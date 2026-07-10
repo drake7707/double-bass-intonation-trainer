@@ -14,6 +14,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        // the lifted detection code sprinkles android.util.Log calls; let them no-op on the JVM
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 kotlin {

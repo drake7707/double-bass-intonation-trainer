@@ -23,12 +23,14 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ### M3: settings, levels, persistence, sounds (new)
 - [ ] Solfège names (Do Ré Mi) show everywhere: prompts, string hints, tune-up labels, debug
-- [ ] **Position level mapping is provisional — correct me!** Current assumption
-      (semitones above the open string): Half = 1–3, First = 2–4, Second = 4–6, Third = 5–7.
-      Check a round at your level only asks notes you know, and tell me which notes belong where.
-- [ ] Position chips are now multi-select; each exact combination keeps its own best score
+- [x] 2026-07-10 — Position mapping confirmed from her Simandl fingering chart:
+      ½ = 1–3, 1st = 2–4, 2nd = 3–5, 3rd = 5–7, 4th = 7–9, 5th = 8–10 (semitones above open)
+- [ ] Position chips are now multi-select (½ 1st 2nd 3rd 4th 5th); each exact combination
+      keeps its own best score
 - [ ] With several positions selected, a round mixes them evenly (no easy-position bias)
 - [ ] Open strings no longer appear as game prompts (they stay in Tune up)
+- [ ] Spot-check prompts against your chart: e.g. 2nd position on Sol string should only
+      ask Si♭2/Si2/Do3; 1st position on Mi string only Fa#1/Sol1/Sol#1
 - [ ] Position + string on the prompt is readable at a glance while playing
 - [ ] Chime on a good note (≤15c), soft blip on close (≤30c), buzz on miss — audible, not
       annoying, and doesn't confuse the detector for the next prompt

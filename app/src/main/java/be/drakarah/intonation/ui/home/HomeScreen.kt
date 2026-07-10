@@ -101,7 +101,7 @@ fun HomeScreen(
                         FilterChip(
                             selected = positions.contains(p),
                             onClick = { viewModel.togglePosition(p) },
-                            label = { Text(p.label) },
+                            label = { Text(p.shortLabel) },
                         )
                     }
                 }

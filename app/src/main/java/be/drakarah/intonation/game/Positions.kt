@@ -5,21 +5,25 @@ import be.drakarah.intonation.music.NoteSpec
 
 /** A left-hand position: the semitone offsets above the open string that fingers 1-2-4 cover.
  *
- * PROVISIONAL Simandl mapping — to be corrected by the user (she plays from Simandl):
- * half = 1..3, first = 2..4, second = 4..6, third = 5..7.
+ * Mapping confirmed against the user's Simandl fingering chart (2nd position from her
+ * description: Si-flat, Si, Do on the Sol string): half = 1..3, 1st = 2..4, 2nd = 3..5,
+ * 3rd = 5..7, 4th = 7..9, 5th = 8..10.
  */
-data class Position(val id: String, val label: String, val offsets: IntRange)
+data class Position(val id: String, val label: String, val shortLabel: String, val offsets: IntRange)
 
-val OPEN_STRINGS = Position("OPEN", "Open string", 0..0)
-val HALF_POSITION = Position("HALF", "Half position", 1..3)
-val FIRST_POSITION = Position("FIRST", "First position", 2..4)
-val SECOND_POSITION = Position("SECOND", "Second position", 4..6)
-val THIRD_POSITION = Position("THIRD", "Third position", 5..7)
+val OPEN_STRINGS = Position("OPEN", "Open string", "0", 0..0)
+val HALF_POSITION = Position("HALF", "Half position", "½", 1..3)
+val FIRST_POSITION = Position("FIRST", "First position", "1st", 2..4)
+val SECOND_POSITION = Position("SECOND", "Second position", "2nd", 3..5)
+val THIRD_POSITION = Position("THIRD", "Third position", "3rd", 5..7)
+val FOURTH_POSITION = Position("FOURTH", "Fourth position", "4th", 7..9)
+val FIFTH_POSITION = Position("FIFTH", "Fifth position", "5th", 8..10)
 
-/** The positions a player can toggle on the home screen. Open strings are always included —
- * every player knows them. Each exact combination is its own scoring category, so scores
- * are only ever compared between rounds drawn from the same set of positions. */
-val SELECTABLE_POSITIONS = listOf(HALF_POSITION, FIRST_POSITION, SECOND_POSITION, THIRD_POSITION)
+/** The positions a player can toggle on the home screen. Each exact combination is its own
+ * scoring category, so scores are only ever compared between rounds drawn from the same set. */
+val SELECTABLE_POSITIONS = listOf(
+    HALF_POSITION, FIRST_POSITION, SECOND_POSITION, THIRD_POSITION, FOURTH_POSITION, FIFTH_POSITION,
+)
 
 fun positionById(id: String): Position? =
     SELECTABLE_POSITIONS.firstOrNull { it.id == id }

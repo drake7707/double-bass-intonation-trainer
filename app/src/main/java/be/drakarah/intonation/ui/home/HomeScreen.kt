@@ -37,6 +37,7 @@ fun HomeScreen(
     onStartSustain: (mode: String) -> Unit,
     onStartShift: (mode: String) -> Unit,
     onOpenTuneUp: () -> Unit,
+    onOpenProgress: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenDebug: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
@@ -143,9 +144,13 @@ fun HomeScreen(
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextButton(onClick = onOpenDebug) { Text("Pitch debug") }
-                OutlinedButton(onClick = onOpenSettings) { Text("Settings") }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = onOpenProgress) { Text("Progress") }
+                    OutlinedButton(onClick = onOpenSettings) { Text("Settings") }
+                }
             }
             Spacer(Modifier.height(16.dp))
         }

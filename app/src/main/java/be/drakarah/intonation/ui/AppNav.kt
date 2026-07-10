@@ -7,6 +7,7 @@ import androidx.navigation.compose.rememberNavController
 import be.drakarah.intonation.ui.debug.DebugPitchScreen
 import be.drakarah.intonation.ui.home.HomeScreen
 import be.drakarah.intonation.ui.round.RoundScreen
+import be.drakarah.intonation.ui.progress.ProgressScreen
 import be.drakarah.intonation.ui.settings.SettingsScreen
 import be.drakarah.intonation.ui.shift.ShiftScreen
 import be.drakarah.intonation.ui.sustain.SustainScreen
@@ -17,6 +18,7 @@ object Routes {
     const val DEBUG = "debug"
     const val TUNE = "tune"
     const val SETTINGS = "settings"
+    const val PROGRESS = "progress"
     const val ROUND = "round/{mode}"
     const val SUSTAIN = "sustain/{mode}"
     const val SHIFT = "shift/{mode}"
@@ -36,6 +38,7 @@ fun AppNav() {
                 onStartSustain = { mode -> navController.navigate(Routes.sustain(mode)) },
                 onStartShift = { mode -> navController.navigate(Routes.shift(mode)) },
                 onOpenTuneUp = { navController.navigate(Routes.TUNE) },
+                onOpenProgress = { navController.navigate(Routes.PROGRESS) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 onOpenDebug = { navController.navigate(Routes.DEBUG) },
             )
@@ -45,6 +48,9 @@ fun AppNav() {
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.PROGRESS) {
+            ProgressScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.ROUND) {
             RoundScreen(onExit = { navController.popBackStack() })

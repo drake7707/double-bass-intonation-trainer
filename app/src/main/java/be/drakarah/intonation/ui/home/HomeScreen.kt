@@ -34,6 +34,7 @@ import be.drakarah.intonation.game.SELECTABLE_POSITIONS
 @Composable
 fun HomeScreen(
     onStartNoteAccuracy: (mode: String) -> Unit,
+    onStartSustain: (mode: String) -> Unit,
     onOpenTuneUp: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenDebug: () -> Unit,
@@ -43,6 +44,7 @@ fun HomeScreen(
     val positions by viewModel.positions.collectAsStateWithLifecycle()
     val streak by viewModel.streak.collectAsStateWithLifecycle()
     val best by viewModel.noteAccuracyBest.collectAsStateWithLifecycle()
+    val sustainBest by viewModel.sustainBest.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { viewModel.refreshStreak() }
 
@@ -122,8 +124,10 @@ fun HomeScreen(
             )
             ExerciseCard(
                 title = "Sustain",
-                subtitle = "Hold it in tune. Coming in M4.",
-                enabled = false,
+                subtitle = sustainBest?.let { "Best: ${it.score} / ${it.maxScore}" }
+                    ?: "Hold it in tune. Don't let the ring reset.",
+                enabled = true,
+                onClick = { onStartSustain(mode) },
             )
             ExerciseCard(
                 title = "Shift Trainer",

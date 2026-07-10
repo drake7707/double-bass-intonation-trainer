@@ -8,6 +8,7 @@ import be.drakarah.intonation.ui.debug.DebugPitchScreen
 import be.drakarah.intonation.ui.home.HomeScreen
 import be.drakarah.intonation.ui.round.RoundScreen
 import be.drakarah.intonation.ui.settings.SettingsScreen
+import be.drakarah.intonation.ui.sustain.SustainScreen
 import be.drakarah.intonation.ui.tune.TuneUpScreen
 
 object Routes {
@@ -16,8 +17,10 @@ object Routes {
     const val TUNE = "tune"
     const val SETTINGS = "settings"
     const val ROUND = "round/{mode}"
+    const val SUSTAIN = "sustain/{mode}"
 
     fun round(mode: String) = "round/$mode"
+    fun sustain(mode: String) = "sustain/$mode"
 }
 
 @Composable
@@ -27,6 +30,7 @@ fun AppNav() {
         composable(Routes.HOME) {
             HomeScreen(
                 onStartNoteAccuracy = { mode -> navController.navigate(Routes.round(mode)) },
+                onStartSustain = { mode -> navController.navigate(Routes.sustain(mode)) },
                 onOpenTuneUp = { navController.navigate(Routes.TUNE) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 onOpenDebug = { navController.navigate(Routes.DEBUG) },
@@ -40,6 +44,9 @@ fun AppNav() {
         }
         composable(Routes.ROUND) {
             RoundScreen(onExit = { navController.popBackStack() })
+        }
+        composable(Routes.SUSTAIN) {
+            SustainScreen(onExit = { navController.popBackStack() })
         }
         composable(Routes.DEBUG) {
             DebugPitchScreen(onBack = { navController.popBackStack() })

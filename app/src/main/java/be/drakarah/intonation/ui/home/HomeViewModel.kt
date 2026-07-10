@@ -10,6 +10,7 @@ import be.drakarah.intonation.data.SessionRepository
 import be.drakarah.intonation.data.configKey
 import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
+import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -47,11 +48,10 @@ class HomeViewModel(
     private val _streak = MutableStateFlow(0)
     val streak: StateFlow<Int> = _streak.asStateFlow()
 
-    /** Personal best for Note Accuracy with the currently selected mode and settings. */
-    val noteAccuracyBest: StateFlow<PersonalBestEntity?> =
+    private fun bestFor(exerciseType: String): StateFlow<PersonalBestEntity?> =
         combine(settingsRepository.settings, _mode) { settings, mode ->
             configKey(
-                exerciseType = EXERCISE_NOTE_ACCURACY,
+                exerciseType = exerciseType,
                 mode = mode,
                 difficulty = settings.difficulty,
                 roundLength = settings.roundLength,
@@ -59,6 +59,10 @@ class HomeViewModel(
             )
         }.flatMapLatest { key -> sessionRepository.observeBest(key) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /** Personal bests for the currently selected mode and settings. */
+    val noteAccuracyBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_NOTE_ACCURACY)
+    val sustainBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SUSTAIN)
 
     fun setMode(mode: String) {
         _mode.value = mode

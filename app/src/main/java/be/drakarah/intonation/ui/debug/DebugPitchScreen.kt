@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.music.centsBetween
 import be.drakarah.intonation.music.nearestNote
+import be.drakarah.intonation.ui.common.rememberAppSettings
 import be.drakarah.intonation.ui.theme.ResultColors
 import java.util.Locale
 import kotlin.math.abs
@@ -100,6 +101,7 @@ fun DebugPitchScreen(
             } else {
                 val current = sample
                 val shown = displayHz
+                val noteStyle = rememberAppSettings().noteNameStyle
                 if (shown != null) {
                     val note = nearestNote(shown.toDouble())
                     val cents = centsBetween(shown.toDouble(), note.frequency())
@@ -109,7 +111,7 @@ fun DebugPitchScreen(
                         else -> ResultColors.off
                     }
                     Text(
-                        note.name,
+                        note.displayName(noteStyle),
                         style = MaterialTheme.typography.displayLarge,
                         color = color,
                     )

@@ -6,26 +6,38 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import be.drakarah.intonation.IntonationApplication
+import be.drakarah.intonation.audio.GameSounds
+import be.drakarah.intonation.data.AttemptEntity
+import be.drakarah.intonation.data.RoundOutcome
+import be.drakarah.intonation.data.SessionEntity
+import be.drakarah.intonation.data.SessionRepository
+import be.drakarah.intonation.data.configKey
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.game.AttemptCapture
 import be.drakarah.intonation.game.CaptureParams
 import be.drakarah.intonation.game.CaptureQuality
 import be.drakarah.intonation.game.CaptureState
-import be.drakarah.intonation.game.Difficulty
 import be.drakarah.intonation.game.MAX_ATTEMPT_SCORE
 import be.drakarah.intonation.game.NotePool
+import be.drakarah.intonation.game.PositionLevel
+import be.drakarah.intonation.game.PromptSpec
 import be.drakarah.intonation.game.WRONG_NOTE_CENTS
 import be.drakarah.intonation.game.scoreAttempt
 import be.drakarah.intonation.game.stars
+import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.music.NoteSpec
 import be.drakarah.intonation.music.centsBetween
+import be.drakarah.intonation.settings.SettingsRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+
+const val EXERCISE_NOTE_ACCURACY = "NOTE_ACCURACY"
 
 data class AttemptUi(
     val target: NoteSpec,
@@ -49,50 +61,72 @@ sealed interface RoundPhase {
 data class RoundUiState(
     val promptIndex: Int = 0,
     val roundLength: Int = 10,
-    val target: NoteSpec = NoteSpec(43),
+    val prompt: PromptSpec? = null,
     val phase: RoundPhase = RoundPhase.Listening,
     val totalScore: Int = 0,
     val results: List<AttemptUi> = emptyList(),
+    val noteStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
+    /** Set once the finished round is persisted; drives the beat-your-best banner. */
+    val outcome: RoundOutcome? = null,
+    val ready: Boolean = false,
 ) {
     val maxScore: Int get() = roundLength * MAX_ATTEMPT_SCORE
 }
 
 class RoundViewModel(
     private val config: PitchEngineConfig,
-    mode: String,
-    roundLength: Int = 10,
-    private val difficulty: Difficulty = Difficulty.STANDARD,
-    private val a4: Double = 440.0,
+    private val mode: String,
+    private val settingsRepository: SettingsRepository,
+    private val sessionRepository: SessionRepository,
 ) : ViewModel() {
 
     private val captureParams =
         if (mode == "pizz") CaptureParams.pizz() else CaptureParams.arco()
 
     private val engine = PitchEngine(config)
-    private val prompts = NotePool().draw(roundLength)
 
-    private val _uiState = MutableStateFlow(
-        RoundUiState(roundLength = roundLength, target = prompts[0])
-    )
+    private val _uiState = MutableStateFlow(RoundUiState())
     val uiState: StateFlow<RoundUiState> = _uiState.asStateFlow()
 
+    private var prompts: List<PromptSpec> = emptyList()
     private var capture = AttemptCapture(captureParams, skipQuietGate = true)
     private var revealUntilMs = -1L
     private var listenJob: Job? = null
+    private var a4 = 440.0
+    private var difficulty = be.drakarah.intonation.game.Difficulty.STANDARD
+    private var level = PositionLevel.L1
+    private var startedAtWallClock = 0L
+    private var soundFeedback = true
+    private val sounds = GameSounds()
 
     fun start() {
         if (listenJob != null) return
         listenJob = viewModelScope.launch {
+            val settings = settingsRepository.settings.first()
+            a4 = settings.a4
+            difficulty = settings.difficulty
+            level = settings.positionLevel
+            soundFeedback = settings.soundFeedback
+            prompts = NotePool(level).draw(settings.roundLength)
+            startedAtWallClock = System.currentTimeMillis()
+            _uiState.value = RoundUiState(
+                roundLength = settings.roundLength,
+                prompt = prompts[0],
+                noteStyle = settings.noteNameStyle,
+                ready = true,
+            )
+
             engine.samples().collect { sample ->
                 val state = _uiState.value
+                val target = state.prompt?.target ?: return@collect
                 when (state.phase) {
                     RoundPhase.Listening -> {
                         when (val captureState = capture.process(sample)) {
                             is CaptureState.Frozen -> onAttemptFinished(
-                                resultFor(state.target, captureState)
-                            , sample.timestampMs)
+                                resultFor(target, captureState), sample.timestampMs
+                            )
                             CaptureState.TimedOut -> onAttemptFinished(
-                                resultFor(state.target, null), sample.timestampMs
+                                resultFor(target, null), sample.timestampMs
                             )
                             else -> {}
                         }
@@ -132,6 +166,13 @@ class RoundViewModel(
     }
 
     private fun onAttemptFinished(result: AttemptUi, nowMs: Long) {
+        if (soundFeedback) {
+            when {
+                result.starCount >= 2 -> sounds.playHit()
+                result.starCount == 1 -> sounds.playClose()
+                else -> sounds.playMiss()
+            }
+        }
         revealUntilMs = nowMs + REVEAL_MS
         _uiState.value = _uiState.value.let {
             it.copy(
@@ -145,13 +186,66 @@ class RoundViewModel(
     private fun advance() {
         val state = _uiState.value
         val next = state.promptIndex + 1
-        _uiState.value = if (next >= state.roundLength) {
-            state.copy(phase = RoundPhase.Done)
+        if (next >= state.roundLength) {
+            _uiState.value = state.copy(phase = RoundPhase.Done)
+            persistRound(state)
         } else {
             capture = AttemptCapture(captureParams, skipQuietGate = false)
-            state.copy(promptIndex = next, target = prompts[next], phase = RoundPhase.Listening)
+            _uiState.value =
+                state.copy(promptIndex = next, prompt = prompts[next], phase = RoundPhase.Listening)
         }
     }
+
+    private fun persistRound(state: RoundUiState) {
+        viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val scored = state.results.mapNotNull { it.cents }
+            val session = SessionEntity(
+                startedAt = startedAtWallClock,
+                endedAt = now,
+                exerciseType = EXERCISE_NOTE_ACCURACY,
+                mode = mode,
+                configKey = currentConfigKey(),
+                totalScore = state.totalScore,
+                maxScore = state.maxScore,
+                avgAbsCents = if (scored.isEmpty()) null
+                              else scored.map { abs(it) }.average().toFloat(),
+                completed = true,
+            )
+            val attempts = state.results.mapIndexed { i, r ->
+                AttemptEntity(
+                    sessionId = 0, // replaced by the repository with the real id
+                    promptIndex = i,
+                    timestamp = startedAtWallClock,
+                    exerciseType = EXERCISE_NOTE_ACCURACY,
+                    targetMidi = r.target.midi,
+                    targetFreqHz = r.target.frequency(a4).toFloat(),
+                    startMidi = null,
+                    playedFreqHz = r.playedHz,
+                    centsError = r.cents,
+                    reactionTimeMs = r.reactionTimeMs,
+                    timeToStableMs = r.timeToStableMs,
+                    score = r.score,
+                    stars = r.starCount,
+                    quality = when {
+                        r.timedOut -> "TIMEOUT"
+                        r.quality == CaptureQuality.SHAKY -> "SHAKY"
+                        else -> "CLEAN"
+                    },
+                )
+            }
+            val outcome = sessionRepository.recordCompletedRound(session, attempts)
+            _uiState.value = _uiState.value.copy(outcome = outcome)
+        }
+    }
+
+    private fun currentConfigKey() = configKey(
+        exerciseType = EXERCISE_NOTE_ACCURACY,
+        mode = mode,
+        difficulty = difficulty,
+        roundLength = _uiState.value.roundLength,
+        level = level,
+    )
 
     fun stop() {
         listenJob?.cancel()
@@ -172,7 +266,12 @@ class RoundViewModel(
                         as IntonationApplication
                 val handle = extras.createSavedStateHandle()
                 val mode = handle.get<String>("mode") ?: "arco"
-                return RoundViewModel(app.container.pitchEngineConfig, mode) as T
+                return RoundViewModel(
+                    config = app.container.pitchEngineConfig,
+                    mode = mode,
+                    settingsRepository = app.container.settingsRepository,
+                    sessionRepository = app.container.sessionRepository,
+                ) as T
             }
         }
     }

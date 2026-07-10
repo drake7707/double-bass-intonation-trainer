@@ -48,6 +48,7 @@ fun RoundScreen(
     RequireMicPermission {
         LaunchedEffect(Unit) { viewModel.start() }
         val state by viewModel.uiState.collectAsStateWithLifecycle()
+        if (!state.ready) return@RequireMicPermission
 
         Scaffold { padding ->
             Column(
@@ -69,7 +70,7 @@ fun RoundScreen(
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     when (val phase = state.phase) {
                         RoundPhase.Listening -> ListeningPrompt(state)
-                        is RoundPhase.Reveal -> RevealResult(phase.result)
+                        is RoundPhase.Reveal -> RevealResult(phase.result, state.noteStyle)
                         RoundPhase.Done -> RoundSummary(state, onExit)
                     }
                 }
@@ -115,6 +116,7 @@ private fun ListeningPrompt(state: RoundUiState) {
         animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
         label = "pulse",
     )
+    val prompt = state.prompt ?: return
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             "Play",
@@ -122,16 +124,23 @@ private fun ListeningPrompt(state: RoundUiState) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            state.target.name,
+            prompt.target.displayName(state.noteStyle),
             fontSize = 112.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
         )
-        val string = BassTuning.suggestedString(state.target)
+        Spacer(Modifier.height(8.dp))
+        // players read this under time pressure — position and string get real estate
         Text(
-            "on ${BassTuning.stringNumeral(string)} (${string.name.dropLast(1)} string)",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            prompt.position.label,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            "${prompt.string.pitchClassName(state.noteStyle)} string (${BassTuning.stringNumeral(prompt.string)})",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(Modifier.height(24.dp))
         Text(
@@ -144,7 +153,7 @@ private fun ListeningPrompt(state: RoundUiState) {
 }
 
 @Composable
-private fun RevealResult(result: AttemptUi) {
+private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.music.NoteNameStyle) {
     val color = when {
         result.timedOut || result.wrongNote -> ResultColors.off
         result.starCount == 3 -> ResultColors.excellent
@@ -153,7 +162,7 @@ private fun RevealResult(result: AttemptUi) {
     }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            result.target.name,
+            result.target.displayName(noteStyle),
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -220,6 +229,26 @@ private fun RoundSummary(state: RoundUiState, onExit: () -> Unit) {
             "${state.results.sumOf { it.starCount }} of ${state.roundLength * 3} stars",
             style = MaterialTheme.typography.bodyLarge,
         )
+        state.outcome?.let { outcome ->
+            Spacer(Modifier.height(12.dp))
+            when {
+                outcome.isNewBest && outcome.previousBest != null -> Text(
+                    "New personal best! (was ${outcome.previousBest})",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                outcome.isNewBest -> Text(
+                    "First round on this setup — that's your best to beat.",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                else -> Text(
+                    "Best: ${outcome.previousBest} — ${outcome.previousBest!! - state.totalScore} points to beat",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
         Spacer(Modifier.height(24.dp))
         Button(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
             Text("Done")

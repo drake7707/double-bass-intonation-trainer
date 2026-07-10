@@ -4,17 +4,33 @@ import kotlin.math.log2
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
+/** How note names are displayed; Sarah thinks in fixed-do solfège. */
+enum class NoteNameStyle {
+    LETTERS,
+    SOLFEGE,
+}
+
+private val LETTER_NAMES = listOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
+private val SOLFEGE_NAMES = listOf("Do", "Do#", "Ré", "Ré#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si")
+
 /** A note in 12-tone equal temperament, identified by its MIDI number (E1 = 28, A4 = 69). */
 data class NoteSpec(val midi: Int) {
     fun frequency(a4: Double = 440.0): Double = a4 * 2.0.pow((midi - 69) / 12.0)
 
     /** Scientific pitch notation with sharps, e.g. "G2", "F#3". */
-    val name: String
-        get() {
-            val names = listOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
-            val octave = midi / 12 - 1
-            return names[midi % 12] + octave
-        }
+    val name: String get() = displayName(NoteNameStyle.LETTERS)
+
+    /** Note name in the given style, with scientific octave number ("G2" / "Sol2"). */
+    fun displayName(style: NoteNameStyle): String {
+        val names = if (style == NoteNameStyle.SOLFEGE) SOLFEGE_NAMES else LETTER_NAMES
+        return names[midi % 12] + (midi / 12 - 1)
+    }
+
+    /** Pitch-class name without octave ("G" / "Sol") — for string hints. */
+    fun pitchClassName(style: NoteNameStyle): String {
+        val names = if (style == NoteNameStyle.SOLFEGE) SOLFEGE_NAMES else LETTER_NAMES
+        return names[midi % 12]
+    }
 }
 
 fun centsBetween(frequency: Double, reference: Double): Double =

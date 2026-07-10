@@ -1,0 +1,85 @@
+package be.drakarah.intonation.ui.home
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
+import be.drakarah.intonation.IntonationApplication
+import be.drakarah.intonation.data.PersonalBestEntity
+import be.drakarah.intonation.data.SessionRepository
+import be.drakarah.intonation.data.configKey
+import be.drakarah.intonation.settings.SettingsRepository
+import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class HomeViewModel(
+    private val settingsRepository: SettingsRepository,
+    private val sessionRepository: SessionRepository,
+) : ViewModel() {
+
+    private val _mode = MutableStateFlow("arco")
+    val mode: StateFlow<String> = _mode.asStateFlow()
+
+    val level: StateFlow<be.drakarah.intonation.game.PositionLevel> =
+        settingsRepository.settings
+            .map { it.positionLevel }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000),
+                be.drakarah.intonation.game.PositionLevel.L1)
+
+    fun setLevel(level: be.drakarah.intonation.game.PositionLevel) {
+        viewModelScope.launch { settingsRepository.setPositionLevel(level) }
+    }
+
+    private val _streak = MutableStateFlow(0)
+    val streak: StateFlow<Int> = _streak.asStateFlow()
+
+    /** Personal best for Note Accuracy with the currently selected mode and settings. */
+    val noteAccuracyBest: StateFlow<PersonalBestEntity?> =
+        combine(settingsRepository.settings, _mode) { settings, mode ->
+            configKey(
+                exerciseType = EXERCISE_NOTE_ACCURACY,
+                mode = mode,
+                difficulty = settings.difficulty,
+                roundLength = settings.roundLength,
+                level = settings.positionLevel,
+            )
+        }.flatMapLatest { key -> sessionRepository.observeBest(key) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    fun setMode(mode: String) {
+        _mode.value = mode
+    }
+
+    /** Called on every home visit — a completed round may have extended the streak. */
+    fun refreshStreak() {
+        viewModelScope.launch { _streak.value = sessionRepository.practiceStreakDays() }
+    }
+
+    init {
+        refreshStreak()
+    }
+
+    companion object {
+        val Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+                val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]
+                        as IntonationApplication
+                return HomeViewModel(
+                    settingsRepository = app.container.settingsRepository,
+                    sessionRepository = app.container.sessionRepository,
+                ) as T
+            }
+        }
+    }
+}

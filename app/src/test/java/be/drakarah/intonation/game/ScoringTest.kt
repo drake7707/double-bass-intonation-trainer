@@ -43,8 +43,30 @@ class ScoringTest {
 
     @Test
     fun notePoolNeverRepeatsConsecutively() {
-        val notes = NotePool(random = Random(42)).draw(200)
-        notes.zipWithNext().forEach { (a, b) -> assertTrue(a.midi != b.midi) }
-        notes.forEach { assertTrue(it.midi in NotePool.DEFAULT_RANGE) }
+        val prompts = NotePool(PositionLevel.L2, Random(42)).draw(200)
+        prompts.zipWithNext().forEach { (a, b) -> assertTrue(a.target.midi != b.target.midi) }
+    }
+
+    @Test
+    fun promptsStayWithinTheLevel() {
+        PositionLevel.entries.forEach { level ->
+            promptsForLevel(level).forEach { prompt ->
+                val offset = prompt.target.midi - prompt.string.midi
+                assertTrue(
+                    "offset $offset not in ${prompt.position.label} at ${level.name}",
+                    offset in prompt.position.offsets
+                )
+                assertTrue(level.positions.contains(prompt.position))
+            }
+        }
+    }
+
+    @Test
+    fun firstLevelHasNoHalfPositionNotes() {
+        // L1 = open strings + first position (semitones 2..4); semitone 1 must not appear
+        promptsForLevel(PositionLevel.L1).forEach { prompt ->
+            val offset = prompt.target.midi - prompt.string.midi
+            assertTrue("unexpected offset $offset in L1", offset == 0 || offset in 2..4)
+        }
     }
 }

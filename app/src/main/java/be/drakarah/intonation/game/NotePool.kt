@@ -1,30 +1,26 @@
 package be.drakarah.intonation.game
 
-import be.drakarah.intonation.music.NoteSpec
 import kotlin.random.Random
 
-/** Draws round targets from a MIDI range, never repeating the previous note. */
+/** Draws round prompts for a position level, never repeating the previous note. */
 class NotePool(
-    private val range: IntRange = DEFAULT_RANGE,
+    private val level: PositionLevel,
     private val random: Random = Random.Default,
 ) {
-    fun draw(count: Int): List<NoteSpec> {
-        require(range.count() >= 2) { "pool needs at least two notes" }
-        val result = ArrayList<NoteSpec>(count)
-        var previous = -1
+    private val candidates = promptsForLevel(level)
+
+    fun draw(count: Int): List<PromptSpec> {
+        require(candidates.size >= 2) { "level needs at least two prompts" }
+        val result = ArrayList<PromptSpec>(count)
+        var previousMidi = -1
         repeat(count) {
-            var midi: Int
+            var pick: PromptSpec
             do {
-                midi = range.random(random)
-            } while (midi == previous)
-            previous = midi
-            result.add(NoteSpec(midi))
+                pick = candidates.random(random)
+            } while (pick.target.midi == previousMidi)
+            previousMidi = pick.target.midi
+            result.add(pick)
         }
         return result
-    }
-
-    companion object {
-        /** E1 (open E) up to D3 — comfortable neck positions on all four strings. */
-        val DEFAULT_RANGE = 28..50
     }
 }

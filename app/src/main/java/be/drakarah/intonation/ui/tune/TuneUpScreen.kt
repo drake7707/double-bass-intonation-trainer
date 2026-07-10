@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.ui.common.RequireMicPermission
+import be.drakarah.intonation.ui.common.rememberAppSettings
 import be.drakarah.intonation.ui.theme.ResultColors
 import java.util.Locale
 import kotlin.math.abs
@@ -42,6 +43,7 @@ fun TuneUpScreen(
     RequireMicPermission {
         LaunchedEffect(Unit) { viewModel.start() }
         val state by viewModel.uiState.collectAsStateWithLifecycle()
+        val noteStyle = rememberAppSettings().noteNameStyle
 
         Scaffold { padding ->
             Column(
@@ -76,7 +78,7 @@ fun TuneUpScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
                                 Text(
-                                    string.name,
+                                    string.displayName(noteStyle),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
                                     color = when {

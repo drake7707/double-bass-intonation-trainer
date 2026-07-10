@@ -29,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import be.drakarah.intonation.game.PositionLevel
+import be.drakarah.intonation.game.SELECTABLE_POSITIONS
 
 @Composable
 fun HomeScreen(
@@ -40,7 +40,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
 ) {
     val mode by viewModel.mode.collectAsStateWithLifecycle()
-    val level by viewModel.level.collectAsStateWithLifecycle()
+    val positions by viewModel.positions.collectAsStateWithLifecycle()
     val streak by viewModel.streak.collectAsStateWithLifecycle()
     val best by viewModel.noteAccuracyBest.collectAsStateWithLifecycle()
 
@@ -87,7 +87,7 @@ fun HomeScreen(
 
             Column {
                 Text(
-                    "Positions you know",
+                    "Positions to practice (each combination scores separately)",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -97,11 +97,11 @@ fun HomeScreen(
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    PositionLevel.entries.forEach { l ->
+                    SELECTABLE_POSITIONS.forEach { p ->
                         FilterChip(
-                            selected = level == l,
-                            onClick = { viewModel.setLevel(l) },
-                            label = { Text(l.label) },
+                            selected = positions.contains(p),
+                            onClick = { viewModel.togglePosition(p) },
+                            label = { Text(p.label) },
                         )
                     }
                 }

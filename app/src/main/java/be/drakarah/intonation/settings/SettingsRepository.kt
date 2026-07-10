@@ -8,7 +8,9 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import be.drakarah.intonation.game.Difficulty
-import be.drakarah.intonation.game.PositionLevel
+import be.drakarah.intonation.game.FIRST_POSITION
+import be.drakarah.intonation.game.Position
+import be.drakarah.intonation.game.positionById
 import be.drakarah.intonation.music.NoteNameStyle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -18,7 +20,7 @@ data class AppSettings(
     val a4: Double = 440.0,
     val difficulty: Difficulty = Difficulty.STANDARD,
     val roundLength: Int = 10,
-    val positionLevel: PositionLevel = PositionLevel.L1,
+    val positions: Set<Position> = setOf(FIRST_POSITION),
     val soundFeedback: Boolean = true,
 )
 
@@ -31,7 +33,7 @@ class SettingsRepository(private val context: Context) {
         val a4 = doublePreferencesKey("a4")
         val difficulty = stringPreferencesKey("difficulty")
         val roundLength = intPreferencesKey("roundLength")
-        val positionLevel = stringPreferencesKey("positionLevel")
+        val positions = stringPreferencesKey("positions")
         val soundFeedback = booleanPreferencesKey("soundFeedback")
     }
 
@@ -45,9 +47,12 @@ class SettingsRepository(private val context: Context) {
                 ?.let { runCatching { Difficulty.valueOf(it) }.getOrNull() }
                 ?: Difficulty.STANDARD,
             roundLength = prefs[Keys.roundLength] ?: 10,
-            positionLevel = prefs[Keys.positionLevel]
-                ?.let { runCatching { PositionLevel.valueOf(it) }.getOrNull() }
-                ?: PositionLevel.L1,
+            positions = prefs[Keys.positions]
+                ?.split(",")
+                ?.mapNotNull { positionById(it) }
+                ?.toSet()
+                ?.takeIf { it.isNotEmpty() }
+                ?: setOf(FIRST_POSITION),
             soundFeedback = prefs[Keys.soundFeedback] ?: true,
         )
     }
@@ -56,8 +61,11 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[Keys.soundFeedback] = enabled }
     }
 
-    suspend fun setPositionLevel(level: PositionLevel) {
-        context.dataStore.edit { it[Keys.positionLevel] = level.name }
+    suspend fun setPositions(positions: Set<Position>) {
+        if (positions.isEmpty()) return // at least one position must stay selected
+        context.dataStore.edit { prefs ->
+            prefs[Keys.positions] = positions.joinToString(",") { it.id }
+        }
     }
 
     suspend fun setNoteNameStyle(style: NoteNameStyle) {

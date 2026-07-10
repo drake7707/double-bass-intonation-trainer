@@ -63,11 +63,13 @@ fun computeStreak(days: Set<LocalDate>, today: LocalDate): Int {
 }
 
 /** Canonical, human-readable identity of an exercise configuration — the personal-best key.
- * Every element that changes scoring comparability must be part of it. */
+ * Every element that changes scoring comparability must be part of it; in particular each
+ * exact combination of selected positions is its own scoring category. */
 fun configKey(
     exerciseType: String,
     mode: String,
     difficulty: Difficulty,
     roundLength: Int,
-    level: be.drakarah.intonation.game.PositionLevel,
-): String = "$exerciseType|$mode|${difficulty.name}|$roundLength|${level.name}"
+    positions: Set<be.drakarah.intonation.game.Position>,
+): String =
+    "$exerciseType|$mode|${difficulty.name}|$roundLength|${be.drakarah.intonation.game.positionSetKey(positions)}"

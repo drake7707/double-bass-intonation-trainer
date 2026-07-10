@@ -26,7 +26,9 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] **Position level mapping is provisional — correct me!** Current assumption
       (semitones above the open string): Half = 1–3, First = 2–4, Second = 4–6, Third = 5–7.
       Check a round at your level only asks notes you know, and tell me which notes belong where.
-- [ ] Level select chips on home: switching level changes which notes get asked
+- [ ] Position chips are now multi-select; each exact combination keeps its own best score
+- [ ] With several positions selected, a round mixes them evenly (no easy-position bias)
+- [ ] Open strings no longer appear as game prompts (they stay in Tune up)
 - [ ] Position + string on the prompt is readable at a glance while playing
 - [ ] Chime on a good note (≤15c), soft blip on close (≤30c), buzz on miss — audible, not
       annoying, and doesn't confuse the detector for the next prompt

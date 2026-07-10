@@ -30,14 +30,18 @@ class HomeViewModel(
     private val _mode = MutableStateFlow("arco")
     val mode: StateFlow<String> = _mode.asStateFlow()
 
-    val level: StateFlow<be.drakarah.intonation.game.PositionLevel> =
+    val positions: StateFlow<Set<be.drakarah.intonation.game.Position>> =
         settingsRepository.settings
-            .map { it.positionLevel }
+            .map { it.positions }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000),
-                be.drakarah.intonation.game.PositionLevel.L1)
+                setOf(be.drakarah.intonation.game.FIRST_POSITION))
 
-    fun setLevel(level: be.drakarah.intonation.game.PositionLevel) {
-        viewModelScope.launch { settingsRepository.setPositionLevel(level) }
+    fun togglePosition(position: be.drakarah.intonation.game.Position) {
+        viewModelScope.launch {
+            val current = positions.value
+            val next = if (current.contains(position)) current - position else current + position
+            settingsRepository.setPositions(next) // repository refuses an empty set
+        }
     }
 
     private val _streak = MutableStateFlow(0)
@@ -51,7 +55,7 @@ class HomeViewModel(
                 mode = mode,
                 difficulty = settings.difficulty,
                 roundLength = settings.roundLength,
-                level = settings.positionLevel,
+                positions = settings.positions,
             )
         }.flatMapLatest { key -> sessionRepository.observeBest(key) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)

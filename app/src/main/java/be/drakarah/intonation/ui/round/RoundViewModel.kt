@@ -18,9 +18,10 @@ import be.drakarah.intonation.game.AttemptCapture
 import be.drakarah.intonation.game.CaptureParams
 import be.drakarah.intonation.game.CaptureQuality
 import be.drakarah.intonation.game.CaptureState
+import be.drakarah.intonation.game.FIRST_POSITION
 import be.drakarah.intonation.game.MAX_ATTEMPT_SCORE
 import be.drakarah.intonation.game.NotePool
-import be.drakarah.intonation.game.PositionLevel
+import be.drakarah.intonation.game.Position
 import be.drakarah.intonation.game.PromptSpec
 import be.drakarah.intonation.game.WRONG_NOTE_CENTS
 import be.drakarah.intonation.game.scoreAttempt
@@ -94,7 +95,7 @@ class RoundViewModel(
     private var listenJob: Job? = null
     private var a4 = 440.0
     private var difficulty = be.drakarah.intonation.game.Difficulty.STANDARD
-    private var level = PositionLevel.L1
+    private var positions: Set<Position> = setOf(FIRST_POSITION)
     private var startedAtWallClock = 0L
     private var soundFeedback = true
     private val sounds = GameSounds()
@@ -105,9 +106,9 @@ class RoundViewModel(
             val settings = settingsRepository.settings.first()
             a4 = settings.a4
             difficulty = settings.difficulty
-            level = settings.positionLevel
+            positions = settings.positions
             soundFeedback = settings.soundFeedback
-            prompts = NotePool(level).draw(settings.roundLength)
+            prompts = NotePool(positions).draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()
             _uiState.value = RoundUiState(
                 roundLength = settings.roundLength,
@@ -244,7 +245,7 @@ class RoundViewModel(
         mode = mode,
         difficulty = difficulty,
         roundLength = _uiState.value.roundLength,
-        level = level,
+        positions = positions,
     )
 
     fun stop() {

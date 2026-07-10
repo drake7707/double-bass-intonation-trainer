@@ -31,6 +31,7 @@ import be.drakarah.intonation.game.PromptSpec
 import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.ui.common.AchievementUnlocks
+import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.theme.ResultColors
 import java.util.Locale
@@ -271,6 +272,12 @@ private fun DoneContent(state: ShiftUiState, onExit: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            val scoredCents = state.results.mapNotNull { it.cents }
+            ImprovementLine(
+                thisRoundAvgCents = scoredCents.takeIf { it.isNotEmpty() }
+                    ?.map { kotlin.math.abs(it) }?.average()?.toFloat(),
+                lastWeekAvgCents = outcome.lastWeekAvgCents,
+            )
             AchievementUnlocks(outcome.newAchievements)
         }
         Spacer(Modifier.height(24.dp))

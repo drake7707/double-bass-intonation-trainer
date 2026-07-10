@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import be.drakarah.intonation.game.Difficulty
@@ -23,6 +24,8 @@ data class AppSettings(
     val positions: Set<Position> = setOf(FIRST_POSITION),
     val soundFeedback: Boolean = true,
     val driftWarning: Boolean = true,
+    /** Last time the tune-up screen saw all four strings in tune (epoch ms, 0 = never). */
+    val lastTunedAt: Long = 0,
 )
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
@@ -37,6 +40,7 @@ class SettingsRepository(private val context: Context) {
         val positions = stringPreferencesKey("positions")
         val soundFeedback = booleanPreferencesKey("soundFeedback")
         val driftWarning = booleanPreferencesKey("driftWarning")
+        val lastTunedAt = longPreferencesKey("lastTunedAt")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -57,7 +61,12 @@ class SettingsRepository(private val context: Context) {
                 ?: setOf(FIRST_POSITION),
             soundFeedback = prefs[Keys.soundFeedback] ?: true,
             driftWarning = prefs[Keys.driftWarning] ?: true,
+            lastTunedAt = prefs[Keys.lastTunedAt] ?: 0,
         )
+    }
+
+    suspend fun setLastTunedAt(epochMs: Long) {
+        context.dataStore.edit { it[Keys.lastTunedAt] = epochMs }
     }
 
     suspend fun setDriftWarning(enabled: Boolean) {

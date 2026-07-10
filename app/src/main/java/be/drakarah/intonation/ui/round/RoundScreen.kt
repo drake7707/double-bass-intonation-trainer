@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.ui.common.AchievementUnlocks
+import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.theme.ResultColors
 import java.util.Locale
@@ -234,6 +235,10 @@ private fun RoundSummary(state: RoundUiState, onExit: () -> Unit) {
                 String.format(Locale.US, "average %.1f cents off", avgCents),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
+            )
+            ImprovementLine(
+                thisRoundAvgCents = avgCents.toFloat(),
+                lastWeekAvgCents = state.outcome?.lastWeekAvgCents,
             )
         }
         Text(

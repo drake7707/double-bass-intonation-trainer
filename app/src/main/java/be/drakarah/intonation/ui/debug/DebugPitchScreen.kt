@@ -4,14 +4,21 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
@@ -29,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
@@ -43,6 +51,7 @@ import be.drakarah.intonation.ui.theme.ResultColors
 import java.util.Locale
 import kotlin.math.abs
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DebugPitchScreen(
     onBack: () -> Unit,
@@ -87,7 +96,8 @@ fun DebugPitchScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Spacer(Modifier.height(16.dp))
@@ -163,6 +173,95 @@ fun DebugPitchScreen(
                     }
                 }
 
+                // the live game-capture machine — proves a note would be accepted by the games
+                val captureMode by viewModel.captureMode.collectAsStateWithLifecycle()
+                val captureLabel by viewModel.captureStateLabel.collectAsStateWithLifecycle()
+                val freeze by viewModel.lastFreeze.collectAsStateWithLifecycle()
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text("game capture: $captureLabel", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                if (captureMode == "arco") "arco ⇄" else "pizz ⇄",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable {
+                                    viewModel.setCaptureMode(if (captureMode == "arco") "pizz" else "arco")
+                                },
+                            )
+                        }
+                        freeze?.let { f ->
+                            val note = nearestNote(f.frequencyHz.toDouble())
+                            val cents = centsBetween(f.frequencyHz.toDouble(), note.frequency())
+                            Text(
+                                String.format(
+                                    Locale.US,
+                                    "✓ stable: %s %+.1fc (%.2f Hz) in %d ms [%s]",
+                                    note.displayName(noteStyle), cents, f.frequencyHz,
+                                    f.timeToStableMs, f.quality,
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = ResultColors.excellent,
+                                fontFamily = FontFamily.Monospace,
+                            )
+                        } ?: Text(
+                            "no stable note captured yet",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                // sweep checklist: play every note; all green = all good for the games
+                val sweep by viewModel.sweep.collectAsStateWithLifecycle()
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            val total = DebugViewModel.MIDI_RANGE.count()
+                            Text(
+                                if (sweep.size >= total) "✓ all $total notes game-ready"
+                                else "note sweep: ${sweep.size}/$total game-ready",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (sweep.size >= total) ResultColors.excellent
+                                        else MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                "reset",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable { viewModel.clearSweep() },
+                            )
+                        }
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            DebugViewModel.MIDI_RANGE.forEach { midi ->
+                                val captured = sweep[midi]
+                                Text(
+                                    be.drakarah.intonation.music.NoteSpec(midi).displayName(noteStyle),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (captured != null) Color(0xFF003912)
+                                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier
+                                        .background(
+                                            if (captured != null) ResultColors.excellent
+                                            else MaterialTheme.colorScheme.surfaceVariant,
+                                            RoundedCornerShape(6.dp),
+                                        )
+                                        .padding(horizontal = 6.dp, vertical = 3.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+
                 with(viewModel.engineConfig) {
                     Text(
                         "window $windowSize @ $sampleRate Hz, overlap $overlap, " +
@@ -177,7 +276,7 @@ fun DebugPitchScreen(
                 }
             }
 
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.height(8.dp))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text("Back")
             }

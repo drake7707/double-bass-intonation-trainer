@@ -27,6 +27,12 @@ All exercises run as **fixed rounds** (5/10/20 prompts) with a total score to be
 Prompts always show the note (large), the **position** and the **string** — readable at
 arm's length while holding the instrument.
 
+### Daily focus
+The home screen leads with one highlighted card — a suggested session that rotates with
+the calendar day (accuracy arco, same-string shifts, sustain, pizz accuracy, cross-string
+shifts) with its personal best. One tap and practice starts: no configuring, no decision
+fatigue.
+
 ### Tune up
 Pre-session tuner (the one deliberate exception to the no-needle rule): play each open
 string, the app auto-detects which one, shows a live cents needle, and ticks the string
@@ -54,11 +60,13 @@ counts — glide samples are excluded, so sliding into the note scores where the
 - **Same string**: the classic shift along one string (prefers ≥3-semitone shifts).
 - **Cross string**: start and target on different strings — string crossing plus landing.
 
-## Positions (Simandl)
+## Position system (v1: Simandl)
 
 Prompts are drawn only from positions the player selects (multi-select chips):
 ½, 1st, 2nd, 3rd, 4th, 5th — mapped per the Simandl fingering chart (semitones above the
 open string: ½ = 1–3, 1st = 2–4, 2nd = 3–5, 3rd = 5–7, 4th = 7–9, 5th = 8–10).
+Positions are plain data (name + semitone offsets), so other systems (French, Rabbath)
+are a new table, not a rewrite; each system's positions would score separately.
 Rounds are **balanced across the selected positions** (shuffled per-position decks drawn
 round-robin), so a round can't cluster on the easiest position. Open strings are not
 prompted (they test the bow, not finger placement). **Each exact position combination is
@@ -86,8 +94,13 @@ its own scoring category** — scores are only ever compared between identical s
 
 - **Progress page**: per-exercise score chart (percent per round, colored dots), stats
   (rounds played, best, average cents of the last 10 rounds), achievements gallery, and a
-  session history list. Every attempt is stored locally (Room) with target, cents error,
-  timing and quality — the raw material for future insights.
+  session history list.
+- **Improvement over points**: round summaries compare this round's average error against
+  your previous week ("14.8 cents — last week 18.6 ⬇"), because improving matters more
+  than the raw score.
+- Every attempt is stored locally (Room) with target, cents error, **reaction time,
+  time-to-stable and shift landing time**, and capture quality — so future insights
+  (average shift speed, slow-but-accurate vs fast-but-wild) need no schema changes.
 
 ## Settings
 
@@ -101,6 +114,12 @@ its own scoring category** — scores are only ever compared between identical s
 - **Pitch debug screen**: live frequency/cents/noise/energy readout and a
   **"save last 8 s" button** that writes the raw audio (WAV) plus a per-window detection
   log (JSONL) — recordings of misbehavior become reproducible offline test cases.
+- The debug screen also runs the **real game-capture machine** live (arco/pizz
+  toggleable): it shows its state, stamps "✓ stable" with time-to-stable whenever a note
+  freezes, and keeps a **note sweep checklist** — play chromatically through the whole
+  range and every game-ready note turns green, exposing any notes that need tweaking.
+- **Tune-up reminder**: the app remembers your last complete tune-up; starting a game
+  more than ~8 hours later asks "Tuned up?" first (dismissible per session).
 - Screens stay awake while listening. Dark theme only. Offline; no accounts, no ads,
   no telemetry.
 

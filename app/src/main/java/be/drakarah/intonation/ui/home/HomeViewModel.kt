@@ -23,11 +23,50 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/** One-tap suggested session; rotates deterministically with the calendar day. */
+data class DailyFocus(
+    val title: String,
+    val subtitle: String,
+    val exerciseType: String,
+    val mode: String,
+    val style: String?,
+)
+
+private val FOCUS_ROTATION = listOf(
+    DailyFocus("Note Accuracy · arco", "Land clean first notes with the bow.",
+        EXERCISE_NOTE_ACCURACY, "arco", null),
+    DailyFocus("Shift · same string", "Confident shifts along one string.",
+        EXERCISE_SHIFT, "arco", "same"),
+    DailyFocus("Sustain · arco", "Steady bow, steady pitch.",
+        EXERCISE_SUSTAIN, "arco", null),
+    DailyFocus("Note Accuracy · pizz", "First landings, plucked.",
+        EXERCISE_NOTE_ACCURACY, "pizz", null),
+    DailyFocus("Shift · cross string", "String crossings that land in tune.",
+        EXERCISE_SHIFT, "arco", "cross"),
+)
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(
     private val settingsRepository: SettingsRepository,
     private val sessionRepository: SessionRepository,
 ) : ViewModel() {
+
+    val dailyFocus: DailyFocus =
+        FOCUS_ROTATION[(java.time.LocalDate.now().toEpochDay() % FOCUS_ROTATION.size).toInt()]
+
+    /** Personal best for today's focus (its own mode, current difficulty/length/positions). */
+    val dailyFocusBest: StateFlow<PersonalBestEntity?> =
+        settingsRepository.settings.map { settings ->
+            configKey(
+                exerciseType = dailyFocus.exerciseType,
+                mode = dailyFocus.mode,
+                difficulty = settings.difficulty,
+                roundLength = settings.roundLength,
+                positions = settings.positions,
+                variant = dailyFocus.style,
+            )
+        }.flatMapLatest { key -> sessionRepository.observeBest(key) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     private val _mode = MutableStateFlow("arco")
     val mode: StateFlow<String> = _mode.asStateFlow()
@@ -44,6 +83,20 @@ class HomeViewModel(
             val next = if (current.contains(position)) current - position else current + position
             settingsRepository.setPositions(next) // repository refuses an empty set
         }
+    }
+
+    private val tuneReminderSuppressed = MutableStateFlow(false)
+
+    /** True when the last complete tune-up is stale — the user probably forgot to tune. */
+    val needsTuneReminder: StateFlow<Boolean> =
+        combine(settingsRepository.settings, tuneReminderSuppressed) { settings, suppressed ->
+            !suppressed &&
+                System.currentTimeMillis() - settings.lastTunedAt > TUNE_STALE_AFTER_MS
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    /** "Start anyway" — stop asking until the app restarts. */
+    fun suppressTuneReminder() {
+        tuneReminderSuppressed.value = true
     }
 
     private val _streak = MutableStateFlow(0)
@@ -82,6 +135,8 @@ class HomeViewModel(
     }
 
     companion object {
+        private const val TUNE_STALE_AFTER_MS = 8L * 60 * 60 * 1000
+
         val Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {

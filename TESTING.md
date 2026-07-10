@@ -67,6 +67,14 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Sustain card is disabled in Pizz mode with an explanation (your feedback)
 - [ ] Settings → About & licenses shows GPL + Tuner attribution, license text loads
 - [ ] New launcher icon reads as a bass clef (be honest)
+- [ ] "Today's focus" card on top of home: one tap starts the suggested round; rotates daily
+- [ ] After a second day of rounds: summary shows "X cents — last week Y ⬇/⬆" comparison
+- [ ] Home screen scrolls (was cut off — your report)
+- [ ] Starting a game without a recent tune-up asks "Tuned up?"; completing a tune-up
+      (all four green) silences it for ~8 h
+- [ ] **Note sweep** in Pitch debug: play chromatically through the range (arco, then flip
+      the toggle and pizz) — every note should turn green; report any that stay grey
+- [ ] Debug capture line shows "✓ stable: <note> in <ms>" after each played note
 
 ### Note Accuracy game (M2)
 - [ ] Arco round: notes freeze at the *first* landing — correcting a finger after landing

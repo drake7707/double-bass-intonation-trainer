@@ -13,6 +13,9 @@ data class RoundOutcome(
     val previousBest: Int?,
     val isNewBest: Boolean,
     val newAchievements: List<AchievementDef> = emptyList(),
+    /** Average |cents| across this exercise's rounds of the preceding week — the
+     * "practice → improvement" comparison. Null without enough history. */
+    val lastWeekAvgCents: Float? = null,
 )
 
 class SessionRepository(private val db: IntonationDatabase) {
@@ -57,10 +60,18 @@ class SessionRepository(private val db: IntonationDatabase) {
             db.achievementDao().insert(fresh.map { AchievementEntity(it.id, now) })
         }
 
+        val weekMs = 7L * 24 * 60 * 60 * 1000
+        val lastWeekAvg = db.sessionDao().averageCentsBetween(
+            exerciseType = session.exerciseType,
+            fromMs = session.startedAt - weekMs,
+            untilMs = session.startedAt,
+        )
+
         return RoundOutcome(
             previousBest = previous?.score,
             isNewBest = isNewBest,
             newAchievements = fresh,
+            lastWeekAvgCents = lastWeekAvg,
         )
     }
 

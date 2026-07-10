@@ -25,6 +25,13 @@ interface SessionDao {
 
     @Query("SELECT COUNT(*) FROM attempts")
     suspend fun totalAttempts(): Int
+
+    @Query(
+        "SELECT AVG(avgAbsCents) FROM sessions WHERE exerciseType = :exerciseType " +
+            "AND completed = 1 AND avgAbsCents IS NOT NULL " +
+            "AND startedAt >= :fromMs AND startedAt < :untilMs"
+    )
+    suspend fun averageCentsBetween(exerciseType: String, fromMs: Long, untilMs: Long): Float?
 }
 
 @Dao

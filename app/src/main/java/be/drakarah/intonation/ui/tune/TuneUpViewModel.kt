@@ -31,8 +31,11 @@ data class TuneUpUiState(
 
 class TuneUpViewModel(
     private val config: PitchEngineConfig,
+    private val settingsRepository: be.drakarah.intonation.settings.SettingsRepository?,
     private val a4: Double = 440.0,
 ) : ViewModel() {
+
+    private var allInTuneRecorded = false
 
     private val engine = PitchEngine(config)
 
@@ -77,10 +80,19 @@ class TuneUpViewModel(
                 if (plausible && abs(cents) <= IN_TUNE_CENTS) {
                     if (inTuneSinceMs < 0) inTuneSinceMs = sample.timestampMs
                     if (sample.timestampMs - inTuneSinceMs >= CONFIRM_MS) {
-                        _uiState.value = _uiState.value.copy(
+                        val next = _uiState.value.copy(
                             activeString = string, cents = cents,
                             inTune = _uiState.value.inTune + string,
                         )
+                        _uiState.value = next
+                        if (next.allInTune && !allInTuneRecorded) {
+                            allInTuneRecorded = true
+                            settingsRepository?.let {
+                                viewModelScope.launch {
+                                    it.setLastTunedAt(System.currentTimeMillis())
+                                }
+                            }
+                        }
                         return@collect
                     }
                 } else {
@@ -125,7 +137,10 @@ class TuneUpViewModel(
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                 val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]
                         as IntonationApplication
-                return TuneUpViewModel(app.container.pitchEngineConfig) as T
+                return TuneUpViewModel(
+                    app.container.pitchEngineConfig,
+                    app.container.settingsRepository,
+                ) as T
             }
         }
     }

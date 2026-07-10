@@ -11,6 +11,11 @@ import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.dsp.PitchSample
 import be.drakarah.intonation.dsp.misc.WaveWriter
+import be.drakarah.intonation.game.AttemptCapture
+import be.drakarah.intonation.game.CaptureParams
+import be.drakarah.intonation.game.CaptureQuality
+import be.drakarah.intonation.game.CaptureState
+import be.drakarah.intonation.music.nearestNote
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +46,44 @@ class DebugViewModel(
     private val _displayHz = MutableStateFlow<Float?>(null)
     val displayHz: StateFlow<Float?> = _displayHz.asStateFlow()
 
+    /** The live game-capture machine: proves the games would accept what's being played. */
+    data class FreezeInfo(
+        val frequencyHz: Float,
+        val timeToStableMs: Long,
+        val quality: CaptureQuality,
+        val atMs: Long,
+    )
+
+    private val _captureMode = MutableStateFlow("arco")
+    val captureMode: StateFlow<String> = _captureMode.asStateFlow()
+
+    private val _captureState = MutableStateFlow("arming")
+    val captureStateLabel: StateFlow<String> = _captureState.asStateFlow()
+
+    private val _lastFreeze = MutableStateFlow<FreezeInfo?>(null)
+    val lastFreeze: StateFlow<FreezeInfo?> = _lastFreeze.asStateFlow()
+
+    /** Sweep checklist: midi -> freeze info for every game-range note captured so far.
+     * Walk chromatically through the range and every note should turn green. */
+    private val _sweep = MutableStateFlow<Map<Int, FreezeInfo>>(emptyMap())
+    val sweep: StateFlow<Map<Int, FreezeInfo>> = _sweep.asStateFlow()
+
+    fun clearSweep() {
+        _sweep.value = emptyMap()
+    }
+
+    private var capture = AttemptCapture(CaptureParams.arco(), skipQuietGate = true)
+
+    fun setCaptureMode(mode: String) {
+        _captureMode.value = mode
+        rearmCapture(skipQuiet = true)
+    }
+
+    private fun rearmCapture(skipQuiet: Boolean) {
+        val params = if (_captureMode.value == "pizz") CaptureParams.pizz() else CaptureParams.arco()
+        capture = AttemptCapture(params, skipQuietGate = skipQuiet)
+    }
+
     private val _isListening = MutableStateFlow(false)
     val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
 
@@ -67,6 +110,27 @@ class DebugViewModel(
                 synchronized(sampleLog) {
                     if (sampleLog.size == SAMPLE_LOG_CAPACITY) sampleLog.removeFirst()
                     sampleLog.addLast(sample)
+                }
+
+                when (val captureState = capture.process(sample)) {
+                    is CaptureState.Frozen -> {
+                        val info = FreezeInfo(
+                            frequencyHz = captureState.result.frequencyHz,
+                            timeToStableMs = captureState.result.timeToStableMs,
+                            quality = captureState.result.quality,
+                            atMs = sample.timestampMs,
+                        )
+                        _lastFreeze.value = info
+                        val midi = nearestNote(info.frequencyHz.toDouble()).midi
+                        if (midi in MIDI_RANGE) {
+                            _sweep.value = _sweep.value + (midi to info)
+                        }
+                        rearmCapture(skipQuiet = false)
+                    }
+                    CaptureState.TimedOut -> rearmCapture(skipQuiet = false)
+                    CaptureState.AwaitQuiet -> _captureState.value = "waiting for quiet"
+                    CaptureState.Listening -> _captureState.value = "armed — listening"
+                    CaptureState.Capturing -> _captureState.value = "capturing…"
                 }
 
                 if (sample.accepted && sample.smoothedHz > 0f) {
@@ -140,6 +204,9 @@ class DebugViewModel(
     }
 
     companion object {
+        /** E1 (open Mi) up to F3 — every note the position system can prompt. */
+        val MIDI_RANGE = 28..53
+
         val Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {

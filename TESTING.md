@@ -39,6 +39,19 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Change difficulty or round length → separate best (by design — check it feels right)
 - [ ] A4 setting: set 442 and verify the tuner/tune-up shifts accordingly
 
+### M4: Sustain + Shift Trainer (new)
+- [ ] Sustain: ring fills while you're in tune, resets when you drift out (arco on La)
+- [ ] Sustain: a brief bobble (single bad reading) does NOT reset the ring
+- [ ] Sustain: stopping the bow mid-hold counts as a reset and waits for you to restart
+- [ ] Sustain pizz: the note dying naturally ends the attempt with partial credit
+- [ ] Shift: "Start on X" — playing the wrong start note says so and re-arms
+- [ ] Shift: the GO cue timing feels right (random 0.5–1.5 s after start confirmed)
+- [ ] Shift: sliding slowly into the target scores where you STOP, not where you passed
+- [ ] Shift: landing back on the start note doesn't score — it waits for a real shift
+- [ ] Shift: fast clean landing shows the ⚡ confident-shift bonus
+- [ ] Shift with 2+ positions selected gives real cross-position shifts;
+      single position gives small movements (intended fallback — does it feel useful?)
+
 ### Note Accuracy game (M2)
 - [ ] Arco round: notes freeze at the *first* landing — correcting a finger after landing
       doesn't improve the result

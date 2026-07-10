@@ -10,6 +10,7 @@ import be.drakarah.intonation.data.SessionRepository
 import be.drakarah.intonation.data.configKey
 import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
+import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,6 +64,7 @@ class HomeViewModel(
     /** Personal bests for the currently selected mode and settings. */
     val noteAccuracyBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_NOTE_ACCURACY)
     val sustainBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SUSTAIN)
+    val shiftBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SHIFT)
 
     fun setMode(mode: String) {
         _mode.value = mode

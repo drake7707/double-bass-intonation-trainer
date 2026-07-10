@@ -35,6 +35,7 @@ import be.drakarah.intonation.game.SELECTABLE_POSITIONS
 fun HomeScreen(
     onStartNoteAccuracy: (mode: String) -> Unit,
     onStartSustain: (mode: String) -> Unit,
+    onStartShift: (mode: String) -> Unit,
     onOpenTuneUp: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenDebug: () -> Unit,
@@ -45,6 +46,7 @@ fun HomeScreen(
     val streak by viewModel.streak.collectAsStateWithLifecycle()
     val best by viewModel.noteAccuracyBest.collectAsStateWithLifecycle()
     val sustainBest by viewModel.sustainBest.collectAsStateWithLifecycle()
+    val shiftBest by viewModel.shiftBest.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { viewModel.refreshStreak() }
 
@@ -131,8 +133,10 @@ fun HomeScreen(
             )
             ExerciseCard(
                 title = "Shift Trainer",
-                subtitle = "Shift and land. Coming in M4.",
-                enabled = false,
+                subtitle = shiftBest?.let { "Best: ${it.score} / ${it.maxScore}" }
+                    ?: "Shift on cue and land. No corrections.",
+                enabled = true,
+                onClick = { onStartShift(mode) },
             )
 
             Spacer(Modifier.weight(1f))

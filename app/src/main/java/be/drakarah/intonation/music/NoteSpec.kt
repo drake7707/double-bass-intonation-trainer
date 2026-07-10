@@ -41,4 +41,10 @@ object BassTuning {
 
     /** Exercise range: open E1 up to ~D4 (neck positions). */
     val range = 28..62
+
+    /** The string a neck-position player would normally take this note on: the highest
+     * string on which it sits within the first ~7 semitones. */
+    fun suggestedString(note: NoteSpec): NoteSpec =
+        openStrings.lastOrNull { open -> note.midi >= open.midi && note.midi - open.midi <= 7 }
+            ?: G2
 }

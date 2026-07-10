@@ -22,6 +22,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -61,8 +63,16 @@ fun DebugPitchScreen(
     }
 
     val sample by viewModel.latestSample.collectAsStateWithLifecycle()
+    val displayHz by viewModel.displayHz.collectAsStateWithLifecycle()
     val snippetMessage by viewModel.snippetMessage.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // practicing hands-free: never let the screen time out while this screen is open
+    val view = LocalView.current
+    DisposableEffect(Unit) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false }
+    }
 
     LaunchedEffect(snippetMessage) {
         snippetMessage?.let {
@@ -89,10 +99,10 @@ fun DebugPitchScreen(
                 }
             } else {
                 val current = sample
-                val smoothed = current?.smoothedHz ?: 0f
-                if (current != null && smoothed > 0f) {
-                    val note = nearestNote(smoothed.toDouble())
-                    val cents = centsBetween(smoothed.toDouble(), note.frequency())
+                val shown = displayHz
+                if (shown != null) {
+                    val note = nearestNote(shown.toDouble())
+                    val cents = centsBetween(shown.toDouble(), note.frequency())
                     val color = when {
                         abs(cents) <= 5 -> ResultColors.excellent
                         abs(cents) <= 15 -> ResultColors.close
@@ -129,8 +139,9 @@ fun DebugPitchScreen(
                         DiagnosticRow("raw", current?.frequencyHz?.let { hz ->
                             String.format(Locale.US, "%.2f Hz", hz)
                         } ?: "—")
-                        DiagnosticRow("smoothed", if (smoothed > 0f)
-                            String.format(Locale.US, "%.2f Hz", smoothed) else "—")
+                        DiagnosticRow("smoothed", current?.smoothedHz?.takeIf { it > 0f }?.let {
+                            String.format(Locale.US, "%.2f Hz", it)
+                        } ?: "—")
                         DiagnosticRow("accepted", current?.accepted?.toString() ?: "—")
                         DiagnosticRow("noise", current?.noise?.let {
                             String.format(Locale.US, "%.3f", it)

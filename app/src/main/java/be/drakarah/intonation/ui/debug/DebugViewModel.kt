@@ -23,6 +23,8 @@ import java.time.format.DateTimeFormatter
 
 private const val SNIPPET_SECONDS = 8
 private const val SAMPLE_LOG_CAPACITY = 512
+private const val UI_UPDATE_MS = 120L
+private const val DISPLAY_HOLD_MS = 600L
 
 class DebugViewModel(
     private val applicationContext: Context,
@@ -35,6 +37,10 @@ class DebugViewModel(
     private val _latestSample = MutableStateFlow<PitchSample?>(null)
     val latestSample: StateFlow<PitchSample?> = _latestSample.asStateFlow()
 
+    /** Median of recently accepted pitches, refreshed ~8x/s — steady enough to read. */
+    private val _displayHz = MutableStateFlow<Float?>(null)
+    val displayHz: StateFlow<Float?> = _displayHz.asStateFlow()
+
     private val _isListening = MutableStateFlow(false)
     val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
 
@@ -46,6 +52,10 @@ class DebugViewModel(
     /** Recent samples for the snippet detection log (ring, newest last). */
     private val sampleLog = ArrayDeque<PitchSample>(SAMPLE_LOG_CAPACITY)
 
+    /** Accepted pitches of the last ~600 ms, for the smoothed display value. */
+    private val recentPitches = ArrayDeque<Pair<Long, Float>>()
+    private var lastUiUpdateMs = 0L
+
     private var listenJob: Job? = null
 
     fun start() {
@@ -54,10 +64,28 @@ class DebugViewModel(
         listenJob = viewModelScope.launch {
             waveWriter.setBufferSize(SNIPPET_SECONDS * config.sampleRate)
             engine.samples().collect { sample ->
-                _latestSample.value = sample
                 synchronized(sampleLog) {
                     if (sampleLog.size == SAMPLE_LOG_CAPACITY) sampleLog.removeFirst()
                     sampleLog.addLast(sample)
+                }
+
+                if (sample.accepted && sample.smoothedHz > 0f) {
+                    recentPitches.addLast(sample.timestampMs to sample.smoothedHz)
+                }
+                while (recentPitches.isNotEmpty() &&
+                    recentPitches.first().first < sample.timestampMs - DISPLAY_HOLD_MS
+                ) {
+                    recentPitches.removeFirst()
+                }
+
+                // the pipeline emits every ~23 ms; refreshing the UI that fast just flickers
+                if (sample.timestampMs - lastUiUpdateMs >= UI_UPDATE_MS) {
+                    lastUiUpdateMs = sample.timestampMs
+                    _latestSample.value = sample
+                    _displayHz.value = recentPitches
+                        .map { it.second }
+                        .sorted()
+                        .let { if (it.isEmpty()) null else it[it.size / 2] }
                 }
             }
         }
@@ -68,6 +96,8 @@ class DebugViewModel(
         listenJob = null
         _isListening.value = false
         _latestSample.value = null
+        _displayHz.value = null
+        recentPitches.clear()
     }
 
     /** Saves the last ~8 s of raw audio as WAV plus a JSONL detection log next to it. */

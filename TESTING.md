@@ -52,6 +52,22 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Shift with 2+ positions selected gives real cross-position shifts;
       single position gives small movements (intended fallback — does it feel useful?)
 
+### Progress page (new)
+- [ ] Home → Progress: chart shows your rounds (percent per round), tabs switch exercise
+- [ ] Stats row and session list look right after a few real rounds
+- [ ] Achievements gallery on Progress: locked show 🔒, finishing a round unlocks 🎉 First round
+- [ ] Round summary announces newly unlocked achievements
+
+### Overnight additions (achievements, drift, shift variants)
+- [ ] Existing scores/streak survived the app update (database migration)
+- [ ] Shift Trainer now has two cards: same-string and cross-string, separate bests
+- [ ] Cross-string shifts actually prompt different strings for start and target
+- [ ] Pitch-drift warning: play ~6 notes deliberately a bit sharp → banner + descending
+      "come down" tones appear; toggle off in settings silences it
+- [ ] Sustain card is disabled in Pizz mode with an explanation (your feedback)
+- [ ] Settings → About & licenses shows GPL + Tuner attribution, license text loads
+- [ ] New launcher icon reads as a bass clef (be honest)
+
 ### Note Accuracy game (M2)
 - [ ] Arco round: notes freeze at the *first* landing — correcting a finger after landing
       doesn't improve the result

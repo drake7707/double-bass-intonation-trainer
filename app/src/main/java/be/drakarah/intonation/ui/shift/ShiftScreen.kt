@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.game.PromptSpec
 import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.music.NoteNameStyle
+import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.theme.ResultColors
 import java.util.Locale
@@ -60,6 +61,15 @@ fun ShiftScreen(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                state.driftCents?.let { drift ->
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        if (drift > 0) "⚠ everything is trending sharp — reset your reference"
+                        else "⚠ everything is trending flat — reset your reference",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = ResultColors.close,
+                    )
+                }
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     when (val phase = state.phase) {
@@ -261,6 +271,7 @@ private fun DoneContent(state: ShiftUiState, onExit: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            AchievementUnlocks(outcome.newAchievements)
         }
         Spacer(Modifier.height(24.dp))
         Button(onClick = onExit, modifier = Modifier.fillMaxWidth()) {

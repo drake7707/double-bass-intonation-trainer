@@ -22,6 +22,7 @@ data class AppSettings(
     val roundLength: Int = 10,
     val positions: Set<Position> = setOf(FIRST_POSITION),
     val soundFeedback: Boolean = true,
+    val driftWarning: Boolean = true,
 )
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
@@ -35,6 +36,7 @@ class SettingsRepository(private val context: Context) {
         val roundLength = intPreferencesKey("roundLength")
         val positions = stringPreferencesKey("positions")
         val soundFeedback = booleanPreferencesKey("soundFeedback")
+        val driftWarning = booleanPreferencesKey("driftWarning")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -54,7 +56,12 @@ class SettingsRepository(private val context: Context) {
                 ?.takeIf { it.isNotEmpty() }
                 ?: setOf(FIRST_POSITION),
             soundFeedback = prefs[Keys.soundFeedback] ?: true,
+            driftWarning = prefs[Keys.driftWarning] ?: true,
         )
+    }
+
+    suspend fun setDriftWarning(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.driftWarning] = enabled }
     }
 
     suspend fun setSoundFeedback(enabled: Boolean) {

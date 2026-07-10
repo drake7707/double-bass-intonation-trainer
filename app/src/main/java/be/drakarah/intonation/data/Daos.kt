@@ -19,6 +19,24 @@ interface SessionDao {
 
     @Query("SELECT DISTINCT date(startedAt / 1000, 'unixepoch', 'localtime') FROM sessions WHERE completed = 1")
     suspend fun practiceDays(): List<String>
+
+    @Query("SELECT COUNT(*) FROM attempts WHERE date(timestamp / 1000, 'unixepoch', 'localtime') = date(:epochMs / 1000, 'unixepoch', 'localtime')")
+    suspend fun attemptsOnSameDay(epochMs: Long): Int
+
+    @Query("SELECT COUNT(*) FROM attempts")
+    suspend fun totalAttempts(): Int
+}
+
+@Dao
+interface AchievementDao {
+    @Query("SELECT * FROM achievements")
+    fun observeAll(): Flow<List<AchievementEntity>>
+
+    @Query("SELECT achievementId FROM achievements")
+    suspend fun unlockedIds(): List<String>
+
+    @Insert
+    suspend fun insert(achievements: List<AchievementEntity>)
 }
 
 @Dao

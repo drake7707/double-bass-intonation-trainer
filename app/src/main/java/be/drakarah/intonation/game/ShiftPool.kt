@@ -8,13 +8,18 @@ data class ShiftPromptSpec(
     val target: PromptSpec,
 )
 
-/** Draws same-string shift pairs from the selected positions.
+/** Draws shift pairs from the selected positions, in one of two styles (user's design —
+ * they train different skills and score separately):
  *
- * Prefers real shifts (>= [preferredDistance] semitones apart, typically across positions);
- * when the selection can't produce any — a single position only spans 2 semitones — it falls
- * back to any same-string pair, which still trains movement within the position. */
+ * - same-string: the classic shift along one string. Prefers real shifts
+ *   (>= [preferredDistance] semitones, typically across positions); a single-position
+ *   selection falls back to small movements within the position.
+ * - cross-string: start and target on different strings — the harder coordination of a
+ *   string crossing combined with a landing. Any cross pair qualifies.
+ */
 class ShiftPool(
     positions: Set<Position>,
+    private val crossString: Boolean = false,
     private val random: Random = Random.Default,
     preferredDistance: Int = 3,
 ) {
@@ -22,10 +27,14 @@ class ShiftPool(
         val prompts = promptsFor(positions)
         val all = prompts.flatMap { a ->
             prompts.mapNotNull { b ->
-                if (a.string == b.string && a.target.midi != b.target.midi)
-                    ShiftPromptSpec(a, b) else null
+                val stringsMatch = a.string == b.string
+                // same pitch on another string can't be told apart from not shifting at all
+                val differentPitch = a.target.midi != b.target.midi
+                val valid = differentPitch && (if (crossString) !stringsMatch else stringsMatch)
+                if (valid) ShiftPromptSpec(a, b) else null
             }
         }
+        if (crossString) return@run all
         val far = all.filter {
             kotlin.math.abs(it.target.target.midi - it.start.target.midi) >= preferredDistance
         }

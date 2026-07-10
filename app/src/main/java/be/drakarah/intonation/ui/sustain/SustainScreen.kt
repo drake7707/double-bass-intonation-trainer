@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.music.BassTuning
+import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.theme.ResultColors
 import java.util.Locale
@@ -230,6 +231,7 @@ private fun DoneContent(state: SustainUiState, onExit: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            AchievementUnlocks(outcome.newAchievements)
         }
         Spacer(Modifier.height(24.dp))
         Button(onClick = onExit, modifier = Modifier.fillMaxWidth()) {

@@ -67,6 +67,8 @@ data class RoundUiState(
     val totalScore: Int = 0,
     val results: List<AttemptUi> = emptyList(),
     val noteStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
+    /** Median signed cents when the player is systematically drifting; drives the banner. */
+    val driftCents: Float? = null,
     /** Set once the finished round is persisted; drives the beat-your-best banner. */
     val outcome: RoundOutcome? = null,
     val ready: Boolean = false,
@@ -98,7 +100,9 @@ class RoundViewModel(
     private var positions: Set<Position> = setOf(FIRST_POSITION)
     private var startedAtWallClock = 0L
     private var soundFeedback = true
+    private var driftWarningEnabled = true
     private val sounds = GameSounds()
+    private val driftDetector = be.drakarah.intonation.game.DriftDetector()
 
     fun start() {
         if (listenJob != null) return
@@ -108,6 +112,7 @@ class RoundViewModel(
             difficulty = settings.difficulty
             positions = settings.positions
             soundFeedback = settings.soundFeedback
+            driftWarningEnabled = settings.driftWarning
             prompts = NotePool(positions).draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()
             _uiState.value = RoundUiState(
@@ -167,12 +172,15 @@ class RoundViewModel(
     }
 
     private fun onAttemptFinished(result: AttemptUi, nowMs: Long) {
+        val drift = if (driftWarningEnabled)
+            driftDetector.onAttempt(result.cents.takeUnless { result.wrongNote }) else null
         if (soundFeedback) {
             when {
                 result.starCount >= 2 -> sounds.playHit()
                 result.starCount == 1 -> sounds.playClose()
                 else -> sounds.playMiss()
             }
+            if (drift != null) sounds.playDrift(sharp = drift > 0)
         }
         revealUntilMs = nowMs + REVEAL_MS
         _uiState.value = _uiState.value.let {
@@ -180,6 +188,7 @@ class RoundViewModel(
                 phase = RoundPhase.Reveal(result),
                 results = it.results + result,
                 totalScore = it.totalScore + result.score,
+                driftCents = drift,
             )
         }
     }
@@ -222,6 +231,7 @@ class RoundViewModel(
                     targetMidi = r.target.midi,
                     targetFreqHz = r.target.frequency(a4).toFloat(),
                     startMidi = null,
+                    stringMidi = prompts.getOrNull(i)?.string?.midi,
                     playedFreqHz = r.playedHz,
                     centsError = r.cents,
                     reactionTimeMs = r.reactionTimeMs,

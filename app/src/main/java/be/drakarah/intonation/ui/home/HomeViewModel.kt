@@ -49,7 +49,7 @@ class HomeViewModel(
     private val _streak = MutableStateFlow(0)
     val streak: StateFlow<Int> = _streak.asStateFlow()
 
-    private fun bestFor(exerciseType: String): StateFlow<PersonalBestEntity?> =
+    private fun bestFor(exerciseType: String, variant: String? = null): StateFlow<PersonalBestEntity?> =
         combine(settingsRepository.settings, _mode) { settings, mode ->
             configKey(
                 exerciseType = exerciseType,
@@ -57,6 +57,7 @@ class HomeViewModel(
                 difficulty = settings.difficulty,
                 roundLength = settings.roundLength,
                 positions = settings.positions,
+                variant = variant,
             )
         }.flatMapLatest { key -> sessionRepository.observeBest(key) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
@@ -64,7 +65,8 @@ class HomeViewModel(
     /** Personal bests for the currently selected mode and settings. */
     val noteAccuracyBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_NOTE_ACCURACY)
     val sustainBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SUSTAIN)
-    val shiftBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SHIFT)
+    val shiftBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SHIFT, variant = "same")
+    val shiftCrossBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SHIFT, variant = "cross")
 
     fun setMode(mode: String) {
         _mode.value = mode

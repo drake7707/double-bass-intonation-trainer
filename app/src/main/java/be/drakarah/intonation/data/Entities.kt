@@ -38,6 +38,7 @@ data class AttemptEntity(
     val targetMidi: Int,
     val targetFreqHz: Float,
     val startMidi: Int?,               // shift trainer only
+    val stringMidi: Int?,              // open-string midi of the prompted string
     val playedFreqHz: Float?,
     val centsError: Float?,            // signed: + sharp, - flat
     val reactionTimeMs: Long?,
@@ -54,4 +55,10 @@ data class PersonalBestEntity(
     val score: Int,
     val maxScore: Int,
     val achievedAt: Long,
+)
+
+@Entity(tableName = "achievements")
+data class AchievementEntity(
+    @PrimaryKey val achievementId: String,
+    val unlockedAt: Long,
 )

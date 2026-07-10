@@ -37,9 +37,21 @@ class GameSounds {
         }
     }
 
+    /** Drift alert: two descending tones say "you're trending sharp, come down",
+     * ascending says "you're trending flat, come up". */
+    private val driftSharp: ShortArray = tones(
+        listOf(987.77 to 140, 740.0 to 200), // B5 down to F#5
+        amplitude = 0.4,
+    )
+    private val driftFlat: ShortArray = tones(
+        listOf(740.0 to 140, 987.77 to 200),
+        amplitude = 0.4,
+    )
+
     fun playHit() = play(hit)
     fun playClose() = play(close)
     fun playMiss() = play(miss)
+    fun playDrift(sharp: Boolean) = play(if (sharp) driftSharp else driftFlat)
 
     private fun tones(notes: List<Pair<Double, Int>>, amplitude: Double): ShortArray {
         val total = notes.sumOf { sampleRate * it.second / 1000 }

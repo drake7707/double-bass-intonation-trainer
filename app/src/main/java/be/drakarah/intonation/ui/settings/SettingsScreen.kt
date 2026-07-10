@@ -17,6 +17,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,7 +33,7 @@ import be.drakarah.intonation.settings.AppSettings
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit = {}) {
     val app = LocalContext.current.applicationContext as IntonationApplication
     val repo = app.container.settingsRepository
     val settings by repo.settings.collectAsStateWithLifecycle(AppSettings())
@@ -121,7 +122,24 @@ fun SettingsScreen(onBack: () -> Unit) {
                 }
             }
 
+            SettingBlock("Pitch drift warning", "Warns when everything you land is consistently sharp or flat — a sign to reset your inner reference instead of learning wrong pitches.") {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(if (settings.driftWarning) "On" else "Off")
+                    Switch(
+                        checked = settings.driftWarning,
+                        onCheckedChange = { scope.launch { repo.setDriftWarning(it) } },
+                    )
+                }
+            }
+
             Spacer(Modifier.weight(1f))
+            TextButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
+                Text("About & licenses")
+            }
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text("Back")
             }

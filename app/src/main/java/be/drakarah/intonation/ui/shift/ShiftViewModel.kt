@@ -70,6 +70,7 @@ data class ShiftUiState(
     val totalScore: Int = 0,
     val results: List<ShiftAttemptUi> = emptyList(),
     val noteStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
+    val driftCents: Float? = null,
     val outcome: RoundOutcome? = null,
     val ready: Boolean = false,
 ) {
@@ -79,6 +80,8 @@ data class ShiftUiState(
 class ShiftViewModel(
     config: PitchEngineConfig,
     private val mode: String,
+    /** "same" or "cross" — same-string shifts vs cross-string shifts. */
+    private val style: String,
     private val settingsRepository: SettingsRepository,
     private val sessionRepository: SessionRepository,
 ) : ViewModel() {
@@ -100,6 +103,8 @@ class ShiftViewModel(
     private var difficulty = Difficulty.STANDARD
     private var positions: Set<Position> = setOf(FIRST_POSITION)
     private var soundFeedback = true
+    private var driftWarningEnabled = true
+    private val driftDetector = be.drakarah.intonation.game.DriftDetector()
     private var startedAtWallClock = 0L
 
     fun start() {
@@ -110,7 +115,9 @@ class ShiftViewModel(
             difficulty = settings.difficulty
             positions = settings.positions
             soundFeedback = settings.soundFeedback
-            prompts = ShiftPool(positions).draw(settings.roundLength)
+            driftWarningEnabled = settings.driftWarning
+            prompts = ShiftPool(positions, crossString = style == "cross")
+                .draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()
             capture = newCapture(prompts[0], skipQuiet = true)
             _uiState.value = ShiftUiState(
@@ -179,18 +186,22 @@ class ShiftViewModel(
             wrongNote = wrongNote,
             fastBonus = !r.timedOut && (r.landingTimeMs ?: Long.MAX_VALUE) < 1200 && score > 0,
         )
+        val drift = if (driftWarningEnabled)
+            driftDetector.onAttempt(attempt.cents.takeUnless { attempt.wrongNote }) else null
         if (soundFeedback) {
             when {
                 attempt.starCount >= 2 -> sounds.playHit()
                 attempt.starCount == 1 -> sounds.playClose()
                 else -> sounds.playMiss()
             }
+            if (drift != null) sounds.playDrift(sharp = drift > 0)
         }
         revealUntilMs = nowMs + REVEAL_MS
         _uiState.value = state.copy(
             phase = ShiftPhase.Reveal(attempt),
             results = state.results + attempt,
             totalScore = state.totalScore + attempt.score,
+            driftCents = drift,
         )
     }
 
@@ -217,7 +228,7 @@ class ShiftViewModel(
                 endedAt = now,
                 exerciseType = EXERCISE_SHIFT,
                 mode = mode,
-                configKey = configKey(EXERCISE_SHIFT, mode, difficulty, state.roundLength, positions),
+                configKey = configKey(EXERCISE_SHIFT, mode, difficulty, state.roundLength, positions, variant = style),
                 totalScore = state.totalScore,
                 maxScore = state.maxScore,
                 avgAbsCents = if (scored.isEmpty()) null
@@ -233,6 +244,7 @@ class ShiftViewModel(
                     targetMidi = r.prompt.target.target.midi,
                     targetFreqHz = r.prompt.target.target.frequency(a4).toFloat(),
                     startMidi = r.prompt.start.target.midi,
+                    stringMidi = r.prompt.start.string.midi,
                     playedFreqHz = null,
                     centsError = r.cents,
                     reactionTimeMs = null,
@@ -266,9 +278,11 @@ class ShiftViewModel(
                         as IntonationApplication
                 val handle = extras.createSavedStateHandle()
                 val mode = handle.get<String>("mode") ?: "arco"
+                val style = handle.get<String>("style") ?: "same"
                 return ShiftViewModel(
                     config = app.container.pitchEngineConfig,
                     mode = mode,
+                    style = style,
                     settingsRepository = app.container.settingsRepository,
                     sessionRepository = app.container.sessionRepository,
                 ) as T

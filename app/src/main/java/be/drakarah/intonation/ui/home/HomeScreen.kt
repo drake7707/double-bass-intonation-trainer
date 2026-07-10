@@ -35,7 +35,7 @@ import be.drakarah.intonation.game.SELECTABLE_POSITIONS
 fun HomeScreen(
     onStartNoteAccuracy: (mode: String) -> Unit,
     onStartSustain: (mode: String) -> Unit,
-    onStartShift: (mode: String) -> Unit,
+    onStartShift: (mode: String, style: String) -> Unit,
     onOpenTuneUp: () -> Unit,
     onOpenProgress: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -48,6 +48,7 @@ fun HomeScreen(
     val best by viewModel.noteAccuracyBest.collectAsStateWithLifecycle()
     val sustainBest by viewModel.sustainBest.collectAsStateWithLifecycle()
     val shiftBest by viewModel.shiftBest.collectAsStateWithLifecycle()
+    val shiftCrossBest by viewModel.shiftCrossBest.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { viewModel.refreshStreak() }
 
@@ -127,17 +128,27 @@ fun HomeScreen(
             )
             ExerciseCard(
                 title = "Sustain",
-                subtitle = sustainBest?.let { "Best: ${it.score} / ${it.maxScore}" }
-                    ?: "Hold it in tune. Don't let the ring reset.",
-                enabled = true,
+                subtitle = when {
+                    mode == "pizz" -> "Arco only — a plucked note dies before a hold means anything."
+                    sustainBest != null -> "Best: ${sustainBest!!.score} / ${sustainBest!!.maxScore}"
+                    else -> "Hold it in tune. Don't let the ring reset."
+                },
+                enabled = mode == "arco",
                 onClick = { onStartSustain(mode) },
             )
             ExerciseCard(
-                title = "Shift Trainer",
+                title = "Shift Trainer — same string",
                 subtitle = shiftBest?.let { "Best: ${it.score} / ${it.maxScore}" }
-                    ?: "Shift on cue and land. No corrections.",
+                    ?: "Shift along one string and land. No corrections.",
                 enabled = true,
-                onClick = { onStartShift(mode) },
+                onClick = { onStartShift(mode, "same") },
+            )
+            ExerciseCard(
+                title = "Shift Trainer — cross string",
+                subtitle = shiftCrossBest?.let { "Best: ${it.score} / ${it.maxScore}" }
+                    ?: "Cross to another string and land.",
+                enabled = true,
+                onClick = { onStartShift(mode, "cross") },
             )
 
             Spacer(Modifier.weight(1f))

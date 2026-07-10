@@ -8,6 +8,7 @@ import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.data.SessionEntity
 import be.drakarah.intonation.data.SessionRepository
 import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,6 +49,12 @@ class ProgressViewModel(
     fun setExerciseType(type: String) {
         _exerciseType.value = type
     }
+
+    /** Ids of unlocked achievements, for the gallery. */
+    val unlockedAchievements: StateFlow<Set<String>> =
+        sessionRepository.observeAchievements()
+            .map { list -> list.map { it.achievementId }.toSet() }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     companion object {
         val Factory = object : ViewModelProvider.Factory {

@@ -207,6 +207,7 @@ class SustainViewModel(
                     targetMidi = r.prompt.target.midi,
                     targetFreqHz = r.prompt.target.frequency(a4).toFloat(),
                     startMidi = null,
+                    stringMidi = r.prompt.string.midi,
                     playedFreqHz = null,
                     centsError = null,
                     reactionTimeMs = null,

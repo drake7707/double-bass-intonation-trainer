@@ -1,6 +1,7 @@
 package be.drakarah.intonation.ui.progress
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
@@ -28,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.data.SessionEntity
+import be.drakarah.intonation.game.ACHIEVEMENTS
 import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
 import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
@@ -49,6 +53,7 @@ fun ProgressScreen(
     viewModel: ProgressViewModel = viewModel(factory = ProgressViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val unlocked by viewModel.unlockedAchievements.collectAsStateWithLifecycle()
 
     Scaffold { padding ->
         Column(
@@ -98,6 +103,7 @@ fun ProgressScreen(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    item { AchievementGallery(unlocked) }
                     items(state.sessions.asReversed()) { session ->
                         SessionRow(session)
                     }
@@ -111,6 +117,51 @@ fun ProgressScreen(
             }
             Spacer(Modifier.height(16.dp))
         }
+    }
+}
+
+@Composable
+private fun AchievementGallery(unlocked: Set<String>) {
+    Column {
+        Text(
+            "Achievements  (${unlocked.size}/${ACHIEVEMENTS.size})",
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            ACHIEVEMENTS.sortedByDescending { it.id in unlocked }.forEach { def ->
+                val isUnlocked = def.id in unlocked
+                Card(Modifier.width(120.dp)) {
+                    Column(
+                        Modifier.padding(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            if (isUnlocked) def.emoji else "🔒",
+                            style = MaterialTheme.typography.headlineSmall,
+                        )
+                        Text(
+                            def.title,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isUnlocked) MaterialTheme.colorScheme.onSurface
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            def.description,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            minLines = 2,
+                        )
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(8.dp))
     }
 }
 

@@ -1,19 +1,23 @@
 package be.drakarah.intonation.data
 
+import be.drakarah.intonation.game.AchievementDef
 import be.drakarah.intonation.game.Difficulty
+import be.drakarah.intonation.game.RoundFacts
+import be.drakarah.intonation.game.evaluateAchievements
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
-/** Result of persisting a finished round: how it compares to the personal best. */
+/** Result of persisting a finished round: best comparison plus anything newly unlocked. */
 data class RoundOutcome(
     /** Best score for this config before this round, null if it was the first. */
     val previousBest: Int?,
     val isNewBest: Boolean,
+    val newAchievements: List<AchievementDef> = emptyList(),
 )
 
 class SessionRepository(private val db: IntonationDatabase) {
 
-    /** Persists a completed round and updates the personal best; returns the comparison. */
+    /** Persists a completed round, updates the personal best, evaluates achievements. */
     suspend fun recordCompletedRound(
         session: SessionEntity,
         attempts: List<AttemptEntity>,
@@ -34,8 +38,34 @@ class SessionRepository(private val db: IntonationDatabase) {
                 )
             )
         }
-        return RoundOutcome(previousBest = previous?.score, isNewBest = isNewBest)
+
+        val now = session.endedAt ?: session.startedAt
+        val facts = RoundFacts(
+            exerciseType = session.exerciseType,
+            attemptCents = attempts.map { it.centsError },
+            attemptStars = attempts.map { it.stars },
+            attemptStrings = attempts.map { it.stringMidi },
+            landingTimesMs = attempts.map { it.timeToStableMs },
+            avgAbsCents = session.avgAbsCents,
+            totalAttemptsAllTime = db.sessionDao().totalAttempts(),
+            attemptsToday = db.sessionDao().attemptsOnSameDay(now),
+            practiceStreakDays = practiceStreakDays(),
+        )
+        val unlocked = db.achievementDao().unlockedIds().toSet()
+        val fresh = evaluateAchievements(facts, unlocked)
+        if (fresh.isNotEmpty()) {
+            db.achievementDao().insert(fresh.map { AchievementEntity(it.id, now) })
+        }
+
+        return RoundOutcome(
+            previousBest = previous?.score,
+            isNewBest = isNewBest,
+            newAchievements = fresh,
+        )
     }
+
+    fun observeAchievements(): Flow<List<AchievementEntity>> =
+        db.achievementDao().observeAll()
 
     fun observeBest(configKey: String): Flow<PersonalBestEntity?> =
         db.personalBestDao().observe(configKey)
@@ -71,5 +101,9 @@ fun configKey(
     difficulty: Difficulty,
     roundLength: Int,
     positions: Set<be.drakarah.intonation.game.Position>,
+    /** Exercise sub-style (e.g. shift same-string vs cross-string). */
+    variant: String? = null,
 ): String =
-    "$exerciseType|$mode|${difficulty.name}|$roundLength|${be.drakarah.intonation.game.positionSetKey(positions)}"
+    "$exerciseType|$mode|${difficulty.name}|$roundLength|" +
+        be.drakarah.intonation.game.positionSetKey(positions) +
+        (variant?.let { "|$it" } ?: "")

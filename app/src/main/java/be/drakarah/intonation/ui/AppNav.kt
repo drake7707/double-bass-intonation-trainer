@@ -7,6 +7,7 @@ import androidx.navigation.compose.rememberNavController
 import be.drakarah.intonation.ui.debug.DebugPitchScreen
 import be.drakarah.intonation.ui.home.HomeScreen
 import be.drakarah.intonation.ui.round.RoundScreen
+import be.drakarah.intonation.ui.about.AboutScreen
 import be.drakarah.intonation.ui.progress.ProgressScreen
 import be.drakarah.intonation.ui.settings.SettingsScreen
 import be.drakarah.intonation.ui.shift.ShiftScreen
@@ -19,13 +20,14 @@ object Routes {
     const val TUNE = "tune"
     const val SETTINGS = "settings"
     const val PROGRESS = "progress"
+    const val ABOUT = "about"
     const val ROUND = "round/{mode}"
     const val SUSTAIN = "sustain/{mode}"
-    const val SHIFT = "shift/{mode}"
+    const val SHIFT = "shift/{mode}/{style}"
 
     fun round(mode: String) = "round/$mode"
     fun sustain(mode: String) = "sustain/$mode"
-    fun shift(mode: String) = "shift/$mode"
+    fun shift(mode: String, style: String) = "shift/$mode/$style"
 }
 
 @Composable
@@ -36,7 +38,7 @@ fun AppNav() {
             HomeScreen(
                 onStartNoteAccuracy = { mode -> navController.navigate(Routes.round(mode)) },
                 onStartSustain = { mode -> navController.navigate(Routes.sustain(mode)) },
-                onStartShift = { mode -> navController.navigate(Routes.shift(mode)) },
+                onStartShift = { mode, style -> navController.navigate(Routes.shift(mode, style)) },
                 onOpenTuneUp = { navController.navigate(Routes.TUNE) },
                 onOpenProgress = { navController.navigate(Routes.PROGRESS) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
@@ -47,10 +49,16 @@ fun AppNav() {
             TuneUpScreen(onDone = { navController.popBackStack() })
         }
         composable(Routes.SETTINGS) {
-            SettingsScreen(onBack = { navController.popBackStack() })
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenAbout = { navController.navigate(Routes.ABOUT) },
+            )
         }
         composable(Routes.PROGRESS) {
             ProgressScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.ABOUT) {
+            AboutScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.ROUND) {
             RoundScreen(onExit = { navController.popBackStack() })

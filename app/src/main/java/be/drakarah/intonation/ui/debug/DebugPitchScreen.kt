@@ -219,10 +219,10 @@ fun DebugPitchScreen(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text("game capture: $captureLabel", style = MaterialTheme.typography.titleLarge)
+                            Text("game capture: $captureLabel", style = MaterialTheme.typography.bodyMedium)
                             Text(
                                 if (captureMode == "arco") "arco ⇄" else "pizz ⇄",
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.clickable {
                                     viewModel.setCaptureMode(if (captureMode == "arco") "pizz" else "arco")

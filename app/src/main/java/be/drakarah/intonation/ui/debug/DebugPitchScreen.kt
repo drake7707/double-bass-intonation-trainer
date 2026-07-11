@@ -117,6 +117,7 @@ fun DebugPitchScreen(
                 onToggleMode = {
                     viewModel.setCaptureMode(if (captureMode == "arco") "pizz" else "arco")
                 },
+                onSaveSnippet = viewModel::saveSnippet,
                 onReset = viewModel::clearSweep,
                 onExit = { sweepMode = false },
                 modifier = Modifier
@@ -383,6 +384,7 @@ private fun SweepView(
     captureLabel: String,
     freeze: DebugViewModel.FreezeInfo?,
     onToggleMode: () -> Unit,
+    onSaveSnippet: () -> Unit,
     onReset: () -> Unit,
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
@@ -433,6 +435,11 @@ private fun SweepView(
             )
         }
         SweepGrid(sweep, noteStyle, big = true)
+        // her request: a misdetection must be savable right here, before it scrolls
+        // out of the 8 s ring buffer
+        Button(onClick = onSaveSnippet, modifier = Modifier.fillMaxWidth()) {
+            Text("Save last 8 s (WAV + log)")
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(onClick = onReset, modifier = Modifier.weight(1f)) { Text("Reset") }
             OutlinedButton(onClick = onExit, modifier = Modifier.weight(1f)) { Text("Exit sweep") }

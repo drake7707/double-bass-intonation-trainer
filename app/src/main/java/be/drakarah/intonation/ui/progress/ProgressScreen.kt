@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -131,12 +133,18 @@ private fun AchievementGallery(unlocked: Set<String>) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
+                .horizontalScroll(rememberScrollState())
+                // all cards share the height of the tallest one (longest description)
+                .height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             ACHIEVEMENTS.sortedByDescending { it.id in unlocked }.forEach { def ->
                 val isUnlocked = def.id in unlocked
-                Card(Modifier.width(120.dp)) {
+                Card(
+                    Modifier
+                        .width(120.dp)
+                        .fillMaxHeight(),
+                ) {
                     Column(
                         Modifier.padding(10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,

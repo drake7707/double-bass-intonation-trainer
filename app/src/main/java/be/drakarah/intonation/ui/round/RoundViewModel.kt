@@ -117,6 +117,7 @@ class RoundViewModel(
             difficulty = settings.difficulty
             positions = settings.positions
             soundFeedback = settings.soundFeedback
+            sounds.volume = settings.gameVolume
             driftWarningEnabled = settings.driftWarning
             captureParams = captureParams.copy(
                 promptTimeoutMs = settings.playerLevel.promptTimeoutMs,

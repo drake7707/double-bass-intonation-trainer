@@ -3,6 +3,7 @@ package be.drakarah.intonation.audio
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import android.util.Log
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -10,6 +11,11 @@ import kotlin.math.sin
  * Played during the reveal phase; the capture machine ignores samples there and the
  * await-quiet gate keeps the tail from triggering the next prompt. */
 class GameSounds {
+
+    /** 0..1 gain applied to every sound; driven by the settings slider, which plays a
+     * chime through this exact path on release so the player can verify sounds work. */
+    @Volatile
+    var volume: Float = 1f
 
     private val sampleRate = 22050
 
@@ -74,31 +80,47 @@ class GameSounds {
     private fun decay(i: Int, n: Int): Double = 1.0 - (i.toDouble() / n).let { it * it }
 
     private fun play(pcm: ShortArray) {
-        val track = AudioTrack.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_GAME)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-            )
-            .setAudioFormat(
-                AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(sampleRate)
-                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                    .build()
-            )
-            .setBufferSizeInBytes(pcm.size * 2)
-            .setTransferMode(AudioTrack.MODE_STATIC)
-            .build()
-        track.write(pcm, 0, pcm.size)
-        track.setNotificationMarkerPosition(pcm.size)
-        track.setPlaybackPositionUpdateListener(object : AudioTrack.OnPlaybackPositionUpdateListener {
-            override fun onMarkerReached(t: AudioTrack?) {
-                t?.release()
+        // Never let a feedback sound take the game down — log and stay silent instead.
+        try {
+            val track = AudioTrack.Builder()
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_GAME)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                .setAudioFormat(
+                    AudioFormat.Builder()
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setSampleRate(sampleRate)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                        .build()
+                )
+                .setBufferSizeInBytes(pcm.size * 2)
+                .setTransferMode(AudioTrack.MODE_STATIC)
+                .build()
+            if (track.state != AudioTrack.STATE_INITIALIZED) {
+                Log.w(TAG, "AudioTrack failed to initialize (state=${track.state})")
+                track.release()
+                return
             }
-            override fun onPeriodicNotification(t: AudioTrack?) {}
-        })
-        track.play()
+            track.setVolume(volume.coerceIn(0f, 1f))
+            val written = track.write(pcm, 0, pcm.size)
+            track.setNotificationMarkerPosition(pcm.size)
+            track.setPlaybackPositionUpdateListener(object : AudioTrack.OnPlaybackPositionUpdateListener {
+                override fun onMarkerReached(t: AudioTrack?) {
+                    t?.release()
+                }
+                override fun onPeriodicNotification(t: AudioTrack?) {}
+            })
+            track.play()
+            Log.d(TAG, "playing ${pcm.size} frames (wrote $written)")
+        } catch (e: Exception) {
+            Log.w(TAG, "game sound failed", e)
+        }
+    }
+
+    private companion object {
+        const val TAG = "GameSounds"
     }
 }

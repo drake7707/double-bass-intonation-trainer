@@ -28,6 +28,8 @@ data class AppSettings(
     val roundLength: Int = 10,
     val positions: Set<Position> = setOf(FIRST_POSITION),
     val soundFeedback: Boolean = true,
+    /** 0..1 gain for the game sounds (chime/blip/buzz/drift), on top of media volume. */
+    val gameVolume: Float = 1f,
     val driftWarning: Boolean = true,
     /** Last time the tune-up screen saw all four strings in tune (epoch ms, 0 = never). */
     val lastTunedAt: Long = 0,
@@ -51,6 +53,7 @@ class SettingsRepository(private val context: Context) {
         val roundLength = intPreferencesKey("roundLength")
         val positions = stringPreferencesKey("positions")
         val soundFeedback = booleanPreferencesKey("soundFeedback")
+        val gameVolume = floatPreferencesKey("gameVolume")
         val driftWarning = booleanPreferencesKey("driftWarning")
         val lastTunedAt = longPreferencesKey("lastTunedAt")
         val lastCalibratedAt = longPreferencesKey("lastCalibratedAt")
@@ -77,6 +80,7 @@ class SettingsRepository(private val context: Context) {
                 ?.takeIf { it.isNotEmpty() }
                 ?: setOf(FIRST_POSITION),
             soundFeedback = prefs[Keys.soundFeedback] ?: true,
+            gameVolume = prefs[Keys.gameVolume] ?: 1f,
             driftWarning = prefs[Keys.driftWarning] ?: true,
             lastTunedAt = prefs[Keys.lastTunedAt] ?: 0,
             lastCalibratedAt = prefs[Keys.lastCalibratedAt] ?: 0,
@@ -102,6 +106,10 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setSoundFeedback(enabled: Boolean) {
         context.dataStore.edit { it[Keys.soundFeedback] = enabled }
+    }
+
+    suspend fun setGameVolume(volume: Float) {
+        context.dataStore.edit { it[Keys.gameVolume] = volume.coerceIn(0f, 1f) }
     }
 
     suspend fun setPositions(positions: Set<Position>) {

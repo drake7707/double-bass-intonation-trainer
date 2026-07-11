@@ -25,13 +25,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import be.drakarah.intonation.IntonationApplication
+import be.drakarah.intonation.audio.GameSounds
 import be.drakarah.intonation.game.Difficulty
 import be.drakarah.intonation.game.PlayerLevel
 import be.drakarah.intonation.music.NoteNameStyle
@@ -155,6 +159,35 @@ fun SettingsScreen(
                     Switch(
                         checked = settings.soundFeedback,
                         onCheckedChange = { scope.launch { repo.setSoundFeedback(it) } },
+                    )
+                }
+                // releasing the slider plays a chime through the exact in-game sound path,
+                // so this doubles as the "do game sounds work at all?" test
+                val sounds = remember { GameSounds() }
+                var volume by remember(settings.gameVolume) {
+                    mutableStateOf(settings.gameVolume)
+                }
+                Text("Volume (release to hear it)", style = MaterialTheme.typography.bodyMedium)
+                Slider(
+                    value = volume,
+                    onValueChange = { volume = it },
+                    onValueChangeFinished = {
+                        scope.launch { repo.setGameVolume(volume) }
+                        sounds.volume = volume
+                        sounds.playHit()
+                    },
+                    enabled = settings.soundFeedback,
+                )
+                val audioManager = remember {
+                    app.getSystemService(android.content.Context.AUDIO_SERVICE)
+                        as android.media.AudioManager
+                }
+                if (audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC) == 0) {
+                    Text(
+                        "⚠ Your phone's media volume is muted — game sounds stay silent " +
+                            "no matter what this slider says.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
                     )
                 }
             }

@@ -110,17 +110,27 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
       if this feels wrong)
 - [ ] Shift: GO-cue window feels roomier on Beginner (8 s to depart vs 4 s before)
 
+### Game sounds silent + gallery (your reports)
+- [ ] Settings → Sound feedback → volume slider: release it → you hear the chime through
+      the exact in-game sound path (your design — this verifies game sounds work at all)
+- [ ] If the phone's media volume is muted, settings shows a ⚠ warning saying game
+      sounds stay silent regardless of the slider
+- [ ] With the slider audible, play a Note Accuracy round → chime/blip/buzz now heard
+      (if the slider chimes but the round stays silent, tell me — that's a different bug
+      and there's now logging to catch it)
+- [ ] Progress → achievements row: all cards are the same height
+
 ### Note Accuracy game (M2)
 - [ ] Arco round: notes freeze at the *first* landing — correcting a finger after landing
       doesn't improve the result
-- [ ] Pizz round: plucked notes get captured before they die away
+- [x] Pizz round: plucked notes get captured before they die away
 - [ ] Freeze timing feels right (not so slow it drags, not so fast it catches the attack)
 - [ ] Reveal duration (1.2 s) is long enough to read
 - [ ] 10 prompts is a sensible round length
 - [ ] Deliberately play ~20 cents sharp → shows + (sharp); flat shows −
 - [ ] Deliberately play a completely different note → shows "wrong note?"
 - [ ] Let a note ring out — the next prompt must NOT capture the ring-over
-- [ ] Talk / make room noise while not playing → no false captures
+- [x] Talk / make room noise while not playing → no false captures
 - [ ] Suggested strings make sense for the prompted notes
 
 ## Verified

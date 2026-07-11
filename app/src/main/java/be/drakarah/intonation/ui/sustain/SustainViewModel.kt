@@ -104,6 +104,7 @@ class SustainViewModel(
             difficulty = settings.difficulty
             positions = settings.positions
             soundFeedback = settings.soundFeedback
+            sounds.volume = settings.gameVolume
             engine = PitchEngine(config.copy(sensitivity = settings.micSensitivity))
             sustainParams = SustainParams.forDifficulty(difficulty).copy(
                 attemptTimeoutMs = settings.playerLevel.sustainAttemptTimeoutMs,

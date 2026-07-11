@@ -6,18 +6,9 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 ## Pending
 
 ### 2026-07-11 afternoon feedback fixes (verify on the bass)
-Diagnosed from your five afternoon snippets (now in the corpus); see
-`FeedbackSnippetAnalysis` / `FeedbackRegressionTest` in `:app` tests.
-- [ ] **Fa2/Fa#2 arco now captured.** Play a round with Fa2/Fa#2 prompts bowing legato
-      (don't stop between notes) — they should register now (root cause: mid-round prompts
-      waited for silence that never came while bowing; they now arm immediately)
-- [ ] **Wrong note no longer flashes on stray rings.** Lifting fingers / brushing an
-      adjacent string between prompts should NOT score "wrong note?" — faint, shaky,
-      out-of-range and harmonic captures are discarded and it keeps listening
-- [ ] **Sol#1 pizz.** Play Sol#1 pizz repeatedly — the D#3 harmonic flash and the 39 Hz
-      artifact should no longer surface as "wrong note?"; a genuinely-held wrong note still does
-- [ ] **Wrong octave labelled.** Deliberately play the right note an octave off → shows
-      "right note, wrong octave" (not "wrong note?"). Non-octave harmonics are filtered, not shown
+Diagnosed from your five afternoon snippets + full game traces; see `docs/DETECTION.md` and
+`FeedbackSnippetAnalysis` / `FeedbackRegressionTest` / `AttemptCaptureTest` in `:app` tests.
+The capture rewrite (attack requirement) was verified live via traces — see the Verified block.
 - [ ] **Count-in.** Every exercise (Note Accuracy / Sustain / Shift) starts with a 5 s
       visual countdown ("Get ready / pick up your bass"), no beeps; listening only starts after
 - [ ] **Let's go again.** Score screen has a "Let's go again" button that restarts the same
@@ -260,6 +251,16 @@ Diagnosed from your five afternoon snippets (now in the corpus); see
 - [x] 2026-07-10 — Bowed open strings detected on correct notes, green when in tune (first bass test)
 - [x] 2026-07-10 — Low E1 (41 Hz) locks reliably when bowed
 - [x] 2026-07-10 — Snippet save button produces WAV + log usable for offline debugging
+- [x] 2026-07-11 — **Capture rewrite (attack requirement), verified live via game traces.** A note
+      left ringing / doing nothing no longer produces a false "wrong note" (the ring has no attack,
+      so it never captures); genuinely played notes — correct AND deliberately wrong — register
+      correctly; deliberate octave errors show "right note, wrong octave". Full mixed arco run:
+      correct notes scored, wrong flagged, rings produced zero captures. See `docs/DETECTION.md`.
+- [x] 2026-07-11 — **Pizz works, both directions.** Good notes (incl. very out of tune) and
+      deliberate wrong notes detected correctly; no false captures. The arming change suits pizz
+      (a pluck is a pure attack).
+- [x] 2026-07-11 — **Game-trace tool** records a full round (audio + detection + events) and
+      replays offline — used to drive the whole capture fix.
 
 
 

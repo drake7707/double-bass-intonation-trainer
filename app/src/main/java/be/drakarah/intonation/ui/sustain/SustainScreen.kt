@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.theme.ResultColors
@@ -125,9 +124,9 @@ private fun PlayContent(state: SustainUiState, phase: SustainPhase.Play) {
                     fontSize = 64.sp,
                     fontWeight = FontWeight.Bold,
                 )
+                // Position only — the player works out which string and where to put the finger.
                 Text(
-                    "${prompt.position.label} · ${prompt.string.pitchClassName(state.noteStyle)} " +
-                        "(${BassTuning.stringNumeral(prompt.string)})",
+                    prompt.position.label,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

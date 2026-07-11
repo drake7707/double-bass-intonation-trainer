@@ -116,31 +116,31 @@ class ShiftCaptureTest {
     }
 
     @Test
-    fun shiftPoolPrefersRealShiftsAndStaysOnOneString() {
+    fun shiftPoolPrefersRealShiftsAndStaysOnOneStringAndChangesPosition() {
         val pool = ShiftPool(setOf(FIRST_POSITION, THIRD_POSITION), random = Random(1))
         val prompts = pool.draw(100)
         prompts.forEach {
             assertEquals(it.start.string, it.target.string)
+            assertTrue("a shift must change position", it.start.position != it.target.position)
             assertTrue(abs(it.target.target.midi - it.start.target.midi) >= 3)
         }
     }
 
     @Test
-    fun shiftPoolFallsBackWithinASinglePosition() {
+    fun shiftPoolIsEmptyForASinglePosition() {
+        // A shift changes position, so one position can't produce any — the home screen
+        // disables the shift exercises when fewer than two positions are selected.
         val pool = ShiftPool(setOf(FIRST_POSITION), random = Random(1))
-        val prompts = pool.draw(50)
-        prompts.forEach {
-            assertEquals(it.start.string, it.target.string)
-            assertTrue(it.start.target.midi != it.target.target.midi)
-        }
+        assertTrue(pool.isEmpty)
     }
 
     @Test
-    fun crossStringPoolChangesStringAndNeverUnison() {
+    fun crossStringPoolChangesStringAndPositionAndNeverUnison() {
         val pool = ShiftPool(setOf(FIRST_POSITION, SECOND_POSITION), crossString = true, random = Random(1))
         val prompts = pool.draw(100)
         prompts.forEach {
             assertTrue("strings must differ", it.start.string != it.target.string)
+            assertTrue("a shift must change position", it.start.position != it.target.position)
             assertTrue("unison crossings are undetectable", it.start.target.midi != it.target.target.midi)
         }
     }

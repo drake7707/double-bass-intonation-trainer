@@ -5,6 +5,25 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### Feedback batch (your 2026-07-11 notes)
+- [ ] **Shifts always change position.** Same-string and cross-string shift rounds never
+      give a start and target in the same position — every prompt is a genuine shift
+      between two positions
+- [ ] **One position disables shifting.** Select a single position on the home screen: both
+      "Shift Trainer" cards go greyed out with "Select at least two positions to shift
+      between"; select a second position and they light up again
+- [ ] If today's focus is a shift and only one position is selected, the focus card is not
+      tappable and explains why (select two positions)
+- [ ] **No string label on prompts.** Note Accuracy / Shift / Sustain prompts now show only
+      the note + position — the confusing "(I)" string numeral is gone; you find the string
+      yourself
+- [ ] **Streak has a label.** Top-left shows a flame icon + "N day streak" (not a bare 🔥 N)
+- [ ] **Proper icons, no emoji.** Home progress/settings buttons and Drone Play/Stop are
+      real icons; Drone's Back is the same outlined full-width button as every other screen
+- [ ] **Settings has sections** (Notation & tuning / Gameplay / Feedback / Detection &
+      calibration) instead of one long list
+- [ ] **Calibrate surroundings** now also has its own card under Home → Tools
+
 ### Drone mode (new — pure practice aid, no scoring/detection)
 - [ ] Home → Tuning & ear training → Drone: tap Play → a steady tone sounds through the
       phone speaker and is clearly audible (this is the key check — bass pitches on a phone
@@ -20,12 +39,12 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Reopen Drone: it remembers your last pitch + fifth setting
 
 ### Home screen restructure (your layout idea)
-- [ ] Home is grouped into sections: Tuning & ear training / Practice / Tools
-- [ ] Progress 📊 and Settings ⚙️ are icons at the top-right; both open the right screen
-- [ ] Arco/Pizz + position chips now sit under the Practice header (they only affect the
+- [x] Home is grouped into sections: Tuning & ear training / Practice / Tools
+- [x] Progress 📊 and Settings ⚙️ are icons at the top-right; both open the right screen
+- [x] Arco/Pizz + position chips now sit under the Practice header (they only affect the
       scored games — Tune up and Drone ignore them); scores still key off them as before
-- [ ] Pitch debug lives under Tools and still opens the debug screen
-- [ ] Today's focus card and 🔥 streak are still up top and still work
+- [x] Pitch debug lives under Tools and still opens the debug screen
+- [x] Today's focus card and 🔥 streak are still up top and still work
 
 ### Octave-error fix (from your two snippets)
 - [x] Bowed open A now reads **A1** (it silently read A2 before)
@@ -44,7 +63,7 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [x] Damping a string does NOT clear its green tick (your report — the mute transient
       used to untick it); a string only loses its tick after ~1 s of genuinely
       out-of-tune playing on it
-- [ ] A stopped note (e.g. F# on E string) does NOT get counted as a string
+- [x] A stopped note (e.g. F# on E string) does NOT get counted as a string
 
 ### M3: settings, levels, persistence, sounds (new)
 - [x] Solfège names (Do Ré Mi) show everywhere: prompts, string hints, tune-up labels, debug
@@ -53,7 +72,7 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [x] Position chips are now multi-select (½ 1st 2nd 3rd 4th 5th); each exact combination
       keeps its own best score
 - [ ] With several positions selected, a round mixes them evenly (no easy-position bias)
-- [ ] Open strings no longer appear as game prompts (they stay in Tune up)
+- [x] Open strings no longer appear as game prompts (they stay in Tune up)
 - [ ] Spot-check prompts against your chart: e.g. 2nd position on Sol string should only
       ask Si♭2/Si2/Do3; 1st position on Mi string only Fa#1/Sol1/Sol#1
 - [ ] Position + string on the prompt is readable at a glance while playing
@@ -78,31 +97,31 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
       single position gives small movements (intended fallback — does it feel useful?)
 
 ### Progress page (new)
-- [ ] Home → Progress: chart shows your rounds (percent per round), tabs switch exercise
+- [x] Home → Progress: chart shows your rounds (percent per round), tabs switch exercise
 - [ ] Stats row and session list look right after a few real rounds
-- [ ] Achievements gallery on Progress: locked show 🔒, finishing a round unlocks 🎉 First round
+- [x] Achievements gallery on Progress: locked show 🔒, finishing a round unlocks 🎉 First round
 - [x] Round summary announces newly unlocked achievements
 
 ### Overnight additions (achievements, drift, shift variants)
-- [ ] Existing scores/streak survived the app update (database migration)
-- [ ] Shift Trainer now has two cards: same-string and cross-string, separate bests
+- [x] Existing scores/streak survived the app update (database migration)
+- [x] Shift Trainer now has two cards: same-string and cross-string, separate bests
 - [ ] Cross-string shifts actually prompt different strings for start and target
 - [ ] Pitch-drift warning: play ~6 notes deliberately a bit sharp → banner + descending
       "come down" tones appear; toggle off in settings silences it
 - [x] Sustain card is disabled in Pizz mode with an explanation (your feedback)
 - [x] Settings → About & licenses shows GPL + Tuner attribution, license text loads
 - [x] New launcher icon reads as a bass clef (be honest)
-- [ ] "Today's focus" card on top of home: one tap starts the suggested round; rotates daily
+- [x] "Today's focus" card on top of home: one tap starts the suggested round; rotates daily
 - [ ] After a second day of rounds: summary shows "X cents — last week Y ⬇/⬆" comparison
-- [ ] Home screen scrolls (was cut off — your report)
+- [x] Home screen scrolls (was cut off — your report)
 - [ ] Starting a game without a recent tune-up asks "Tuned up?"; completing a tune-up
       (all four green) silences it for ~8 h
-- [ ] **Note sweep** in Pitch debug: play chromatically through the range (arco, then flip
+- [x] **Note sweep** in Pitch debug: play chromatically through the range (arco, then flip
       the toggle and pizz) — every note should turn green; report any that stay grey
 - [x] Debug capture line shows "✓ stable: <note> in <ms>" after each played note
 - [ ] Long capture: start, play a slow chromatic sweep (one string arco), stop & save —
       then do the same pizz; these become the offline test corpus
-- [ ] Manage recordings: list shows the captures with the settings they were recorded
+- [x] Manage recordings: list shows the captures with the settings they were recorded
       with; ▶ Play plays them back; Share sends WAV + log; Delete works
 
 ### Noise gate (from your noise snippets)
@@ -113,16 +132,16 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
       green and capture — if not, lower the gate in Settings
 - [x] Settings → Calibrate surroundings: quiet phase + soft-playing phase → verdict
       (✓ clear / △ tight / ✕ no separation); your desk room should be ✓ with a gate near 45
-- [ ] Calibrate verdict ✕: try it with loud music playing — it should refuse to set a gate
-- [ ] Noise-gate slider in Settings changes what the debug bar considers noise
+- [x] Calibrate verdict ✕: try it with loud music playing — it should refuse to set a gate
+- [x] Noise-gate slider in Settings changes what the debug bar considers noise
 - [ ] Pre-game "Ready to play?" dialog offers Tune up / Calibrate when either is stale;
       "Start anyway" silences both for the session; completing them silences for ~8 h
 
 ### Player level (your feedback: timeout too tight for reading + placing)
-- [ ] Settings → Player level: chips Beginner/Intermediate/Advanced/Expert; default is
+- [x] Settings → Player level: chips Beginner/Intermediate/Advanced/Expert; default is
       Beginner (20 s to start each note — enough to read, translate and place?)
-- [ ] Reveal stays on screen noticeably longer on Beginner than before
-- [ ] Play a familiar 1st-position round fast → summary offers "Switch to Intermediate
+- [x] Reveal stays on screen noticeably longer on Beginner than before
+- [x] Play a familiar 1st-position round fast → summary offers "Switch to Intermediate
       pace"; tapping it changes the setting (check in Settings afterwards)
 - [ ] Play a 3rd-position round slowly → NO speed-up suggestion appears (one slow note
       is enough to hold it back — by design)
@@ -137,25 +156,25 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
       the exact in-game sound path (your design — this verifies game sounds work at all)
 - [x] If the phone's media volume is muted, settings shows a ⚠ warning saying game
       sounds stay silent regardless of the slider
-- [ ] With the slider audible, play a Note Accuracy round → chime/blip/buzz now heard
+- [x] With the slider audible, play a Note Accuracy round → chime/blip/buzz now heard
       (if the slider chimes but the round stays silent, tell me — that's a different bug
       and there's now logging to catch it)
 - [x] Progress → achievements row: all cards are the same height
 
 ### High notes read an octave low + sweep big view (your reports)
-- [ ] Note sweep arco: Do3, Ré3, Ré#3, Mi3, Fa3 now register at the right octave
+- [x] Note sweep arco: Do3, Ré3, Ré#3, Mi3, Fa3 now register at the right octave
       (your snippets showed our own octave-correction halving them; it now only fires
       when the claimed true note is below ~Do2, where the phone mic genuinely loses
       fundamentals — the six snippets are in the offline test corpus as regression tests)
 - [ ] Same check pizz on those notes
-- [ ] Open La bowed still reads La1, and pizz Mi still stays Mi1 through the decay
+- [x] Open La bowed still reads La1, and pizz Mi still stays Mi1 through the decay
       (the original octave fixes must survive the rework)
 - [ ] Pitch debug → "Start sweep (big view)": grid, capture state and last capture
       readable from playing distance; "🤫 wait for quiet" vs "🎧 play a note" banner
       makes it obvious why a note isn't registering yet (your confusion report)
 - [ ] Big view: arco/pizz toggle, Reset and "Save last 8 s" work (snippet button
       duplicated there on your request); system back or Exit returns to debug
-- [ ] Heads-up from your morning snippets (8:34–8:38): that session's playing was much
+- [x] Heads-up from your morning snippets (8:34–8:38): that session's playing was much
       softer than the afternoon one — median level ~20 vs 100. If that was your normal
       soft playing at 2 m, the current noise gate (45) would reject it live. If soft
       playing fails to register during games, recalibrate surroundings or tell me.
@@ -182,11 +201,11 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Arco round: notes freeze at the *first* landing — correcting a finger after landing
       doesn't improve the result
 - [x] Pizz round: plucked notes get captured before they die away
-- [ ] Freeze timing feels right (not so slow it drags, not so fast it catches the attack)
-- [ ] Reveal duration (1.2 s) is long enough to read
-- [ ] 10 prompts is a sensible round length
+- [x] Freeze timing feels right (not so slow it drags, not so fast it catches the attack)
+- [x] Reveal duration (1.2 s) is long enough to read
+- [x] 10 prompts is a sensible round length
 - [ ] Deliberately play ~20 cents sharp → shows + (sharp); flat shows −
-- [ ] Deliberately play a completely different note → shows "wrong note?"
+- [x] Deliberately play a completely different note → shows "wrong note?"
 - [ ] Let a note ring out — the next prompt must NOT capture the ring-over
 - [x] Talk / make room noise while not playing → no false captures
 - [ ] Suggested strings make sense for the prompted notes
@@ -196,3 +215,46 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [x] 2026-07-10 — Bowed open strings detected on correct notes, green when in tune (first bass test)
 - [x] 2026-07-10 — Low E1 (41 Hz) locks reliably when bowed
 - [x] 2026-07-10 — Snippet save button produces WAV + log usable for offline debugging
+
+
+
+----
+
+Feedback after testing:
+
+Here's some of my feedback:
+
+Note accuracy issues during playing:
+
+- Fa2 and Fa#2 refused to get recognized while i was playing arco the correct note -> no note detected. However in pitch debug it popped up correctly immediately, I've recorded a snippet alternating between fa2 and fa#2 from the pitch debug. I didn't notice having this issue in pizzicato, when i did pizz exercises fa#2 got recognized properly.
+
+- Wrong note is sometimes shown too fast, i barely touched a adjacent string before playing and i immediately got a wrong note, there probably needs to be a minimum duration before saying it's a wrong note. it happens because i was still playing the previous note, looking at the result and then I lifted my fingers which barely rings the strings but it picks it up and the moment it shows the next note to play it picks it up and immediately shows wrong note. --> this actually kills most of my practice notes, and makes practice almost impossible.
+
+- I would have a count in so I have time between starting an exercise , putting my phone down, taking my bass and be ready. For all exercises really.
+
+- Add a let's go again button at the score screen to restart the same exercise
+
+- I only hear a correct chime, not a buzz when wrong or timeout
+
+- The everything is trending sharp label is far too small to be able to read while playing
+
+- When i play an octave wrong, it should show right now but wrong octave instead of wrong note
+  
+- Twice i was asked to play Sol#1 and I played the right note pizzicato, but it immediately said wrong note. When I check in pitch debug it does flip between other notes. I made 2 snippets with Sol#1, this is likely a combo of too quick to say wrong note and some harmonic instability that's not filtered out.
+
+
+Sustain:
+
+ - I could not for the life of me get it to lock on to Do#2, it's as if it didn't detect it at all. In pitch debug it showed up but cents did fluctuate (i recorded a snippet)
+
+ - Each time i switched directions with my bow almost every time it resetted the sustain (you can use the same do#2 snippet for testing), this made this exercise incredibly hard because 5 seconds is a looooot on a single bow stroke.
+  
+ - A bar like in the tune up view that shows how in tune is being played would maybe help
+  
+Pitch debug:
+
+- Playing open string Sol2 acro and pitch debug alternates between Sol2 and Sol3, I've recorded a snippet
+
+Home screen:
+
+- The sustain menu item on pizz is disabled but i would also change the background because it's very subtle now, between light gray and white is almost no difference.

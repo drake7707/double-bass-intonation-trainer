@@ -12,10 +12,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -124,24 +129,43 @@ fun HomeScreen(
                         style = MaterialTheme.typography.headlineMedium,
                     )
                     if (streak > 0) {
-                        Text(
-                            "🔥 $streak",
-                            style = MaterialTheme.typography.titleMedium,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Icon(
+                                Icons.Filled.LocalFireDepartment,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                if (streak == 1) "1 day streak" else "$streak day streak",
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                        }
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    IconButton(onClick = onOpenProgress) { Text("📊", style = MaterialTheme.typography.titleLarge) }
-                    IconButton(onClick = onOpenSettings) { Text("⚙️", style = MaterialTheme.typography.titleLarge) }
+                    IconButton(onClick = onOpenProgress) {
+                        Icon(Icons.Filled.BarChart, contentDescription = "Progress")
+                    }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    }
                 }
             }
 
             // one tap into today's suggested session — zero configuration friction
             val focus = viewModel.dailyFocus
+            // a shift needs two positions to shift between; if the focus is a shift and only
+            // one is selected, it can't start — say so instead of launching an empty round.
+            val focusNeedsMorePositions =
+                focus.exerciseType == be.drakarah.intonation.ui.shift.EXERCISE_SHIFT &&
+                    positions.size < 2
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable {
+                    .clickable(enabled = !focusNeedsMorePositions) {
                         gated {
                             when (focus.exerciseType) {
                                 be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN ->
@@ -168,8 +192,13 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                     Text(
-                        focusBest?.let { "${focus.subtitle}  ·  PB ${it.score}/${it.maxScore}" }
-                            ?: focus.subtitle,
+                        when {
+                            focusNeedsMorePositions ->
+                                "Select at least two positions below to shift between."
+                            focusBest != null ->
+                                "${focus.subtitle}  ·  PB ${focusBest!!.score}/${focusBest!!.maxScore}"
+                            else -> focus.subtitle
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
@@ -243,22 +272,36 @@ fun HomeScreen(
                 enabled = mode == "arco",
                 onClick = { gated { onStartSustain(mode) } },
             )
+            // A shift moves between positions, so both need at least two selected.
+            val canShift = positions.size >= 2
             ExerciseCard(
                 title = "Shift Trainer — same string",
-                subtitle = shiftBest?.let { "Best: ${it.score} / ${it.maxScore}" }
-                    ?: "Shift along one string and land. No corrections.",
-                enabled = true,
+                subtitle = when {
+                    !canShift -> "Select at least two positions to shift between."
+                    shiftBest != null -> "Best: ${shiftBest!!.score} / ${shiftBest!!.maxScore}"
+                    else -> "Shift along one string and land. No corrections."
+                },
+                enabled = canShift,
                 onClick = { gated { onStartShift(mode, "same") } },
             )
             ExerciseCard(
                 title = "Shift Trainer — cross string",
-                subtitle = shiftCrossBest?.let { "Best: ${it.score} / ${it.maxScore}" }
-                    ?: "Cross to another string and land.",
-                enabled = true,
+                subtitle = when {
+                    !canShift -> "Select at least two positions to shift between."
+                    shiftCrossBest != null -> "Best: ${shiftCrossBest!!.score} / ${shiftCrossBest!!.maxScore}"
+                    else -> "Cross to another string and land."
+                },
+                enabled = canShift,
                 onClick = { gated { onStartShift(mode, "cross") } },
             )
 
             SectionHeader("Tools")
+            ExerciseCard(
+                title = "Calibrate surroundings",
+                subtitle = "Measure room noise and your soft playing so detection stays reliable.",
+                enabled = true,
+                onClick = onOpenCalibrate,
+            )
             ExerciseCard(
                 title = "Pitch debug",
                 subtitle = "Live detection diagnostics and the note sweep.",

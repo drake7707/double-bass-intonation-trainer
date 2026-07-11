@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.RequireMicPermission
@@ -146,16 +145,12 @@ private fun ListeningPrompt(state: RoundUiState) {
         )
         Spacer(Modifier.height(8.dp))
         // players read this under time pressure — position and string get real estate
+        // Position only — the player works out which string and where to put the finger.
         Text(
             prompt.position.label,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            "${prompt.string.pitchClassName(state.noteStyle)} string (${BassTuning.stringNumeral(prompt.string)})",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(Modifier.height(24.dp))
         Text(

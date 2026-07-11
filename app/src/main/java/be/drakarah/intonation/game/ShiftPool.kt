@@ -9,13 +9,16 @@ data class ShiftPromptSpec(
 )
 
 /** Draws shift pairs from the selected positions, in one of two styles (user's design —
- * they train different skills and score separately):
+ * they train different skills and score separately). A shift always CHANGES POSITION
+ * (start.position != target.position) — that is what "shifting" means to the player; two
+ * notes in the same position aren't a shift, they're just fingering. So both styles need
+ * at least two selected positions to produce anything (the home screen disables them
+ * otherwise):
  *
- * - same-string: the classic shift along one string. Prefers real shifts
- *   (>= [preferredDistance] semitones, typically across positions); a single-position
- *   selection falls back to small movements within the position.
- * - cross-string: start and target on different strings — the harder coordination of a
- *   string crossing combined with a landing. Any cross pair qualifies.
+ * - same-string: the classic shift along one string, between positions. Prefers longer
+ *   shifts (>= [preferredDistance] semitones) but falls back to any cross-position pair.
+ * - cross-string: start and target on different strings AND different positions — a string
+ *   crossing combined with a shift and a landing.
  */
 class ShiftPool(
     positions: Set<Position>,
@@ -30,7 +33,10 @@ class ShiftPool(
                 val stringsMatch = a.string == b.string
                 // same pitch on another string can't be told apart from not shifting at all
                 val differentPitch = a.target.midi != b.target.midi
-                val valid = differentPitch && (if (crossString) !stringsMatch else stringsMatch)
+                // a shift moves between positions — never within one
+                val differentPosition = a.position != b.position
+                val valid = differentPitch && differentPosition &&
+                    (if (crossString) !stringsMatch else stringsMatch)
                 if (valid) ShiftPromptSpec(a, b) else null
             }
         }
@@ -40,6 +46,9 @@ class ShiftPool(
         }
         far.ifEmpty { all }
     }
+
+    /** True when the selection can produce at least one shift (needs 2+ positions). */
+    val isEmpty: Boolean get() = pairs.isEmpty()
 
     fun draw(count: Int): List<ShiftPromptSpec> {
         require(pairs.isNotEmpty()) { "no shift pairs available" }

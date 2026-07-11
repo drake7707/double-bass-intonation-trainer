@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.game.PromptSpec
-import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.ImprovementLine
@@ -122,9 +121,9 @@ private fun NoteWithPlace(prompt: PromptSpec, style: NoteNameStyle, big: Boolean
         fontSize = if (big) 96.sp else 64.sp,
         fontWeight = FontWeight.Bold,
     )
+    // Position only — the player works out which string and where to put the finger.
     Text(
-        "${prompt.position.label} · ${prompt.string.pitchClassName(style)} " +
-            "(${BassTuning.stringNumeral(prompt.string)})",
+        prompt.position.label,
         style = MaterialTheme.typography.titleLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )

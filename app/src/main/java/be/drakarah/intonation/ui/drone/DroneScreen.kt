@@ -9,15 +9,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -105,7 +110,12 @@ fun DroneScreen(
                 ButtonDefaults.buttonColors(containerColor = ResultColors.off)
             else ButtonDefaults.buttonColors(),
         ) {
-            Text(if (state.isPlaying) "◼  Stop" else "▶  Play")
+            Icon(
+                if (state.isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                contentDescription = null,
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(if (state.isPlaying) "Stop" else "Play")
         }
 
         Spacer(Modifier.height(16.dp))
@@ -175,7 +185,7 @@ fun DroneScreen(
         )
 
         Spacer(Modifier.height(24.dp))
-        TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
+        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
         Spacer(Modifier.height(16.dp))
     }
 }

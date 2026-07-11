@@ -66,6 +66,7 @@ fun SettingsScreen(
             Spacer(Modifier.height(16.dp))
             Text("Settings", style = MaterialTheme.typography.headlineMedium)
 
+            SectionHeader("Notation & tuning")
             SettingBlock("Note names", "How notes are written throughout the app.") {
                 TwoChoice(
                     left = "Do Ré Mi", leftSelected = settings.noteNameStyle == NoteNameStyle.SOLFEGE,
@@ -93,6 +94,7 @@ fun SettingsScreen(
                 }
             }
 
+            SectionHeader("Gameplay")
             SettingBlock(
                 "Player level",
                 "How much time you get to read the prompt and find the note. Scoring is " +
@@ -150,6 +152,7 @@ fun SettingsScreen(
                 }
             }
 
+            SectionHeader("Feedback")
             SettingBlock("Sound feedback", "Chime when you land a note, buzz when you miss — so you can keep your eyes on the fingerboard.") {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -193,6 +196,21 @@ fun SettingsScreen(
                 }
             }
 
+            SettingBlock("Pitch drift warning", "Warns when everything you land is consistently sharp or flat — a sign to reset your inner reference instead of learning wrong pitches.") {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(if (settings.driftWarning) "On" else "Off")
+                    Switch(
+                        checked = settings.driftWarning,
+                        onCheckedChange = { scope.launch { repo.setDriftWarning(it) } },
+                    )
+                }
+            }
+
+            SectionHeader("Detection & calibration")
             SettingBlock(
                 "Noise gate",
                 "Sound below this level is ignored as room noise. Calibrate measures your " +
@@ -216,20 +234,6 @@ fun SettingsScreen(
                 }
             }
 
-            SettingBlock("Pitch drift warning", "Warns when everything you land is consistently sharp or flat — a sign to reset your inner reference instead of learning wrong pitches.") {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(if (settings.driftWarning) "On" else "Off")
-                    Switch(
-                        checked = settings.driftWarning,
-                        onCheckedChange = { scope.launch { repo.setDriftWarning(it) } },
-                    )
-                }
-            }
-
             Spacer(Modifier.height(8.dp))
             TextButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
                 Text("About & licenses")
@@ -240,6 +244,16 @@ fun SettingsScreen(
             Spacer(Modifier.height(16.dp))
         }
     }
+}
+
+@Composable
+private fun SectionHeader(text: String) {
+    Spacer(Modifier.height(4.dp))
+    Text(
+        text.uppercase(),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+    )
 }
 
 @Composable

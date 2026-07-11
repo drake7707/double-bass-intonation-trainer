@@ -66,8 +66,12 @@ randomized 0.5–1.5 s wait, then **GO**: shift to the target. Only the first st
 counts — glide samples are excluded, so sliding into the note scores where the pitch
 *stops*; returning to the start note scores nothing. Landings under 1.2 s earn a
 ⚡ confident-shift bonus.
-- **Same string**: the classic shift along one string (prefers ≥3-semitone shifts).
-- **Cross string**: start and target on different strings — string crossing plus landing.
+A shift always moves **between two positions** — two notes in the same position aren't a
+shift — so both variants need at least two selected positions (the home cards are disabled,
+with an explanation, when only one is selected).
+- **Same string**: the classic shift along one string, between positions (prefers ≥3-semitone shifts).
+- **Cross string**: start and target on different strings *and* different positions — string
+  crossing plus shift plus landing.
 
 ## Position system (v1: Simandl)
 
@@ -87,7 +91,8 @@ its own scoring category** — scores are only ever compared between identical s
   (Relaxed ±75 / Standard ±50 / Strict ±30). Stars: 3★ ≤5c, 2★ ≤15c, 1★ ≤30c.
 - **Personal bests** per configuration (exercise + arco/pizz + difficulty + round length +
   position set + variant); round summaries show "New personal best!" or points-to-beat.
-- **Daily practice streak** (🔥 on the home screen; surviving until end of the next day).
+- **Daily practice streak** (flame icon + "N day streak" label on the home screen;
+  surviving until end of the next day).
 - **Achievements** (12): first round, bullseye (≤2c), sharpshooter round, perfect round,
   all four strings, 100/1000 notes, 100 notes in a day, week/month streaks, perfect
   sustain round, sub-second three-star shift. Unlocks announced on the round summary;

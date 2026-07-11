@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,8 +45,8 @@ fun CalibrateScreen(
                 Text("Calibrate surroundings", style = MaterialTheme.typography.headlineMedium)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Measures your room's noise for five seconds and sets the noise gate " +
-                        "just above it, so ambient sound never counts as playing.",
+                    "Two short measurements — your room's noise, then your softest playing — " +
+                        "verify they can be told apart before setting the noise gate.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -54,19 +55,21 @@ fun CalibrateScreen(
 
                 when (val s = state) {
                     CalibrateState.Idle -> {
+                        StepLabel("Step 1 of 2 — room noise")
                         Text(
-                            "Don't play — leave the room sounding as it normally does " +
+                            "Don't play. Leave the room sounding as it normally does " +
                                 "(fans, birds, neighbours included).",
                             style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center,
                         )
                         Spacer(Modifier.height(24.dp))
                         Button(
-                            onClick = viewModel::startMeasuring,
+                            onClick = viewModel::startNoisePhase,
                             modifier = Modifier.fillMaxWidth(),
                         ) { Text("Start listening (5 s)") }
                     }
-                    is CalibrateState.Measuring -> {
+                    is CalibrateState.MeasuringNoise -> {
+                        StepLabel("Step 1 of 2 — room noise")
                         Text("listening…", style = MaterialTheme.typography.titleLarge)
                         Spacer(Modifier.height(16.dp))
                         LinearProgressIndicator(
@@ -74,55 +77,135 @@ fun CalibrateScreen(
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
-                    is CalibrateState.Done -> {
+                    is CalibrateState.NoiseMeasured -> {
+                        StepLabel("Step 2 of 2 — soft playing")
                         Text(
-                            String.format(
-                                Locale.US,
-                                "Room noise: level %.0f\nRecommended gate: %.0f",
-                                s.noiseP95, s.recommendedGate,
-                            ),
-                            style = MaterialTheme.typography.headlineSmall,
+                            "Now play a few notes as SOFTLY as you would ever play " +
+                                "during practice — soft bowing or gentle plucks, with " +
+                                "short pauses between notes.",
+                            style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center,
                         )
-                        if (s.tooNoisy) {
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                "⚠ This room is loud — quiet playing may get rejected. " +
-                                    "Consider reducing the noise if detection struggles.",
-                                color = ResultColors.close,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
                         Spacer(Modifier.height(24.dp))
-                        if (s.saved) {
-                            Text(
-                                "Saved — the gate applies from the next screen you open.",
-                                color = ResultColors.excellent,
-                            )
-                            Spacer(Modifier.height(16.dp))
-                            Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
-                                Text("Done")
-                            }
-                        } else {
-                            Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) {
-                                Text("Use this gate")
-                            }
-                            Spacer(Modifier.height(8.dp))
-                            OutlinedButton(
-                                onClick = viewModel::reset,
-                                modifier = Modifier.fillMaxWidth(),
-                            ) { Text("Measure again") }
-                        }
+                        Button(
+                            onClick = viewModel::startPlayingPhase,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text("Start playing softly (8 s)") }
                     }
+                    is CalibrateState.MeasuringPlaying -> {
+                        StepLabel("Step 2 of 2 — soft playing")
+                        Text("play softly…", style = MaterialTheme.typography.titleLarge)
+                        Spacer(Modifier.height(16.dp))
+                        LinearProgressIndicator(
+                            progress = { s.progress },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    is CalibrateState.Done -> ResultContent(s, viewModel, onDone)
                 }
 
                 Spacer(Modifier.weight(1f))
-                if (state !is CalibrateState.Done || !(state as CalibrateState.Done).saved) {
+                val isDoneSaved = (state as? CalibrateState.Done)?.saved == true
+                if (!isDoneSaved) {
                     OutlinedButton(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
                         Text("Cancel")
                     }
                 }
                 Spacer(Modifier.height(16.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun StepLabel(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+    )
+    Spacer(Modifier.height(8.dp))
+}
+
+@Composable
+private fun ResultContent(
+    s: CalibrateState.Done,
+    viewModel: CalibrateViewModel,
+    onDone: () -> Unit,
+) {
+    Text(
+        String.format(
+            Locale.US,
+            "room noise up to %.0f · soft playing from %.0f",
+            s.noiseCeil, s.playingFloor,
+        ),
+        style = MaterialTheme.typography.titleMedium,
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(16.dp))
+    when (s.verdict) {
+        SeparationVerdict.GOOD -> {
+            Text(
+                "✓ Clear separation",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = ResultColors.excellent,
+            )
+            Text(
+                String.format(Locale.US, "Gate set to %.0f — noise ignored, soft playing heard.", s.recommendedGate),
+                textAlign = TextAlign.Center,
+            )
+        }
+        SeparationVerdict.TIGHT -> {
+            Text(
+                "△ Tight separation",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = ResultColors.close,
+            )
+            Text(
+                String.format(
+                    Locale.US,
+                    "Gate set to %.0f, but your softest playing is close to the room's " +
+                        "noise — very quiet notes may be missed. A quieter room would help.",
+                    s.recommendedGate,
+                ),
+                textAlign = TextAlign.Center,
+            )
+        }
+        SeparationVerdict.OVERLAP -> {
+            Text(
+                "✕ No separation",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = ResultColors.off,
+            )
+            Text(
+                "Your soft playing can't be told apart from this room's noise. No gate " +
+                    "can fix that — practice somewhere quieter, or play louder throughout.",
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+    Spacer(Modifier.height(24.dp))
+    when {
+        s.saved -> {
+            Text("Saved.", color = ResultColors.excellent)
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) { Text("Done") }
+        }
+        s.recommendedGate != null -> {
+            Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) {
+                Text("Use this gate")
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = viewModel::reset, modifier = Modifier.fillMaxWidth()) {
+                Text("Measure again")
+            }
+        }
+        else -> {
+            OutlinedButton(onClick = viewModel::reset, modifier = Modifier.fillMaxWidth()) {
+                Text("Try again (quieter room)")
             }
         }
     }

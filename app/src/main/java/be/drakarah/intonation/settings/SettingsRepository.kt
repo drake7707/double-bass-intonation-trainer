@@ -27,6 +27,8 @@ data class AppSettings(
     val driftWarning: Boolean = true,
     /** Last time the tune-up screen saw all four strings in tune (epoch ms, 0 = never). */
     val lastTunedAt: Long = 0,
+    /** Last time "Calibrate surroundings" saved a gate (epoch ms, 0 = never). */
+    val lastCalibratedAt: Long = 0,
     /** Microphone sensitivity (dsp gate): lower = ignores more ambient noise, higher =
      * hears quieter playing. Default measured against real noise/playing recordings;
      * the future calibration wizard should set this per room. */
@@ -46,6 +48,7 @@ class SettingsRepository(private val context: Context) {
         val soundFeedback = booleanPreferencesKey("soundFeedback")
         val driftWarning = booleanPreferencesKey("driftWarning")
         val lastTunedAt = longPreferencesKey("lastTunedAt")
+        val lastCalibratedAt = longPreferencesKey("lastCalibratedAt")
         val micSensitivity = floatPreferencesKey("micSensitivity")
     }
 
@@ -68,8 +71,13 @@ class SettingsRepository(private val context: Context) {
             soundFeedback = prefs[Keys.soundFeedback] ?: true,
             driftWarning = prefs[Keys.driftWarning] ?: true,
             lastTunedAt = prefs[Keys.lastTunedAt] ?: 0,
+            lastCalibratedAt = prefs[Keys.lastCalibratedAt] ?: 0,
             micSensitivity = prefs[Keys.micSensitivity] ?: 55f,
         )
+    }
+
+    suspend fun setLastCalibratedAt(epochMs: Long) {
+        context.dataStore.edit { it[Keys.lastCalibratedAt] = epochMs }
     }
 
     suspend fun setMicSensitivity(value: Float) {

@@ -43,6 +43,7 @@ fun HomeScreen(
     onStartSustain: (mode: String) -> Unit,
     onStartShift: (mode: String, style: String) -> Unit,
     onOpenTuneUp: () -> Unit,
+    onOpenCalibrate: () -> Unit,
     onOpenProgress: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenDebug: () -> Unit,
@@ -52,30 +53,44 @@ fun HomeScreen(
     val positions by viewModel.positions.collectAsStateWithLifecycle()
     val focusBest by viewModel.dailyFocusBest.collectAsStateWithLifecycle()
     val needsTuneReminder by viewModel.needsTuneReminder.collectAsStateWithLifecycle()
+    val needsCalibration by viewModel.needsCalibrationReminder.collectAsStateWithLifecycle()
 
-    // "did you tune?" gate: holds the requested game while the user decides
+    // pre-game gate: both checks are quick and both make or break the scores
     var pendingStart by remember { mutableStateOf<(() -> Unit)?>(null) }
     fun gated(start: () -> Unit) {
-        if (needsTuneReminder) pendingStart = start else start()
+        if (needsTuneReminder || needsCalibration) pendingStart = start else start()
     }
 
     pendingStart?.let { start ->
         AlertDialog(
             onDismissRequest = { pendingStart = null },
-            title = { Text("Tuned up?") },
-            text = { Text("It's been a while since the last tune-up. An out-of-tune bass makes every score meaningless.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    pendingStart = null
-                    onOpenTuneUp()
-                }) { Text("Tune first") }
+            title = { Text("Ready to play?") },
+            text = {
+                Column {
+                    if (needsTuneReminder) Text(
+                        "• No recent tune-up — an out-of-tune bass makes every score meaningless.",
+                    )
+                    if (needsCalibration) Text(
+                        "• Surroundings not calibrated — room noise might interfere with detection.",
+                    )
+                }
             },
-            dismissButton = {
-                TextButton(onClick = {
-                    viewModel.suppressTuneReminder()
-                    pendingStart = null
-                    start()
-                }) { Text("Start anyway") }
+            confirmButton = {
+                Column {
+                    if (needsTuneReminder) TextButton(onClick = {
+                        pendingStart = null
+                        onOpenTuneUp()
+                    }) { Text("Tune up first") }
+                    if (needsCalibration) TextButton(onClick = {
+                        pendingStart = null
+                        onOpenCalibrate()
+                    }) { Text("Calibrate surroundings first") }
+                    TextButton(onClick = {
+                        viewModel.suppressReminders()
+                        pendingStart = null
+                        start()
+                    }) { Text("Start anyway") }
+                }
             },
         )
     }

@@ -85,18 +85,26 @@ class HomeViewModel(
         }
     }
 
-    private val tuneReminderSuppressed = MutableStateFlow(false)
+    private val remindersSuppressed = MutableStateFlow(false)
 
     /** True when the last complete tune-up is stale — the user probably forgot to tune. */
     val needsTuneReminder: StateFlow<Boolean> =
-        combine(settingsRepository.settings, tuneReminderSuppressed) { settings, suppressed ->
+        combine(settingsRepository.settings, remindersSuppressed) { settings, suppressed ->
             !suppressed &&
                 System.currentTimeMillis() - settings.lastTunedAt > TUNE_STALE_AFTER_MS
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    /** True when "Calibrate surroundings" hasn't been run recently — the gate may not
+     * match this room/session. As quick and as load-bearing as tuning. */
+    val needsCalibrationReminder: StateFlow<Boolean> =
+        combine(settingsRepository.settings, remindersSuppressed) { settings, suppressed ->
+            !suppressed &&
+                System.currentTimeMillis() - settings.lastCalibratedAt > TUNE_STALE_AFTER_MS
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
     /** "Start anyway" — stop asking until the app restarts. */
-    fun suppressTuneReminder() {
-        tuneReminderSuppressed.value = true
+    fun suppressReminders() {
+        remindersSuppressed.value = true
     }
 
     private val _streak = MutableStateFlow(0)

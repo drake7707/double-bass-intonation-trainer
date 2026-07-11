@@ -44,6 +44,7 @@ fun AppNav() {
                 onStartSustain = { mode -> navController.navigate(Routes.sustain(mode)) },
                 onStartShift = { mode, style -> navController.navigate(Routes.shift(mode, style)) },
                 onOpenTuneUp = { navController.navigate(Routes.TUNE) },
+                onOpenCalibrate = { navController.navigate(Routes.CALIBRATE) },
                 onOpenProgress = { navController.navigate(Routes.PROGRESS) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 onOpenDebug = { navController.navigate(Routes.DEBUG) },

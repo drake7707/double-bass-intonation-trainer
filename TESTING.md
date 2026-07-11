@@ -86,9 +86,12 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Note sweep no longer fills in while you're not playing
 - [ ] Quiet playing still registers: soft pizz and gentle bowing must still turn the bar
       green and capture — if not, lower the gate in Settings
-- [ ] Settings → Calibrate surroundings: 5 s quiet measurement suggests a sensible gate
-      (should land near 45 in your room); saving applies it everywhere
+- [ ] Settings → Calibrate surroundings: quiet phase + soft-playing phase → verdict
+      (✓ clear / △ tight / ✕ no separation); your desk room should be ✓ with a gate near 45
+- [ ] Calibrate verdict ✕: try it with loud music playing — it should refuse to set a gate
 - [ ] Noise-gate slider in Settings changes what the debug bar considers noise
+- [ ] Pre-game "Ready to play?" dialog offers Tune up / Calibrate when either is stale;
+      "Start anyway" silences both for the session; completing them silences for ~8 h
 
 ### Note Accuracy game (M2)
 - [ ] Arco round: notes freeze at the *first* landing — correcting a finger after landing

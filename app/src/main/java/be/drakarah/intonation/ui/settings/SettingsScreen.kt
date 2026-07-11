@@ -133,7 +133,7 @@ fun SettingsScreen(
             SettingBlock(
                 "Noise gate",
                 "Sound below this level is ignored as room noise. Calibrate measures your " +
-                    "room and sets it automatically; playing measures ~63+ on this phone.",
+                    "room and your soft playing, and sets it automatically.",
             ) {
                 val gate = 100f - settings.micSensitivity
                 Text(

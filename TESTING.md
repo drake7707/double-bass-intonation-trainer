@@ -131,7 +131,8 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Pitch debug → "Start sweep (big view)": grid, capture state and last capture
       readable from playing distance; "🤫 wait for quiet" vs "🎧 play a note" banner
       makes it obvious why a note isn't registering yet (your confusion report)
-- [ ] Big view: arco/pizz toggle and Reset work; system back or Exit returns to debug
+- [ ] Big view: arco/pizz toggle, Reset and "Save last 8 s" work (snippet button
+      duplicated there on your request); system back or Exit returns to debug
 - [ ] Heads-up from your morning snippets (8:34–8:38): that session's playing was much
       softer than the afternoon one — median level ~20 vs 100. If that was your normal
       soft playing at 2 m, the current noise gate (45) would reject it live. If soft

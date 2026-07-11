@@ -99,13 +99,20 @@ class GameSounds {
                 .setBufferSizeInBytes(pcm.size * 2)
                 .setTransferMode(AudioTrack.MODE_STATIC)
                 .build()
-            if (track.state != AudioTrack.STATE_INITIALIZED) {
-                Log.w(TAG, "AudioTrack failed to initialize (state=${track.state})")
+            // A MODE_STATIC track sits in STATE_NO_STATIC_DATA until the PCM is written,
+            // so initialization can only be judged AFTER write().
+            if (track.state == AudioTrack.STATE_UNINITIALIZED) {
+                Log.w(TAG, "AudioTrack failed to initialize")
                 track.release()
                 return
             }
             track.setVolume(volume.coerceIn(0f, 1f))
             val written = track.write(pcm, 0, pcm.size)
+            if (written < pcm.size || track.state != AudioTrack.STATE_INITIALIZED) {
+                Log.w(TAG, "static write failed (wrote=$written, state=${track.state})")
+                track.release()
+                return
+            }
             track.setNotificationMarkerPosition(pcm.size)
             track.setPlaybackPositionUpdateListener(object : AudioTrack.OnPlaybackPositionUpdateListener {
                 override fun onMarkerReached(t: AudioTrack?) {
@@ -114,7 +121,7 @@ class GameSounds {
                 override fun onPeriodicNotification(t: AudioTrack?) {}
             })
             track.play()
-            Log.d(TAG, "playing ${pcm.size} frames (wrote $written)")
+            Log.d(TAG, "playing ${pcm.size} frames (playState=${track.playState}, volume=$volume)")
         } catch (e: Exception) {
             Log.w(TAG, "game sound failed", e)
         }

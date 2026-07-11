@@ -158,7 +158,7 @@ class RoundViewModel(
             previousAnswerHz = 0f
             promptShownAtMs = -1
             val cfg = config.applying(settings)
-            trace = if (settings.traceGames) GameTrace(appContext, cfg, "note-accuracy").also { it.prepare() } else null
+            trace = if (settings.traceGames) GameTrace(appContext, cfg, "note-accuracy-$mode").also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
             prompts = NotePool(positions).draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()

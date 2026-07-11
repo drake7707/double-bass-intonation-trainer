@@ -115,7 +115,7 @@ class SustainViewModel(
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
             val cfg = config.applying(settings)
-            trace = if (settings.traceGames) GameTrace(appContext, cfg, "sustain").also { it.prepare() } else null
+            trace = if (settings.traceGames) GameTrace(appContext, cfg, "sustain-$mode").also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
             sustainParams = SustainParams.forDifficulty(difficulty).copy(
                 attemptTimeoutMs = settings.playerLevel.sustainAttemptTimeoutMs,

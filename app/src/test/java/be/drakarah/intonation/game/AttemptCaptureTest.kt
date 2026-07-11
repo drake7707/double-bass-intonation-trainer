@@ -247,4 +247,34 @@ class AttemptCaptureTest {
         assertTrue("attack after the ring decays must freeze, got $state", state is CaptureState.Frozen)
         assertEquals(146.8f, (state as CaptureState.Frozen).result.frequencyHz, 0.8f)
     }
+
+    // --- pizz: same arming (attack required); a pluck is a pure attack -------------------
+    // (her 2026-07-11 pizz run confirmed correct + deliberately-wrong notes register and rings
+    // don't.) A pluck = sharp onset then a fast decay in level at a steady pitch.
+
+    private fun pizzPrompt() =
+        AttemptCapture(CaptureParams.pizz(), skipQuietGate = true, requireOnsetRise = true)
+
+    private fun pluck(fromMs: Long, hz: Float, peak: Float, decayPerHop: Float) =
+        generateSequence(fromMs) { it + hop }.takeWhile { it < fromMs + 1500 }
+            .mapIndexed { i, t -> sample(t, hz, level = (peak - i * decayPerHop).coerceAtLeast(0f),
+                accepted = (peak - i * decayPerHop) >= 45f) }
+            .toList()
+
+    @Test
+    fun gamePromptPizzCapturesAPluck() {
+        // quiet, then a pluck: sharp rise to level 92 decaying over ~0.5 s at steady pitch A1
+        val state = run(pizzPrompt(), silence(0, 300) + pluck(300, hz = 55.0f, peak = 92f, decayPerHop = 3f))
+        assertTrue("a pluck must freeze, got $state", state is CaptureState.Frozen)
+        assertEquals(55.0f, (state as CaptureState.Frozen).result.frequencyHz, 0.6f)
+    }
+
+    @Test
+    fun gamePromptPizzIgnoresADecayingRingWithNoNewPluck() {
+        // a previous pluck already ringing/decaying when the prompt arms — no fresh attack
+        val decaying = (0..80).map { sample(it * hop, 110f, level = (90f - it * 2f).coerceAtLeast(46f)) }
+        val state = run(pizzPrompt(), decaying)
+        assertTrue("a decaying ring with no new pluck must not freeze, got $state",
+            state !is CaptureState.Frozen)
+    }
 }

@@ -134,7 +134,7 @@ class ShiftViewModel(
             )
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             val cfg = config.applying(settings)
-            trace = if (settings.traceGames) GameTrace(appContext, cfg, "shift-$style").also { it.prepare() } else null
+            trace = if (settings.traceGames) GameTrace(appContext, cfg, "shift-$style-$mode").also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
             prompts = ShiftPool(positions, crossString = style == "cross")
                 .draw(settings.roundLength)

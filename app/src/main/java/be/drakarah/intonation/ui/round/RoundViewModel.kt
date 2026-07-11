@@ -110,7 +110,7 @@ class RoundViewModel(
     val uiState: StateFlow<RoundUiState> = _uiState.asStateFlow()
 
     private var prompts: List<PromptSpec> = emptyList()
-    private var capture = AttemptCapture(captureParams, skipQuietGate = true)
+    private var capture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = true)
     private var revealUntilMs = -1L
     private var listenJob: Job? = null
     private var a4 = 440.0
@@ -154,7 +154,7 @@ class RoundViewModel(
                 promptTimeoutMs = settings.playerLevel.promptTimeoutMs,
             )
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
-            capture = AttemptCapture(captureParams, skipQuietGate = true)
+            capture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = true)
             previousAnswerHz = 0f
             promptShownAtMs = -1
             val cfg = config.applying(settings)
@@ -213,7 +213,7 @@ class RoundViewModel(
         }
         reArmsThisPrompt = 0
         promptShownAtMs = -1
-        capture = AttemptCapture(captureParams, skipQuietGate = true)
+        capture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = true)
         _uiState.value = _uiState.value.copy(phase = RoundPhase.Listening)
     }
 
@@ -254,7 +254,7 @@ class RoundViewModel(
                 .format(captured.frequencyHz, captured.quality, captured.energyLevel,
                     elapsedSincePrompt, ringOver, tooSoon, harmonicArtifact))
             reArmsThisPrompt++
-            capture = AttemptCapture(captureParams, skipQuietGate = true)
+            capture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = true)
             return
         }
         // Gave up waiting through a persistent artifact/ring — report no note, not the artifact.
@@ -344,7 +344,7 @@ class RoundViewModel(
             // transients are handled by the reveal delay and the wrong-note filter instead.
             reArmsThisPrompt = 0
             promptShownAtMs = -1
-            capture = AttemptCapture(captureParams, skipQuietGate = true)
+            capture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = true)
             _uiState.value =
                 state.copy(promptIndex = next, prompt = prompts[next], phase = RoundPhase.Listening)
         }
@@ -437,7 +437,7 @@ class RoundViewModel(
     }
 
     companion object {
-        private const val BASE_REVEAL_MS = 1200L
+        private const val BASE_REVEAL_MS = 1700L
         /** How close to an exact octave a wrong note must be to be called "wrong octave". */
         private const val OCTAVE_TOLERANCE_CENTS = 60f
         /** Cap on discarded captures per prompt (ring-over can persist for seconds); beyond

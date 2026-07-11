@@ -72,19 +72,24 @@ sealed interface CaptureState {
  * Pure state machine: all timing derives from sample timestamps (the audio clock), so behavior
  * is deterministic and testable with synthetic streams. Terminal states are sticky.
  *
- * @param skipQuietGate Arm immediately instead of waiting for silence (first prompt of a round).
+ * @param skipQuietGate Arm immediately (start in Listening) instead of waiting for silence.
+ * @param requireOnsetRise Require the onset to be a genuine attack — energy rising above the
+ *   tracked floor — rather than any sounding pitch. This is what tells "she played a note" from
+ *   "a previous note is still ringing / decaying": a decay has no rising edge, so a ring she
+ *   isn't playing never onsets. Defaults to [skipQuietGate]'s inverse to preserve old callers,
+ *   but the game arms with skipQuietGate=true (no silence wait, legato-friendly) AND
+ *   requireOnsetRise=true (won't grab ring-over). Shift landings keep it false (mid-glide, no
+ *   attack to wait for — the sounding string itself would BE the floor).
  */
 class AttemptCapture(
     private val params: CaptureParams,
     skipQuietGate: Boolean = false,
+    requireOnsetRise: Boolean = !skipQuietGate,
 ) {
     var state: CaptureState = if (skipQuietGate) CaptureState.Listening else CaptureState.AwaitQuiet
         private set
 
-    /** Captures that arm from silence require the onset to rise above the ambient floor.
-     * Captures created mid-sound (shift landings, first prompts) must not: the sounding
-     * string itself would BE the floor and no onset could ever clear it. */
-    private val requireOnsetRise = !skipQuietGate
+    private val requireOnsetRise: Boolean = requireOnsetRise
 
     private var startMs: Long = -1
     private var quietSinceMs: Long = -1

@@ -203,4 +203,48 @@ class AttemptCaptureTest {
         val centsOff = 1200.0 * kotlin.math.ln(result.frequencyHz / played.toDouble()) / kotlin.math.ln(2.0)
         assertTrue("frozen ${result.frequencyHz} is $centsOff cents off played pitch", abs(centsOff) < 2.0)
     }
+
+    // --- game prompt arming: no silence wait, but a genuine attack IS required ------------
+    // (skipQuietGate=true + requireOnsetRise=true) — fixes her "I let it ring / did nothing and
+    // it flagged a wrong note" trace: a decaying/sustained ring has no rising edge, so it never
+    // captures; only a real attack does. Confirmed against full-round traces 2026-07-11.
+
+    private fun gamePrompt() =
+        AttemptCapture(CaptureParams.arco(), skipQuietGate = true, requireOnsetRise = true)
+
+    private fun loudTone(fromMs: Long, toMs: Long, hz: Float, level: Float) =
+        generateSequence(fromMs) { it + hop }.takeWhile { it < toMs }
+            .map { sample(it, hz, level = level) }.toList()
+
+    @Test
+    fun gamePromptIgnoresASteadyRingWithNoAttack() {
+        // previous note still sounding loud when the prompt arms, held with no fresh attack
+        val state = run(gamePrompt(), loudTone(0, 3000, hz = 55.0f, level = 95f))
+        assertTrue("a ring with no attack must not freeze, got $state", state !is CaptureState.Frozen)
+    }
+
+    @Test
+    fun gamePromptIgnoresADecayingRing() {
+        val decaying = (0..120).map { sample(it * hop, 110f, level = (96f - it).coerceAtLeast(50f)) }
+        val state = run(gamePrompt(), decaying)
+        assertTrue("a decaying ring must not freeze, got $state", state !is CaptureState.Frozen)
+    }
+
+    @Test
+    fun gamePromptCapturesAGenuineAttackFromQuiet() {
+        val state = run(gamePrompt(), silence(0, 400) + steadyNote(400, 3000, hz = 110f))
+        assertTrue("a genuine attack must freeze, got $state", state is CaptureState.Frozen)
+        assertEquals(110f, (state as CaptureState.Frozen).result.frequencyHz, 0.6f)
+    }
+
+    @Test
+    fun gamePromptCapturesTheAttackAfterAPreviousRingDecays() {
+        // realistic round timing: previous note rings, dies away, THEN she plays the new note
+        val script = loudTone(0, 800, hz = 98f, level = 90f) +
+                silence(800, 1400) +
+                steadyNote(1400, 4000, hz = 146.8f)
+        val state = run(gamePrompt(), script)
+        assertTrue("attack after the ring decays must freeze, got $state", state is CaptureState.Frozen)
+        assertEquals(146.8f, (state as CaptureState.Frozen).result.frequencyHz, 0.8f)
+    }
 }

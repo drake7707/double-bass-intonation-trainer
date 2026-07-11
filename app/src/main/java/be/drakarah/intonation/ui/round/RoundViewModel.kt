@@ -122,8 +122,17 @@ class RoundViewModel(
     /** Calibration-owned detection thresholds (defaults until the wizard measures them). */
     private var wrongNoteMinLevel = 55f
     private var lowestPlayableHz = 40f
+    /** Player-owned (scales with level, auto-tuned by LevelAdvisor): min read→play time. */
+    private var minReadMs = 900L
     /** Wrong-note captures discarded so far on the current prompt (see [onCaptured]). */
     private var reArmsThisPrompt = 0
+    /** Pitch of the previous prompt's captured answer (Hz), for ring-over rejection. The most
+     * common false "wrong note": the previous note is still ringing when the next prompt arms
+     * and gets frozen before she plays. 0 = none yet. */
+    private var previousAnswerHz = 0f
+    /** Sample timestamp when the current prompt began listening (-1 until first sample), so
+     * "time since the note appeared" is measured on the prompt, not the last re-arm. */
+    private var promptShownAtMs = -1L
     private val sounds = GameSounds()
     private val driftDetector = be.drakarah.intonation.game.DriftDetector()
     private var trace: GameTrace? = null
@@ -140,11 +149,14 @@ class RoundViewModel(
             driftWarningEnabled = settings.driftWarning
             wrongNoteMinLevel = settings.wrongNoteMinLevel
             lowestPlayableHz = settings.lowestPlayableHz
+            minReadMs = settings.playerLevel.minReadMs
             captureParams = captureParams.copy(
                 promptTimeoutMs = settings.playerLevel.promptTimeoutMs,
             )
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             capture = AttemptCapture(captureParams, skipQuietGate = true)
+            previousAnswerHz = 0f
+            promptShownAtMs = -1
             val cfg = config.applying(settings)
             trace = if (settings.traceGames) GameTrace(appContext, cfg, "note-accuracy").also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
@@ -167,6 +179,12 @@ class RoundViewModel(
                 when (state.phase) {
                     is RoundPhase.CountIn -> {}
                     RoundPhase.Listening -> {
+                        if (promptShownAtMs < 0) {
+                            promptShownAtMs = sample.timestampMs
+                            trace?.event(sample.timestampMs, "prompt",
+                                "idx=${state.promptIndex} midi=${target.midi} " +
+                                    "prevHz=%.1f".format(previousAnswerHz))
+                        }
                         when (val captureState = capture.process(sample)) {
                             is CaptureState.Frozen -> onCaptured(
                                 resultFor(target, captureState), captureState.result, target,
@@ -194,36 +212,57 @@ class RoundViewModel(
             kotlinx.coroutines.delay(1000)
         }
         reArmsThisPrompt = 0
+        promptShownAtMs = -1
         capture = AttemptCapture(captureParams, skipQuietGate = true)
         _uiState.value = _uiState.value.copy(phase = RoundPhase.Listening)
     }
 
     /** A capture froze. Discard it and keep listening (instead of flashing "wrong note?" and
-     * killing the attempt) when the frozen pitch is clearly not the note she meant:
-     *  - a *harmonic artifact*: an integer overtone of the target (×3, ×5, …). She's aiming
-     *    at the target, so an overtone reading is the detector latching a harmonic, not a
-     *    note anyone would play by mistake (her idea). Octaves (×2, ×4) are the exception —
-     *    those are a plausible misread and stay reported as "wrong octave".
-     *  - a *flimsy* wrong note: faint (a finger-lift/adjacent-string ring) or shaky.
-     * A confidently held, non-harmonic wrong note is still reported. Provisional thresholds —
-     * to be retuned from a full-round trace. */
+     * killing the attempt) when the frozen pitch is clearly not the note she meant to play:
+     *  - **ring-over**: it matches the *previous* prompt's answer and isn't near the current
+     *    target — the last note is still ringing when this prompt armed (the dominant false
+     *    "wrong note" in her trace: E2 rang on for two prompts and froze both times).
+     *  - **too soon**: it arrived before she could physically read the new note and play it
+     *    (her point — an instant wrong note in a fraction of a second is never her attempt).
+     *  - **harmonic artifact**: a non-octave integer overtone of the target (her idea; octaves
+     *    stay reported as "right note, wrong octave").
+     *  - **unplayable**: below the lowest string — a subharmonic/correction artifact.
+     *  - **flimsy**: faint (finger-lift/adjacent-string ring) or shaky.
+     * A confidently played, on-time, non-artifact wrong note is still reported. Thresholds are
+     * calibration-owned / provisional — see [wrongNoteMinLevel]. */
     private fun onCaptured(result: AttemptUi, captured: CapturedPitch, target: NoteSpec, nowMs: Long) {
-        val harmonicArtifact = !result.wrongOctave &&
+        val cents = result.cents ?: 0f
+        val nearTarget = abs(cents) <= NEAR_TARGET_CENTS
+        val elapsedSincePrompt = if (promptShownAtMs >= 0) nowMs - promptShownAtMs else Long.MAX_VALUE
+
+        val ringOver = previousAnswerHz > 0f && !nearTarget &&
+                abs(centsBetween(captured.frequencyHz.toDouble(), previousAnswerHz.toDouble()))
+                    .toFloat() < RING_MATCH_CENTS
+        // Physical impossibility applies to ANY pitch, near-target included: a capture sooner
+        // than she could read the new note and play it is leftover sound, not her attempt. (Her
+        // real reads measured 2.4-5 s; false ring-overs landed at 0.35-0.8 s.)
+        val tooSoon = elapsedSincePrompt < minReadMs
+        val harmonicArtifact = result.wrongNote && !result.wrongOctave &&
                 isIntegerHarmonic(captured.frequencyHz.toDouble(), target.frequency(a4))
-        // Below the lowest note on a double bass (open E1, 41.2 Hz) it cannot be a played
-        // note — it's a subharmonic/correction artifact (a 39 Hz reading on the Sol#1 pizz).
-        val unplayable = captured.frequencyHz < lowestPlayableHz
-        val flimsy = captured.quality == CaptureQuality.SHAKY ||
-                captured.energyLevel < wrongNoteMinLevel
-        if (result.wrongNote && (harmonicArtifact || unplayable || flimsy) &&
-            reArmsThisPrompt < MAX_WRONG_NOTE_RETRIES
-        ) {
-            trace?.event(nowMs, "discard-wrong",
-                "hz=%.1f q=%s lvl=%.0f".format(captured.frequencyHz, captured.quality, captured.energyLevel))
+        val unplayable = result.wrongNote && captured.frequencyHz < lowestPlayableHz
+        val flimsy = result.wrongNote &&
+                (captured.quality == CaptureQuality.SHAKY || captured.energyLevel < wrongNoteMinLevel)
+
+        val discard = ringOver || tooSoon || harmonicArtifact || unplayable || flimsy
+        if (discard && reArmsThisPrompt < MAX_DISCARDS) {
+            trace?.event(nowMs, "discard", "hz=%.1f q=%s lvl=%.0f el=%d ring=%b soon=%b harm=%b"
+                .format(captured.frequencyHz, captured.quality, captured.energyLevel,
+                    elapsedSincePrompt, ringOver, tooSoon, harmonicArtifact))
             reArmsThisPrompt++
             capture = AttemptCapture(captureParams, skipQuietGate = true)
             return
         }
+        // Gave up waiting through a persistent artifact/ring — report no note, not the artifact.
+        if (discard) {
+            onAttemptFinished(resultFor(target, null), nowMs)
+            return
+        }
+        previousAnswerHz = result.playedHz ?: previousAnswerHz
         onAttemptFinished(result, nowMs)
     }
 
@@ -304,6 +343,7 @@ class RoundViewModel(
             // AwaitQuiet and capture nothing (her Fa2/Fa#2 "no note" report). Ring-over and
             // transients are handled by the reveal delay and the wrong-note filter instead.
             reArmsThisPrompt = 0
+            promptShownAtMs = -1
             capture = AttemptCapture(captureParams, skipQuietGate = true)
             _uiState.value =
                 state.copy(promptIndex = next, prompt = prompts[next], phase = RoundPhase.Listening)
@@ -400,9 +440,17 @@ class RoundViewModel(
         private const val BASE_REVEAL_MS = 1200L
         /** How close to an exact octave a wrong note must be to be called "wrong octave". */
         private const val OCTAVE_TOLERANCE_CENTS = 60f
-        /** Cap on discarded wrong-note captures per prompt, so a genuinely-held wrong note
-         * still gets reported rather than looping until timeout. */
-        private const val MAX_WRONG_NOTE_RETRIES = 6
+        /** Cap on discarded captures per prompt (ring-over can persist for seconds); beyond
+         * this we report "no note" rather than looping forever. */
+        private const val MAX_DISCARDS = 25
+        // These two are universal musical tolerances (like NON_OCTAVE_HARMONICS), deliberately
+        // NOT device-calibrated — a semitone is a semitone on every phone; calibrating them
+        // per device would be meaningless. The read-time floor lives on PlayerLevel (player,
+        // not mic); the energy/lowest-Hz detection thresholds are calibration-owned in settings.
+        /** Within this of the target, a capture is a plausible real attempt — never discarded. */
+        private const val NEAR_TARGET_CENTS = 150f
+        /** A capture this close to the previous prompt's answer is that note still ringing. */
+        private const val RING_MATCH_CENTS = 60f
         /** Integer harmonics that are NOT octaves (powers of two): the detector reads these as
          * overtones of the target. Universal math (an overtone is an overtone on any phone or
          * instrument) — deliberately NOT calibrated. Octaves are excluded: a wrong octave is a

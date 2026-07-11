@@ -21,11 +21,16 @@ enum class PlayerLevel(
     val shiftDepartTimeoutMs: Long,
     /** Sustain: whole-attempt cap (finding the note eats into it, so it scales too). */
     val sustainAttemptTimeoutMs: Long,
+    /** Floor on "note appeared → played": an off-target capture sooner than this is leftover
+     * sound (ring-over), not her attempt — she cannot read a new note and play it faster. It's
+     * her reading speed, so it scales with the level (auto-tuned via [LevelAdvisor]), NOT the
+     * detection wizard: reading speed is the player, detection is the mic. */
+    val minReadMs: Long,
 ) {
-    BEGINNER("Beginner", 20_000, 1.6f, 8_000, 40_000),
-    INTERMEDIATE("Intermediate", 13_000, 1.3f, 6_000, 30_000),
-    ADVANCED("Advanced", 8_000, 1.0f, 4_000, 20_000),
-    EXPERT("Expert", 5_000, 0.85f, 3_000, 15_000);
+    BEGINNER("Beginner", 20_000, 1.6f, 8_000, 40_000, minReadMs = 1_000),
+    INTERMEDIATE("Intermediate", 13_000, 1.3f, 6_000, 30_000, minReadMs = 800),
+    ADVANCED("Advanced", 8_000, 1.0f, 4_000, 20_000, minReadMs = 600),
+    EXPERT("Expert", 5_000, 0.85f, 3_000, 15_000, minReadMs = 450);
 
     fun revealMs(baseMs: Long): Long = (baseMs * revealFactor).toLong()
 }

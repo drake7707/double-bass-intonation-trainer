@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -26,6 +27,10 @@ data class AppSettings(
     val driftWarning: Boolean = true,
     /** Last time the tune-up screen saw all four strings in tune (epoch ms, 0 = never). */
     val lastTunedAt: Long = 0,
+    /** Microphone sensitivity (dsp gate): lower = ignores more ambient noise, higher =
+     * hears quieter playing. Default measured against real noise/playing recordings;
+     * the future calibration wizard should set this per room. */
+    val micSensitivity: Float = 55f,
 )
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
@@ -41,6 +46,7 @@ class SettingsRepository(private val context: Context) {
         val soundFeedback = booleanPreferencesKey("soundFeedback")
         val driftWarning = booleanPreferencesKey("driftWarning")
         val lastTunedAt = longPreferencesKey("lastTunedAt")
+        val micSensitivity = floatPreferencesKey("micSensitivity")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -62,7 +68,12 @@ class SettingsRepository(private val context: Context) {
             soundFeedback = prefs[Keys.soundFeedback] ?: true,
             driftWarning = prefs[Keys.driftWarning] ?: true,
             lastTunedAt = prefs[Keys.lastTunedAt] ?: 0,
+            micSensitivity = prefs[Keys.micSensitivity] ?: 55f,
         )
+    }
+
+    suspend fun setMicSensitivity(value: Float) {
+        context.dataStore.edit { it[Keys.micSensitivity] = value.coerceIn(20f, 95f) }
     }
 
     suspend fun setLastTunedAt(epochMs: Long) {

@@ -163,13 +163,20 @@ fun DebugPitchScreen(
                             String.format(Locale.US, "%.2f", it)
                         } ?: "—")
                         Spacer(Modifier.height(4.dp))
+                        val gate by viewModel.gateLevel.collectAsStateWithLifecycle()
+                        val level = current?.energyLevel ?: 0f
                         Text(
-                            "level ${current?.energyLevel?.toInt() ?: 0} / 100",
+                            "level ${level.toInt()} / 100 · noise gate ${gate.toInt()}" +
+                                if (level < gate) "  (ignored as noise)" else "",
                             style = MaterialTheme.typography.labelSmall,
+                            color = if (level < gate) MaterialTheme.colorScheme.onSurfaceVariant
+                                    else ResultColors.excellent,
                         )
                         LinearProgressIndicator(
-                            progress = { (current?.energyLevel ?: 0f) / 100f },
+                            progress = { level / 100f },
                             modifier = Modifier.fillMaxWidth(),
+                            color = if (level < gate) MaterialTheme.colorScheme.onSurfaceVariant
+                                    else ResultColors.excellent,
                         )
                     }
                 }

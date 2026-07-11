@@ -77,7 +77,18 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Debug capture line shows "✓ stable: <note> in <ms>" after each played note
 - [ ] Long capture: start, play a slow chromatic sweep (one string arco), stop & save —
       then do the same pizz; these become the offline test corpus
-- [ ] Manage recordings: list shows the captures; Share sends WAV + log; Delete works
+- [ ] Manage recordings: list shows the captures with the settings they were recorded
+      with; ▶ Play plays them back; Share sends WAV + log; Delete works
+
+### Noise gate (from your noise snippets)
+- [ ] Pitch debug at your desk: typing/birds no longer show notes; level bar stays grey
+      with "(ignored as noise)"; playing turns it green
+- [ ] Note sweep no longer fills in while you're not playing
+- [ ] Quiet playing still registers: soft pizz and gentle bowing must still turn the bar
+      green and capture — if not, lower the gate in Settings
+- [ ] Settings → Calibrate surroundings: 5 s quiet measurement suggests a sensible gate
+      (should land near 45 in your room); saving applies it everywhere
+- [ ] Noise-gate slider in Settings changes what the debug bar considers noise
 
 ### Note Accuracy game (M2)
 - [ ] Arco round: notes freeze at the *first* landing — correcting a finger after landing

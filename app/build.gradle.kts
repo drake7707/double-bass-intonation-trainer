@@ -37,6 +37,18 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        // detection code lifted from Tuner calls android.util.Log; let it no-op on the JVM
+        unitTests.isReturnDefaultValues = true
+    }
+
+    sourceSets {
+        getByName("test") {
+            // real-bass and noise recordings live in :dsp's corpus; game tests replay them too
+            resources.srcDir("../dsp/src/test/resources")
+        }
+    }
 }
 
 kotlin {

@@ -21,6 +21,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.LocalDateTime
@@ -34,11 +35,13 @@ private const val DISPLAY_HOLD_MS = 600L
 
 class DebugViewModel(
     private val applicationContext: Context,
-    private val config: PitchEngineConfig,
+    private val baseConfig: PitchEngineConfig,
+    private val settingsRepository: be.drakarah.intonation.settings.SettingsRepository,
 ) : ViewModel() {
 
     private val waveWriter = WaveWriter()
-    private val engine = PitchEngine(config, waveWriter)
+    private lateinit var engine: PitchEngine
+    private var config: PitchEngineConfig = baseConfig
 
     private val _latestSample = MutableStateFlow<PitchSample?>(null)
     val latestSample: StateFlow<PitchSample?> = _latestSample.asStateFlow()
@@ -88,6 +91,10 @@ class DebugViewModel(
     private val _isListening = MutableStateFlow(false)
     val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
 
+    /** The noise gate in level units (0..100): samples below it are rejected as ambience. */
+    private val _gateLevel = MutableStateFlow(45f)
+    val gateLevel: StateFlow<Float> = _gateLevel.asStateFlow()
+
     private val _snippetMessage = MutableStateFlow<String?>(null)
     val snippetMessage: StateFlow<String?> = _snippetMessage.asStateFlow()
 
@@ -106,6 +113,10 @@ class DebugViewModel(
         if (listenJob != null) return
         _isListening.value = true
         listenJob = viewModelScope.launch {
+            val settings = settingsRepository.settings.first()
+            config = baseConfig.copy(sensitivity = settings.micSensitivity)
+            _gateLevel.value = 100f - config.sensitivity
+            engine = PitchEngine(config, waveWriter)
             waveWriter.setBufferSize(SNIPPET_SECONDS * config.sampleRate)
             engine.samples().collect { sample ->
                 synchronized(sampleLog) {
@@ -237,7 +248,11 @@ class DebugViewModel(
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                 val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]
                         as IntonationApplication
-                return DebugViewModel(app.applicationContext, app.container.pitchEngineConfig) as T
+                return DebugViewModel(
+                    app.applicationContext,
+                    app.container.pitchEngineConfig,
+                    app.container.settingsRepository,
+                ) as T
             }
         }
     }

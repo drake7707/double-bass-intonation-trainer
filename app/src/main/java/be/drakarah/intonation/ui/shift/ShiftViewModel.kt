@@ -78,7 +78,7 @@ data class ShiftUiState(
 }
 
 class ShiftViewModel(
-    config: PitchEngineConfig,
+    private val config: PitchEngineConfig,
     private val mode: String,
     /** "same" or "cross" — same-string shifts vs cross-string shifts. */
     private val style: String,
@@ -89,7 +89,7 @@ class ShiftViewModel(
     private val captureParams =
         if (mode == "pizz") CaptureParams.pizz() else CaptureParams.arco()
 
-    private val engine = PitchEngine(config)
+    private lateinit var engine: PitchEngine
     private val sounds = GameSounds()
 
     private val _uiState = MutableStateFlow(ShiftUiState())
@@ -116,6 +116,7 @@ class ShiftViewModel(
             positions = settings.positions
             soundFeedback = settings.soundFeedback
             driftWarningEnabled = settings.driftWarning
+            engine = PitchEngine(config.copy(sensitivity = settings.micSensitivity))
             prompts = ShiftPool(positions, crossString = style == "cross")
                 .draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()

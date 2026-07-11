@@ -131,7 +131,7 @@ class AttemptCaptureTest {
 
     @Test
     fun quietNoteBelowNoiseFloorRiseIsIgnored() {
-        val capture = AttemptCapture(CaptureParams.arco(), skipQuietGate = true)
+        val capture = AttemptCapture(CaptureParams.arco())
         // noisy room: floor settles around level 60; a "note" at level 65 is not a real onset
         val noisy = generateSequence(0L) { it + hop }.takeWhile { it < 700 }
             .map { sample(it, 0f, accepted = false, level = 60f) }.toList()
@@ -139,6 +139,15 @@ class AttemptCaptureTest {
             .map { sample(it, 98.5f, accepted = true, level = 65f) }.toList()
         val state = run(capture, noisy + weak)
         assertTrue("expected no freeze, got $state", state !is CaptureState.Frozen)
+    }
+
+    @Test
+    fun midSoundCaptureDoesNotRequireARise() {
+        // shift landing: the machine is created while the string already sounds loudly —
+        // the onset-rise requirement must not block it
+        val capture = AttemptCapture(CaptureParams.arco(), skipQuietGate = true)
+        val state = run(capture, steadyNote(0, 900, hz = 146.8f))
+        assertTrue("expected Frozen, got $state", state is CaptureState.Frozen)
     }
 
     // --- timeouts ------------------------------------------------------------------------

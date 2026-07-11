@@ -72,13 +72,13 @@ data class SustainUiState(
 }
 
 class SustainViewModel(
-    config: PitchEngineConfig,
+    private val config: PitchEngineConfig,
     private val mode: String,
     private val settingsRepository: SettingsRepository,
     private val sessionRepository: SessionRepository,
 ) : ViewModel() {
 
-    private val engine = PitchEngine(config)
+    private lateinit var engine: PitchEngine
     private val sounds = GameSounds()
 
     private val _uiState = MutableStateFlow(SustainUiState())
@@ -103,6 +103,7 @@ class SustainViewModel(
             difficulty = settings.difficulty
             positions = settings.positions
             soundFeedback = settings.soundFeedback
+            engine = PitchEngine(config.copy(sensitivity = settings.micSensitivity))
             sustainParams = SustainParams.forDifficulty(difficulty)
             prompts = NotePool(positions).draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()

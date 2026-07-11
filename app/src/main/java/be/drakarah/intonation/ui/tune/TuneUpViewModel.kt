@@ -14,6 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -32,12 +33,12 @@ data class TuneUpUiState(
 class TuneUpViewModel(
     private val config: PitchEngineConfig,
     private val settingsRepository: be.drakarah.intonation.settings.SettingsRepository?,
-    private val a4: Double = 440.0,
 ) : ViewModel() {
 
     private var allInTuneRecorded = false
+    private var a4: Double = 440.0
 
-    private val engine = PitchEngine(config)
+    private lateinit var engine: PitchEngine
 
     private val _uiState = MutableStateFlow(TuneUpUiState())
     val uiState: StateFlow<TuneUpUiState> = _uiState.asStateFlow()
@@ -50,6 +51,10 @@ class TuneUpViewModel(
     fun start() {
         if (listenJob != null) return
         listenJob = viewModelScope.launch {
+            settingsRepository?.settings?.first()?.let { settings ->
+                a4 = settings.a4
+                engine = PitchEngine(config.copy(sensitivity = settings.micSensitivity))
+            } ?: run { engine = PitchEngine(config) }
             engine.samples().collect { sample ->
                 if (sample.accepted && sample.smoothedHz > 0f) {
                     recentPitches.addLast(sample.timestampMs to sample.smoothedHz)

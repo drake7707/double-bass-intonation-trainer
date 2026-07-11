@@ -29,7 +29,12 @@ data class PitchEngineConfig(
     val audioSource: Int = MediaRecorder.AudioSource.MIC,
     val maxNoise: Float = 0.1f,
     val minHarmonicEnergyContent: Float = 0.1f,
-    val sensitivity: Float = 90f,
+    /** Tuner ships 90 (accept level >= 10) — right for a tuner that must show whisper-quiet
+     * notes, wrong for a game: desk noise and birdsong measured at level 14-45 were being
+     * accepted and even froze sweep notes. Real bass playing on the target phone measures
+     * 63-100 (including full pizz decay), so 55 (accept level >= 45) rejects ambience with
+     * ~20 levels of headroom. Verified by the noise-floor recordings in the test corpus. */
+    val sensitivity: Float = 55f,
     val numMovingAverage: Int = 5,
     val maxNumFaultyValues: Int = 3,
     val frequencyMin: Float = DspDefaults.FREQUENCY_MIN,

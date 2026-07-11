@@ -8,6 +8,7 @@ import be.drakarah.intonation.ui.debug.DebugPitchScreen
 import be.drakarah.intonation.ui.home.HomeScreen
 import be.drakarah.intonation.ui.round.RoundScreen
 import be.drakarah.intonation.ui.about.AboutScreen
+import be.drakarah.intonation.ui.calibrate.CalibrateScreen
 import be.drakarah.intonation.ui.progress.ProgressScreen
 import be.drakarah.intonation.ui.recordings.RecordingsScreen
 import be.drakarah.intonation.ui.settings.SettingsScreen
@@ -23,6 +24,7 @@ object Routes {
     const val PROGRESS = "progress"
     const val ABOUT = "about"
     const val RECORDINGS = "recordings"
+    const val CALIBRATE = "calibrate"
     const val ROUND = "round/{mode}"
     const val SUSTAIN = "sustain/{mode}"
     const val SHIFT = "shift/{mode}/{style}"
@@ -54,7 +56,11 @@ fun AppNav() {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
                 onOpenAbout = { navController.navigate(Routes.ABOUT) },
+                onOpenCalibrate = { navController.navigate(Routes.CALIBRATE) },
             )
+        }
+        composable(Routes.CALIBRATE) {
+            CalibrateScreen(onDone = { navController.popBackStack() })
         }
         composable(Routes.PROGRESS) {
             ProgressScreen(onBack = { navController.popBackStack() })

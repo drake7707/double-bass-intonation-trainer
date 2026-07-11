@@ -86,7 +86,7 @@ class RoundViewModel(
     private val captureParams =
         if (mode == "pizz") CaptureParams.pizz() else CaptureParams.arco()
 
-    private val engine = PitchEngine(config)
+    private lateinit var engine: PitchEngine
 
     private val _uiState = MutableStateFlow(RoundUiState())
     val uiState: StateFlow<RoundUiState> = _uiState.asStateFlow()
@@ -113,6 +113,7 @@ class RoundViewModel(
             positions = settings.positions
             soundFeedback = settings.soundFeedback
             driftWarningEnabled = settings.driftWarning
+            engine = PitchEngine(config.copy(sensitivity = settings.micSensitivity))
             prompts = NotePool(positions).draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()
             _uiState.value = RoundUiState(

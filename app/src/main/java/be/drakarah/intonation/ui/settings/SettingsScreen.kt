@@ -2,6 +2,8 @@ package be.drakarah.intonation.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,7 +36,11 @@ import be.drakarah.intonation.settings.AppSettings
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit = {}) {
+fun SettingsScreen(
+    onBack: () -> Unit,
+    onOpenAbout: () -> Unit = {},
+    onOpenCalibrate: () -> Unit = {},
+) {
     val app = LocalContext.current.applicationContext as IntonationApplication
     val repo = app.container.settingsRepository
     val settings by repo.settings.collectAsStateWithLifecycle(AppSettings())
@@ -44,7 +51,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit = {}) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             Spacer(Modifier.height(16.dp))
@@ -122,6 +130,26 @@ fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit = {}) {
                 }
             }
 
+            SettingBlock(
+                "Noise gate",
+                "Sound below this level is ignored as room noise. Calibrate measures your " +
+                    "room and sets it automatically; playing measures ~63+ on this phone.",
+            ) {
+                val gate = 100f - settings.micSensitivity
+                Text(
+                    "gate at level ${gate.toInt()} / 100",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Slider(
+                    value = gate,
+                    onValueChange = { scope.launch { repo.setMicSensitivity(100f - it) } },
+                    valueRange = 5f..80f,
+                )
+                OutlinedButton(onClick = onOpenCalibrate, modifier = Modifier.fillMaxWidth()) {
+                    Text("Calibrate surroundings")
+                }
+            }
+
             SettingBlock("Pitch drift warning", "Warns when everything you land is consistently sharp or flat — a sign to reset your inner reference instead of learning wrong pitches.") {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -136,7 +164,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit = {}) {
                 }
             }
 
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.height(8.dp))
             TextButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
                 Text("About & licenses")
             }

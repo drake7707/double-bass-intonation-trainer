@@ -77,6 +77,11 @@ class AttemptCapture(
     var state: CaptureState = if (skipQuietGate) CaptureState.Listening else CaptureState.AwaitQuiet
         private set
 
+    /** Captures that arm from silence require the onset to rise above the ambient floor.
+     * Captures created mid-sound (shift landings, first prompts) must not: the sounding
+     * string itself would BE the floor and no onset could ever clear it. */
+    private val requireOnsetRise = !skipQuietGate
+
     private var startMs: Long = -1
     private var quietSinceMs: Long = -1
     private var noiseFloor = 0f
@@ -93,6 +98,16 @@ class AttemptCapture(
     fun process(sample: PitchSample): CaptureState {
         if (state is CaptureState.Frozen || state is CaptureState.TimedOut) return state
         if (startMs < 0) startMs = sample.timestampMs
+
+        // Track the ambient floor from EVERY sample (fast down, slow up). Tracking only
+        // rejected samples let steady tonal noise (hum, birdsong) pass the onset rise
+        // check because it never contributed to the floor.
+        noiseFloor = when {
+            !hasNoiseFloor -> sample.energyLevel
+            sample.energyLevel < noiseFloor -> sample.energyLevel
+            else -> noiseFloor + 0.008f * (sample.energyLevel - noiseFloor)
+        }
+        hasNoiseFloor = true
 
         when (state) {
             CaptureState.AwaitQuiet -> processAwaitQuiet(sample)
@@ -119,19 +134,14 @@ class AttemptCapture(
 
     private fun processListening(sample: PitchSample) {
         val usable = sample.accepted && sample.smoothedHz > 0f
-        val rise = !hasNoiseFloor || sample.energyLevel >= noiseFloor + params.onsetRiseLevels
+        val rise = !requireOnsetRise || !hasNoiseFloor ||
+                sample.energyLevel >= noiseFloor + params.onsetRiseLevels
         consecutiveAccepted = if (usable) consecutiveAccepted + 1 else 0
 
         if (usable && rise && consecutiveAccepted >= params.onsetConfirmSamples) {
             onsetMs = sample.timestampMs
             state = CaptureState.Capturing
             return
-        }
-        // adapt the floor only while no candidate note is sounding
-        if (!usable) {
-            noiseFloor = if (hasNoiseFloor) 0.98f * noiseFloor + 0.02f * sample.energyLevel
-                         else sample.energyLevel
-            hasNoiseFloor = true
         }
         checkPromptTimeout(sample)
     }

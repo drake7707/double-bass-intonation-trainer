@@ -75,6 +75,9 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] **Note sweep** in Pitch debug: play chromatically through the range (arco, then flip
       the toggle and pizz) — every note should turn green; report any that stay grey
 - [ ] Debug capture line shows "✓ stable: <note> in <ms>" after each played note
+- [ ] Long capture: start, play a slow chromatic sweep (one string arco), stop & save —
+      then do the same pizz; these become the offline test corpus
+- [ ] Manage recordings: list shows the captures; Share sends WAV + log; Delete works
 
 ### Note Accuracy game (M2)
 - [ ] Arco round: notes freeze at the *first* landing — correcting a finger after landing

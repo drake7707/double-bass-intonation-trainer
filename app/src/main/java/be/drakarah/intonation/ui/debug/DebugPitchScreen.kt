@@ -55,6 +55,7 @@ import kotlin.math.abs
 @Composable
 fun DebugPitchScreen(
     onBack: () -> Unit,
+    onOpenRecordings: () -> Unit = {},
     viewModel: DebugViewModel = viewModel(factory = DebugViewModel.Factory),
 ) {
     val context = LocalContext.current
@@ -271,8 +272,24 @@ fun DebugPitchScreen(
                     )
                 }
 
+                val isLongCapture by viewModel.isLongCapture.collectAsStateWithLifecycle()
                 Button(onClick = viewModel::saveSnippet, modifier = Modifier.fillMaxWidth()) {
                     Text("Save last 8 s (WAV + log)")
+                }
+                OutlinedButton(
+                    onClick = {
+                        if (isLongCapture) viewModel.stopLongCaptureAndSave()
+                        else viewModel.startLongCapture()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        if (isLongCapture) "◉ Stop & save long capture"
+                        else "Long capture (up to 2 min) — for test recordings",
+                    )
+                }
+                OutlinedButton(onClick = onOpenRecordings, modifier = Modifier.fillMaxWidth()) {
+                    Text("Manage recordings")
                 }
             }
 

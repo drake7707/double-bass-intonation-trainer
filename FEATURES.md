@@ -118,6 +118,11 @@ its own scoring category** — scores are only ever compared between identical s
   toggleable): it shows its state, stamps "✓ stable" with time-to-stable whenever a note
   freezes, and keeps a **note sweep checklist** — play chromatically through the whole
   range and every game-ready note turns green, exposing any notes that need tweaking.
+- **Long capture**: besides the 8 s snippet, a start/stop recording mode keeps up to
+  2 minutes — for systematic test recordings (chromatic sweeps) that grow the offline
+  regression corpus.
+- **Recordings manager**: lists all saved snippets/captures with date, duration and size;
+  share (audio + detection log via any app) or delete, straight from the phone.
 - **Tune-up reminder**: the app remembers your last complete tune-up; starting a game
   more than ~8 hours later asks "Tuned up?" first (dismissible per session).
 - Screens stay awake while listening. Dark theme only. Offline; no accounts, no ads,

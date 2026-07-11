@@ -9,6 +9,7 @@ import be.drakarah.intonation.ui.home.HomeScreen
 import be.drakarah.intonation.ui.round.RoundScreen
 import be.drakarah.intonation.ui.about.AboutScreen
 import be.drakarah.intonation.ui.progress.ProgressScreen
+import be.drakarah.intonation.ui.recordings.RecordingsScreen
 import be.drakarah.intonation.ui.settings.SettingsScreen
 import be.drakarah.intonation.ui.shift.ShiftScreen
 import be.drakarah.intonation.ui.sustain.SustainScreen
@@ -21,6 +22,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val PROGRESS = "progress"
     const val ABOUT = "about"
+    const val RECORDINGS = "recordings"
     const val ROUND = "round/{mode}"
     const val SUSTAIN = "sustain/{mode}"
     const val SHIFT = "shift/{mode}/{style}"
@@ -60,6 +62,9 @@ fun AppNav() {
         composable(Routes.ABOUT) {
             AboutScreen(onBack = { navController.popBackStack() })
         }
+        composable(Routes.RECORDINGS) {
+            RecordingsScreen(onBack = { navController.popBackStack() })
+        }
         composable(Routes.ROUND) {
             RoundScreen(onExit = { navController.popBackStack() })
         }
@@ -70,7 +75,10 @@ fun AppNav() {
             ShiftScreen(onExit = { navController.popBackStack() })
         }
         composable(Routes.DEBUG) {
-            DebugPitchScreen(onBack = { navController.popBackStack() })
+            DebugPitchScreen(
+                onBack = { navController.popBackStack() },
+                onOpenRecordings = { navController.navigate(Routes.RECORDINGS) },
+            )
         }
     }
 }

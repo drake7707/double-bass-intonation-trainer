@@ -27,7 +27,8 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 private const val SNIPPET_SECONDS = 8
-private const val SAMPLE_LOG_CAPACITY = 512
+private const val LONG_CAPTURE_SECONDS = 120
+private const val SAMPLE_LOG_CAPACITY = 6000 // ~2 min of detection log at ~23 ms/sample
 private const val UI_UPDATE_MS = 120L
 private const val DISPLAY_HOLD_MS = 600L
 
@@ -164,14 +165,38 @@ class DebugViewModel(
         recentPitches.clear()
     }
 
+    /** Long-capture mode for corpus recording: up to 2 minutes instead of the 8 s ring. */
+    private val _isLongCapture = MutableStateFlow(false)
+    val isLongCapture: StateFlow<Boolean> = _isLongCapture.asStateFlow()
+
+    fun startLongCapture() {
+        viewModelScope.launch {
+            waveWriter.setBufferSize(LONG_CAPTURE_SECONDS * config.sampleRate)
+            _isLongCapture.value = true
+            _snippetMessage.value = "Recording (keeps the last 2 min)…"
+        }
+    }
+
+    fun stopLongCaptureAndSave() {
+        viewModelScope.launch {
+            saveCurrentBuffer(prefix = "capture")
+            waveWriter.setBufferSize(SNIPPET_SECONDS * config.sampleRate)
+            _isLongCapture.value = false
+        }
+    }
+
     /** Saves the last ~8 s of raw audio as WAV plus a JSONL detection log next to it. */
     fun saveSnippet() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch { saveCurrentBuffer(prefix = "snippet") }
+    }
+
+    private suspend fun saveCurrentBuffer(prefix: String) {
+        kotlinx.coroutines.withContext(Dispatchers.IO) {
             val dir = File(applicationContext.getExternalFilesDir(null), "snippets")
             dir.mkdirs()
             val stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
-            val wavFile = File(dir, "snippet-$stamp.wav")
-            val logFile = File(dir, "snippet-$stamp.jsonl")
+            val wavFile = File(dir, "$prefix-$stamp.wav")
+            val logFile = File(dir, "$prefix-$stamp.jsonl")
 
             waveWriter.storeSnapshot()
             waveWriter.writeStoredSnapshot(applicationContext, Uri.fromFile(wavFile), config.sampleRate)

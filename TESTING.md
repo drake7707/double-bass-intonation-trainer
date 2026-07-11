@@ -11,8 +11,8 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Pizz on D and G strings still locks quickly and correctly (sanity check after the fix)
 
 ### Debug screen fixes
-- [ ] Screen no longer times out while listening
-- [ ] Big note/cents readout is calm instead of jittery
+- [x] Screen no longer times out while listening
+- [x] Big note/cents readout is calm instead of jittery
 
 ### Tune up screen (new)
 - [ ] Playing an open string highlights the right one of E1/A1/D2/G2
@@ -84,17 +84,31 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
       with; ▶ Play plays them back; Share sends WAV + log; Delete works
 
 ### Noise gate (from your noise snippets)
-- [ ] Pitch debug at your desk: typing/birds no longer show notes; level bar stays grey
+- [x] Pitch debug at your desk: typing/birds no longer show notes; level bar stays grey
       with "(ignored as noise)"; playing turns it green
-- [ ] Note sweep no longer fills in while you're not playing
-- [ ] Quiet playing still registers: soft pizz and gentle bowing must still turn the bar
+- [x] Note sweep no longer fills in while you're not playing
+- [x] Quiet playing still registers: soft pizz and gentle bowing must still turn the bar
       green and capture — if not, lower the gate in Settings
-- [ ] Settings → Calibrate surroundings: quiet phase + soft-playing phase → verdict
+- [x] Settings → Calibrate surroundings: quiet phase + soft-playing phase → verdict
       (✓ clear / △ tight / ✕ no separation); your desk room should be ✓ with a gate near 45
 - [ ] Calibrate verdict ✕: try it with loud music playing — it should refuse to set a gate
 - [ ] Noise-gate slider in Settings changes what the debug bar considers noise
 - [ ] Pre-game "Ready to play?" dialog offers Tune up / Calibrate when either is stale;
       "Start anyway" silences both for the session; completing them silences for ~8 h
+
+### Player level (your feedback: timeout too tight for reading + placing)
+- [ ] Settings → Player level: chips Beginner/Intermediate/Advanced/Expert; default is
+      Beginner (20 s to start each note — enough to read, translate and place?)
+- [ ] Reveal stays on screen noticeably longer on Beginner than before
+- [ ] Play a familiar 1st-position round fast → summary offers "Switch to Intermediate
+      pace"; tapping it changes the setting (check in Settings afterwards)
+- [ ] Play a 3rd-position round slowly → NO speed-up suggestion appears (one slow note
+      is enough to hold it back — by design)
+- [ ] On a faster level, let several prompts time out → summary offers a slower pace
+- [ ] Changing level does NOT split your personal bests (deliberate: same scoring
+      strictness at every level, and moving up must not orphan your history — push back
+      if this feels wrong)
+- [ ] Shift: GO-cue window feels roomier on Beginner (8 s to depart vs 4 s before)
 
 ### Note Accuracy game (M2)
 - [ ] Arco round: notes freeze at the *first* landing — correcting a finger after landing

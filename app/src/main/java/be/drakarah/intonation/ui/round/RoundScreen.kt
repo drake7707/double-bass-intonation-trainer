@@ -83,7 +83,10 @@ fun RoundScreen(
                     when (val phase = state.phase) {
                         RoundPhase.Listening -> ListeningPrompt(state)
                         is RoundPhase.Reveal -> RevealResult(phase.result, state.noteStyle)
-                        RoundPhase.Done -> RoundSummary(state, onExit)
+                        RoundPhase.Done -> RoundSummary(
+                            state, onExit,
+                            onApplyLevel = viewModel::applySuggestedLevel,
+                        )
                     }
                 }
                 Spacer(Modifier.height(8.dp))
@@ -212,7 +215,7 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
 }
 
 @Composable
-private fun RoundSummary(state: RoundUiState, onExit: () -> Unit) {
+private fun RoundSummary(state: RoundUiState, onExit: () -> Unit, onApplyLevel: () -> Unit) {
     val scored = state.results.filter { it.cents != null && !it.wrongNote }
     val avgCents = scored.mapNotNull { it.cents }.map { kotlin.math.abs(it) }.average()
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -265,6 +268,20 @@ private fun RoundSummary(state: RoundUiState, onExit: () -> Unit) {
                 )
             }
             AchievementUnlocks(outcome.newAchievements)
+        }
+        state.suggestedLevel?.let { suggested ->
+            val faster = suggested.ordinal > state.playerLevel.ordinal
+            Spacer(Modifier.height(16.dp))
+            Text(
+                if (faster) "You found every note with time to spare — that's progress!"
+                else "Several prompts ran out of time — more breathing room keeps it fun.",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedButton(onClick = onApplyLevel, modifier = Modifier.fillMaxWidth()) {
+                Text("Switch to ${suggested.label} pace")
+            }
         }
         Spacer(Modifier.height(24.dp))
         Button(onClick = onExit, modifier = Modifier.fillMaxWidth()) {

@@ -106,6 +106,15 @@ its own scoring category** — scores are only ever compared between identical s
 
 - **Note names: solfège (Do Ré Mi — default) or letters (C D E)**, applied everywhere.
 - Concert pitch A4 (415–446 Hz, default 440).
+- **Player level (Beginner / Intermediate / Advanced / Expert, default Beginner)** — one
+  friendly setting for time pressure across all games instead of raw timeout values: time
+  to start a note after the prompt (20/13/8/5 s), reveal reading time, the Shift GO-cue
+  window and the Sustain attempt cap all scale with it. Scoring is equally strict at
+  every level and personal bests carry over when moving up — improving is never punished.
+  Round summaries watch your actual reaction times: a round where every note came
+  comfortably fast offers a one-tap "Switch to <next> pace" (progress worth celebrating);
+  a round where prompts kept timing out offers more breathing room. Suggestions are
+  per-round, so an unfamiliar position naturally holds them back.
 - Difficulty (scoring tolerance), round length (5/10/20).
 - Sound feedback and pitch-drift warning toggles.
 

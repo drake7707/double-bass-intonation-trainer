@@ -86,8 +86,10 @@ class ShiftViewModel(
     private val sessionRepository: SessionRepository,
 ) : ViewModel() {
 
-    private val captureParams =
+    private var captureParams =
         if (mode == "pizz") CaptureParams.pizz() else CaptureParams.arco()
+    private var shiftParams = be.drakarah.intonation.game.ShiftParams()
+    private var revealMs = BASE_REVEAL_MS
 
     private lateinit var engine: PitchEngine
     private val sounds = GameSounds()
@@ -116,6 +118,13 @@ class ShiftViewModel(
             positions = settings.positions
             soundFeedback = settings.soundFeedback
             driftWarningEnabled = settings.driftWarning
+            captureParams = captureParams.copy(
+                promptTimeoutMs = settings.playerLevel.promptTimeoutMs,
+            )
+            shiftParams = shiftParams.copy(
+                departTimeoutMs = settings.playerLevel.shiftDepartTimeoutMs,
+            )
+            revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             engine = PitchEngine(config.copy(sensitivity = settings.micSensitivity))
             prompts = ShiftPool(positions, crossString = style == "cross")
                 .draw(settings.roundLength)
@@ -165,6 +174,7 @@ class ShiftViewModel(
     private fun newCapture(prompt: ShiftPromptSpec, skipQuiet: Boolean) = ShiftCapture(
         startHz = prompt.start.target.frequency(a4),
         captureParams = captureParams,
+        params = shiftParams,
         skipQuietGate = skipQuiet,
     )
 
@@ -197,7 +207,7 @@ class ShiftViewModel(
             }
             if (drift != null) sounds.playDrift(sharp = drift > 0)
         }
-        revealUntilMs = nowMs + REVEAL_MS
+        revealUntilMs = nowMs + revealMs
         _uiState.value = state.copy(
             phase = ShiftPhase.Reveal(attempt),
             results = state.results + attempt,
@@ -270,7 +280,7 @@ class ShiftViewModel(
     }
 
     companion object {
-        private const val REVEAL_MS = 1600L
+        private const val BASE_REVEAL_MS = 1600L
 
         val Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")

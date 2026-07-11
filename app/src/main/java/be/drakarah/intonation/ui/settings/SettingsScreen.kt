@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -31,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.game.Difficulty
+import be.drakarah.intonation.game.PlayerLevel
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.settings.AppSettings
 import kotlinx.coroutines.launch
@@ -83,6 +86,32 @@ fun SettingsScreen(
                     )
                     IconButton(onClick = { scope.launch { repo.setA4(settings.a4 + 1) } }) { Text("+") }
                 }
+            }
+
+            SettingBlock(
+                "Player level",
+                "How much time you get to read the prompt and find the note. Scoring is " +
+                    "equally strict at every level, and your bests carry over when you move up.",
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    PlayerLevel.entries.forEach { level ->
+                        FilterChip(
+                            selected = settings.playerLevel == level,
+                            onClick = { scope.launch { repo.setPlayerLevel(level) } },
+                            label = { Text(level.label) },
+                        )
+                    }
+                }
+                Text(
+                    "Up to ${settings.playerLevel.promptTimeoutMs / 1000} s to start each note.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             SettingBlock("Difficulty", "How forgiving the scoring is about cents off target.") {

@@ -87,6 +87,7 @@ class SustainViewModel(
     private var prompts: List<PromptSpec> = emptyList()
     private var capture: SustainCapture? = null
     private var sustainParams = SustainParams()
+    private var revealMs = BASE_REVEAL_MS
     private var revealUntilMs = -1L
     private var listenJob: Job? = null
     private var a4 = 440.0
@@ -104,7 +105,10 @@ class SustainViewModel(
             positions = settings.positions
             soundFeedback = settings.soundFeedback
             engine = PitchEngine(config.copy(sensitivity = settings.micSensitivity))
-            sustainParams = SustainParams.forDifficulty(difficulty)
+            sustainParams = SustainParams.forDifficulty(difficulty).copy(
+                attemptTimeoutMs = settings.playerLevel.sustainAttemptTimeoutMs,
+            )
+            revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             prompts = NotePool(positions).draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()
             capture = newCapture(prompts[0], skipQuiet = true)
@@ -163,7 +167,7 @@ class SustainViewModel(
                 else -> sounds.playMiss()
             }
         }
-        revealUntilMs = nowMs + REVEAL_MS
+        revealUntilMs = nowMs + revealMs
         _uiState.value = state.copy(
             phase = SustainPhase.Reveal(attempt),
             results = state.results + attempt,
@@ -233,7 +237,7 @@ class SustainViewModel(
     }
 
     companion object {
-        private const val REVEAL_MS = 1600L
+        private const val BASE_REVEAL_MS = 1600L
 
         val Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")

@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import be.drakarah.intonation.game.Difficulty
 import be.drakarah.intonation.game.FIRST_POSITION
+import be.drakarah.intonation.game.PlayerLevel
 import be.drakarah.intonation.game.Position
 import be.drakarah.intonation.game.positionById
 import be.drakarah.intonation.music.NoteNameStyle
@@ -21,6 +22,9 @@ data class AppSettings(
     val noteNameStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
     val a4: Double = 440.0,
     val difficulty: Difficulty = Difficulty.STANDARD,
+    /** Time pressure across all games (prompt/reveal/shift/sustain timing). Orthogonal to
+     * [difficulty], which sets scoring strictness; deliberately NOT in the configKey. */
+    val playerLevel: PlayerLevel = PlayerLevel.BEGINNER,
     val roundLength: Int = 10,
     val positions: Set<Position> = setOf(FIRST_POSITION),
     val soundFeedback: Boolean = true,
@@ -43,6 +47,7 @@ class SettingsRepository(private val context: Context) {
         val noteNameStyle = stringPreferencesKey("noteNameStyle")
         val a4 = doublePreferencesKey("a4")
         val difficulty = stringPreferencesKey("difficulty")
+        val playerLevel = stringPreferencesKey("playerLevel")
         val roundLength = intPreferencesKey("roundLength")
         val positions = stringPreferencesKey("positions")
         val soundFeedback = booleanPreferencesKey("soundFeedback")
@@ -61,6 +66,9 @@ class SettingsRepository(private val context: Context) {
             difficulty = prefs[Keys.difficulty]
                 ?.let { runCatching { Difficulty.valueOf(it) }.getOrNull() }
                 ?: Difficulty.STANDARD,
+            playerLevel = prefs[Keys.playerLevel]
+                ?.let { runCatching { PlayerLevel.valueOf(it) }.getOrNull() }
+                ?: PlayerLevel.BEGINNER,
             roundLength = prefs[Keys.roundLength] ?: 10,
             positions = prefs[Keys.positions]
                 ?.split(",")
@@ -113,6 +121,10 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setDifficulty(difficulty: Difficulty) {
         context.dataStore.edit { it[Keys.difficulty] = difficulty.name }
+    }
+
+    suspend fun setPlayerLevel(level: PlayerLevel) {
+        context.dataStore.edit { it[Keys.playerLevel] = level.name }
     }
 
     suspend fun setRoundLength(length: Int) {

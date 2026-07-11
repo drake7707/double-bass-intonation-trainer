@@ -71,6 +71,10 @@ data class RoundUiState(
     val driftCents: Float? = null,
     /** Set once the finished round is persisted; drives the beat-your-best banner. */
     val outcome: RoundOutcome? = null,
+    val playerLevel: be.drakarah.intonation.game.PlayerLevel =
+        be.drakarah.intonation.game.PlayerLevel.BEGINNER,
+    /** Level the summary offers to switch to (from this round's reaction times), if any. */
+    val suggestedLevel: be.drakarah.intonation.game.PlayerLevel? = null,
     val ready: Boolean = false,
 ) {
     val maxScore: Int get() = roundLength * MAX_ATTEMPT_SCORE
@@ -83,8 +87,9 @@ class RoundViewModel(
     private val sessionRepository: SessionRepository,
 ) : ViewModel() {
 
-    private val captureParams =
+    private var captureParams =
         if (mode == "pizz") CaptureParams.pizz() else CaptureParams.arco()
+    private var revealMs = BASE_REVEAL_MS
 
     private lateinit var engine: PitchEngine
 
@@ -113,6 +118,11 @@ class RoundViewModel(
             positions = settings.positions
             soundFeedback = settings.soundFeedback
             driftWarningEnabled = settings.driftWarning
+            captureParams = captureParams.copy(
+                promptTimeoutMs = settings.playerLevel.promptTimeoutMs,
+            )
+            revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
+            capture = AttemptCapture(captureParams, skipQuietGate = true)
             engine = PitchEngine(config.copy(sensitivity = settings.micSensitivity))
             prompts = NotePool(positions).draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()
@@ -120,6 +130,7 @@ class RoundViewModel(
                 roundLength = settings.roundLength,
                 prompt = prompts[0],
                 noteStyle = settings.noteNameStyle,
+                playerLevel = settings.playerLevel,
                 ready = true,
             )
 
@@ -183,7 +194,7 @@ class RoundViewModel(
             }
             if (drift != null) sounds.playDrift(sharp = drift > 0)
         }
-        revealUntilMs = nowMs + REVEAL_MS
+        revealUntilMs = nowMs + revealMs
         _uiState.value = _uiState.value.let {
             it.copy(
                 phase = RoundPhase.Reveal(result),
@@ -247,7 +258,24 @@ class RoundViewModel(
                 )
             }
             val outcome = sessionRepository.recordCompletedRound(session, attempts)
-            _uiState.value = _uiState.value.copy(outcome = outcome)
+            _uiState.value = _uiState.value.copy(
+                outcome = outcome,
+                suggestedLevel = be.drakarah.intonation.game.LevelAdvisor.suggest(
+                    current = state.playerLevel,
+                    reactionTimesMs = state.results.map {
+                        if (it.timedOut) null else it.reactionTimeMs
+                    },
+                ),
+            )
+        }
+    }
+
+    /** The player accepted the summary's level suggestion. */
+    fun applySuggestedLevel() {
+        val level = _uiState.value.suggestedLevel ?: return
+        viewModelScope.launch {
+            settingsRepository.setPlayerLevel(level)
+            _uiState.value = _uiState.value.copy(playerLevel = level, suggestedLevel = null)
         }
     }
 
@@ -269,7 +297,7 @@ class RoundViewModel(
     }
 
     companion object {
-        private const val REVEAL_MS = 1200L
+        private const val BASE_REVEAL_MS = 1200L
 
         val Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")

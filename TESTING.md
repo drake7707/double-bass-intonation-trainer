@@ -5,6 +5,19 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### Big sweep view redesign (your 2026-07-11 notes)
+- [ ] Pitch debug → "Start sweep (big view)": the note cells now line up in even columns
+      (all the same width) instead of a ragged flow
+- [ ] No emoji anywhere in the sweep view — the state banner uses an hourglass (waiting) /
+      waveform (capturing) / music-note (play a note) icon, the last capture uses a check
+      icon, and arco/pizz is a swap icon + label
+- [ ] Layout reads as one design: centered progress "N / 26", a caption, a progress bar, a
+      big color-coded state banner, the last-captured note, then the aligned grid
+- [ ] The colour still does the at-2 m work (green = captured), and it's all still readable
+      while holding the bass
+- [ ] The compact debug cards also lost their ⇄/✓/◉ emoji (swap icon, check icon, record/
+      stop icon) — everything still works (mode toggle, freeze readout, long capture)
+
 ### Feedback batch (your 2026-07-11 notes)
 - [ ] **Shifts always change position.** Same-string and cross-string shift rounds never
       give a start and target in the same position — every prompt is a genuine shift

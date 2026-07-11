@@ -10,8 +10,12 @@ data class SustainParams(
     val goalMs: Long = 5000,
     /** After onset: time to find the pitch before deviation starts counting. */
     val graceMs: Long = 300,
-    /** Consecutive out-of-tolerance samples before the timer resets (~46 ms at 2). */
-    val outDebounceSamples: Int = 2,
+    /** How long the pitch may sit out of tolerance before the hold timer resets. A bow
+     * reversal briefly scoops the pitch then returns to the same note (her report: every
+     * bow change reset the ring); genuine finger drift persists. Forgiving the brief,
+     * self-correcting excursion but still resetting on a sustained departure is the bow-
+     * reversal-vs-drift classifier in its simplest useful form. */
+    val outGraceMs: Long = 250,
     /** Rejected samples longer than this mean the note died (pizz decay, bow stop). */
     val dropoutMs: Long = 400,
     /** Whole-attempt cap; ending here scores partial credit on the best held stretch. */
@@ -69,7 +73,8 @@ class SustainCapture(
     private var heldSinceMs = -1L
     private var bestHeldMs = 0L
     private var resets = 0
-    private var outStreak = 0
+    /** When the current out-of-tolerance excursion began, or -1 while in tune. */
+    private var outSinceMs = -1L
     private var lastUsableMs = -1L
 
     fun process(sample: PitchSample): SustainState {
@@ -110,7 +115,7 @@ class SustainCapture(
             onsetMs = sample.timestampMs
             lastUsableMs = sample.timestampMs
             heldSinceMs = -1
-            outStreak = 0
+            outSinceMs = -1
             state = SustainState.Tracking(0, inTolerance = false, cents = null)
             return
         }
@@ -147,7 +152,7 @@ class SustainCapture(
         val inTolerance = abs(cents) <= params.toleranceCents
 
         if (inTolerance) {
-            outStreak = 0
+            outSinceMs = -1
             if (heldSinceMs < 0) heldSinceMs = now
             val held = now - heldSinceMs
             if (held >= params.goalMs) {
@@ -157,8 +162,10 @@ class SustainCapture(
             }
             state = SustainState.Tracking(held, true, cents)
         } else {
-            outStreak++
-            if (outStreak > params.outDebounceSamples && heldSinceMs >= 0) {
+            // Only a *sustained* departure resets the timer; a brief scoop that returns (bow
+            // reversal) is forgiven so the hold survives the bow change.
+            if (outSinceMs < 0) outSinceMs = now
+            if (now - outSinceMs > params.outGraceMs && heldSinceMs >= 0) {
                 captureHeldStretch(now)
                 heldSinceMs = -1
                 resets++

@@ -68,23 +68,37 @@ fun RoundScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 state.driftCents?.let { drift ->
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        if (drift > 0) "⚠ everything is trending sharp — reset your reference"
-                        else "⚠ everything is trending flat — reset your reference",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = ResultColors.close,
-                        textAlign = TextAlign.Center,
-                    )
+                    Spacer(Modifier.height(8.dp))
+                    // Big, high-contrast banner: she reads this at arm's length while playing.
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .background(
+                                ResultColors.close.copy(alpha = 0.18f),
+                                MaterialTheme.shapes.medium,
+                            )
+                            .padding(vertical = 12.dp, horizontal = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            if (drift > 0) "TRENDING SHARP\ncome down" else "TRENDING FLAT\ncome up",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = ResultColors.close,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     when (val phase = state.phase) {
+                        is RoundPhase.CountIn -> CountIn(phase.secsLeft)
                         RoundPhase.Listening -> ListeningPrompt(state)
                         is RoundPhase.Reveal -> RevealResult(phase.result, state.noteStyle)
                         RoundPhase.Done -> RoundSummary(
                             state, onExit,
                             onApplyLevel = viewModel::applySuggestedLevel,
+                            onPlayAgain = viewModel::restart,
                         )
                     }
                 }
@@ -119,6 +133,28 @@ private fun ProgressDots(state: RoundUiState) {
                     .background(color, CircleShape)
             )
         }
+    }
+}
+
+@Composable
+private fun CountIn(secsLeft: Int) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            "Get ready",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            "$secsLeft",
+            fontSize = 140.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            "pick up your bass",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -183,6 +219,12 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
                 style = MaterialTheme.typography.headlineMedium,
                 color = color,
             )
+            result.wrongOctave -> Text(
+                "right note,\nwrong octave",
+                style = MaterialTheme.typography.headlineMedium,
+                color = color,
+                textAlign = TextAlign.Center,
+            )
             result.wrongNote -> Text(
                 "wrong note?",
                 style = MaterialTheme.typography.headlineMedium,
@@ -210,7 +252,12 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
 }
 
 @Composable
-private fun RoundSummary(state: RoundUiState, onExit: () -> Unit, onApplyLevel: () -> Unit) {
+private fun RoundSummary(
+    state: RoundUiState,
+    onExit: () -> Unit,
+    onApplyLevel: () -> Unit,
+    onPlayAgain: () -> Unit,
+) {
     val scored = state.results.filter { it.cents != null && !it.wrongNote }
     val avgCents = scored.mapNotNull { it.cents }.map { kotlin.math.abs(it) }.average()
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -279,7 +326,11 @@ private fun RoundSummary(state: RoundUiState, onExit: () -> Unit, onApplyLevel: 
             }
         }
         Spacer(Modifier.height(24.dp))
-        Button(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) {
+            Text("Let's go again")
+        }
+        Spacer(Modifier.height(8.dp))
+        OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
             Text("Done")
         }
     }

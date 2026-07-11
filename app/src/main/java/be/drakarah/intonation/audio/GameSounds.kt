@@ -31,15 +31,17 @@ class GameSounds {
         amplitude = 0.3,
     )
 
-    /** Low buzz: missed. Two close frequencies beat against each other. */
+    /** Harsh buzz: missed. Two close frequencies beat against each other. Kept up at ~E4/F4:
+     * the old 130/139 Hz pair sat below a phone speaker's roll-off and was inaudible on the
+     * Pixel speaker (her report: only the chime was audible, never a buzz on wrong/timeout). */
     private val miss: ShortArray = run {
-        val ms = 220
+        val ms = 260
         val n = sampleRate * ms / 1000
         ShortArray(n) { i ->
             val t = i.toDouble() / sampleRate
             val envelope = decay(i, n)
-            val v = 0.5 * sin(2 * PI * 130.0 * t) + 0.5 * sin(2 * PI * 139.0 * t)
-            (Short.MAX_VALUE * 0.35 * envelope * v).toInt().toShort()
+            val v = 0.5 * sin(2 * PI * 330.0 * t) + 0.5 * sin(2 * PI * 349.23 * t)
+            (Short.MAX_VALUE * 0.4 * envelope * v).toInt().toShort()
         }
     }
 

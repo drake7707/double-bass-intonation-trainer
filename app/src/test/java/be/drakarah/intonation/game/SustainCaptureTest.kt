@@ -47,6 +47,20 @@ class SustainCaptureTest {
     }
 
     @Test
+    fun briefBowReversalScoopDoesNotReset() {
+        // Hold in tune, a ~200 ms scoop out (bow change) that returns, then finish the hold.
+        // The bow reversal must not cost the hold (her report) — 200 ms < outGraceMs 250 ms.
+        val script = silence(0, 300) +
+                note(300, 2500, cents = 1f) +
+                note(2500, 2700, cents = 35f) +   // 200 ms scoop out and back
+                note(2700, 8000, cents = 1f)
+        val state = run(capture(), script)
+        val result = (state as SustainState.Finished).result
+        assertTrue("expected success, got $result", result.success)
+        assertEquals("a brief bow-change scoop must be forgiven", 0, result.resets)
+    }
+
+    @Test
     fun driftResetsTimerButCanStillSucceed() {
         // hold 2 s, drift out for 300 ms, then hold 5 s
         val script = silence(0, 300) +

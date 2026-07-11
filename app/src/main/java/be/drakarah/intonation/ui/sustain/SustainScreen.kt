@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,8 +26,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.abs
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.ui.common.AchievementUnlocks
@@ -62,9 +66,10 @@ fun SustainScreen(
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     when (val phase = state.phase) {
+                        is SustainPhase.CountIn -> CountIn(phase.secsLeft)
                         is SustainPhase.Play -> PlayContent(state, phase)
                         is SustainPhase.Reveal -> RevealContent(state, phase.result)
-                        SustainPhase.Done -> DoneContent(state, onExit)
+                        SustainPhase.Done -> DoneContent(state, onExit, viewModel::restart)
                     }
                 }
                 Spacer(Modifier.height(8.dp))
@@ -152,6 +157,73 @@ private fun PlayContent(state: SustainUiState, phase: SustainPhase.Play) {
                 color = ResultColors.excellent,
             )
         }
+        if (phase.tracking) {
+            Spacer(Modifier.height(16.dp))
+            InTuneBar(phase.currentCents, phase.inTolerance)
+        }
+    }
+}
+
+/** Tune-up-style bar: a marker slides sharp/flat around a centre line so she can see how in
+ * tune the hold is, not just whether it reset (her request). */
+@Composable
+private fun InTuneBar(cents: Float?, inTune: Boolean) {
+    val frac = cents?.let { ((it / 50f).coerceIn(-1f, 1f) + 1f) / 2f }
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(32.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
+        )
+        Box(
+            Modifier
+                .width(2.dp)
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.onSurfaceVariant),
+        )
+        if (frac != null) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.weight(frac.coerceIn(0.001f, 0.999f)))
+                Box(
+                    Modifier
+                        .size(22.dp)
+                        .background(
+                            if (inTune) ResultColors.excellent else ResultColors.close,
+                            CircleShape,
+                        ),
+                )
+                Spacer(Modifier.weight((1f - frac).coerceIn(0.001f, 0.999f)))
+            }
+        }
+    }
+}
+
+@Composable
+private fun CountIn(secsLeft: Int) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            "Get ready",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            "$secsLeft",
+            fontSize = 140.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            "pick up your bass",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -196,7 +268,7 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
 }
 
 @Composable
-private fun DoneContent(state: SustainUiState, onExit: () -> Unit) {
+private fun DoneContent(state: SustainUiState, onExit: () -> Unit, onPlayAgain: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text("Round complete", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(16.dp))
@@ -233,7 +305,11 @@ private fun DoneContent(state: SustainUiState, onExit: () -> Unit) {
             AchievementUnlocks(outcome.newAchievements)
         }
         Spacer(Modifier.height(24.dp))
-        Button(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) {
+            Text("Let's go again")
+        }
+        Spacer(Modifier.height(8.dp))
+        OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
             Text("Done")
         }
     }

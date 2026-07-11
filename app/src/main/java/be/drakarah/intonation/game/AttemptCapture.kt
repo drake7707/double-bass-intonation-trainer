@@ -48,6 +48,10 @@ data class CapturedPitch(
     /** Time from onset to the freeze. */
     val timeToStableMs: Long,
     val quality: CaptureQuality,
+    /** Median energy (0..100) of the frozen window. A faint finger-lift/adjacent-string
+     * transient freezes low here; a genuinely played note is high. Lets the game reject a
+     * transient that happens to be a wrong note instead of scoring it. */
+    val energyLevel: Float = 0f,
 )
 
 sealed interface CaptureState {
@@ -91,8 +95,11 @@ class AttemptCapture(
     private var lastPitch = 0f
     private var dropoutStreak = 0
 
-    /** Accepted (timestampMs, hz) pairs since the attack skip ended. */
-    private val buffer = ArrayList<Pair<Long, Float>>()
+    /** One accepted, post-attack-skip sample kept for the stability window. */
+    private data class Buffered(val ms: Long, val hz: Float, val level: Float)
+
+    /** Accepted samples since the attack skip ended. */
+    private val buffer = ArrayList<Buffered>()
 
     /** Feed the next sample; returns the state after processing it. */
     fun process(sample: PitchSample): CaptureState {
@@ -157,7 +164,7 @@ class AttemptCapture(
             lastPitch = sample.smoothedHz
             dropoutStreak = 0
             if (!glide) {
-                buffer.add(sample.timestampMs to sample.smoothedHz)
+                buffer.add(Buffered(sample.timestampMs, sample.smoothedHz, sample.energyLevel))
                 if (isStable(sample.timestampMs)) {
                     freeze(windowSince(sample.timestampMs - params.stabilityWindowMs), CaptureQuality.CLEAN, sample.timestampMs)
                     return
@@ -196,39 +203,40 @@ class AttemptCapture(
         state = CaptureState.Listening
     }
 
-    private fun windowSince(fromMs: Long): List<Pair<Long, Float>> =
-        buffer.filter { it.first >= fromMs }
+    private fun windowSince(fromMs: Long): List<Buffered> =
+        buffer.filter { it.ms >= fromMs }
 
     private fun isStable(nowMs: Long): Boolean {
         val window = windowSince(nowMs - params.stabilityWindowMs)
         if (window.size < 2) return false
         // the window must genuinely span the required duration, not just hold two close samples
-        if (window.first().first > nowMs - params.stabilityWindowMs + spanToleranceMs) return false
-        return spreadCents(window.map { it.second }) <= params.stabilityBandCents
+        if (window.first().ms > nowMs - params.stabilityWindowMs + spanToleranceMs) return false
+        return spreadCents(window.map { it.hz }) <= params.stabilityBandCents
     }
 
-    private fun freeze(window: List<Pair<Long, Float>>, quality: CaptureQuality, nowMs: Long) {
-        val hz = median(window.map { it.second })
+    private fun freeze(window: List<Buffered>, quality: CaptureQuality, nowMs: Long) {
+        val hz = median(window.map { it.hz })
         state = CaptureState.Frozen(
             CapturedPitch(
                 frequencyHz = hz,
                 reactionTimeMs = onsetMs - startMs,
                 timeToStableMs = nowMs - onsetMs,
                 quality = quality,
+                energyLevel = median(window.map { it.level }),
             )
         )
     }
 
     /** Contiguous run of stability-window length with the smallest cent spread, if any. */
-    private fun mostStableSubWindow(): List<Pair<Long, Float>>? {
+    private fun mostStableSubWindow(): List<Buffered>? {
         if (buffer.size < params.minFallbackSamples) return null
-        var best: List<Pair<Long, Float>>? = null
+        var best: List<Buffered>? = null
         var bestSpread = Float.MAX_VALUE
         for (end in buffer.indices) {
-            val endMs = buffer[end].first
-            val window = buffer.subList(0, end + 1).filter { it.first >= endMs - params.stabilityWindowMs }
+            val endMs = buffer[end].ms
+            val window = buffer.subList(0, end + 1).filter { it.ms >= endMs - params.stabilityWindowMs }
             if (window.size < 2) continue
-            val spread = spreadCents(window.map { it.second })
+            val spread = spreadCents(window.map { it.hz })
             if (spread < bestSpread) {
                 bestSpread = spread
                 best = window.toList()

@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,22 +63,35 @@ fun ShiftScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 state.driftCents?.let { drift ->
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        if (drift > 0) "⚠ everything is trending sharp — reset your reference"
-                        else "⚠ everything is trending flat — reset your reference",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = ResultColors.close,
-                    )
+                    Spacer(Modifier.height(8.dp))
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .background(
+                                ResultColors.close.copy(alpha = 0.18f),
+                                MaterialTheme.shapes.medium,
+                            )
+                            .padding(vertical = 12.dp, horizontal = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            if (drift > 0) "TRENDING SHARP\ncome down" else "TRENDING FLAT\ncome up",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = ResultColors.close,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     when (val phase = state.phase) {
+                        is ShiftPhase.CountIn -> CountIn(phase.secsLeft)
                         is ShiftPhase.Start -> StartContent(state, phase.wrongNote)
                         ShiftPhase.Hold -> HoldContent(state)
                         ShiftPhase.Go -> GoContent(state)
                         is ShiftPhase.Reveal -> RevealContent(state, phase.result)
-                        ShiftPhase.Done -> DoneContent(state, onExit)
+                        ShiftPhase.Done -> DoneContent(state, onExit, viewModel::restart)
                     }
                 }
                 Spacer(Modifier.height(8.dp))
@@ -237,7 +251,29 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
 }
 
 @Composable
-private fun DoneContent(state: ShiftUiState, onExit: () -> Unit) {
+private fun CountIn(secsLeft: Int) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            "Get ready",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            "$secsLeft",
+            fontSize = 140.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            "pick up your bass",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun DoneContent(state: ShiftUiState, onExit: () -> Unit, onPlayAgain: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text("Round complete", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(16.dp))
@@ -280,7 +316,11 @@ private fun DoneContent(state: ShiftUiState, onExit: () -> Unit) {
             AchievementUnlocks(outcome.newAchievements)
         }
         Spacer(Modifier.height(24.dp))
-        Button(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) {
+            Text("Let's go again")
+        }
+        Spacer(Modifier.height(8.dp))
+        OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
             Text("Done")
         }
     }

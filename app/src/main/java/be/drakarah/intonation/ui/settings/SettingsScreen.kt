@@ -234,6 +234,26 @@ fun SettingsScreen(
                 }
             }
 
+            SectionHeader("Debug")
+            SettingBlock(
+                "Record & trace games",
+                "Records the whole game — audio + detection + game events — so a real round " +
+                    "can be replayed offline to diagnose detection. Files appear in Recordings " +
+                    "tagged \"game-trace\"; share them for analysis. Leave off for normal play.",
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(if (settings.traceGames) "On" else "Off")
+                    Switch(
+                        checked = settings.traceGames,
+                        onCheckedChange = { scope.launch { repo.setTraceGames(it) } },
+                    )
+                }
+            }
+
             Spacer(Modifier.height(8.dp))
             TextButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
                 Text("About & licenses")

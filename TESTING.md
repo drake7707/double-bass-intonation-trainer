@@ -5,17 +5,49 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-11 afternoon feedback fixes (verify on the bass)
+Diagnosed from your five afternoon snippets (now in the corpus); see
+`FeedbackSnippetAnalysis` / `FeedbackRegressionTest` in `:app` tests.
+- [ ] **Fa2/Fa#2 arco now captured.** Play a round with Fa2/Fa#2 prompts bowing legato
+      (don't stop between notes) — they should register now (root cause: mid-round prompts
+      waited for silence that never came while bowing; they now arm immediately)
+- [ ] **Wrong note no longer flashes on stray rings.** Lifting fingers / brushing an
+      adjacent string between prompts should NOT score "wrong note?" — faint, shaky,
+      out-of-range and harmonic captures are discarded and it keeps listening
+- [ ] **Sol#1 pizz.** Play Sol#1 pizz repeatedly — the D#3 harmonic flash and the 39 Hz
+      artifact should no longer surface as "wrong note?"; a genuinely-held wrong note still does
+- [ ] **Wrong octave labelled.** Deliberately play the right note an octave off → shows
+      "right note, wrong octave" (not "wrong note?"). Non-octave harmonics are filtered, not shown
+- [ ] **Count-in.** Every exercise (Note Accuracy / Sustain / Shift) starts with a 5 s
+      visual countdown ("Get ready / pick up your bass"), no beeps; listening only starts after
+- [ ] **Let's go again.** Score screen has a "Let's go again" button that restarts the same
+      exercise; "Done" still exits
+- [ ] **Buzz audible.** Wrong note / timeout now plays an audible buzz on the phone speaker
+      (was 130 Hz, below the speaker's range → silent); chime/blip still fine
+- [ ] **Drift banner readable.** The trending-sharp/flat warning is now a big banner
+      readable at arm's length while playing
+- [ ] **Sustain locks on Do#2.** Bow Do#2 arco — the ring should fill (it couldn't arm
+      before while bowing continuously)
+- [ ] **Sustain survives bow changes.** Change bow direction mid-hold — a brief scoop that
+      returns should NOT reset the ring; only genuine drift (sustained out) resets it
+- [ ] **Sustain in-tune bar.** A tune-up-style bar shows how sharp/flat the hold is; it
+      greys out (no marker) when you're below the noise gate / not playing
+- [ ] **Home disabled card.** Sustain in Pizz mode reads clearly greyed/dimmed (was too subtle)
+- [ ] **Trace tool.** Settings → Debug → "Record & trace games" ON → play a full arco round →
+      a `game-trace-…` WAV + JSONL appears in Recordings (Share it to me — I'll replay the whole
+      round offline to retune arming/thresholds from real data). Turn OFF for normal play
+
 ### Big sweep view redesign (your 2026-07-11 notes)
-- [ ] Pitch debug → "Start sweep (big view)": the note cells now line up in even columns
+- [x] Pitch debug → "Start sweep (big view)": the note cells now line up in even columns
       (all the same width) instead of a ragged flow
-- [ ] No emoji anywhere in the sweep view — the state banner uses an hourglass (waiting) /
+- [x] No emoji anywhere in the sweep view — the state banner uses an hourglass (waiting) /
       waveform (capturing) / music-note (play a note) icon, the last capture uses a check
       icon, and arco/pizz is a swap icon + label
-- [ ] Layout reads as one design: centered progress "N / 26", a caption, a progress bar, a
+- [x] Layout reads as one design: centered progress "N / 26", a caption, a progress bar, a
       big color-coded state banner, the last-captured note, then the aligned grid
-- [ ] The colour still does the at-2 m work (green = captured), and it's all still readable
+- [x] The colour still does the at-2 m work (green = captured), and it's all still readable
       while holding the bass
-- [ ] The compact debug cards also lost their ⇄/✓/◉ emoji (swap icon, check icon, record/
+- [x] The compact debug cards also lost their ⇄/✓/◉ emoji (swap icon, check icon, record/
       stop icon) — everything still works (mode toggle, freeze readout, long capture)
 
 ### Feedback batch (your 2026-07-11 notes)

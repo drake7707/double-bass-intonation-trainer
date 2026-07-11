@@ -5,8 +5,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import android.content.Context
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.audio.GameSounds
+import be.drakarah.intonation.audio.GameTrace
 import be.drakarah.intonation.data.AttemptEntity
 import be.drakarah.intonation.data.RoundOutcome
 import be.drakarah.intonation.data.SessionEntity
@@ -45,6 +47,8 @@ data class SustainAttemptUi(
 )
 
 sealed interface SustainPhase {
+    /** Visual-only count-in before the first hold. */
+    data class CountIn(val secsLeft: Int) : SustainPhase
     /** Waiting for the note; once tracking, [heldMs]/[goalMs] drives the ring. */
     data class Play(
         val heldMs: Long = 0,
@@ -52,6 +56,8 @@ sealed interface SustainPhase {
         val inTolerance: Boolean = false,
         /** Signed cents while out of tolerance — drives the high/low hint. */
         val offCents: Float? = null,
+        /** Signed cents whenever tracking — drives the tune-up-style in-tune bar. */
+        val currentCents: Float? = null,
     ) : SustainPhase
     data class Reveal(val result: SustainAttemptUi) : SustainPhase
     data object Done : SustainPhase
@@ -61,7 +67,7 @@ data class SustainUiState(
     val promptIndex: Int = 0,
     val roundLength: Int = 10,
     val prompt: PromptSpec? = null,
-    val phase: SustainPhase = SustainPhase.Play(),
+    val phase: SustainPhase = SustainPhase.CountIn(be.drakarah.intonation.ui.round.COUNT_IN_SECS),
     val totalScore: Int = 0,
     val results: List<SustainAttemptUi> = emptyList(),
     val noteStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
@@ -77,10 +83,12 @@ class SustainViewModel(
     private val mode: String,
     private val settingsRepository: SettingsRepository,
     private val sessionRepository: SessionRepository,
+    private val appContext: Context,
 ) : ViewModel() {
 
     private lateinit var engine: PitchEngine
     private val sounds = GameSounds()
+    private var trace: GameTrace? = null
 
     private val _uiState = MutableStateFlow(SustainUiState())
     val uiState: StateFlow<SustainUiState> = _uiState.asStateFlow()
@@ -106,7 +114,9 @@ class SustainViewModel(
             positions = settings.positions
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
-            engine = PitchEngine(config.applying(settings))
+            val cfg = config.applying(settings)
+            trace = if (settings.traceGames) GameTrace(appContext, cfg, "sustain").also { it.prepare() } else null
+            engine = PitchEngine(cfg, trace?.waveWriter)
             sustainParams = SustainParams.forDifficulty(difficulty).copy(
                 attemptTimeoutMs = settings.playerLevel.sustainAttemptTimeoutMs,
             )
@@ -119,12 +129,16 @@ class SustainViewModel(
                 prompt = prompts[0],
                 noteStyle = settings.noteNameStyle,
                 goalMs = sustainParams.goalMs,
+                phase = SustainPhase.CountIn(be.drakarah.intonation.ui.round.COUNT_IN_SECS),
                 ready = true,
             )
+            launch { runCountIn() }
 
             engine.samples().collect { sample ->
+                trace?.onSample(sample)
                 val state = _uiState.value
                 when (state.phase) {
+                    is SustainPhase.CountIn -> {}
                     is SustainPhase.Play -> {
                         when (val captureState = capture?.process(sample)) {
                             is SustainState.Tracking -> _uiState.value = state.copy(
@@ -134,6 +148,9 @@ class SustainViewModel(
                                     inTolerance = captureState.inTolerance,
                                     offCents = captureState.cents
                                         ?.takeIf { !captureState.inTolerance },
+                                    // Only show the marker on a live signal; below the noise
+                                    // gate (not playing) the bar greys out (her request).
+                                    currentCents = captureState.cents?.takeIf { sample.accepted },
                                 )
                             )
                             is SustainState.Finished -> onFinished(
@@ -151,8 +168,24 @@ class SustainViewModel(
         }
     }
 
+    private suspend fun runCountIn() {
+        for (s in be.drakarah.intonation.ui.round.COUNT_IN_SECS downTo 1) {
+            _uiState.value = _uiState.value.copy(phase = SustainPhase.CountIn(s))
+            kotlinx.coroutines.delay(1000)
+        }
+        capture = newCapture(prompts[0], skipQuiet = true)
+        _uiState.value = _uiState.value.copy(phase = SustainPhase.Play())
+    }
+
     private fun newCapture(prompt: PromptSpec, skipQuiet: Boolean) =
         SustainCapture(prompt.target.frequency(a4), sustainParams, skipQuietGate = skipQuiet)
+
+    /** "Play again": fresh round, same settings. */
+    fun restart() {
+        stop()
+        _uiState.value = SustainUiState()
+        start()
+    }
 
     private fun onFinished(result: SustainResult, state: SustainUiState, nowMs: Long) {
         val prompt = state.prompt ?: return
@@ -184,7 +217,9 @@ class SustainViewModel(
             _uiState.value = state.copy(phase = SustainPhase.Done)
             persistRound(state)
         } else {
-            capture = newCapture(prompts[next], skipQuiet = false)
+            // skipQuiet: legato bowing never goes silent between holds, so waiting for quiet
+            // left the machine unable to arm (her Do#2 "won't lock" report).
+            capture = newCapture(prompts[next], skipQuiet = true)
             _uiState.value = state.copy(
                 promptIndex = next, prompt = prompts[next], phase = SustainPhase.Play(),
             )
@@ -224,6 +259,7 @@ class SustainViewModel(
                     quality = if (r.result.success) "CLEAN" else "TIMEOUT",
                 )
             }
+            trace?.save()
             val outcome = sessionRepository.recordCompletedRound(session, attempts)
             _uiState.value = _uiState.value.copy(outcome = outcome)
         }
@@ -253,6 +289,7 @@ class SustainViewModel(
                     mode = mode,
                     settingsRepository = app.container.settingsRepository,
                     sessionRepository = app.container.sessionRepository,
+                    appContext = app.applicationContext,
                 ) as T
             }
         }

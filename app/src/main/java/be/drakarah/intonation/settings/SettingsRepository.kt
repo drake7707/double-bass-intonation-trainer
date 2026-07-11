@@ -47,11 +47,22 @@ data class AppSettings(
     val missingFundamentalMaxHz: Float = 63f,
     val oddHarmonicMinRatio: Float = 2f,
     val oddHarmonicMinRelative: Float = 0.02f,
+    /** Game detection thresholds the full calibration wizard measures from real playing
+     * (defaults are the reference-device provisional values; the wizard overrides per phone):
+     * energy below which a *wrong* capture is treated as a stray transient not a played note. */
+    val wrongNoteMinLevel: Float = 55f,
+    /** Frequency below which a capture cannot be a played note (the lowest string; the wizard
+     * sets it from the measured open-Mi so it generalizes to any tuning/instrument). */
+    val lowestPlayableHz: Float = 40f,
     /** Last completed full calibration (epoch ms, 0 = never). */
     val fullCalibrationAt: Long = 0,
     /** Drone mode's last pitch class (0 = Do/C … 11 = Si/B) and just-fifth toggle. */
     val dronePitchClass: Int = 9, // La / A — a natural reference pitch
     val droneFifth: Boolean = false,
+    /** Debug only: record the whole game (audio + detection + game events) so a real round
+     * can be replayed offline to diagnose thresholds. Off by default; files land in
+     * Recordings tagged "game-trace". */
+    val traceGames: Boolean = false,
 )
 
 /** The one place where saved calibration turns into a runnable detection config. */
@@ -84,9 +95,12 @@ class SettingsRepository(private val context: Context) {
         val missingFundamentalMaxHz = floatPreferencesKey("missingFundamentalMaxHz")
         val oddHarmonicMinRatio = floatPreferencesKey("oddHarmonicMinRatio")
         val oddHarmonicMinRelative = floatPreferencesKey("oddHarmonicMinRelative")
+        val wrongNoteMinLevel = floatPreferencesKey("wrongNoteMinLevel")
+        val lowestPlayableHz = floatPreferencesKey("lowestPlayableHz")
         val fullCalibrationAt = longPreferencesKey("fullCalibrationAt")
         val dronePitchClass = intPreferencesKey("dronePitchClass")
         val droneFifth = booleanPreferencesKey("droneFifth")
+        val traceGames = booleanPreferencesKey("traceGames")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -119,9 +133,12 @@ class SettingsRepository(private val context: Context) {
             missingFundamentalMaxHz = prefs[Keys.missingFundamentalMaxHz] ?: 63f,
             oddHarmonicMinRatio = prefs[Keys.oddHarmonicMinRatio] ?: 2f,
             oddHarmonicMinRelative = prefs[Keys.oddHarmonicMinRelative] ?: 0.02f,
+            wrongNoteMinLevel = prefs[Keys.wrongNoteMinLevel] ?: 55f,
+            lowestPlayableHz = prefs[Keys.lowestPlayableHz] ?: 40f,
             fullCalibrationAt = prefs[Keys.fullCalibrationAt] ?: 0,
             dronePitchClass = (prefs[Keys.dronePitchClass] ?: 9).coerceIn(0, 11),
             droneFifth = prefs[Keys.droneFifth] ?: false,
+            traceGames = prefs[Keys.traceGames] ?: false,
         )
     }
 
@@ -134,6 +151,10 @@ class SettingsRepository(private val context: Context) {
         oddHarmonicMinRatio: Float,
         oddHarmonicMinRelative: Float,
         epochMs: Long,
+        /** Measured from the open-strings playing stage; null keeps the current value. */
+        wrongNoteMinLevel: Float? = null,
+        /** Measured from the open-Mi stage (lowest string); null keeps the current value. */
+        lowestPlayableHz: Float? = null,
     ) {
         context.dataStore.edit {
             it[Keys.audioSource] = audioSource
@@ -141,6 +162,8 @@ class SettingsRepository(private val context: Context) {
             it[Keys.missingFundamentalMaxHz] = missingFundamentalMaxHz.coerceIn(39f, 90f)
             it[Keys.oddHarmonicMinRatio] = oddHarmonicMinRatio
             it[Keys.oddHarmonicMinRelative] = oddHarmonicMinRelative
+            wrongNoteMinLevel?.let { v -> it[Keys.wrongNoteMinLevel] = v.coerceIn(20f, 90f) }
+            lowestPlayableHz?.let { v -> it[Keys.lowestPlayableHz] = v.coerceIn(30f, 60f) }
             it[Keys.fullCalibrationAt] = epochMs
             it[Keys.lastCalibratedAt] = epochMs
         }
@@ -203,5 +226,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setDroneFifth(enabled: Boolean) {
         context.dataStore.edit { it[Keys.droneFifth] = enabled }
+    }
+
+    suspend fun setTraceGames(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.traceGames] = enabled }
     }
 }

@@ -48,17 +48,25 @@ tone always sounds in an audible register (octave-equivalent to your choice). Op
 **"add fifth"** reinforces the root with a just (3:2) fifth for easier tuning. Its own
 volume slider; the tone stops when you leave the screen or background the app.
 
+Every exercise begins with a short visual count-in ("Get ready / pick up your bass") so
+you can put the phone down and get the bow ready before listening starts. Each score
+screen offers **Let's go again** to replay the same exercise immediately.
+
 ### Note Accuracy
 "Play Sol2." The first stable pitch is frozen and scored in cents. Correcting the finger
-after landing does not help. Timeouts count as misses; a note ~a semitone off is labelled
-"wrong note?" instead of pretending it was very flat.
+after landing does not help. Timeouts count as misses. A genuinely-held wrong note is
+labelled "wrong note?"; the right pitch class an octave off is labelled "right note, wrong
+octave". Stray artifacts never score against you: a faint finger-lift/adjacent-string ring,
+an impossible sub-range reading, or a harmonic overtone of the target is ignored and the
+app keeps listening for the note you meant.
 
 ### Sustain
 Hold the prompted note inside a tolerance ring (tolerance follows difficulty: ±20/15/10
-cents). The ring fills toward the goal (5 s); drifting out resets the timer (single bad
-readings are debounced). While out of tolerance the app shows only a coarse
-"too sharp / too flat" hint — never a needle. Stopping the note banks the best stretch;
-a 20-second cap awards partial credit.
+cents). The ring fills toward the goal (5 s). A tune-up-style bar shows how sharp/flat you
+are (it greys out when you're not playing). A brief scoop out — like a bow direction change
+— is forgiven; only sustained drift resets the timer. While out of tolerance the big hint
+stays coarse ("too sharp / too flat") — never a needle. Stopping the note banks the best
+stretch; a 20-second cap awards partial credit.
 
 ### Shift Trainer (two variants, scored separately)
 Confirm the start note (wrong note → "that's not it" and it re-arms), hold it through a
@@ -161,6 +169,10 @@ its own scoring category** — scores are only ever compared between identical s
 - **Calibrate surroundings** (quick, per room): quiet phase + soft-playing phase set the
   noise gate; refuses on overlap. The full wizard includes this measurement, so it only
   needs re-running when the room changes.
+- **Record & trace games** (Settings → Debug, off by default): records a whole game — the
+  raw audio plus the full detection stream and game events — into Recordings. The entire
+  round can then be replayed offline to diagnose and tune detection thresholds against real
+  playing, not isolated snippets. For normal play, leave it off.
 - Screens stay awake while listening. Dark theme only. Offline; no accounts, no ads,
   no telemetry.
 

@@ -5,8 +5,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import android.content.Context
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.audio.GameSounds
+import be.drakarah.intonation.audio.GameTrace
 import be.drakarah.intonation.data.AttemptEntity
 import be.drakarah.intonation.data.RoundOutcome
 import be.drakarah.intonation.data.SessionEntity
@@ -53,6 +55,8 @@ data class ShiftAttemptUi(
 )
 
 sealed interface ShiftPhase {
+    /** Visual-only count-in before the first prompt. */
+    data class CountIn(val secsLeft: Int) : ShiftPhase
     /** Play and hold the start note. */
     data class Start(val wrongNote: Boolean = false) : ShiftPhase
     /** Start confirmed — hold and wait for the cue. */
@@ -67,7 +71,7 @@ data class ShiftUiState(
     val promptIndex: Int = 0,
     val roundLength: Int = 10,
     val prompt: ShiftPromptSpec? = null,
-    val phase: ShiftPhase = ShiftPhase.Start(),
+    val phase: ShiftPhase = ShiftPhase.CountIn(be.drakarah.intonation.ui.round.COUNT_IN_SECS),
     val totalScore: Int = 0,
     val results: List<ShiftAttemptUi> = emptyList(),
     val noteStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
@@ -85,6 +89,7 @@ class ShiftViewModel(
     private val style: String,
     private val settingsRepository: SettingsRepository,
     private val sessionRepository: SessionRepository,
+    private val appContext: Context,
 ) : ViewModel() {
 
     private var captureParams =
@@ -94,6 +99,7 @@ class ShiftViewModel(
 
     private lateinit var engine: PitchEngine
     private val sounds = GameSounds()
+    private var trace: GameTrace? = null
 
     private val _uiState = MutableStateFlow(ShiftUiState())
     val uiState: StateFlow<ShiftUiState> = _uiState.asStateFlow()
@@ -127,7 +133,9 @@ class ShiftViewModel(
                 departTimeoutMs = settings.playerLevel.shiftDepartTimeoutMs,
             )
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
-            engine = PitchEngine(config.applying(settings))
+            val cfg = config.applying(settings)
+            trace = if (settings.traceGames) GameTrace(appContext, cfg, "shift-$style").also { it.prepare() } else null
+            engine = PitchEngine(cfg, trace?.waveWriter)
             prompts = ShiftPool(positions, crossString = style == "cross")
                 .draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()
@@ -136,12 +144,16 @@ class ShiftViewModel(
                 roundLength = settings.roundLength,
                 prompt = prompts[0],
                 noteStyle = settings.noteNameStyle,
+                phase = ShiftPhase.CountIn(be.drakarah.intonation.ui.round.COUNT_IN_SECS),
                 ready = true,
             )
+            launch { runCountIn() }
 
             engine.samples().collect { sample ->
+                trace?.onSample(sample)
                 val state = _uiState.value
                 when (state.phase) {
+                    is ShiftPhase.CountIn -> {}
                     is ShiftPhase.Start, ShiftPhase.Hold, ShiftPhase.Go -> {
                         when (val captureState = capture?.process(sample)) {
                             is ShiftState.ConfirmStart ->
@@ -171,6 +183,22 @@ class ShiftViewModel(
                 }
             }
         }
+    }
+
+    private suspend fun runCountIn() {
+        for (s in be.drakarah.intonation.ui.round.COUNT_IN_SECS downTo 1) {
+            _uiState.value = _uiState.value.copy(phase = ShiftPhase.CountIn(s))
+            kotlinx.coroutines.delay(1000)
+        }
+        capture = newCapture(prompts[0], skipQuiet = true)
+        _uiState.value = _uiState.value.copy(phase = ShiftPhase.Start())
+    }
+
+    /** "Play again": fresh round, same settings. */
+    fun restart() {
+        stop()
+        _uiState.value = ShiftUiState()
+        start()
     }
 
     private fun newCapture(prompt: ShiftPromptSpec, skipQuiet: Boolean) = ShiftCapture(
@@ -267,6 +295,7 @@ class ShiftViewModel(
                     quality = if (r.timedOut) "TIMEOUT" else "CLEAN",
                 )
             }
+            trace?.save()
             val outcome = sessionRepository.recordCompletedRound(session, attempts)
             _uiState.value = _uiState.value.copy(outcome = outcome)
         }
@@ -298,6 +327,7 @@ class ShiftViewModel(
                     style = style,
                     settingsRepository = app.container.settingsRepository,
                     sessionRepository = app.container.sessionRepository,
+                    appContext = app.applicationContext,
                 ) as T
             }
         }

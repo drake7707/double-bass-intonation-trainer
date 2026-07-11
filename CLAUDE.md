@@ -107,8 +107,31 @@ replay offline (`SnippetReplayAnalysis`, `OctaveDiagnosis` in dsp tests write re
 
 ## Status snapshot (2026-07-11)
 
-Everything through M7 + many feedback features is DONE, committed, installed on her
-Pixel. **Blocked on her bass verification of TESTING.md** (note sweep is the key check).
-Deferred: full calibration wizard (only if needed; must measure noise floor per her
-note). Backlog: chord progressions, walking bass lines, Guess First ear training,
-endless streak, drone mode, insights/heatmaps, decay-relative pizz hold (maybe).
+Everything through M7 + calibration wizard + drone mode is DONE and installed. Latest
+(2026-07-11 evening): her **first real-gameplay feedback batch** (bottom of TESTING.md)
+diagnosed from 5 pulled snippets and fixed — see the "2026-07-11 afternoon feedback fixes"
+Pending block in TESTING.md and `FeedbackRegressionTest`. Key changes now in the tree
+(UNCOMMITTED — left for her review): legato arming (mid-round prompts re-arm
+`skipQuietGate=true`; fixed Fa2/Fa#2 "no note" + Do#2 sustain "won't lock"), a
+ViewModel-level **wrong-note filter** (see below), sustain bow-reversal grace, visual
+count-in + "Let's go again" on all games, audible buzz, sustain in-tune bar, and the
+**game-trace tool**. Provisional thresholds await a real full-round trace to retune.
+Backlog: chord progressions, walking bass lines, Guess First ear training, endless streak,
+insights/heatmaps, decay-relative pizz hold (maybe).
+
+### Two capture-gating layers (don't confuse them)
+- **`dsp/PitchGate`** — target-AGNOSTIC, per-sample: noise/harmonic/energy gate + octave-UP
+  correction. Shared by everything.
+- **`RoundViewModel.onCaptured`** — target-AWARE game rule (Note Accuracy only): a frozen
+  *wrong* note is discarded and listening continues when it's flimsy (SHAKY or
+  `energyLevel < 55`), unplayable (`< 40 Hz`, below open E1), or a **non-octave integer
+  harmonic of the target** (her "harmonic leniency": overtones are detector artifacts, not
+  notes she'd mistakenly play). Octaves are exempt → shown as "right note, wrong octave".
+  `CapturedPitch.energyLevel` (median of the frozen window) feeds this. Provisional.
+
+### Game trace (`audio/GameTrace.kt`) — debug replay of a whole game
+Settings→Debug "Record & trace games" (`traceGames`). When on, the 3 game VMs pass its
+`waveWriter` to PitchEngine and feed it every sample + game events; on round completion it
+saves `game-trace-*.wav` + `.jsonl` to the snippets dir (Recordings lists/shares them).
+Replay the WAV via `PitchEngine.wavSamples` to reconstruct detection; the event log lines
+up game decisions. This is how to get real inter-prompt audio for tuning arming/thresholds.

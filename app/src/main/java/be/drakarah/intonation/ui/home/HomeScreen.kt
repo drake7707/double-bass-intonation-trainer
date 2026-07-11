@@ -334,6 +334,12 @@ private fun ExerciseCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = enabled, onClick = onClick),
+        // A disabled card must read as clearly "off" at a glance — the default surface was
+        // nearly indistinguishable from white (her report). Sink it to the dimmer container.
+        colors = if (enabled) CardDefaults.cardColors()
+                 else CardDefaults.cardColors(
+                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                 ),
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(

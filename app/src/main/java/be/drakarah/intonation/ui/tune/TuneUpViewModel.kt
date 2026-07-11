@@ -45,6 +45,8 @@ class TuneUpViewModel(
 
     private val recentPitches = ArrayDeque<Pair<Long, Float>>()
     private var inTuneSinceMs = -1L
+    private var outOfTuneSinceMs = -1L
+    private var outOfTuneString: NoteSpec? = null
     private var lastUiUpdateMs = 0L
     private var listenJob: Job? = null
 
@@ -71,6 +73,9 @@ class TuneUpViewModel(
                     .let { if (it.isEmpty()) null else it[it.size / 2] }
                 if (hz == null) {
                     inTuneSinceMs = -1
+                    // silence never unticks — damping a string to move to the next one is
+                    // part of tuning, not evidence the string went out of tune
+                    outOfTuneString = null
                     _uiState.value = _uiState.value.copy(activeString = null, cents = null)
                     return@collect
                 }
@@ -83,6 +88,7 @@ class TuneUpViewModel(
                 // must be plausibly THE string (not a stopped note far away)
                 val plausible = abs(cents) <= MAX_PLAUSIBLE_CENTS
                 if (plausible && abs(cents) <= IN_TUNE_CENTS) {
+                    outOfTuneString = null
                     if (inTuneSinceMs < 0) inTuneSinceMs = sample.timestampMs
                     if (sample.timestampMs - inTuneSinceMs >= CONFIRM_MS) {
                         val next = _uiState.value.copy(
@@ -102,11 +108,26 @@ class TuneUpViewModel(
                     }
                 } else {
                     inTuneSinceMs = -1
-                    // drifted out of tolerance -> the string loses its checkmark
+                    // Unticking must be as deliberate as ticking: damping a string passes the
+                    // gate for a moment with garbage pitch, so a single out-of-tune reading
+                    // proves nothing. Only sustained out-of-tolerance playing on the SAME
+                    // string clears its checkmark; the damp transient drains from the pitch
+                    // window into silence long before UNTICK_CONFIRM_MS elapses.
                     if (plausible && _uiState.value.inTune.contains(string) &&
                         abs(cents) > IN_TUNE_CENTS + HYSTERESIS_CENTS
                     ) {
-                        _uiState.value = _uiState.value.copy(inTune = _uiState.value.inTune - string)
+                        if (outOfTuneString != string) {
+                            outOfTuneString = string
+                            outOfTuneSinceMs = sample.timestampMs
+                        }
+                        if (sample.timestampMs - outOfTuneSinceMs >= UNTICK_CONFIRM_MS) {
+                            outOfTuneString = null
+                            _uiState.value = _uiState.value.copy(
+                                inTune = _uiState.value.inTune - string,
+                            )
+                        }
+                    } else {
+                        outOfTuneString = null
                     }
                 }
                 _uiState.value = _uiState.value.copy(
@@ -121,6 +142,8 @@ class TuneUpViewModel(
         listenJob?.cancel()
         listenJob = null
         recentPitches.clear()
+        inTuneSinceMs = -1
+        outOfTuneString = null
         _uiState.value = _uiState.value.copy(activeString = null, cents = null)
     }
 
@@ -134,6 +157,12 @@ class TuneUpViewModel(
         private const val IN_TUNE_CENTS = 5f
         private const val HYSTERESIS_CENTS = 3f
         private const val CONFIRM_MS = 1000L
+        /**
+         * Sustained out-of-tolerance needed before a string loses its tick. Must outlast
+         * HOLD_MS: a damping transient can dominate the pitch median for up to one full
+         * window after the string is muted, and must never untick.
+         */
+        private const val UNTICK_CONFIRM_MS = 800L
         /** Beyond this the player is playing a stopped note, not tuning an open string. */
         private const val MAX_PLAUSIBLE_CENTS = 170f
 

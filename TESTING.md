@@ -19,6 +19,9 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Needle direction matches reality (sharp = right/+, flat = left/−)
 - [ ] A string in tune held ~1 s ticks green and stays ticked
 - [ ] All four green shows "All strings in tune — go play!"
+- [ ] Damping a string does NOT clear its green tick (your report — the mute transient
+      used to untick it); a string only loses its tick after ~1 s of genuinely
+      out-of-tune playing on it
 - [ ] A stopped note (e.g. F# on E string) does NOT get counted as a string
 
 ### M3: settings, levels, persistence, sounds (new)

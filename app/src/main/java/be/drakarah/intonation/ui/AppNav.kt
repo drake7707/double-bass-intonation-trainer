@@ -5,6 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import be.drakarah.intonation.ui.debug.DebugPitchScreen
+import be.drakarah.intonation.ui.drone.DroneScreen
 import be.drakarah.intonation.ui.home.HomeScreen
 import be.drakarah.intonation.ui.round.RoundScreen
 import be.drakarah.intonation.ui.about.AboutScreen
@@ -27,6 +28,7 @@ object Routes {
     const val RECORDINGS = "recordings"
     const val CALIBRATE = "calibrate"
     const val WIZARD = "wizard"
+    const val DRONE = "drone"
     const val ROUND = "round/{mode}"
     const val SUSTAIN = "sustain/{mode}"
     const val SHIFT = "shift/{mode}/{style}"
@@ -46,6 +48,7 @@ fun AppNav() {
                 onStartSustain = { mode -> navController.navigate(Routes.sustain(mode)) },
                 onStartShift = { mode, style -> navController.navigate(Routes.shift(mode, style)) },
                 onOpenTuneUp = { navController.navigate(Routes.TUNE) },
+                onOpenDrone = { navController.navigate(Routes.DRONE) },
                 onOpenCalibrate = { navController.navigate(Routes.CALIBRATE) },
                 onOpenProgress = { navController.navigate(Routes.PROGRESS) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
@@ -54,6 +57,9 @@ fun AppNav() {
         }
         composable(Routes.TUNE) {
             TuneUpScreen(onDone = { navController.popBackStack() })
+        }
+        composable(Routes.DRONE) {
+            DroneScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(

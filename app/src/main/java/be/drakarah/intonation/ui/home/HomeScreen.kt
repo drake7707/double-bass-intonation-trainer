@@ -16,8 +16,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -43,6 +43,7 @@ fun HomeScreen(
     onStartSustain: (mode: String) -> Unit,
     onStartShift: (mode: String, style: String) -> Unit,
     onOpenTuneUp: () -> Unit,
+    onOpenDrone: () -> Unit,
     onOpenCalibrate: () -> Unit,
     onOpenProgress: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -117,50 +118,21 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    "Double bass\nintonation trainer",
-                    style = MaterialTheme.typography.headlineMedium,
-                )
-                if (streak > 0) {
+                Column {
                     Text(
-                        "🔥 $streak",
-                        style = MaterialTheme.typography.titleLarge,
+                        "Double bass\nintonation trainer",
+                        style = MaterialTheme.typography.headlineMedium,
                     )
-                }
-            }
-
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                SegmentedButton(
-                    selected = mode == "arco",
-                    onClick = { viewModel.setMode("arco") },
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                ) { Text("Arco") }
-                SegmentedButton(
-                    selected = mode == "pizz",
-                    onClick = { viewModel.setMode("pizz") },
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                ) { Text("Pizz") }
-            }
-
-            Column {
-                Text(
-                    "Positions to practice (each combination scores separately)",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    SELECTABLE_POSITIONS.forEach { p ->
-                        FilterChip(
-                            selected = positions.contains(p),
-                            onClick = { viewModel.togglePosition(p) },
-                            label = { Text(p.shortLabel) },
+                    if (streak > 0) {
+                        Text(
+                            "🔥 $streak",
+                            style = MaterialTheme.typography.titleMedium,
                         )
                     }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    IconButton(onClick = onOpenProgress) { Text("📊", style = MaterialTheme.typography.titleLarge) }
+                    IconButton(onClick = onOpenSettings) { Text("⚙️", style = MaterialTheme.typography.titleLarge) }
                 }
             }
 
@@ -204,12 +176,56 @@ fun HomeScreen(
                 }
             }
 
+            SectionHeader("Tuning & ear training")
             ExerciseCard(
                 title = "Tune up",
                 subtitle = "Check your open strings before you play.",
                 enabled = true,
                 onClick = onOpenTuneUp,
             )
+            ExerciseCard(
+                title = "Drone mode",
+                subtitle = "A steady reference pitch to tune against by ear.",
+                enabled = true,
+                onClick = onOpenDrone,
+            )
+
+            SectionHeader("Practice")
+            // Arco/Pizz and positions only affect the scored games below — Tune up and
+            // Drone ignore them — so they live under this header, not as a global control.
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                SegmentedButton(
+                    selected = mode == "arco",
+                    onClick = { viewModel.setMode("arco") },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                ) { Text("Arco") }
+                SegmentedButton(
+                    selected = mode == "pizz",
+                    onClick = { viewModel.setMode("pizz") },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                ) { Text("Pizz") }
+            }
+            Column {
+                Text(
+                    "Positions to practice (each combination scores separately)",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    SELECTABLE_POSITIONS.forEach { p ->
+                        FilterChip(
+                            selected = positions.contains(p),
+                            onClick = { viewModel.togglePosition(p) },
+                            label = { Text(p.shortLabel) },
+                        )
+                    }
+                }
+            }
             ExerciseCard(
                 title = "Note Accuracy",
                 subtitle = best?.let { "Best: ${it.score} / ${it.maxScore}" }
@@ -242,21 +258,26 @@ fun HomeScreen(
                 onClick = { gated { onStartShift(mode, "cross") } },
             )
 
-            Spacer(Modifier.height(8.dp))
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TextButton(onClick = onOpenDebug) { Text("Pitch debug") }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onOpenProgress) { Text("Progress") }
-                    OutlinedButton(onClick = onOpenSettings) { Text("Settings") }
-                }
-            }
+            SectionHeader("Tools")
+            ExerciseCard(
+                title = "Pitch debug",
+                subtitle = "Live detection diagnostics and the note sweep.",
+                enabled = true,
+                onClick = onOpenDebug,
+            )
             Spacer(Modifier.height(16.dp))
         }
     }
+}
+
+@Composable
+private fun SectionHeader(text: String) {
+    Spacer(Modifier.height(8.dp))
+    Text(
+        text.uppercase(),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+    )
 }
 
 @Composable

@@ -1,6 +1,7 @@
 package be.drakarah.intonation.di
 
 import android.content.Context
+import be.drakarah.intonation.audio.DroneTone
 import be.drakarah.intonation.data.IntonationDatabase
 import be.drakarah.intonation.data.SessionRepository
 import be.drakarah.intonation.dsp.PitchEngineConfig
@@ -12,6 +13,9 @@ class AppContainer(val applicationContext: Context) {
     val pitchEngineConfig = PitchEngineConfig()
 
     val settingsRepository = SettingsRepository(applicationContext)
+
+    /** Continuous reference tone for Drone mode (output only, no detection). */
+    val droneTone by lazy { DroneTone() }
 
     private val database by lazy { IntonationDatabase.build(applicationContext) }
     val sessionRepository by lazy { SessionRepository(database) }

@@ -39,6 +39,15 @@ string, the app auto-detects which one, shows a live cents needle, and ticks the
 green after it's held in tune for a second. An out-of-tune instrument makes intonation
 scores meaningless, so this comes first.
 
+### Drone (ear training)
+A steady reference pitch to play against by ear — hold your note against it and listen for
+the beats to disappear. Pure practice aid: **no scoring and no pitch detection**, so it
+needs no microphone and never touches the capture machine. Pick the pitch by open-string
+root (Mi/La/Ré/Sol) or any note by name; because phone speakers roll off in the bass, the
+tone always sounds in an audible register (octave-equivalent to your choice). Optional
+**"add fifth"** reinforces the root with a just (3:2) fifth for easier tuning. Its own
+volume slider; the tone stops when you leave the screen or background the app.
+
 ### Note Accuracy
 "Play Sol2." The first stable pitch is frozen and scored in cents. Correcting the finger
 after landing does not help. Timeouts count as misses; a note ~a semitone off is labelled

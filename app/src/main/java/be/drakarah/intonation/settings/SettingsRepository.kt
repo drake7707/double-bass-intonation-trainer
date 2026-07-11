@@ -49,6 +49,9 @@ data class AppSettings(
     val oddHarmonicMinRelative: Float = 0.02f,
     /** Last completed full calibration (epoch ms, 0 = never). */
     val fullCalibrationAt: Long = 0,
+    /** Drone mode's last pitch class (0 = Do/C … 11 = Si/B) and just-fifth toggle. */
+    val dronePitchClass: Int = 9, // La / A — a natural reference pitch
+    val droneFifth: Boolean = false,
 )
 
 /** The one place where saved calibration turns into a runnable detection config. */
@@ -82,6 +85,8 @@ class SettingsRepository(private val context: Context) {
         val oddHarmonicMinRatio = floatPreferencesKey("oddHarmonicMinRatio")
         val oddHarmonicMinRelative = floatPreferencesKey("oddHarmonicMinRelative")
         val fullCalibrationAt = longPreferencesKey("fullCalibrationAt")
+        val dronePitchClass = intPreferencesKey("dronePitchClass")
+        val droneFifth = booleanPreferencesKey("droneFifth")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -115,6 +120,8 @@ class SettingsRepository(private val context: Context) {
             oddHarmonicMinRatio = prefs[Keys.oddHarmonicMinRatio] ?: 2f,
             oddHarmonicMinRelative = prefs[Keys.oddHarmonicMinRelative] ?: 0.02f,
             fullCalibrationAt = prefs[Keys.fullCalibrationAt] ?: 0,
+            dronePitchClass = (prefs[Keys.dronePitchClass] ?: 9).coerceIn(0, 11),
+            droneFifth = prefs[Keys.droneFifth] ?: false,
         )
     }
 
@@ -188,5 +195,13 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setRoundLength(length: Int) {
         context.dataStore.edit { it[Keys.roundLength] = length }
+    }
+
+    suspend fun setDronePitchClass(pitchClass: Int) {
+        context.dataStore.edit { it[Keys.dronePitchClass] = pitchClass.coerceIn(0, 11) }
+    }
+
+    suspend fun setDroneFifth(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.droneFifth] = enabled }
     }
 }

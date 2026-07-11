@@ -5,6 +5,28 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### Drone mode (new — pure practice aid, no scoring/detection)
+- [ ] Home → Tuning & ear training → Drone: tap Play → a steady tone sounds through the
+      phone speaker and is clearly audible (this is the key check — bass pitches on a phone
+      speaker can be too quiet)
+- [ ] Each open-string chip (Mi/La/Ré/Sol) sounds the right pitch class; the "sounding at
+      X" line matches what you hear (it's octave-placed up so it carries on the speaker)
+- [ ] "Any note" picker: pick a low one (Mi, Do) — still comes out audible, not a buzz
+- [ ] "Add fifth" toggle: the added fifth rings *in tune* with the root (pure 3:2), no beating
+- [ ] Play → Stop is clean: no click/pop at the start or the end of the tone
+- [ ] Retuning while it's playing (tap a different note) changes pitch smoothly, no glitch
+- [ ] Volume slider changes the drone loudness live
+- [ ] Leaving the screen (Back) or backgrounding the app silences the tone immediately
+- [ ] Reopen Drone: it remembers your last pitch + fifth setting
+
+### Home screen restructure (your layout idea)
+- [ ] Home is grouped into sections: Tuning & ear training / Practice / Tools
+- [ ] Progress 📊 and Settings ⚙️ are icons at the top-right; both open the right screen
+- [ ] Arco/Pizz + position chips now sit under the Practice header (they only affect the
+      scored games — Tune up and Drone ignore them); scores still key off them as before
+- [ ] Pitch debug lives under Tools and still opens the debug screen
+- [ ] Today's focus card and 🔥 streak are still up top and still work
+
 ### Octave-error fix (from your two snippets)
 - [x] Bowed open A now reads **A1** (it silently read A2 before)
 - [x] Plucked low E stays **E1** through the whole decay (used to jump to E2 after ~1 s)

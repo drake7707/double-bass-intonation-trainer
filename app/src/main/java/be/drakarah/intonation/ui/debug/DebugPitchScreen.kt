@@ -2,6 +2,7 @@ package be.drakarah.intonation.ui.debug
 
 import android.Manifest
 import android.content.pm.PackageManager
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -39,11 +40,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.music.NoteNameStyle
+import be.drakarah.intonation.music.NoteSpec
 import be.drakarah.intonation.music.centsBetween
 import be.drakarah.intonation.music.nearestNote
 import be.drakarah.intonation.ui.common.rememberAppSettings
@@ -76,7 +80,17 @@ fun DebugPitchScreen(
     val sample by viewModel.latestSample.collectAsStateWithLifecycle()
     val displayHz by viewModel.displayHz.collectAsStateWithLifecycle()
     val snippetMessage by viewModel.snippetMessage.collectAsStateWithLifecycle()
+    val captureMode by viewModel.captureMode.collectAsStateWithLifecycle()
+    val captureLabel by viewModel.captureStateLabel.collectAsStateWithLifecycle()
+    val freeze by viewModel.lastFreeze.collectAsStateWithLifecycle()
+    val sweep by viewModel.sweep.collectAsStateWithLifecycle()
+    val noteStyle = rememberAppSettings().noteNameStyle
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Her request: a dedicated full-screen sweep view, readable from playing distance
+    // (~2 m), instead of squinting at the debug cards while holding the bass.
+    var sweepMode by remember { mutableStateOf(false) }
+    BackHandler(enabled = sweepMode) { sweepMode = false }
 
     // practicing hands-free: never let the screen time out while this screen is open
     val view = LocalView.current
@@ -93,6 +107,24 @@ fun DebugPitchScreen(
     }
 
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+        if (sweepMode && hasPermission) {
+            SweepView(
+                sweep = sweep,
+                noteStyle = noteStyle,
+                captureMode = captureMode,
+                captureLabel = captureLabel,
+                freeze = freeze,
+                onToggleMode = {
+                    viewModel.setCaptureMode(if (captureMode == "arco") "pizz" else "arco")
+                },
+                onReset = viewModel::clearSweep,
+                onExit = { sweepMode = false },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+            )
+            return@Scaffold
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -112,7 +144,6 @@ fun DebugPitchScreen(
             } else {
                 val current = sample
                 val shown = displayHz
-                val noteStyle = rememberAppSettings().noteNameStyle
                 if (shown != null) {
                     val note = nearestNote(shown.toDouble())
                     val cents = centsBetween(shown.toDouble(), note.frequency())
@@ -182,19 +213,16 @@ fun DebugPitchScreen(
                 }
 
                 // the live game-capture machine — proves a note would be accepted by the games
-                val captureMode by viewModel.captureMode.collectAsStateWithLifecycle()
-                val captureLabel by viewModel.captureStateLabel.collectAsStateWithLifecycle()
-                val freeze by viewModel.lastFreeze.collectAsStateWithLifecycle()
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text("game capture: $captureLabel", style = MaterialTheme.typography.bodyMedium)
+                            Text("game capture: $captureLabel", style = MaterialTheme.typography.titleLarge)
                             Text(
                                 if (captureMode == "arco") "arco ⇄" else "pizz ⇄",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.titleLarge,
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.clickable {
                                     viewModel.setCaptureMode(if (captureMode == "arco") "pizz" else "arco")
@@ -206,25 +234,30 @@ fun DebugPitchScreen(
                             val cents = centsBetween(f.frequencyHz.toDouble(), note.frequency())
                             Text(
                                 String.format(
-                                    Locale.US,
-                                    "✓ stable: %s %+.1fc (%.2f Hz) in %d ms [%s]",
-                                    note.displayName(noteStyle), cents, f.frequencyHz,
-                                    f.timeToStableMs, f.quality,
+                                    Locale.US, "✓ %s %+.1fc",
+                                    note.displayName(noteStyle), cents,
                                 ),
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.displaySmall,
                                 color = ResultColors.excellent,
+                            )
+                            Text(
+                                String.format(
+                                    Locale.US, "%.2f Hz · stable in %d ms · %s",
+                                    f.frequencyHz, f.timeToStableMs, f.quality,
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontFamily = FontFamily.Monospace,
                             )
                         } ?: Text(
                             "no stable note captured yet",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
 
                 // sweep checklist: play every note; all green = all good for the games
-                val sweep by viewModel.sweep.collectAsStateWithLifecycle()
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Row(
@@ -246,26 +279,12 @@ fun DebugPitchScreen(
                                 modifier = Modifier.clickable { viewModel.clearSweep() },
                             )
                         }
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        SweepGrid(sweep, noteStyle, big = false)
+                        Button(
+                            onClick = { sweepMode = true },
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
-                            DebugViewModel.MIDI_RANGE.forEach { midi ->
-                                val captured = sweep[midi]
-                                Text(
-                                    be.drakarah.intonation.music.NoteSpec(midi).displayName(noteStyle),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (captured != null) Color(0xFF003912)
-                                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier
-                                        .background(
-                                            if (captured != null) ResultColors.excellent
-                                            else MaterialTheme.colorScheme.surfaceVariant,
-                                            RoundedCornerShape(6.dp),
-                                        )
-                                        .padding(horizontal = 6.dp, vertical = 3.dp),
-                                )
-                            }
+                            Text("Start sweep (big view)")
                         }
                     }
                 }
@@ -314,5 +333,110 @@ private fun DiagnosticRow(label: String, value: String) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
         Text(value, style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Monospace)
+    }
+}
+
+/** The chromatic sweep checklist. [big] renders playing-distance chips for [SweepView];
+ * compact chips stay on the debug screen for up-close work. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SweepGrid(
+    sweep: Map<Int, DebugViewModel.FreezeInfo>,
+    noteStyle: NoteNameStyle,
+    big: Boolean,
+) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(if (big) 8.dp else 6.dp),
+        verticalArrangement = Arrangement.spacedBy(if (big) 8.dp else 6.dp),
+    ) {
+        DebugViewModel.MIDI_RANGE.forEach { midi ->
+            val captured = sweep[midi] != null
+            Text(
+                NoteSpec(midi).displayName(noteStyle),
+                style = if (big) MaterialTheme.typography.titleLarge
+                        else MaterialTheme.typography.labelSmall,
+                color = if (captured) Color(0xFF003912)
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .background(
+                        if (captured) ResultColors.excellent
+                        else MaterialTheme.colorScheme.surfaceVariant,
+                        RoundedCornerShape(if (big) 10.dp else 6.dp),
+                    )
+                    .padding(
+                        horizontal = if (big) 14.dp else 6.dp,
+                        vertical = if (big) 10.dp else 3.dp,
+                    ),
+            )
+        }
+    }
+}
+
+/** Full-screen note sweep sized for playing distance (~2 m, her request). The capture
+ * state gets a huge color-coded banner: she stood playing into a machine that was still
+ * waiting for quiet and couldn't read why notes weren't registering. */
+@Composable
+private fun SweepView(
+    sweep: Map<Int, DebugViewModel.FreezeInfo>,
+    noteStyle: NoteNameStyle,
+    captureMode: String,
+    captureLabel: String,
+    freeze: DebugViewModel.FreezeInfo?,
+    onToggleMode: () -> Unit,
+    onReset: () -> Unit,
+    onExit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Spacer(Modifier.height(8.dp))
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val total = DebugViewModel.MIDI_RANGE.count()
+            Text(
+                "${sweep.size}/$total",
+                style = MaterialTheme.typography.displaySmall,
+                color = if (sweep.size >= total) ResultColors.excellent
+                        else MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                if (captureMode == "arco") "arco ⇄" else "pizz ⇄",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable(onClick = onToggleMode),
+            )
+        }
+        val waiting = captureLabel == "waiting for quiet"
+        Text(
+            when {
+                waiting -> "🤫 wait for quiet"
+                captureLabel == "capturing…" -> "capturing…"
+                else -> "🎧 play a note"
+            },
+            style = MaterialTheme.typography.headlineLarge,
+            color = if (waiting) ResultColors.close else ResultColors.excellent,
+        )
+        freeze?.let { f ->
+            val note = nearestNote(f.frequencyHz.toDouble())
+            val cents = centsBetween(f.frequencyHz.toDouble(), note.frequency())
+            Text(
+                String.format(Locale.US, "✓ %s %+.1fc", note.displayName(noteStyle), cents),
+                style = MaterialTheme.typography.displayMedium,
+                color = ResultColors.excellent,
+            )
+        }
+        SweepGrid(sweep, noteStyle, big = true)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedButton(onClick = onReset, modifier = Modifier.weight(1f)) { Text("Reset") }
+            OutlinedButton(onClick = onExit, modifier = Modifier.weight(1f)) { Text("Exit sweep") }
+        }
+        Spacer(Modifier.height(16.dp))
     }
 }

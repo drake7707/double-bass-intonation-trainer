@@ -112,6 +112,13 @@ class PitchGate(
      *    detected frequency, that peak is the 3rd harmonic of f/2 — a true f-note cannot
      *    produce it. Happens on the bowed A string, where the phone mic loses the 55 Hz
      *    fundamental and the detector picks 110 Hz although 165 Hz is present.
+     *    The peak must be both locally prominent (tight window — sympathetic open-string
+     *    harmonics collide exactly with 1.5x: 1.5x Do3 = 2nd harmonic of open Sol, 1.5x Ré3
+     *    = 3rd harmonic of open Ré) and a substantial fraction of the detected note's own
+     *    peak: sympathetic peaks measured <=0.5% of the played fundamental on the
+     *    2026-07-11 high-note snippets, vs >=2% for the true A-string case (see dsp test
+     *    `OctaveCorrectionEvidence`). Without the relative check, genuinely played notes
+     *    from Do3 up were halved (user report).
      * 2. Decay continuation (stateful): a note was tracked at ~f/2 until just now, the
      *    energy is not rising (no new attack), and the detection jumped to exactly one
      *    octave up. Happens on plucked low strings when the fundamental decays away first.
@@ -124,9 +131,23 @@ class PitchGate(
         timestampMs: Long,
     ): Float {
         val half = frequency / 2f
-        if (half < frequencyMin) return frequency
+        // Never correct into a pitch the instrument cannot produce: a double bass's lowest
+        // string is E1 (41.2 Hz), so a "fixed" result below that is wrong by construction
+        // (seen when the detector picks the D2 subharmonic during a Ré3 attack — halving
+        // that made an impossible D1).
+        if (half < maxOf(frequencyMin, LOWEST_PLAYABLE_HZ)) return frequency
+        // A fundamental can only go missing below the phone mic's low-frequency roll-off.
+        // From ~C2 (65.4 Hz) up the mic sees the fundamental, so a true half-note would have
+        // been detected directly and halving can only be wrong. Without this bound, rule 2
+        // continued octaves seeded by subharmonic attack readings (Ré3's attack read Ré2,
+        // which then dragged the whole sustained Ré3 down an octave).
+        if (half > MISSING_FUNDAMENTAL_MAX_HZ) return frequency
 
-        if (spectralPeakRatio(results, 1.5f * frequency) > ODD_HARMONIC_MIN_RATIO) return half
+        val oddHz = 1.5f * frequency
+        val oddProminent = spectralPeakRatio(results, oddHz) > ODD_HARMONIC_MIN_RATIO
+        val oddSubstantial = spectralPeakAmp(results, oddHz) >
+                ODD_HARMONIC_MIN_RELATIVE * spectralPeakAmp(results, frequency)
+        if (oddProminent && oddSubstantial) return half
 
         val decayContinuation = lastValidHz > 0f
                 && timestampMs - lastValidMs <= DECAY_MEMORY_MS
@@ -137,18 +158,35 @@ class PitchGate(
         return frequency
     }
 
-    /** Peak height around [hz] relative to the local spectral mean (peak-detection style). */
+    /** Peak height around [hz] (+-[ODD_HARMONIC_WINDOW_CENTS]) relative to the local
+     * spectral mean. The window must stay narrow: at high notes a wide window reaches
+     * neighboring open-string harmonics (e.g. 220 Hz next to 1.5x Ré#3 = 233 Hz). */
     private fun spectralPeakRatio(results: FrequencyDetectionCollectedResults, hz: Float): Float {
         val spec = results.frequencySpectrum.amplitudeSpectrumSquared
         val df = results.frequencySpectrum.df
         val center = (hz / df).toInt()
-        val half = maxOf(2, (0.05f * hz / df).toInt())
+        val half = halfWidthBins(hz, df)
         if (center - 4 * half < 0 || center + 4 * half >= spec.size) return 0f
         val peak = (center - half..center + half).maxOf { spec[it] }
         var localMean = 0f
         for (i in center - 4 * half..center + 4 * half) localMean += spec[i]
         localMean /= (8 * half + 1)
         return if (localMean > 0f) peak / localMean else 0f
+    }
+
+    /** Highest squared-amplitude bin within +-[ODD_HARMONIC_WINDOW_CENTS] of [hz]. */
+    private fun spectralPeakAmp(results: FrequencyDetectionCollectedResults, hz: Float): Float {
+        val spec = results.frequencySpectrum.amplitudeSpectrumSquared
+        val df = results.frequencySpectrum.df
+        val center = (hz / df).toInt()
+        val half = halfWidthBins(hz, df)
+        if (center - half < 0 || center + half >= spec.size) return 0f
+        return (center - half..center + half).maxOf { spec[it] }
+    }
+
+    private fun halfWidthBins(hz: Float, df: Float): Int {
+        val span = hz * (ODD_HARMONIC_WINDOW_FACTOR - 1f)
+        return maxOf(1, (span / df).toInt())
     }
 
     private fun centsBetween(hz: Float, referenceHz: Float): Float =
@@ -166,8 +204,18 @@ class PitchGate(
     }
 
     private companion object {
-        /** Correct segments in the recorded corpus stay <= 1.1; wrong ones average 2.3. */
-        const val ODD_HARMONIC_MIN_RATIO = 1.4f
+        /** All thresholds measured on the recorded corpus (dsp test `OctaveCorrectionEvidence`):
+         * the true missing-fundamental A-string segments fire on ~88% of windows, the genuine
+         * Do3/Ré3/Ré#3/Fa3 segments from the 2026-07-11 snippets on <=2% (isolated misfires
+         * are then discarded by the outlier smoother). */
+        const val ODD_HARMONIC_MIN_RATIO = 2.0f
+        const val ODD_HARMONIC_MIN_RELATIVE = 0.02f
+        /** E1 a bit more than half a semitone flat — nothing playable sits below this. */
+        const val LOWEST_PLAYABLE_HZ = 39f
+        /** Si1 with margin; Do2 (65.4 Hz) and up must never be produced by correction. */
+        const val MISSING_FUNDAMENTAL_MAX_HZ = 63f
+        /** +-40 cents. */
+        const val ODD_HARMONIC_WINDOW_FACTOR = 1.0234f
         const val DECAY_MEMORY_MS = 800L
         const val DECAY_MATCH_CENTS = 60f
         const val DECAY_LEVEL_MARGIN = 3f

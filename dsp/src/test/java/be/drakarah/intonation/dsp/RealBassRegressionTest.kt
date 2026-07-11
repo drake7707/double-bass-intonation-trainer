@@ -65,4 +65,44 @@ class RealBassRegressionTest {
             Segment(3.1, 7.9, 41.2, "pizz open E through full decay", minFraction = 0.95),
         )
     )
+
+    // 2026-07-11 note-sweep snippets (user report): genuinely played notes from Do3 up were
+    // halved by the octave correction — sympathetic open-string harmonics sit exactly at
+    // 1.5x these notes and satisfied the old odd-harmonic proof. The notes must keep their
+    // played octave.
+
+    @Test
+    fun highC3KeepsItsOctave() = check(
+        "snippet-20260711-131856.wav",
+        listOf(Segment(0.6, 5.4, 130.81, "sustained Do3 (was read Do2)")),
+    )
+
+    // Segment starts after the attack (raw detector picks the Ré2 subharmonic there) and
+    // ends at the bow lift (the open Ré string genuinely rings an octave below after it).
+    @Test
+    fun highD3KeepsItsOctave() = check(
+        "snippet-20260711-131358.wav",
+        listOf(Segment(3.7, 6.0, 146.83, "sustained Ré3 (was read Ré2)")),
+    )
+
+    @Test
+    fun highDs3KeepsItsOctave() = check(
+        "snippet-20260711-131522.wav",
+        listOf(
+            Segment(1.0, 3.7, 155.56, "sustained Ré#3 (was read Ré#2)"),
+            Segment(4.9, 7.9, 155.56, "second Ré#3 bow"),
+        ),
+    )
+
+    @Test
+    fun highE3KeepsItsOctave() = check(
+        "snippet-20260711-132008.wav",
+        listOf(Segment(0.2, 5.3, 164.81, "sustained Mi3")),
+    )
+
+    @Test
+    fun highF3KeepsItsOctave() = check(
+        "snippet-20260711-132031.wav",
+        listOf(Segment(0.3, 3.2, 174.61, "sustained Fa3 (second bow was read Fa2)")),
+    )
 }

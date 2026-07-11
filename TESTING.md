@@ -6,29 +6,29 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 ## Pending
 
 ### Octave-error fix (from your two snippets)
-- [ ] Bowed open A now reads **A1** (it silently read A2 before)
-- [ ] Plucked low E stays **E1** through the whole decay (used to jump to E2 after ~1 s)
-- [ ] Pizz on D and G strings still locks quickly and correctly (sanity check after the fix)
+- [x] Bowed open A now reads **A1** (it silently read A2 before)
+- [x] Plucked low E stays **E1** through the whole decay (used to jump to E2 after ~1 s)
+- [x] Pizz on D and G strings still locks quickly and correctly (sanity check after the fix)
 
 ### Debug screen fixes
 - [x] Screen no longer times out while listening
 - [x] Big note/cents readout is calm instead of jittery
 
 ### Tune up screen (new)
-- [ ] Playing an open string highlights the right one of E1/A1/D2/G2
-- [ ] Needle direction matches reality (sharp = right/+, flat = left/−)
-- [ ] A string in tune held ~1 s ticks green and stays ticked
-- [ ] All four green shows "All strings in tune — go play!"
-- [ ] Damping a string does NOT clear its green tick (your report — the mute transient
+- [x] Playing an open string highlights the right one of E1/A1/D2/G2
+- [x] Needle direction matches reality (sharp = right/+, flat = left/−)
+- [x] A string in tune held ~1 s ticks green and stays ticked
+- [x] All four green shows "All strings in tune — go play!"
+- [x] Damping a string does NOT clear its green tick (your report — the mute transient
       used to untick it); a string only loses its tick after ~1 s of genuinely
       out-of-tune playing on it
 - [ ] A stopped note (e.g. F# on E string) does NOT get counted as a string
 
 ### M3: settings, levels, persistence, sounds (new)
-- [ ] Solfège names (Do Ré Mi) show everywhere: prompts, string hints, tune-up labels, debug
+- [x] Solfège names (Do Ré Mi) show everywhere: prompts, string hints, tune-up labels, debug
 - [x] 2026-07-10 — Position mapping confirmed from her Simandl fingering chart:
       ½ = 1–3, 1st = 2–4, 2nd = 3–5, 3rd = 5–7, 4th = 7–9, 5th = 8–10 (semitones above open)
-- [ ] Position chips are now multi-select (½ 1st 2nd 3rd 4th 5th); each exact combination
+- [x] Position chips are now multi-select (½ 1st 2nd 3rd 4th 5th); each exact combination
       keeps its own best score
 - [ ] With several positions selected, a round mixes them evenly (no easy-position bias)
 - [ ] Open strings no longer appear as game prompts (they stay in Tune up)
@@ -38,7 +38,7 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Chime on a good note (≤15c), soft blip on close (≤30c), buzz on miss — audible, not
       annoying, and doesn't confuse the detector for the next prompt
 - [ ] Finish a round → summary shows score + best-to-beat; home shows Best and 🔥 streak
-- [ ] Beat your own score → "New personal best!" appears
+- [x] Beat your own score → "New personal best!" appears
 - [ ] Change difficulty or round length → separate best (by design — check it feels right)
 - [ ] A4 setting: set 442 and verify the tuner/tune-up shifts accordingly
 
@@ -59,7 +59,7 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Home → Progress: chart shows your rounds (percent per round), tabs switch exercise
 - [ ] Stats row and session list look right after a few real rounds
 - [ ] Achievements gallery on Progress: locked show 🔒, finishing a round unlocks 🎉 First round
-- [ ] Round summary announces newly unlocked achievements
+- [x] Round summary announces newly unlocked achievements
 
 ### Overnight additions (achievements, drift, shift variants)
 - [ ] Existing scores/streak survived the app update (database migration)
@@ -67,9 +67,9 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Cross-string shifts actually prompt different strings for start and target
 - [ ] Pitch-drift warning: play ~6 notes deliberately a bit sharp → banner + descending
       "come down" tones appear; toggle off in settings silences it
-- [ ] Sustain card is disabled in Pizz mode with an explanation (your feedback)
-- [ ] Settings → About & licenses shows GPL + Tuner attribution, license text loads
-- [ ] New launcher icon reads as a bass clef (be honest)
+- [x] Sustain card is disabled in Pizz mode with an explanation (your feedback)
+- [x] Settings → About & licenses shows GPL + Tuner attribution, license text loads
+- [x] New launcher icon reads as a bass clef (be honest)
 - [ ] "Today's focus" card on top of home: one tap starts the suggested round; rotates daily
 - [ ] After a second day of rounds: summary shows "X cents — last week Y ⬇/⬆" comparison
 - [ ] Home screen scrolls (was cut off — your report)
@@ -77,7 +77,7 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
       (all four green) silences it for ~8 h
 - [ ] **Note sweep** in Pitch debug: play chromatically through the range (arco, then flip
       the toggle and pizz) — every note should turn green; report any that stay grey
-- [ ] Debug capture line shows "✓ stable: <note> in <ms>" after each played note
+- [x] Debug capture line shows "✓ stable: <note> in <ms>" after each played note
 - [ ] Long capture: start, play a slow chromatic sweep (one string arco), stop & save —
       then do the same pizz; these become the offline test corpus
 - [ ] Manage recordings: list shows the captures with the settings they were recorded
@@ -111,14 +111,31 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 - [ ] Shift: GO-cue window feels roomier on Beginner (8 s to depart vs 4 s before)
 
 ### Game sounds silent + gallery (your reports)
-- [ ] Settings → Sound feedback → volume slider: release it → you hear the chime through
+- [x] Settings → Sound feedback → volume slider: release it → you hear the chime through
       the exact in-game sound path (your design — this verifies game sounds work at all)
-- [ ] If the phone's media volume is muted, settings shows a ⚠ warning saying game
+- [x] If the phone's media volume is muted, settings shows a ⚠ warning saying game
       sounds stay silent regardless of the slider
 - [ ] With the slider audible, play a Note Accuracy round → chime/blip/buzz now heard
       (if the slider chimes but the round stays silent, tell me — that's a different bug
       and there's now logging to catch it)
-- [ ] Progress → achievements row: all cards are the same height
+- [x] Progress → achievements row: all cards are the same height
+
+### High notes read an octave low + sweep big view (your reports)
+- [ ] Note sweep arco: Do3, Ré3, Ré#3, Mi3, Fa3 now register at the right octave
+      (your snippets showed our own octave-correction halving them; it now only fires
+      when the claimed true note is below ~Do2, where the phone mic genuinely loses
+      fundamentals — the six snippets are in the offline test corpus as regression tests)
+- [ ] Same check pizz on those notes
+- [ ] Open La bowed still reads La1, and pizz Mi still stays Mi1 through the decay
+      (the original octave fixes must survive the rework)
+- [ ] Pitch debug → "Start sweep (big view)": grid, capture state and last capture
+      readable from playing distance; "🤫 wait for quiet" vs "🎧 play a note" banner
+      makes it obvious why a note isn't registering yet (your confusion report)
+- [ ] Big view: arco/pizz toggle and Reset work; system back or Exit returns to debug
+- [ ] Heads-up from your morning snippets (8:34–8:38): that session's playing was much
+      softer than the afternoon one — median level ~20 vs 100. If that was your normal
+      soft playing at 2 m, the current noise gate (45) would reject it live. If soft
+      playing fails to register during games, recalibrate surroundings or tell me.
 
 ### Note Accuracy game (M2)
 - [ ] Arco round: notes freeze at the *first* landing — correcting a finger after landing

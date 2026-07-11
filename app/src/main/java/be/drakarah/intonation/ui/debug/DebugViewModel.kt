@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
+import be.drakarah.intonation.settings.applying
 import be.drakarah.intonation.dsp.PitchSample
 import be.drakarah.intonation.dsp.misc.WaveWriter
 import be.drakarah.intonation.game.AttemptCapture
@@ -114,7 +115,7 @@ class DebugViewModel(
         _isListening.value = true
         listenJob = viewModelScope.launch {
             val settings = settingsRepository.settings.first()
-            config = baseConfig.copy(sensitivity = settings.micSensitivity)
+            config = baseConfig.applying(settings)
             _gateLevel.value = 100f - config.sensitivity
             engine = PitchEngine(config, waveWriter)
             waveWriter.setBufferSize(SNIPPET_SECONDS * config.sampleRate)

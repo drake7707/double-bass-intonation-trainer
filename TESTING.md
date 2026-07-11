@@ -138,6 +138,24 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
       soft playing at 2 m, the current noise gate (45) would reject it live. If soft
       playing fails to register during games, recalibrate surroundings or tell me.
 
+### Full calibration wizard (M5 — your go-ahead, "turn the knobs against known notes")
+- [ ] Settings → "Full calibration (new phone or double bass)" → intro explains the flow
+- [ ] Quiet stage: bar fills in ~4 s while you keep still
+- [ ] Lowest-string stage: bow open Mi once per microphone mode (Pixel supports 3 →
+      3 takes); prompt text readable from the bass
+- [ ] A deliberately silent take (don't play) is rejected with "too quiet — try again"
+      instead of being swallowed
+- [ ] Open-strings stage: La, Ré, Sol one take each; "hearing X" line shows the right
+      note while bowing
+- [ ] High-note stage: Do3 on the Sol string (2nd position)
+- [ ] Summary on YOUR phone should read: microphone "Standard", room ✓ clear, every
+      note ✓ detected, and NO "octave handling was adjusted" line (the wizard should
+      reproduce today's hand-tuned values on this phone — that's the whole point)
+- [ ] Save → play a Note Accuracy round + note sweep: everything behaves exactly as
+      before (the wizard must not make your phone worse)
+- [ ] Cancel mid-wizard leaves settings untouched
+- [ ] Run it once in a noisy room (music playing): summary refuses to save (✕ room)
+
 ### Note Accuracy game (M2)
 - [ ] Arco round: notes freeze at the *first* landing — correcting a finger after landing
       doesn't improve the result

@@ -27,6 +27,7 @@ import be.drakarah.intonation.game.scoreSustain
 import be.drakarah.intonation.game.sustainStars
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.settings.SettingsRepository
+import be.drakarah.intonation.settings.applying
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -105,7 +106,7 @@ class SustainViewModel(
             positions = settings.positions
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
-            engine = PitchEngine(config.copy(sensitivity = settings.micSensitivity))
+            engine = PitchEngine(config.applying(settings))
             sustainParams = SustainParams.forDifficulty(difficulty).copy(
                 attemptTimeoutMs = settings.playerLevel.sustainAttemptTimeoutMs,
             )

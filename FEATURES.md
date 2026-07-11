@@ -134,6 +134,19 @@ its own scoring category** — scores are only ever compared between identical s
   share (audio + detection log via any app) or delete, straight from the phone.
 - **Tune-up reminder**: the app remembers your last complete tune-up; starting a game
   more than ~8 hours later asks "Tuned up?" first (dismissible per session).
+- **Full calibration wizard** (Settings → "Full calibration (new phone or double
+  bass)"): a ~2-minute guided setup that makes detection work on any phone. It measures
+  the room while you keep quiet, has you bow open Mi once per available microphone mode
+  and picks the most reliable one, then bows of the other open strings measure where the
+  phone's mic loses low fundamentals (this bounds the octave-up correction per device),
+  and a prompted high note (Do3 — the note most prone to false octave halving) verifies
+  the whole chain. Because every prompted note's true pitch is known, the wizard replays
+  the recordings through candidate settings offline and picks the ones that detect every
+  note correctly — "turning the knobs" against ground truth. The summary shows a
+  per-note verdict before anything is saved; a too-noisy room refuses to save at all.
+- **Calibrate surroundings** (quick, per room): quiet phase + soft-playing phase set the
+  noise gate; refuses on overlap. The full wizard includes this measurement, so it only
+  needs re-running when the room changes.
 - Screens stay awake while listening. Dark theme only. Offline; no accounts, no ads,
   no telemetry.
 
@@ -142,8 +155,6 @@ its own scoring category** — scores are only ever compared between identical s
 - Chord-progression and walking-bass-line exercises (hand movement across the fingerboard).
 - Guess First ear-training mode (play → predict sharp/flat/in-tune → reveal).
 - Endless streak mode; drone mode.
-- Auto-calibration wizard (searches mic source / analysis window for the most stable
-  detection on this phone) — deferred until real-world detection demands it.
 - Long-term insights: weakest notes/shifts heatmaps, tendencies per string and position.
 
 ## License

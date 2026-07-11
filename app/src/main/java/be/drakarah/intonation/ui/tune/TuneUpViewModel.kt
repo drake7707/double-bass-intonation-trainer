@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
+import be.drakarah.intonation.settings.applying
 import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.music.NoteSpec
 import be.drakarah.intonation.music.centsBetween
@@ -55,7 +56,7 @@ class TuneUpViewModel(
         listenJob = viewModelScope.launch {
             settingsRepository?.settings?.first()?.let { settings ->
                 a4 = settings.a4
-                engine = PitchEngine(config.copy(sensitivity = settings.micSensitivity))
+                engine = PitchEngine(config.applying(settings))
             } ?: run { engine = PitchEngine(config) }
             engine.samples().collect { sample ->
                 if (sample.accepted && sample.smoothedHz > 0f) {

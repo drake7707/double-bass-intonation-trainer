@@ -1,5 +1,6 @@
 // Adapted from Tuner (https://codeberg.org/thetwom/Tuner), Copyright Michael Moessner,
-// licensed under GPL-3.0-or-later. Modifications: repackaged for BassPitch.
+// licensed under GPL-3.0-or-later. Modifications: repackaged for BassPitch; added
+// snapshotData() so the calibration wizard can replay a take in memory.
 /*
 * Copyright 2024 Michael Moessner
 *
@@ -95,6 +96,22 @@ class WaveWriter {
             this.numValues = 0
             if ((buffer?.size ?: 0) != numValues)
                 buffer = FloatArray(numValues)
+        }
+    }
+
+    /** Returns a copy of the current buffer contents, oldest sample first (BassPitch
+     * modification: lets the calibration wizard replay a recorded take in memory). */
+    suspend fun snapshotData(): FloatArray {
+        mutex.withLock {
+            val bufferLocal = buffer ?: return FloatArray(0)
+            val maxSize = bufferLocal.size
+            if (maxSize == 0) return FloatArray(0)
+            val out = FloatArray(numValues)
+            val bufferIndexBegin = ((insertPosition - numValues) % maxSize).toInt()
+            val numCopyPart1 = min(numValues, maxSize - bufferIndexBegin)
+            bufferLocal.copyInto(out, 0, bufferIndexBegin, bufferIndexBegin + numCopyPart1)
+            bufferLocal.copyInto(out, numCopyPart1, 0, numValues - numCopyPart1)
+            return out
         }
     }
 

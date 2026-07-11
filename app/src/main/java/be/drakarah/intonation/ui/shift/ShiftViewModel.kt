@@ -30,6 +30,7 @@ import be.drakarah.intonation.game.stars
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.music.centsBetween
 import be.drakarah.intonation.settings.SettingsRepository
+import be.drakarah.intonation.settings.applying
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -126,7 +127,7 @@ class ShiftViewModel(
                 departTimeoutMs = settings.playerLevel.shiftDepartTimeoutMs,
             )
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
-            engine = PitchEngine(config.copy(sensitivity = settings.micSensitivity))
+            engine = PitchEngine(config.applying(settings))
             prompts = ShiftPool(positions, crossString = style == "cross")
                 .draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()

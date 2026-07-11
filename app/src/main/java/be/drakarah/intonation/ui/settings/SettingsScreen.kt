@@ -47,6 +47,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenAbout: () -> Unit = {},
     onOpenCalibrate: () -> Unit = {},
+    onOpenWizard: () -> Unit = {},
 ) {
     val app = LocalContext.current.applicationContext as IntonationApplication
     val repo = app.container.settingsRepository
@@ -209,6 +210,9 @@ fun SettingsScreen(
                 )
                 OutlinedButton(onClick = onOpenCalibrate, modifier = Modifier.fillMaxWidth()) {
                     Text("Calibrate surroundings")
+                }
+                OutlinedButton(onClick = onOpenWizard, modifier = Modifier.fillMaxWidth()) {
+                    Text("Full calibration (new phone or double bass)")
                 }
             }
 

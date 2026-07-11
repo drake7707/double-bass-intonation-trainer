@@ -49,6 +49,10 @@ class PitchGate(
     private val sensitivity: Float,
     private val frequencyMin: Float = DspDefaults.FREQUENCY_MIN,
     frequencyMax: Float = DspDefaults.FREQUENCY_MAX,
+    /** See [PitchEngineConfig] — calibration-tunable octave-correction knobs. */
+    private val missingFundamentalMaxHz: Float = 63f,
+    private val oddHarmonicMinRatio: Float = 2.0f,
+    private val oddHarmonicMinRelative: Float = 0.02f,
 ) {
     private val smoother = OutlierRemovingSmoother(
         numMovingAverage,
@@ -141,12 +145,12 @@ class PitchGate(
         // been detected directly and halving can only be wrong. Without this bound, rule 2
         // continued octaves seeded by subharmonic attack readings (Ré3's attack read Ré2,
         // which then dragged the whole sustained Ré3 down an octave).
-        if (half > MISSING_FUNDAMENTAL_MAX_HZ) return frequency
+        if (half > missingFundamentalMaxHz) return frequency
 
         val oddHz = 1.5f * frequency
-        val oddProminent = spectralPeakRatio(results, oddHz) > ODD_HARMONIC_MIN_RATIO
+        val oddProminent = spectralPeakRatio(results, oddHz) > oddHarmonicMinRatio
         val oddSubstantial = spectralPeakAmp(results, oddHz) >
-                ODD_HARMONIC_MIN_RELATIVE * spectralPeakAmp(results, frequency)
+                oddHarmonicMinRelative * spectralPeakAmp(results, frequency)
         if (oddProminent && oddSubstantial) return half
 
         val decayContinuation = lastValidHz > 0f
@@ -204,16 +208,13 @@ class PitchGate(
     }
 
     private companion object {
-        /** All thresholds measured on the recorded corpus (dsp test `OctaveCorrectionEvidence`):
-         * the true missing-fundamental A-string segments fire on ~88% of windows, the genuine
-         * Do3/Ré3/Ré#3/Fa3 segments from the 2026-07-11 snippets on <=2% (isolated misfires
-         * are then discarded by the outlier smoother). */
-        const val ODD_HARMONIC_MIN_RATIO = 2.0f
-        const val ODD_HARMONIC_MIN_RELATIVE = 0.02f
+        // Default values of the constructor's octave-correction knobs were measured on the
+        // recorded corpus (dsp test `OctaveCorrectionEvidence`): the true missing-fundamental
+        // A-string segments fire on ~88% of windows, the genuine Do3/Ré3/Ré#3/Fa3 segments
+        // from the 2026-07-11 snippets on <=2% (isolated misfires are then discarded by the
+        // outlier smoother). The calibration wizard may override them per device.
         /** E1 a bit more than half a semitone flat — nothing playable sits below this. */
         const val LOWEST_PLAYABLE_HZ = 39f
-        /** Si1 with margin; Do2 (65.4 Hz) and up must never be produced by correction. */
-        const val MISSING_FUNDAMENTAL_MAX_HZ = 63f
         /** +-40 cents. */
         const val ODD_HARMONIC_WINDOW_FACTOR = 1.0234f
         const val DECAY_MEMORY_MS = 800L

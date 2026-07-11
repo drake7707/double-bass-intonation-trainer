@@ -13,6 +13,7 @@ import be.drakarah.intonation.game.Difficulty
 import be.drakarah.intonation.game.FIRST_POSITION
 import be.drakarah.intonation.game.PlayerLevel
 import be.drakarah.intonation.game.Position
+import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.game.positionById
 import be.drakarah.intonation.music.NoteNameStyle
 import kotlinx.coroutines.flow.Flow
@@ -37,8 +38,26 @@ data class AppSettings(
     val lastCalibratedAt: Long = 0,
     /** Microphone sensitivity (dsp gate): lower = ignores more ambient noise, higher =
      * hears quieter playing. Default measured against real noise/playing recordings;
-     * the future calibration wizard should set this per room. */
+     * set per room by "Calibrate surroundings" and by the full wizard. */
     val micSensitivity: Float = 55f,
+    /** Everything below here is set by the full calibration wizard (per phone). */
+    /** android.media.MediaRecorder.AudioSource id used for detection. */
+    val audioSource: Int = android.media.MediaRecorder.AudioSource.MIC,
+    /** Octave correction allowed only for claimed fundamentals below this (mic roll-off). */
+    val missingFundamentalMaxHz: Float = 63f,
+    val oddHarmonicMinRatio: Float = 2f,
+    val oddHarmonicMinRelative: Float = 0.02f,
+    /** Last completed full calibration (epoch ms, 0 = never). */
+    val fullCalibrationAt: Long = 0,
+)
+
+/** The one place where saved calibration turns into a runnable detection config. */
+fun PitchEngineConfig.applying(settings: AppSettings): PitchEngineConfig = copy(
+    sensitivity = settings.micSensitivity,
+    audioSource = settings.audioSource,
+    missingFundamentalMaxHz = settings.missingFundamentalMaxHz,
+    oddHarmonicMinRatio = settings.oddHarmonicMinRatio,
+    oddHarmonicMinRelative = settings.oddHarmonicMinRelative,
 )
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
@@ -58,6 +77,11 @@ class SettingsRepository(private val context: Context) {
         val lastTunedAt = longPreferencesKey("lastTunedAt")
         val lastCalibratedAt = longPreferencesKey("lastCalibratedAt")
         val micSensitivity = floatPreferencesKey("micSensitivity")
+        val audioSource = intPreferencesKey("audioSource")
+        val missingFundamentalMaxHz = floatPreferencesKey("missingFundamentalMaxHz")
+        val oddHarmonicMinRatio = floatPreferencesKey("oddHarmonicMinRatio")
+        val oddHarmonicMinRelative = floatPreferencesKey("oddHarmonicMinRelative")
+        val fullCalibrationAt = longPreferencesKey("fullCalibrationAt")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -85,7 +109,34 @@ class SettingsRepository(private val context: Context) {
             lastTunedAt = prefs[Keys.lastTunedAt] ?: 0,
             lastCalibratedAt = prefs[Keys.lastCalibratedAt] ?: 0,
             micSensitivity = prefs[Keys.micSensitivity] ?: 55f,
+            audioSource = prefs[Keys.audioSource]
+                ?: android.media.MediaRecorder.AudioSource.MIC,
+            missingFundamentalMaxHz = prefs[Keys.missingFundamentalMaxHz] ?: 63f,
+            oddHarmonicMinRatio = prefs[Keys.oddHarmonicMinRatio] ?: 2f,
+            oddHarmonicMinRelative = prefs[Keys.oddHarmonicMinRelative] ?: 0.02f,
+            fullCalibrationAt = prefs[Keys.fullCalibrationAt] ?: 0,
         )
+    }
+
+    /** Persists a completed full-calibration result atomically; also counts as a fresh
+     * surroundings calibration (the wizard measures the room as its first stage). */
+    suspend fun setFullCalibration(
+        audioSource: Int,
+        micSensitivity: Float,
+        missingFundamentalMaxHz: Float,
+        oddHarmonicMinRatio: Float,
+        oddHarmonicMinRelative: Float,
+        epochMs: Long,
+    ) {
+        context.dataStore.edit {
+            it[Keys.audioSource] = audioSource
+            it[Keys.micSensitivity] = micSensitivity.coerceIn(20f, 95f)
+            it[Keys.missingFundamentalMaxHz] = missingFundamentalMaxHz.coerceIn(39f, 90f)
+            it[Keys.oddHarmonicMinRatio] = oddHarmonicMinRatio
+            it[Keys.oddHarmonicMinRelative] = oddHarmonicMinRelative
+            it[Keys.fullCalibrationAt] = epochMs
+            it[Keys.lastCalibratedAt] = epochMs
+        }
     }
 
     suspend fun setLastCalibratedAt(epochMs: Long) {

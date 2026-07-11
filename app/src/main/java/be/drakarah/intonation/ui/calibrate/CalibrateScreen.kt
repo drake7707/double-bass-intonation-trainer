@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.calibration.SeparationVerdict
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.theme.ResultColors
 import java.util.Locale

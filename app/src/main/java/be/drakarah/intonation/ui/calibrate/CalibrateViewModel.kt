@@ -5,10 +5,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import be.drakarah.intonation.IntonationApplication
+import be.drakarah.intonation.calibration.CalibrationAnalysis
+import be.drakarah.intonation.calibration.SeparationVerdict
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.settings.SettingsRepository
+import be.drakarah.intonation.settings.applying
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,16 +21,6 @@ import kotlinx.coroutines.launch
 
 private const val NOISE_MS = 5000L
 private const val PLAYING_MS = 8000L
-
-/** How the two measured distributions relate. */
-enum class SeparationVerdict {
-    /** Comfortable gap — gate set with headroom on both sides. */
-    GOOD,
-    /** Soft playing sits close to the noise — playable, but soft notes may drop. */
-    TIGHT,
-    /** Soft playing is indistinguishable from the room — don't practice here. */
-    OVERLAP,
-}
 
 sealed interface CalibrateState {
     data object Idle : CalibrateState
@@ -71,18 +65,7 @@ class CalibrateViewModel(
             // notes alternate with silences during the playing phase: the upper part of the
             // distribution is the note bodies — p70 sits inside them for normal phrasing
             val playingFloor = percentile(levels, 70)
-            val gap = playingFloor - noiseCeil
-            val verdict = when {
-                gap >= 15f -> SeparationVerdict.GOOD
-                gap >= 5f -> SeparationVerdict.TIGHT
-                else -> SeparationVerdict.OVERLAP
-            }
-            val gate = when (verdict) {
-                // closer to the noise than to the playing: soft notes matter more
-                SeparationVerdict.GOOD -> noiseCeil + gap / 3f
-                SeparationVerdict.TIGHT -> noiseCeil + gap / 2f
-                SeparationVerdict.OVERLAP -> null
-            }?.coerceIn(15f, 70f)
+            val (verdict, gate) = CalibrationAnalysis.gateFor(noiseCeil, playingFloor)
             _state.value = CalibrateState.Done(
                 noiseCeil = noiseCeil,
                 playingFloor = playingFloor,
@@ -97,7 +80,9 @@ class CalibrateViewModel(
         progressState: (Float) -> CalibrateState,
         onDone: (List<Float>) -> Unit,
     ): Job = viewModelScope.launch {
-        val engine = PitchEngine(config.copy(sensitivity = 100f))
+        // measure through the calibrated audio source, but with the gate fully open
+        val settings = settingsRepository.settings.first()
+        val engine = PitchEngine(config.applying(settings).copy(sensitivity = 100f))
         val levels = ArrayList<Float>()
         var startMs = -1L
         try {

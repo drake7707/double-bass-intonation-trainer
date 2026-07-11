@@ -30,6 +30,7 @@ import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.music.NoteSpec
 import be.drakarah.intonation.music.centsBetween
 import be.drakarah.intonation.settings.SettingsRepository
+import be.drakarah.intonation.settings.applying
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -124,7 +125,7 @@ class RoundViewModel(
             )
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             capture = AttemptCapture(captureParams, skipQuietGate = true)
-            engine = PitchEngine(config.copy(sensitivity = settings.micSensitivity))
+            engine = PitchEngine(config.applying(settings))
             prompts = NotePool(positions).draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()
             _uiState.value = RoundUiState(

@@ -39,6 +39,16 @@ data class PitchEngineConfig(
     val maxNumFaultyValues: Int = 3,
     val frequencyMin: Float = DspDefaults.FREQUENCY_MIN,
     val frequencyMax: Float = DspDefaults.FREQUENCY_MAX,
+    /** Octave-up correction: a claimed true fundamental must sit below this to be corrected
+     * (the mic's low-frequency roll-off — above it a real fundamental is always visible).
+     * 0 disables the correction entirely (used by calibration to probe raw behaviour).
+     * Default measured on the reference device; the calibration wizard sets it per phone. */
+    val missingFundamentalMaxHz: Float = 63f,
+    /** Octave-up correction: minimum local prominence of the odd-harmonic peak at 1.5x. */
+    val oddHarmonicMinRatio: Float = 2.0f,
+    /** Octave-up correction: the 1.5x peak must be at least this fraction of the detected
+     * note's own spectral peak (sympathetic open-string ringing measures well below it). */
+    val oddHarmonicMinRelative: Float = 0.02f,
 ) {
     /** Time between successive pitch samples. */
     val hopMs: Float
@@ -76,6 +86,9 @@ class PitchEngine(
         sensitivity = config.sensitivity,
         frequencyMin = config.frequencyMin,
         frequencyMax = config.frequencyMax,
+        missingFundamentalMaxHz = config.missingFundamentalMaxHz,
+        oddHarmonicMinRatio = config.oddHarmonicMinRatio,
+        oddHarmonicMinRelative = config.oddHarmonicMinRelative,
     )
 
     fun samples(): Flow<PitchSample> = channelFlow {

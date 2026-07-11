@@ -165,7 +165,11 @@ class WizardViewModel(
             } else chosenSourceIdSoFar()
             val expectedHz = NoteSpec(await.prompt.midi).frequency(a4).toFloat()
             val take = recordTake(configFor(sourceId), await.prompt, expectedHz)
-            if (take == null || !CalibrationAnalysis.score(take.samples, expectedHz).heard) {
+            // Reject a take that isn't clearly the note she was asked for (too quiet, wrong
+            // note/string, or noise) — ask her to play it again rather than trust a one-off.
+            if (take == null || !CalibrationAnalysis.isUsableTake(
+                    CalibrationAnalysis.score(take.samples, expectedHz))
+            ) {
                 promptNextTake(retry = true)
                 return@launch
             }
@@ -261,6 +265,9 @@ class WizardViewModel(
     private var fitted: Pair<Float, Float>? = null
     private var finalGate: Float? = null
     private var finalKnee: Float = 63f
+    /** Game detection thresholds derived from this run (null gate → not saved). */
+    private var finalWrongNoteFloor: Float? = null
+    private var finalLowestHz: Float = 40f
 
     private suspend fun computeResult(): WizardResult? {
         if (quietLevels.size < 30 || stringTakes.size < OPEN_STRING_MIDIS.size + 1) return null
@@ -274,6 +281,9 @@ class WizardViewModel(
         val playingFloor = CalibrationAnalysis.percentile(playingLevels, 70)
         val (verdict, gate) = CalibrationAnalysis.gateFor(noiseCeil, playingFloor)
         finalGate = gate
+        // game detection thresholds, measured from the same room/playing data + the lowest string
+        finalWrongNoteFloor = CalibrationAnalysis.wrongNoteFloor(noiseCeil, playingFloor)
+        finalLowestHz = CalibrationAnalysis.lowestPlayableHz(NoteSpec(OPEN_MI).frequency(a4).toFloat())
 
         // 2. mic roll-off knee: replay open strings with correction disabled
         val octaveUpByHz = stringTakes.values.associate { take ->
@@ -350,6 +360,17 @@ class WizardViewModel(
     fun save() {
         val summary = _state.value as? WizardState.Summary ?: return
         val gate = summary.result.gate ?: return
+        // Last line of defence: never persist settings built on a run where a core open string
+        // failed to detect under the final config — that would make the app worse, not better.
+        // (The high note is allowed to be unreliable; it's surfaced separately.)
+        val coreFailed = summary.result.noteChecks.any { (midi, ok) -> !ok && midi in CORE_OPEN_MIDIS }
+        if (coreFailed) {
+            _state.value = WizardState.Failed(
+                "An open string didn't detect reliably this time. Nothing was changed — " +
+                    "run it again (longer, steadier bows) so the settings are based on clean takes."
+            )
+            return
+        }
         viewModelScope.launch {
             settingsRepository.setFullCalibration(
                 audioSource = chosenSource.id,
@@ -358,6 +379,8 @@ class WizardViewModel(
                 oddHarmonicMinRatio = fitted?.first ?: baseConfig.oddHarmonicMinRatio,
                 oddHarmonicMinRelative = fitted?.second ?: baseConfig.oddHarmonicMinRelative,
                 epochMs = System.currentTimeMillis(),
+                wrongNoteMinLevel = finalWrongNoteFloor,
+                lowestPlayableHz = finalLowestHz,
             )
             _state.value = summary.copy(saved = true)
         }
@@ -380,6 +403,8 @@ class WizardViewModel(
         /** Open strings, low to high: Mi1, La1, Ré2, Sol2. */
         private const val OPEN_MI = 28
         private val OPEN_STRING_MIDIS = listOf(33, 38, 43) // La1, Ré2, Sol2 (Mi reused)
+        /** The four open strings — these MUST verify for the calibration to be saveable. */
+        private val CORE_OPEN_MIDIS = (listOf(OPEN_MI) + OPEN_STRING_MIDIS).toSet()
         /** Do3 — a fourth above open Sol, the worst sympathetic-collision note. */
         private const val HIGH_NOTE = 48
 

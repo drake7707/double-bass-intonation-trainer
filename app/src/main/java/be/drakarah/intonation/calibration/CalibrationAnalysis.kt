@@ -3,6 +3,7 @@ package be.drakarah.intonation.calibration
 import be.drakarah.intonation.dsp.PitchSample
 import kotlin.math.abs
 import kotlin.math.ln
+import kotlin.math.pow
 import kotlin.math.sqrt
 
 /** How the measured room-noise and playing-level distributions relate. */
@@ -71,6 +72,16 @@ object CalibrationAnalysis {
         )
     }
 
+    /** Least fraction of accepted windows that must land on the prompted note (at ANY octave —
+     * a rolled-off mic legitimately reads the low strings an octave up) for a take to count. */
+    const val MIN_EXPECTED_NOTE_RATE = 0.4f
+
+    /** A prompted take is usable only when it has enough signal AND actually contains the note
+     * she was asked to play. Rejects wrong-note, wrong-string and noise-only takes so they can
+     * never be baked into settings — the wizard asks her to play it again instead. */
+    fun isUsableTake(s: TakeScore): Boolean =
+        s.heard && (s.correctRate + s.octaveUpRate + s.octaveDownRate) >= MIN_EXPECTED_NOTE_RATE
+
     /** Composite source quality: octave errors are the cardinal sin (they score a wrong
      * note as confidently as a right one), slow locking costs a little. */
     fun sourceQuality(s: TakeScore): Float =
@@ -118,6 +129,21 @@ object CalibrationAnalysis {
         }?.coerceIn(15f, 70f)
         return verdict to gate
     }
+
+    /** Energy floor below which a *wrong* game capture is treated as a stray transient (a
+     * finger-lift or adjacent-string ring), not a note she meant to play. Measured from the
+     * same room-noise ceiling and playing floor as the gate, but placed stricter: the gate
+     * sits a third of the way up (so soft real notes are still heard), while calling something
+     * a *wrong note* demands clear playing energy — halfway between noise and playing. Derived,
+     * so it generalises across mics, rooms and players instead of a hard-coded 55. */
+    fun wrongNoteFloor(noiseCeil: Float, playingFloor: Float): Float =
+        (noiseCeil + (playingFloor - noiseCeil) * 0.5f).coerceIn(noiseCeil + 5f, 75f)
+
+    /** Nothing playable sits below the lowest open string. A semitone of margin under its
+     * known pitch allows for a flat tuning and detection wobble. Tracks the player's A4 and
+     * generalises to other tunings/instruments (vs a hard-coded 40 Hz that assumed E1@440). */
+    fun lowestPlayableHz(lowestOpenStringHz: Float): Float =
+        lowestOpenStringHz * 2f.pow(-1f / 12f)
 
     fun percentile(values: List<Float>, p: Int): Float =
         values.sorted()[(values.size * p / 100).coerceAtMost(values.size - 1)]

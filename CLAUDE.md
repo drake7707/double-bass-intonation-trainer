@@ -12,6 +12,10 @@ score it. Live needles exist only on the Tune-up screen and Pitch debug screen.
 
 ## Key documents
 
+- `docs/DETECTION.md` — **the definitive capture/detection reference.** The problem history,
+  every design decision, what worked/didn't, the trace-driven fix, threshold ownership, and the
+  drill for diagnosing detection issues. Read it before editing `AttemptCapture`, `SustainCapture`,
+  `PitchGate`, `RoundViewModel.onCaptured`, or the calibration wizard.
 - `FEATURES.md` — complete user-facing feature description. Keep in sync with changes.
 - `TESTING.md` — her hands-on verification checklist. **Discipline: every change that
   needs bass/phone verification gets a Pending item; move to Verified (dated) when she

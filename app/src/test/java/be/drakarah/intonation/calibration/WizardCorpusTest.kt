@@ -56,6 +56,40 @@ class WizardCorpusTest {
     }
 
     @Test
+    fun wrongNoteFloorFromCorpusSitsAboveTheGateInASanePlayingBand() {
+        // measured the way the wizard does: gate wide open, energy of quiet vs playing
+        val noise = replay(readFloatWav("bass-noise-floor-desk.wav"), PitchEngineConfig(sensitivity = 100f))
+            .map { it.energyLevel }
+        val playing = replay(readFloatWav("bass-arco-open-strings.wav"), PitchEngineConfig(sensitivity = 100f))
+            .map { it.energyLevel }
+        val noiseCeil = CalibrationAnalysis.percentile(noise, 95)
+        val playingFloor = CalibrationAnalysis.percentile(playing, 70)
+
+        val gate = CalibrationAnalysis.gateFor(noiseCeil, playingFloor).second!!
+        val floor = CalibrationAnalysis.wrongNoteFloor(noiseCeil, playingFloor)
+        assertTrue("wrong-note floor ($floor) must be stricter than the gate ($gate)", floor > gate)
+        assertTrue("wrong-note floor ($floor) should land in a sane playing band", floor in 45f..70f)
+    }
+
+    @Test
+    fun lowestPlayableHzIsJustBelowTheOpenLowString() {
+        // open E1 at A4=440 is 41.2 Hz; the floor should sit ~a semitone under it
+        assertEquals(38.9f, CalibrationAnalysis.lowestPlayableHz(41.2f), 0.5f)
+        // and track a different tuning rather than assume 440
+        assertTrue(CalibrationAnalysis.lowestPlayableHz(41.4f) > CalibrationAnalysis.lowestPlayableHz(41.2f))
+    }
+
+    @Test
+    fun usableTakeAcceptsARealOpenStringAndRejectsTheWrongNote() {
+        val eString = replay(readFloatWav("bass-arco-open-strings.wav"), PitchEngineConfig())
+            .segment(2.5, 7.9)
+        // scored against the note actually played (E ~41.2) -> usable
+        assertTrue(CalibrationAnalysis.isUsableTake(CalibrationAnalysis.score(eString, 41.2f)))
+        // scored as if we'd asked for a note she did NOT play (C#2 ~69) -> rejected
+        assertTrue(!CalibrationAnalysis.isUsableTake(CalibrationAnalysis.score(eString, 69.3f)))
+    }
+
+    @Test
     fun defaultThresholdCandidateWinsOnTheReferencePhone() {
         // the wizard tries the corpus-measured defaults first: they must make the high
         // note read at its true octave AND keep the A string corrected — i.e. on the

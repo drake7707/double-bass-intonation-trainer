@@ -96,7 +96,8 @@ fun WizardScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (s.retry) {
                         Text(
-                            "That take was too quiet to use — try again, closer to the phone.",
+                            "Didn't catch that note clearly — let's do it again. Play the note " +
+                                "shown, with long steady bows, a bit closer to the phone.",
                             style = MaterialTheme.typography.bodyLarge,
                             color = ResultColors.close,
                         )

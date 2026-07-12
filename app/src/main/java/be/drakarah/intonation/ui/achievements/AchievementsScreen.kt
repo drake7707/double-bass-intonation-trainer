@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -87,6 +88,9 @@ fun AchievementsScreen(
 @Composable
 private fun AchievementCell(def: AchievementDef, isUnlocked: Boolean) {
     Card(
+        // A fixed height keeps every tile in a row identical — otherwise each cell sizes to its
+        // own text and the grid looks ragged. Content is centered and clamped to fit.
+        modifier = Modifier.height(150.dp),
         colors = if (isUnlocked) CardDefaults.cardColors()
                  else CardDefaults.cardColors(
                      containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -94,26 +98,32 @@ private fun AchievementCell(def: AchievementDef, isUnlocked: Boolean) {
     ) {
         Column(
             Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
+                .fillMaxSize()
+                .padding(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 if (isUnlocked) def.emoji else "🔒",
                 style = MaterialTheme.typography.headlineMedium,
             )
+            Spacer(Modifier.height(4.dp))
             Text(
                 def.title,
                 style = MaterialTheme.typography.labelLarge,
                 textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 color = if (isUnlocked) MaterialTheme.colorScheme.onSurface
                         else MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Spacer(Modifier.height(2.dp))
             Text(
                 def.description,
                 style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

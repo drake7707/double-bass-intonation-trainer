@@ -137,8 +137,8 @@ The capture rewrite (attack requirement) was verified live via traces — see th
       returns should NOT reset the ring; only genuine drift (sustained out) resets it
 - [ ] **Sustain in-tune bar.** A tune-up-style bar shows how sharp/flat the hold is; it
       greys out (no marker) when you're below the noise gate / not playing
-- [ ] **Home disabled card.** Sustain in Pizz mode reads clearly greyed/dimmed (was too subtle)
-- [ ] **Trace tool.** Settings → Debug → "Record & trace games" ON → play a full arco round →
+- [x] **Home disabled card.** Sustain in Pizz mode reads clearly greyed/dimmed (was too subtle)
+- [x] **Trace tool.** Settings → Debug → "Record & trace games" ON → play a full arco round →
       a `game-trace-…` WAV + JSONL appears in Recordings (Share it to me — I'll replay the whole
       round offline to retune arming/thresholds from real data). Turn OFF for normal play
 

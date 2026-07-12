@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -38,6 +40,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.data.SessionEntity
 import be.drakarah.intonation.game.ACHIEVEMENTS
 import be.drakarah.intonation.game.positionsFromConfigKey
+import be.drakarah.intonation.ui.chords.EXERCISE_CHORDS
 import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
 import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
@@ -51,8 +54,10 @@ private val exerciseTabs = listOf(
     EXERCISE_NOTE_ACCURACY to "Accuracy",
     EXERCISE_SUSTAIN to "Sustain",
     EXERCISE_SHIFT to "Shift",
+    EXERCISE_CHORDS to "Chords",
 )
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProgressScreen(
     onBack: () -> Unit,
@@ -73,7 +78,7 @@ fun ProgressScreen(
             Text("Progress", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(12.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 exerciseTabs.forEach { (type, label) ->
                     FilterChip(
                         selected = state.exerciseType == type,

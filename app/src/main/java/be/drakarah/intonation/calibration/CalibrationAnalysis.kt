@@ -1,9 +1,14 @@
 package be.drakarah.intonation.calibration
 
 import be.drakarah.intonation.dsp.PitchSample
+import be.drakarah.intonation.game.AttemptCapture
+import be.drakarah.intonation.game.CaptureParams
+import be.drakarah.intonation.game.CaptureState
+import be.drakarah.intonation.game.CapturedPitch
 import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 /** How the measured room-noise and playing-level distributions relate. */
@@ -147,4 +152,76 @@ object CalibrationAnalysis {
 
     fun percentile(values: List<Float>, p: Int): Float =
         values.sorted()[(values.size * p / 100).coerceAtMost(values.size - 1)]
+
+    // ---- pizz octave-settle profiling (the wizard's pizz phase) ----------------------------
+
+    /** Candidate pizz octave-settle windows (ms), shortest — least added latency — first.
+     * 0 = guard off. The wizard picks the smallest that resolves the recorded pizz takes on
+     * THIS rig, exactly like [ODD_HARMONIC_CANDIDATES] for the arco octave thresholds. */
+    val PIZZ_SETTLE_CANDIDATES = listOf(0L, 200L, 300L, 400L)
+
+    /** How pizz notes behave on this rig, from replaying the recorded pizz takes. */
+    data class PizzProfile(
+        /** Chosen octave-settle window (ms); 0 = no attack-octave artifact, guard stays off. */
+        val settleMs: Long,
+        /** True when the chosen window leaves zero octave-high captures across the pizz takes. */
+        val resolved: Boolean,
+        /** Per prompted note (expected Hz) -> captured cleanly at the correct octave. */
+        val checks: List<Pair<Float, Boolean>>,
+    )
+
+    /** True when [hz] sits a whole octave (or more) ABOVE [expectedHz] — the pizz attack artifact
+     * we are trying to eliminate (a wrong-octave capture that scores like a right one). */
+    private fun octaveHigh(hz: Float, expectedHz: Float): Boolean {
+        val c = cents(hz, expectedHz)
+        val octaves = (c / 1200f).roundToInt()
+        return octaves >= 1 && abs(c - octaves * 1200f) <= 70f
+    }
+
+    /** Runs the game's pizz capture over one recorded take, re-arming on each freeze exactly as a
+     * round does, and returns the frozen pitches — so the wizard measures the SAME machine that
+     * will run in the game. */
+    private fun pizzFreezes(
+        samples: List<PitchSample>, settleMs: Long, lowestPlayableHz: Float,
+    ): List<CapturedPitch> {
+        val params = CaptureParams.pizz().copy(
+            octaveSettleMs = settleMs.takeIf { it > 0 },
+            octaveFoldMinHz = lowestPlayableHz,
+            promptTimeoutMs = 20_000,
+        )
+        fun fresh() = AttemptCapture(params, skipQuietGate = true, requireOnsetRise = true)
+        val out = ArrayList<CapturedPitch>()
+        var cap = fresh()
+        for (s in samples) {
+            when (val st = cap.process(s)) {
+                is CaptureState.Frozen -> { out.add(st.result); cap = fresh() }
+                CaptureState.TimedOut -> cap = fresh()
+                else -> {}
+            }
+        }
+        return out
+    }
+
+    /** Builds the rig's pizz profile from recorded pizz takes (expected pitch known). For each
+     * candidate window shortest-first, replays every take through the real game capture and counts
+     * captures landing an octave (or more) high; picks the smallest window with none. A rig whose
+     * takes are already clean at window 0 gets 0 (no guard, no latency); if no window clears them
+     * the largest is used as best effort and [PizzProfile.resolved] is false. */
+    fun choosePizzSettle(
+        takesByExpectedHz: Map<Float, List<PitchSample>>, lowestPlayableHz: Float,
+    ): PizzProfile {
+        fun octaveHighCount(settle: Long): Int = takesByExpectedHz.entries.sumOf { (exp, samples) ->
+            pizzFreezes(samples, settle, lowestPlayableHz).count { octaveHigh(it.frequencyHz, exp) }
+        }
+        val chosen = PIZZ_SETTLE_CANDIDATES.firstOrNull { octaveHighCount(it) == 0 }
+        val settle = chosen ?: PIZZ_SETTLE_CANDIDATES.last()
+        val checks = takesByExpectedHz.entries.map { (exp, samples) ->
+            val freezes = pizzFreezes(samples, settle, lowestPlayableHz)
+            val ok = freezes.isNotEmpty() &&
+                freezes.none { octaveHigh(it.frequencyHz, exp) } &&
+                freezes.any { abs(cents(it.frequencyHz, exp)) <= 60f }
+            exp to ok
+        }
+        return PizzProfile(settle, resolved = chosen != null, checks = checks)
+    }
 }

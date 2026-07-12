@@ -16,7 +16,12 @@ watching-the-needle corrections.
     note is an octave lower (fixes the bowed A string reading A2 when the mic loses the
     55 Hz fundamental);
   - *decay continuation* — a jump to exactly 2× the tracked pitch with falling energy is a
-    decay artifact, not a new note (fixes plucked low E flipping to E2 as it rings out).
+    decay artifact, not a new note (fixes plucked low E flipping to E2 as it rings out);
+  - *pizz octave-settle* — a plucked note whose attack momentarily reads an octave high (the
+    detector latching the 2nd harmonic before the low fundamental develops) is held briefly
+    until the fundamental settles, so it scores the played note, not the wrong octave. The
+    settle window is measured per rig by the calibration wizard (a phone with no such artifact
+    uses none), and it only ever resolves downward when a real lower octave actually appears.
 - Real recordings from the target instrument are a permanent regression test suite.
 - Arco and pizzicato have separate capture tunings (attack skip, stability window, decay
   handling); every exercise can be played in either mode.
@@ -205,10 +210,14 @@ its own scoring category** — scores are only ever compared between identical s
   and picks the most reliable one, then bows of the other open strings measure where the
   phone's mic loses low fundamentals (this bounds the octave-up correction per device),
   and a prompted high note (Do3 — the note most prone to false octave halving) verifies
-  the whole chain. Because every prompted note's true pitch is known, the wizard replays
-  the recordings through candidate settings offline and picks the ones that detect every
-  note correctly — "turning the knobs" against ground truth. The summary shows a
-  per-note verdict before anything is saved; a too-noisy room refuses to save at all.
+  the whole chain. A final **pizz phase** has you pluck the open strings so the wizard can
+  measure how plucked notes behave on your rig and set the octave-settle window accordingly.
+  Because every prompted note's true pitch is known, the wizard replays the recordings
+  through candidate settings offline and picks the ones that detect every note correctly —
+  "turning the knobs" against ground truth. Each prompt **auto-starts recording after a
+  short countdown** so you never have to put the bass down, and the text is large enough to
+  read from playing distance. The summary shows a per-note verdict before anything is saved;
+  a too-noisy room refuses to save at all.
 - **Calibrate surroundings** (quick, per room): quiet phase + soft-playing phase set the
   noise gate; refuses on overlap. The full wizard includes this measurement, so it only
   needs re-running when the room changes.

@@ -5,6 +5,29 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-12 Pizz octave fix + calibration wizard pizz phase & auto-start (your feedback)
+Two things from your 2026-07-12 batch. **(1)** The occasional pizz "right note, wrong octave"
+(your Fa#1 snippet): every pluck's attack reads an octave high for a moment, then settles onto
+the fundamental — the capture used to freeze the octave. New **octave-settle** guard (pizz only)
+waits out that transient and takes the fundamental. It only ever folds down, and only when a real
+octave-below appears, so a genuinely high note is never dragged down. **(2)** The wizard was
+arco-only and made you set the bass down each prompt. It now has a short **pizz phase** that
+*measures* the octave-settle window for your rig (not a hard-coded number — a rig with no
+artifact gets none) and every prompt **auto-starts after a countdown**. Diagnosed + regression-
+tested offline from your snippet (`PizzOctaveSettleTest`); needs your hands-on confirmation.
+- [ ] **Re-run the full calibration.** Text is bigger — readable while holding the bass at ~2 m?
+- [ ] **No button-tapping between prompts** — each note shows a "recording starts in 4…3…2…1"
+      countdown then starts on its own. "Start now" works if you're ready early. (Applies to the
+      bowed prompts AND the new pizz prompts.)
+- [ ] **New pizz phase at the end**: prompts to *pluck* each open string (Mi, La, Ré, Sol),
+      count-in then records. Summary shows "Pizz — octave-settle NNN ms" (or "no octave drift")
+      and a ✓/⚠ per string.
+- [ ] **Then play a pizz Note-Accuracy round on Fa#1 (and low notes generally):** the octave
+      error should be gone — it scores Fa#1, not "wrong octave". (If you still see it, save a pizz
+      snippet from Pitch debug so we can re-measure.)
+- [ ] **Arco is unaffected** — bowed rounds behave exactly as before (no new latency, no octave
+      weirdness).
+
 ### 2026-07-12 More achievements + a dedicated gallery grid (your request)
 Grew the set from 13 → 25 badges and moved the gallery off the Progress feed onto its own
 grid screen. All the unlock rules are pure logic and unit-tested (`AchievementsTest`), so this
@@ -70,6 +93,17 @@ files). Arco and pizz both allowed.
 - [ ] **Summary/PB/achievements.** Round summary, personal best per exact position set, and the
       "🎼 Triads in tune" achievement (a round with every scored tone ≥1★) all appear.
 
+### 2026-07-12 Chords tab on Progress (your feedback)
+The Progress page only had Accuracy / Sustain / Shift tabs — the Chords game recorded rounds
+but there was no way to see them. Added a **Chords** filter chip. Chord rounds already store
+score, `avgAbsCents`, and per-note `positionId`, so the score chart, stats, and "Accuracy by
+position" all populate for it with no data changes. The tab row is now a `FlowRow` so four
+chips wrap instead of clipping on a narrow screen.
+- [ ] **Chords tab.** Play a Chords round, open Progress → a "Chords" chip appears; selecting
+      it shows that round in the score chart and history, with its avg-cents and position bars
+- [ ] **Tab wrapping.** Confirm all four chips (Accuracy / Sustain / Shift / Chords) are fully
+      visible — they should wrap to a second line rather than get cut off
+
 ### 2026-07-12 progress-by-position (verify on the bass)
 Two Progress-page additions from your feedback. Attempts now store which position each note
 belonged to (DB v2→v3 migration `MIGRATION_2_3`); the per-position breakdown only fills in
@@ -125,20 +159,20 @@ The capture rewrite (attack requirement) was verified live via traces — see th
 - [ ] **Shifts always change position.** Same-string and cross-string shift rounds never
       give a start and target in the same position — every prompt is a genuine shift
       between two positions
-- [ ] **One position disables shifting.** Select a single position on the home screen: both
+- [x] **One position disables shifting.** Select a single position on the home screen: both
       "Shift Trainer" cards go greyed out with "Select at least two positions to shift
       between"; select a second position and they light up again
-- [ ] If today's focus is a shift and only one position is selected, the focus card is not
+- [x] If today's focus is a shift and only one position is selected, the focus card is not
       tappable and explains why (select two positions)
-- [ ] **No string label on prompts.** Note Accuracy / Shift / Sustain prompts now show only
+- [x] **No string label on prompts.** Note Accuracy / Shift / Sustain prompts now show only
       the note + position — the confusing "(I)" string numeral is gone; you find the string
       yourself
-- [ ] **Streak has a label.** Top-left shows a flame icon + "N day streak" (not a bare 🔥 N)
-- [ ] **Proper icons, no emoji.** Home progress/settings buttons and Drone Play/Stop are
+- [x] **Streak has a label.** Top-left shows a flame icon + "N day streak" (not a bare 🔥 N)
+- [x] **Proper icons, no emoji.** Home progress/settings buttons and Drone Play/Stop are
       real icons; Drone's Back is the same outlined full-width button as every other screen
-- [ ] **Settings has sections** (Notation & tuning / Gameplay / Feedback / Detection &
+- [x] **Settings has sections** (Notation & tuning / Gameplay / Feedback / Detection &
       calibration) instead of one long list
-- [ ] **Calibrate surroundings** now also has its own card under Home → Tools
+- [x] **Calibrate surroundings** now also has its own card under Home → Tools
 
 ### Drone mode (new — pure practice aid, no scoring/detection)
 - [ ] Home → Tuning & ear training → Drone: tap Play → a steady tone sounds through the
@@ -322,9 +356,9 @@ The capture rewrite (attack requirement) was verified live via traces — see th
 - [x] 10 prompts is a sensible round length
 - [ ] Deliberately play ~20 cents sharp → shows + (sharp); flat shows −
 - [x] Deliberately play a completely different note → shows "wrong note?"
-- [ ] Let a note ring out — the next prompt must NOT capture the ring-over
+- [x] Let a note ring out — the next prompt must NOT capture the ring-over
 - [x] Talk / make room noise while not playing → no false captures
-- [ ] Suggested strings make sense for the prompted notes
+- [/] Suggested strings make sense for the prompted notes
 
 ## Verified
 
@@ -388,12 +422,13 @@ Home screen:
 
 - The sustain menu item on pizz is disabled but i would also change the background because it's very subtle now, between light gray and white is almost no difference.
 
+- the layout of achievements  does not use tiles of the same size in rows, so it looks messy
+
+- progress view does not have Chords shown yet — FIXED 2026-07-12 (Chords tab added; see Pending)
+
+- my day streak is still 1 , but i think it should be 2 by now
+
 
 OPEN FEEDBACK:
 --------------
 
-- the layout of achievements  does not use tiles of the same size in rows, so it looks messy
-
-- progress view does not have Chords shown yet
-
-- my day streak is still 1 , but i think it should be 2 by now

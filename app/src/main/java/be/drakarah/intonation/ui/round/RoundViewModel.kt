@@ -159,6 +159,12 @@ class RoundViewModel(
             minReadMs = settings.playerLevel.minReadMs
             captureParams = captureParams.copy(
                 promptTimeoutMs = settings.playerLevel.promptTimeoutMs,
+                // Pizz only: engage the octave-settle guard (fixes the pluck attack reading an
+                // octave high then settling onto the fundamental). Window is calibration-owned
+                // per rig; 0 = this rig has no attack-octave artifact, so no guard. Fold floor is
+                // the calibrated lowest playable pitch so a low note is never guarded needlessly.
+                octaveSettleMs = if (mode == "pizz") settings.pizzOctaveSettleMs.takeIf { it > 0 } else null,
+                octaveFoldMinHz = settings.lowestPlayableHz,
             )
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             capture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = true)

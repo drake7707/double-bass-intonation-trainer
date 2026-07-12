@@ -61,6 +61,11 @@ data class AppSettings(
     /** Frequency below which a capture cannot be a played note (the lowest string; the wizard
      * sets it from the measured open-Mi so it generalizes to any tuning/instrument). */
     val lowestPlayableHz: Float = 40f,
+    /** Pizz octave-settle window (ms): how long a plucked note that reads an octave high on its
+     * attack is guarded so the fundamental can settle an octave below and be taken instead. 0 =
+     * this rig shows no pizz attack-octave artifact (no guard). Measured per rig by the wizard's
+     * pizz phase; the default is the reference-Pixel-6a measurement, overridden on calibration. */
+    val pizzOctaveSettleMs: Long = 300,
     /** Last completed full calibration (epoch ms, 0 = never). */
     val fullCalibrationAt: Long = 0,
     /** Drone mode's last pitch class (0 = Do/C … 11 = Si/B) and just-fifth toggle. */
@@ -106,6 +111,7 @@ class SettingsRepository(private val context: Context) {
         val oddHarmonicMinRelative = floatPreferencesKey("oddHarmonicMinRelative")
         val wrongNoteMinLevel = floatPreferencesKey("wrongNoteMinLevel")
         val lowestPlayableHz = floatPreferencesKey("lowestPlayableHz")
+        val pizzOctaveSettleMs = longPreferencesKey("pizzOctaveSettleMs")
         val fullCalibrationAt = longPreferencesKey("fullCalibrationAt")
         val dronePitchClass = intPreferencesKey("dronePitchClass")
         val droneFifth = booleanPreferencesKey("droneFifth")
@@ -148,6 +154,7 @@ class SettingsRepository(private val context: Context) {
             oddHarmonicMinRelative = prefs[Keys.oddHarmonicMinRelative] ?: 0.02f,
             wrongNoteMinLevel = prefs[Keys.wrongNoteMinLevel] ?: 55f,
             lowestPlayableHz = prefs[Keys.lowestPlayableHz] ?: 40f,
+            pizzOctaveSettleMs = prefs[Keys.pizzOctaveSettleMs] ?: 300,
             fullCalibrationAt = prefs[Keys.fullCalibrationAt] ?: 0,
             dronePitchClass = (prefs[Keys.dronePitchClass] ?: 9).coerceIn(0, 11),
             droneFifth = prefs[Keys.droneFifth] ?: false,
@@ -168,6 +175,8 @@ class SettingsRepository(private val context: Context) {
         wrongNoteMinLevel: Float? = null,
         /** Measured from the open-Mi stage (lowest string); null keeps the current value. */
         lowestPlayableHz: Float? = null,
+        /** Measured from the pizz phase (0 = no attack-octave artifact); null keeps current. */
+        pizzOctaveSettleMs: Long? = null,
     ) {
         context.dataStore.edit {
             it[Keys.audioSource] = audioSource
@@ -177,6 +186,7 @@ class SettingsRepository(private val context: Context) {
             it[Keys.oddHarmonicMinRelative] = oddHarmonicMinRelative
             wrongNoteMinLevel?.let { v -> it[Keys.wrongNoteMinLevel] = v.coerceIn(20f, 90f) }
             lowestPlayableHz?.let { v -> it[Keys.lowestPlayableHz] = v.coerceIn(30f, 60f) }
+            pizzOctaveSettleMs?.let { v -> it[Keys.pizzOctaveSettleMs] = v.coerceIn(0L, 600L) }
             it[Keys.fullCalibrationAt] = epochMs
             it[Keys.lastCalibratedAt] = epochMs
         }

@@ -5,8 +5,9 @@
 problem, every design decision, what worked and what didn't, and how we got there — so after a
 context reset we can be current again in one read.
 
-Last updated: 2026-07-11 (evening), after the "instant wrong note" saga was fully resolved and
-the calibration wizard was extended to own the detection thresholds.
+Last updated: 2026-07-12, after the pizz **octave-settle** fix (a plucked note reading an octave
+high on its attack, then settling onto the fundamental) and the calibration wizard's new **pizz
+phase** that measures that behaviour per rig.
 
 ---
 
@@ -73,6 +74,27 @@ never produces a rise.
 `CapturedPitch` carries `frequencyHz`, `reactionTimeMs`, `timeToStableMs`, `quality`
 (CLEAN/SHAKY), and **`energyLevel`** (median energy of the frozen window — added so Layer 3 can
 reject faint captures).
+
+### 2.1 Octave-settle (pizz attack-overtone → fundamental)
+A plucked note's attack is dominated by upper partials, so the detector latches the **2nd
+harmonic** and reads an **octave high** for the first ~100–530 ms, then settles onto the true
+fundamental. `PitchGate`'s octave-UP correction does **not** fire here — the reads sit above the
+roll-off knee and energy is rising (not a decay), so both its rules miss. The steady octave window
+is long enough to satisfy stability → the machine froze it and scored a confident "right note,
+wrong octave" (her 2026-07-12 Fa#1 pizz report).
+
+Fix (`CaptureParams.octaveSettleMs`, non-null for pizz only): when a first stable pitch **could**
+be an attack overtone (an octave below it is still ≥ `octaveFoldMinHz`, the calibrated lowest
+playable pitch), park it as a **candidate** rather than freezing. If a stable window settles an
+octave below within `octaveSettleMs`, take that (the fundamental); otherwise the candidate stands.
+**Direction-safe**: it only ever folds DOWN, and only when a real stable octave-below appears — a
+genuinely high note (no octave-below) keeps its pitch (proven with a synthesised F#2 stream). The
+octave→fundamental transition's dropout burst is treated leniently so it doesn't SHAKY-freeze the
+overtone first. `captureWindowMs` for pizz is 2500 (not 1500) so a long pluck's fundamental has
+room to settle. Arco/shift leave `octaveSettleMs` null → unchanged first-stable behaviour. The
+mechanism is universal and non-destructive; **whether to engage it and its window are calibrated
+per rig** (see §5 A). Guarded by `PizzOctaveSettleTest` (her real Fa#1 snippet: guard off → the
+octave bug reproduces; guard on → zero octave-high freezes, fundamental still captured).
 
 ---
 
@@ -199,7 +221,15 @@ point). Measured by the full calibration wizard from prompted notes (ground trut
   noise and playing (the gate sits ⅓ up, favouring hearing soft notes; calling something a
   *wrong note* demands clearer energy). `CalibrationAnalysis.wrongNoteFloor(noiseCeil, playingFloor)`.
 - **`lowestPlayableHz`** — a semitone below the lowest open string's known pitch, so it tracks her
-  A4 / tuning. `CalibrationAnalysis.lowestPlayableHz(lowestOpenStringHz)`.
+  A4 / tuning. `CalibrationAnalysis.lowestPlayableHz(lowestOpenStringHz)`. Also the `octaveFoldMinHz`
+  floor for the pizz octave-settle guard (§2.1).
+- **`pizzOctaveSettleMs`** — the pizz octave-settle window (§2.1). **Measured per rig**, not
+  assumed: the wizard's pizz phase replays the recorded plucked takes through the game capture
+  under each `PIZZ_SETTLE_CANDIDATES` window (`[0, 200, 300, 400] ms`, 0 = off) and picks the
+  smallest that lands zero octave-high captures on THIS rig (`CalibrationAnalysis.choosePizzSettle`).
+  A rig with no attack-octave artifact gets 0 (no guard, no added latency). The shipped default
+  (300) is only the reference-Pixel-6a measurement — a rig assumption that calibration replaces,
+  exactly like the odd-harmonic thresholds. (This is the answer to "don't hard-code your rig".)
 - **mic source** (Standard/Voice/Unprocessed), **roll-off knee** (`missingFundamentalMaxHz`),
   **octave-correction odd-harmonic thresholds** — as before.
 
@@ -233,11 +263,17 @@ Separate machine. Requires onset-rise already (a ring won't start it). Key behav
 
 ## 7. The calibration wizard — measure, validate, test-run, then save
 
-`ui/calibrate/WizardViewModel` + pure core `calibration/CalibrationAnalysis`. Flow (~2 min arco):
+`ui/calibrate/WizardViewModel` + pure core `calibration/CalibrationAnalysis`. Flow (~2 min):
 quiet room → gate; open Mi once per mic source → best source; open La/Ré/Sol → playing floor +
-roll-off knee; Do3 → verify + refit octave thresholds only if it halves. Every prompted note's
-true pitch is known, so takes are **replayed offline through candidate configs** and scored
-against ground truth ("turning the knobs against known notes").
+roll-off knee; Do3 → verify + refit octave thresholds only if it halves; **then a pizz phase —
+pluck the four open strings → `choosePizzSettle` measures the octave-settle window for this rig**
+(§2.1, §5 A). Every prompted note's true pitch is known, so takes are **replayed offline through
+candidate configs** and scored against ground truth ("turning the knobs against known notes").
+
+**UX (2026-07-12):** each play prompt **auto-starts recording after a short countdown** (no
+putting the bass down to tap a button — her request), with a "Start now" override, and the
+prompt text is sized to read from ~2 m while holding the bass. The pizz rows and any residual
+"octave drift" warning show in the summary.
 
 Robustness (her requirements — reject bad data, don't bake in a one-off, validate with a test
 run):
@@ -261,6 +297,10 @@ already pool ~170 windows each and the retry+guard cover the main risk.
 
 - `app` `AttemptCaptureTest` — the state machine incl. the **attack-requirement** cases (a ring
   with no attack must not freeze; a genuine attack must; an attack after a ring decays must).
+- `app` `PizzOctaveSettleTest` — the pizz **octave-settle** fix (§2.1), replaying her real Fa#1
+  pizz snippet's recorded detection stream (JSONL, not a WAV re-run — octave correction is
+  config-dependent, so the recorded stream is the faithful ground truth): guard off reproduces
+  the octave bug, guard on eliminates it, and `choosePizzSettle` picks a resolving window.
 - `app` `FeedbackRegressionTest` — replays her Sol#1/Fa2 snippets; guards the harmonic/unplayable
   /flimsy filters and legato arming.
 - `app` `SustainCaptureTest` — incl. `briefBowReversalScoopDoesNotReset`.

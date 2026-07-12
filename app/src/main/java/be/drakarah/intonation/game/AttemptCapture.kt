@@ -31,10 +31,24 @@ data class CaptureParams(
     /** When set, samples moving faster than this (cents per sample) count as glide and are
      * excluded from the stability window — used by the Shift Trainer's landing phase. */
     val glideCentsPerSample: Float? = null,
+    /** Octave-settle window (ms). When non-null, a first stable pitch that *could* be a pizz
+     * attack-transient overtone (an octave below it is still a playable note) is held as a
+     * provisional candidate for this long; if the true fundamental settles an octave below in
+     * that window it is taken instead, otherwise the candidate stands. Fixes pizz reading an
+     * octave high on the pluck attack then settling onto the fundamental. Null = off (arco/shift
+     * freeze the first stable pitch as before). The value is a per-rig CALIBRATION setting,
+     * measured by the wizard's pizz phase; a rig with no attack-octave artifact gets null/0. */
+    val octaveSettleMs: Long? = null,
+    /** A candidate frequency is only octave-settle-guarded when a whole octave below it is at or
+     * above this (the lowest playable pitch, calibration-owned) — below that, an octave-down
+     * cannot be a real note, so the candidate is frozen at once (no added latency for low notes). */
+    val octaveFoldMinHz: Float = 40f,
 ) {
     companion object {
         fun arco() = CaptureParams(attackSkipMs = 120, stabilityWindowMs = 250, captureWindowMs = 3000)
-        fun pizz() = CaptureParams(attackSkipMs = 60, stabilityWindowMs = 150, captureWindowMs = 1500)
+        /** captureWindowMs is 2500 (not 1500) so a long pluck's fundamental has room to settle
+         * under the octave guard before the window closes (corpus-validated on the Fa#1 snippet). */
+        fun pizz() = CaptureParams(attackSkipMs = 60, stabilityWindowMs = 150, captureWindowMs = 2500)
     }
 }
 
@@ -100,6 +114,13 @@ class AttemptCapture(
     private var lastPitch = 0f
     private var dropoutStreak = 0
 
+    // Octave-settle candidate (only used when params.octaveSettleMs != null). The first stable
+    // pitch that might be a pizz attack overtone is parked here while we watch for the fundamental
+    // to settle an octave below it. Null candWindow = no candidate yet.
+    private var candHz = 0f
+    private var candWindow: List<Buffered>? = null
+    private var candSinceMs = -1L
+
     /** One accepted, post-attack-skip sample kept for the stability window. */
     private data class Buffered(val ms: Long, val hz: Float, val level: Float)
 
@@ -161,6 +182,8 @@ class AttemptCapture(
     private fun processCapturing(sample: PitchSample) {
         if (sample.timestampMs - onsetMs < params.attackSkipMs) return
 
+        val now = sample.timestampMs
+        val settle = params.octaveSettleMs
         val usable = sample.accepted && sample.smoothedHz > 0f
         if (usable) {
             val glide = params.glideCentsPerSample?.let { limit ->
@@ -169,18 +192,39 @@ class AttemptCapture(
             lastPitch = sample.smoothedHz
             dropoutStreak = 0
             if (!glide) {
-                buffer.add(Buffered(sample.timestampMs, sample.smoothedHz, sample.energyLevel))
-                if (isStable(sample.timestampMs)) {
-                    freeze(windowSince(sample.timestampMs - params.stabilityWindowMs), CaptureQuality.CLEAN, sample.timestampMs)
-                    return
+                buffer.add(Buffered(now, sample.smoothedHz, sample.energyLevel))
+                val window = stableWindow(now)
+                if (window != null) {
+                    if (settle == null) {
+                        freeze(window, CaptureQuality.CLEAN, now)
+                        return
+                    }
+                    if (onOctaveSettle(window, now)) return
                 }
             }
         } else {
             dropoutStreak++
-            if (dropoutStreak > params.maxDropouts) {
-                // note died (pizz decay, bow stop) — fall back or rewind
+            if (settle != null && candWindow != null) {
+                // Transitioning from the attack overtone down to the fundamental produces a burst
+                // of rejected windows; don't abandon the candidate for it. Only give up if the
+                // note has truly died (a long dropout run), freezing what we settled on.
+                if (dropoutStreak > OCTAVE_SETTLE_DIE_DROPS) {
+                    freeze(candWindow!!, CaptureQuality.CLEAN, candSinceMs)
+                    return
+                }
+            } else if (dropoutStreak > params.maxDropouts) {
+                // note died (pizz decay, bow stop) — but if what we buffered is itself a foldable
+                // octave, this may be the attack overtone dying into the fundamental: park it as a
+                // candidate and keep listening rather than freezing the overtone.
+                val tail = if (buffer.size >= params.minFallbackSamples)
+                    buffer.takeLast(params.minFallbackSamples) else buffer.toList()
+                if (settle != null && tail.isNotEmpty() && foldable(median(tail.map { it.hz }))) {
+                    candHz = median(tail.map { it.hz }); candWindow = tail; candSinceMs = now
+                    dropoutStreak = 0
+                    return
+                }
                 if (buffer.size >= params.minFallbackSamples) {
-                    freeze(buffer.takeLast(params.minFallbackSamples), CaptureQuality.SHAKY, sample.timestampMs)
+                    freeze(buffer.takeLast(params.minFallbackSamples), CaptureQuality.SHAKY, now)
                 } else {
                     rewindToListening()
                 }
@@ -188,12 +232,54 @@ class AttemptCapture(
             }
         }
 
-        if (sample.timestampMs - onsetMs >= params.captureWindowMs) {
+        if (now - onsetMs >= params.captureWindowMs) {
+            if (settle != null && candWindow != null) {
+                freeze(candWindow!!, CaptureQuality.CLEAN, candSinceMs)
+                return
+            }
             val best = mostStableSubWindow()
-            if (best != null) freeze(best, CaptureQuality.SHAKY, sample.timestampMs)
+            if (best != null) freeze(best, CaptureQuality.SHAKY, now)
             else state = CaptureState.TimedOut
         }
     }
+
+    /** Octave-settle step (params.octaveSettleMs != null). Given a fresh stable [window], decide
+     * whether to freeze now, adopt the fundamental an octave below, or keep waiting. Returns true
+     * when it froze. Direction-safe: it only ever folds DOWN, and only when a stable octave below
+     * actually appears — a genuinely high note (no octave-below) keeps its pitch. */
+    private fun onOctaveSettle(window: List<Buffered>, now: Long): Boolean {
+        val md = median(window.map { it.hz })
+        if (candWindow == null) {
+            // First stable pitch. If nothing playable sits an octave below, it can't be an attack
+            // overtone — freeze at once (no latency for low notes). Otherwise guard it.
+            if (foldable(md)) {
+                candHz = md; candWindow = window; candSinceMs = now
+            } else {
+                freeze(window, CaptureQuality.CLEAN, now); return true
+            }
+        } else {
+            when {
+                // the fundamental settled an octave below the candidate — that's the real note
+                abs(cents(md, candHz / 2f)) <= OCTAVE_MATCH_CENTS -> {
+                    freeze(window, CaptureQuality.CLEAN, now); return true
+                }
+                // still the same pitch — refresh the window we'd freeze if nothing lower appears
+                abs(cents(md, candHz)) <= OCTAVE_MATCH_CENTS -> candWindow = window
+                // settled to a lower pitch that is itself still foldable — re-baseline the guard
+                md < candHz && foldable(md) -> { candHz = md; candWindow = window; candSinceMs = now }
+                // settled to a lower, non-foldable pitch — that's the note
+                md < candHz -> { freeze(window, CaptureQuality.CLEAN, now); return true }
+                // md above the candidate (an overtone flicker) — ignore, keep the candidate
+            }
+        }
+        if (candWindow != null && now - candSinceMs >= params.octaveSettleMs!!) {
+            freeze(candWindow!!, CaptureQuality.CLEAN, candSinceMs)
+            return true
+        }
+        return false
+    }
+
+    private fun foldable(hz: Float): Boolean = hz / 2f >= params.octaveFoldMinHz
 
     private fun checkPromptTimeout(sample: PitchSample) {
         if (sample.timestampMs - startMs >= params.promptTimeoutMs) state = CaptureState.TimedOut
@@ -205,18 +291,22 @@ class AttemptCapture(
         dropoutStreak = 0
         lastPitch = 0f
         onsetMs = -1
+        candHz = 0f
+        candWindow = null
+        candSinceMs = -1
         state = CaptureState.Listening
     }
 
     private fun windowSince(fromMs: Long): List<Buffered> =
         buffer.filter { it.ms >= fromMs }
 
-    private fun isStable(nowMs: Long): Boolean {
+    /** The trailing stability window if the pitch has held steady across it, else null. */
+    private fun stableWindow(nowMs: Long): List<Buffered>? {
         val window = windowSince(nowMs - params.stabilityWindowMs)
-        if (window.size < 2) return false
+        if (window.size < 2) return null
         // the window must genuinely span the required duration, not just hold two close samples
-        if (window.first().ms > nowMs - params.stabilityWindowMs + spanToleranceMs) return false
-        return spreadCents(window.map { it.hz }) <= params.stabilityBandCents
+        if (window.first().ms > nowMs - params.stabilityWindowMs + spanToleranceMs) return null
+        return if (spreadCents(window.map { it.hz }) <= params.stabilityBandCents) window else null
     }
 
     private fun freeze(window: List<Buffered>, quality: CaptureQuality, nowMs: Long) {
@@ -268,5 +358,9 @@ class AttemptCapture(
     private companion object {
         /** Slack when checking that a stability window spans its full duration (one hop-ish). */
         const val spanToleranceMs = 30L
+        /** How close (cents) two readings must be to count as the same pitch / a clean octave. */
+        const val OCTAVE_MATCH_CENTS = 70f
+        /** Rejected-window run during octave settling long enough to mean the note has died. */
+        const val OCTAVE_SETTLE_DIE_DROPS = 8
     }
 }

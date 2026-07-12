@@ -21,6 +21,7 @@ import be.drakarah.intonation.settings.SettingsRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,14 +47,19 @@ data class PlayPrompt(
     val stringHint: String,
     /** e.g. "2 of 3" for the source stage repeats. */
     val repeatHint: String? = null,
+    /** This prompt is played pizzicato (plucked) rather than bowed. */
+    val pizz: Boolean = false,
 )
 
 sealed interface WizardState {
     data object Intro : WizardState
     data class Quiet(val progress: Float) : WizardState
-    /** Waiting for the user to start the given take; [retry] set when the last attempt
+    /** Waiting to record the given take. Recording auto-starts when [secsLeft] counts down to 0
+     * (so she never has to put the bass down to tap a button); [retry] set when the last attempt
      * had too little signal. */
-    data class AwaitPlay(val prompt: PlayPrompt, val stage: String, val retry: Boolean) : WizardState
+    data class AwaitPlay(
+        val prompt: PlayPrompt, val stage: String, val retry: Boolean, val secsLeft: Int,
+    ) : WizardState
     data class Recording(val prompt: PlayPrompt, val progress: Float, val heardHz: Float?) : WizardState
     data object Analyzing : WizardState
     data class Summary(val result: WizardResult, val saved: Boolean) : WizardState
@@ -71,6 +77,12 @@ data class WizardResult(
     val thresholdsAdjusted: Boolean,
     /** True when no threshold candidate could make the high note read correctly. */
     val highNoteUnreliable: Boolean,
+    /** Pizz octave-settle window measured for this rig (ms); 0 = no attack-octave artifact. */
+    val pizzSettleMs: Long,
+    /** Per plucked open string: display midi -> captured cleanly at the right octave. */
+    val pizzChecks: List<Pair<Int, Boolean>>,
+    /** True when no settle window fully cleared the pizz attack-octave artifact on this rig. */
+    val pizzUnreliable: Boolean,
 )
 
 /** Full calibration wizard (M5): measures the room, picks the mic source, measures the
@@ -87,6 +99,8 @@ class WizardViewModel(
     val state: StateFlow<WizardState> = _state.asStateFlow()
 
     private var job: Job? = null
+    /** Pre-take countdown that auto-starts recording (separate from [job], the recording). */
+    private var countdownJob: Job? = null
     private var a4 = 440.0
 
     private var quietLevels: List<Float> = emptyList()
@@ -95,6 +109,8 @@ class WizardViewModel(
     /** Open-string takes on the chosen source, midi -> take (Mi reused from source stage). */
     private val stringTakes = LinkedHashMap<Int, Take>()
     private var highTake: Take? = null
+    /** Plucked open-string takes, midi -> take (for the pizz octave-settle profile). */
+    private val pizzTakes = LinkedHashMap<Int, Take>()
     private var chosenSource: SourceCandidate = sources.first()
 
     // ---- stage flow ------------------------------------------------------------------
@@ -125,7 +141,7 @@ class WizardViewModel(
         val nextSource = sources.firstOrNull { it.id !in sourceTakes }
         if (nextSource != null) {
             val index = sources.indexOf(nextSource) + 1
-            _state.value = WizardState.AwaitPlay(
+            awaitPlay(
                 PlayPrompt(
                     midi = OPEN_MI,
                     stringHint = "open string, long bows",
@@ -138,7 +154,7 @@ class WizardViewModel(
         }
         val nextString = OPEN_STRING_MIDIS.firstOrNull { it !in stringTakes }
         if (nextString != null) {
-            _state.value = WizardState.AwaitPlay(
+            awaitPlay(
                 PlayPrompt(midi = nextString, stringHint = "open string, long bows"),
                 stage = "Open strings",
                 retry = retry,
@@ -146,9 +162,18 @@ class WizardViewModel(
             return
         }
         if (highTake == null) {
-            _state.value = WizardState.AwaitPlay(
+            awaitPlay(
                 PlayPrompt(midi = HIGH_NOTE, stringHint = "Sol string, 2nd position"),
                 stage = "High note",
+                retry = retry,
+            )
+            return
+        }
+        val nextPizz = PIZZ_MIDIS.firstOrNull { it !in pizzTakes }
+        if (nextPizz != null) {
+            awaitPlay(
+                PlayPrompt(midi = nextPizz, stringHint = "pluck it, let it ring", pizz = true),
+                stage = "Pizz check",
                 retry = retry,
             )
             return
@@ -156,8 +181,26 @@ class WizardViewModel(
         analyze()
     }
 
+    /** Show the play prompt and start the auto-start countdown so she never has to put the bass
+     * down: recording begins on its own when the count reaches zero (she can also tap to start
+     * now). */
+    private fun awaitPlay(prompt: PlayPrompt, stage: String, retry: Boolean) {
+        _state.value = WizardState.AwaitPlay(prompt, stage, retry, secsLeft = AUTO_START_SEC)
+        countdownJob?.cancel()
+        countdownJob = viewModelScope.launch {
+            for (n in AUTO_START_SEC downTo 1) {
+                val s = _state.value as? WizardState.AwaitPlay ?: return@launch
+                _state.value = s.copy(secsLeft = n)
+                delay(1000)
+            }
+            startTake()
+        }
+    }
+
     fun startTake() {
         val await = _state.value as? WizardState.AwaitPlay ?: return
+        countdownJob?.cancel()
+        countdownJob = null
         if (job != null) return
         job = viewModelScope.launch {
             val sourceId = if (await.stage == "Lowest string") {
@@ -173,12 +216,13 @@ class WizardViewModel(
                 promptNextTake(retry = true)
                 return@launch
             }
-            when {
-                await.stage == "Lowest string" -> {
+            when (await.stage) {
+                "Lowest string" -> {
                     sourceTakes[sourceId] = take
                     if (sources.all { it.id in sourceTakes }) pickSource()
                 }
-                await.stage == "Open strings" -> stringTakes[await.prompt.midi] = take
+                "Open strings" -> stringTakes[await.prompt.midi] = take
+                "Pizz check" -> pizzTakes[await.prompt.midi] = take
                 else -> highTake = take
             }
             promptNextTake()
@@ -268,6 +312,7 @@ class WizardViewModel(
     /** Game detection thresholds derived from this run (null gate → not saved). */
     private var finalWrongNoteFloor: Float? = null
     private var finalLowestHz: Float = 40f
+    private var finalPizzSettleMs: Long = 300L
 
     private suspend fun computeResult(): WizardResult? {
         if (quietLevels.size < 30 || stringTakes.size < OPEN_STRING_MIDIS.size + 1) return null
@@ -328,6 +373,18 @@ class WizardViewModel(
             nearestNote(take.expectedHz.toDouble(), a4).midi to (score.correctRate >= 0.7f)
         }
 
+        // 5. pizz octave-settle profile: replay the plucked takes through the game capture under
+        //    every candidate window and pick the smallest that resolves the attack-octave artifact
+        //    ON THIS RIG (0 = this rig has none). Measured, not assumed.
+        val pizzGated = pizzTakes.values.associate { take ->
+            take.expectedHz to replaySamples(take)
+        }
+        val pizzProfile = CalibrationAnalysis.choosePizzSettle(pizzGated, finalLowestHz)
+        finalPizzSettleMs = pizzProfile.settleMs
+        val pizzChecks = pizzProfile.checks.map { (hz, ok) ->
+            nearestNote(hz.toDouble(), a4).midi to ok
+        }
+
         return WizardResult(
             sourceLabel = chosenSource.label,
             verdict = verdict,
@@ -336,7 +393,23 @@ class WizardViewModel(
             noteChecks = noteChecks,
             thresholdsAdjusted = thresholdsAdjusted,
             highNoteUnreliable = highNoteUnreliable,
+            pizzSettleMs = pizzProfile.settleMs,
+            pizzChecks = pizzChecks,
+            pizzUnreliable = !pizzProfile.resolved,
         )
+    }
+
+    /** Replays a recorded take through the final chosen config and returns the gated sample
+     * stream (same config as [replayScore], but the raw samples — used to run the pizz capture). */
+    private suspend fun replaySamples(take: Take): List<PitchSample> {
+        val config = baseConfig.copy(
+            audioSource = chosenSource.id,
+            sensitivity = finalGate?.let { 100f - it } ?: baseConfig.sensitivity,
+            missingFundamentalMaxHz = finalKnee,
+            oddHarmonicMinRatio = fitted?.first ?: baseConfig.oddHarmonicMinRatio,
+            oddHarmonicMinRelative = fitted?.second ?: baseConfig.oddHarmonicMinRelative,
+        )
+        return PitchEngine(config).wavSamples(take.pcm).toList()
     }
 
     private suspend fun replayScore(
@@ -381,24 +454,31 @@ class WizardViewModel(
                 epochMs = System.currentTimeMillis(),
                 wrongNoteMinLevel = finalWrongNoteFloor,
                 lowestPlayableHz = finalLowestHz,
+                pizzOctaveSettleMs = finalPizzSettleMs,
             )
             _state.value = summary.copy(saved = true)
         }
     }
 
     fun cancelTake() {
+        countdownJob?.cancel()
+        countdownJob = null
         job?.cancel()
         job = null
         promptNextTake(retry = false)
     }
 
     override fun onCleared() {
+        countdownJob?.cancel()
         job?.cancel()
     }
 
     companion object {
         private const val QUIET_MS = 4000L
         private const val TAKE_MS = 5000L
+        /** Seconds the play prompt shows before recording auto-starts (time to raise the bow /
+         * ready the plucking hand without setting the phone down). */
+        private const val AUTO_START_SEC = 4
 
         /** Open strings, low to high: Mi1, La1, Ré2, Sol2. */
         private const val OPEN_MI = 28
@@ -407,6 +487,8 @@ class WizardViewModel(
         private val CORE_OPEN_MIDIS = (listOf(OPEN_MI) + OPEN_STRING_MIDIS).toSet()
         /** Do3 — a fourth above open Sol, the worst sympathetic-collision note. */
         private const val HIGH_NOTE = 48
+        /** The four open strings plucked — profiles the pizz attack-octave behaviour per rig. */
+        private val PIZZ_MIDIS = listOf(OPEN_MI, 33, 38, 43)
 
         fun candidateSources(context: Context): List<SourceCandidate> {
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager

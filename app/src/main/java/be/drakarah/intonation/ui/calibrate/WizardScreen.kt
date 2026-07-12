@@ -65,13 +65,14 @@ fun WizardScreen(
                 is WizardState.Intro -> {
                     Text(
                         "Sets up pitch detection for this phone. You'll be asked to keep " +
-                            "the room quiet for a moment, then to bow a few prompted notes. " +
-                            "Takes about two minutes.",
-                        style = MaterialTheme.typography.bodyLarge,
+                            "the room quiet for a moment, then to play a few prompted notes — " +
+                            "bowed, then a short plucked (pizz) check. Takes about two minutes.",
+                        style = MaterialTheme.typography.headlineSmall,
                     )
                     Text(
-                        "Have your bass ready, tuned, and play arco (bowed) throughout.",
-                        style = MaterialTheme.typography.bodyLarge,
+                        "Have your bass ready and tuned. Each note starts recording on its own " +
+                            "after a short countdown, so you never have to put the bass down.",
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Button(onClick = viewModel::begin, modifier = Modifier.fillMaxWidth()) {
@@ -92,13 +93,14 @@ fun WizardScreen(
                 }
 
                 is WizardState.AwaitPlay -> {
-                    Text(s.stage, style = MaterialTheme.typography.titleMedium,
+                    Text(s.stage, style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (s.retry) {
                         Text(
-                            "Didn't catch that note clearly — let's do it again. Play the note " +
-                                "shown, with long steady bows, a bit closer to the phone.",
-                            style = MaterialTheme.typography.bodyLarge,
+                            "Didn't catch that clearly — let's do it again. Play the note shown, " +
+                                (if (s.prompt.pizz) "plucking firmly, " else "with long steady bows, ") +
+                                "a bit closer to the phone.",
+                            style = MaterialTheme.typography.titleMedium,
                             color = ResultColors.close,
                         )
                     }
@@ -107,17 +109,21 @@ fun WizardScreen(
                         style = MaterialTheme.typography.displayLarge,
                         color = MaterialTheme.colorScheme.primary,
                     )
-                    Text(s.prompt.stringHint, style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        (if (s.prompt.pizz) "PLUCK — " else "BOW — ") + s.prompt.stringHint,
+                        style = MaterialTheme.typography.headlineMedium,
+                    )
                     s.prompt.repeatHint?.let {
-                        Text(it, style = MaterialTheme.typography.bodyLarge,
+                        Text(it, style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Text(
-                        "Tap start, then bow steadily until the bar fills.",
-                        style = MaterialTheme.typography.bodyLarge,
+                        "Get ready — recording starts in ${s.secsLeft}…",
+                        style = MaterialTheme.typography.displaySmall,
+                        color = ResultColors.excellent,
                     )
-                    Button(onClick = viewModel::startTake, modifier = Modifier.fillMaxWidth()) {
-                        Text("Start recording")
+                    OutlinedButton(onClick = viewModel::startTake, modifier = Modifier.fillMaxWidth()) {
+                        Text("Start now")
                     }
                 }
 
@@ -127,7 +133,10 @@ fun WizardScreen(
                         style = MaterialTheme.typography.displayLarge,
                         color = ResultColors.excellent,
                     )
-                    Text("🎧 keep bowing…", style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        if (s.prompt.pizz) "🎧 pluck & let it ring…" else "🎧 keep bowing…",
+                        style = MaterialTheme.typography.headlineMedium,
+                    )
                     LinearProgressIndicator(
                         progress = { s.progress },
                         modifier = Modifier.fillMaxWidth(),
@@ -135,7 +144,7 @@ fun WizardScreen(
                     Text(
                         s.heardHz?.let { "hearing ${nearestNote(it.toDouble()).displayName(noteStyle)}" }
                             ?: "listening…",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -215,6 +224,35 @@ private fun SummaryContent(
                         color = if (ok) ResultColors.excellent else ResultColors.close,
                     )
                 }
+            }
+            if (r.pizzChecks.isNotEmpty()) {
+                Text(
+                    if (r.pizzSettleMs > 0)
+                        "Pizz (plucked) — octave-settle ${r.pizzSettleMs} ms"
+                    else "Pizz (plucked) — no octave drift, no settle needed",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                r.pizzChecks.forEach { (midi, ok) ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("${NoteSpec(midi).displayName(noteStyle)} pizz",
+                            style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            if (ok) "✓ correct octave" else "⚠ octave drift",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (ok) ResultColors.excellent else ResultColors.close,
+                        )
+                    }
+                }
+            }
+            if (r.pizzUnreliable) {
+                Text(
+                    "⚠ Plucked notes still occasionally read an octave high on this phone. " +
+                        "They'll mostly correct themselves, but if you see it in games, save a " +
+                        "pizz snippet from the Pitch debug screen.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ResultColors.close,
+                )
             }
             if (r.thresholdsAdjusted) {
                 Text(

@@ -149,6 +149,14 @@ its own scoring category** — scores are only ever compared between identical s
 ## Settings
 
 - **Note names: solfège (Do Ré Mi — default) or letters (C D E)**, applied everywhere.
+  Accidentals use the proper musical glyphs ♯ / ♭ (not the ASCII "#").
+- **Mix sharps & flats (off by default)** — a note-naming aid: in the single-note games
+  (Note Accuracy, Sustain, Shift) a black-key note shows sometimes as a sharp (La♯) and
+  sometimes spelled flat (Si♭), randomly per prompt, so the same note is seen both ways and
+  you learn both names of a position's notes. The reveal always matches what the prompt asked.
+  Natural notes are never respelled (never "Si♯" for Do). Chords keep sharps — a chord's tones
+  have a context-correct spelling, so they're left alone. Off keeps everything in sharps; the
+  app is about intonation, not note-naming, so this is opt-in.
 - Concert pitch A4 (415–446 Hz, default 440).
 - **Player level (Beginner / Intermediate / Advanced / Expert, default Beginner)** — one
   friendly setting for time pressure across all games instead of raw timeout values: time

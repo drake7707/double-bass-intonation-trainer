@@ -29,6 +29,8 @@ import be.drakarah.intonation.game.PromptSpec
 import be.drakarah.intonation.game.WRONG_NOTE_CENTS
 import be.drakarah.intonation.game.scoreAttempt
 import be.drakarah.intonation.game.stars
+import be.drakarah.intonation.game.withMixedSpelling
+import be.drakarah.intonation.music.Accidental
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.music.NoteSpec
 import be.drakarah.intonation.music.centsBetween
@@ -61,6 +63,9 @@ data class AttemptUi(
     val wrongOctave: Boolean,
     val reactionTimeMs: Long?,
     val timeToStableMs: Long?,
+    /** Enharmonic spelling to reveal this note with — carried from the prompt so the reveal
+     * always matches what was asked. */
+    val spelling: Accidental = Accidental.SHARP,
 )
 
 sealed interface RoundPhase {
@@ -116,6 +121,7 @@ class RoundViewModel(
     private var a4 = 440.0
     private var difficulty = be.drakarah.intonation.game.Difficulty.STANDARD
     private var positions: Set<Position> = setOf(FIRST_POSITION)
+    private var mixEnharmonics = false
     private var startedAtWallClock = 0L
     private var soundFeedback = true
     private var driftWarningEnabled = true
@@ -144,6 +150,7 @@ class RoundViewModel(
             a4 = settings.a4
             difficulty = settings.difficulty
             positions = settings.positions
+            mixEnharmonics = settings.mixEnharmonics
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
             driftWarningEnabled = settings.driftWarning
@@ -161,6 +168,7 @@ class RoundViewModel(
             trace = if (settings.traceGames) GameTrace(appContext, cfg, "note-accuracy-$mode").also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
             prompts = NotePool(positions).draw(settings.roundLength)
+                .map { it.withMixedSpelling(kotlin.random.Random.Default, mixEnharmonics) }
             startedAtWallClock = System.currentTimeMillis()
             _uiState.value = RoundUiState(
                 roundLength = settings.roundLength,
@@ -175,7 +183,8 @@ class RoundViewModel(
             engine.samples().collect { sample ->
                 trace?.onSample(sample)
                 val state = _uiState.value
-                val target = state.prompt?.target ?: return@collect
+                val prompt = state.prompt ?: return@collect
+                val target = prompt.target
                 when (state.phase) {
                     is RoundPhase.CountIn -> {}
                     RoundPhase.Listening -> {
@@ -187,11 +196,12 @@ class RoundViewModel(
                         }
                         when (val captureState = capture.process(sample)) {
                             is CaptureState.Frozen -> onCaptured(
-                                resultFor(target, captureState), captureState.result, target,
+                                resultFor(target, prompt.spelling, captureState),
+                                captureState.result, target, prompt.spelling,
                                 sample.timestampMs
                             )
                             CaptureState.TimedOut -> onAttemptFinished(
-                                resultFor(target, null), sample.timestampMs
+                                resultFor(target, prompt.spelling, null), sample.timestampMs
                             )
                             else -> {}
                         }
@@ -230,7 +240,10 @@ class RoundViewModel(
      *  - **flimsy**: faint (finger-lift/adjacent-string ring) or shaky.
      * A confidently played, on-time, non-artifact wrong note is still reported. Thresholds are
      * calibration-owned / provisional — see [wrongNoteMinLevel]. */
-    private fun onCaptured(result: AttemptUi, captured: CapturedPitch, target: NoteSpec, nowMs: Long) {
+    private fun onCaptured(
+        result: AttemptUi, captured: CapturedPitch, target: NoteSpec,
+        spelling: Accidental, nowMs: Long,
+    ) {
         val cents = result.cents ?: 0f
         val nearTarget = abs(cents) <= NEAR_TARGET_CENTS
         val elapsedSincePrompt = if (promptShownAtMs >= 0) nowMs - promptShownAtMs else Long.MAX_VALUE
@@ -259,7 +272,7 @@ class RoundViewModel(
         }
         // Gave up waiting through a persistent artifact/ring — report no note, not the artifact.
         if (discard) {
-            onAttemptFinished(resultFor(target, null), nowMs)
+            onAttemptFinished(resultFor(target, spelling, null), nowMs)
             return
         }
         previousAnswerHz = result.playedHz ?: previousAnswerHz
@@ -276,12 +289,14 @@ class RoundViewModel(
         }
     }
 
-    private fun resultFor(target: NoteSpec, frozen: CaptureState.Frozen?): AttemptUi {
+    private fun resultFor(
+        target: NoteSpec, spelling: Accidental, frozen: CaptureState.Frozen?,
+    ): AttemptUi {
         if (frozen == null) {
             return AttemptUi(
                 target = target, playedHz = null, cents = null, score = 0, starCount = 0,
                 quality = null, timedOut = true, wrongNote = false, wrongOctave = false,
-                reactionTimeMs = null, timeToStableMs = null,
+                reactionTimeMs = null, timeToStableMs = null, spelling = spelling,
             )
         }
         val captured = frozen.result
@@ -304,6 +319,7 @@ class RoundViewModel(
             wrongOctave = wrongOctave,
             reactionTimeMs = captured.reactionTimeMs,
             timeToStableMs = captured.timeToStableMs,
+            spelling = spelling,
         )
     }
 

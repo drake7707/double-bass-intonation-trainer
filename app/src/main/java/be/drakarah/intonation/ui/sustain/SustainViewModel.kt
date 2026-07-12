@@ -27,6 +27,7 @@ import be.drakarah.intonation.game.SustainResult
 import be.drakarah.intonation.game.SustainState
 import be.drakarah.intonation.game.scoreSustain
 import be.drakarah.intonation.game.sustainStars
+import be.drakarah.intonation.game.withMixedSpelling
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.settings.applying
@@ -122,6 +123,7 @@ class SustainViewModel(
             )
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             prompts = NotePool(positions).draw(settings.roundLength)
+                .map { it.withMixedSpelling(kotlin.random.Random.Default, settings.mixEnharmonics) }
             startedAtWallClock = System.currentTimeMillis()
             capture = newCapture(prompts[0], skipQuiet = true)
             _uiState.value = SustainUiState(

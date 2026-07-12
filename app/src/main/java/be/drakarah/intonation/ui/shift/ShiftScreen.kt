@@ -131,7 +131,7 @@ private fun ProgressDots(state: ShiftUiState) {
 @Composable
 private fun NoteWithPlace(prompt: PromptSpec, style: NoteNameStyle, big: Boolean) {
     Text(
-        prompt.target.displayName(style),
+        prompt.target.displayName(style, prompt.spelling),
         fontSize = if (big) 96.sp else 64.sp,
         fontWeight = FontWeight.Bold,
     )
@@ -207,8 +207,8 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
     }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            "${result.prompt.start.target.displayName(state.noteStyle)} → " +
-                result.prompt.target.target.displayName(state.noteStyle),
+            "${result.prompt.start.target.displayName(state.noteStyle, result.prompt.start.spelling)} → " +
+                result.prompt.target.target.displayName(state.noteStyle, result.prompt.target.spelling),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

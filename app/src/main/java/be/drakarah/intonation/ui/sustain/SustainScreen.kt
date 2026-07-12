@@ -125,7 +125,7 @@ private fun PlayContent(state: SustainUiState, phase: SustainPhase.Play) {
             )
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    prompt.target.displayName(state.noteStyle),
+                    prompt.target.displayName(state.noteStyle, prompt.spelling),
                     fontSize = 64.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -236,7 +236,7 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
     }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            result.prompt.target.displayName(state.noteStyle),
+            result.prompt.target.displayName(state.noteStyle, result.prompt.spelling),
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

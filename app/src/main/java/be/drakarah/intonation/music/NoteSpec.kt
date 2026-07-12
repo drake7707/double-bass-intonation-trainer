@@ -10,27 +10,39 @@ enum class NoteNameStyle {
     SOLFEGE,
 }
 
-private val LETTER_NAMES = listOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
-private val SOLFEGE_NAMES = listOf("Do", "Do#", "Ré", "Ré#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si")
+/** Which enharmonic spelling to use for a black-key note. The proper musical glyphs are
+ * U+266F ♯ and U+266D ♭ (not the ASCII "#"). Natural notes are identical in both tables,
+ * so [FLAT] never turns Do into "Si♯" or Fa into "Mi♯" — only the five genuinely-ambiguous
+ * black keys change. */
+enum class Accidental { SHARP, FLAT }
+
+private val LETTER_SHARP = listOf("C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B")
+private val LETTER_FLAT = listOf("C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B")
+private val SOLFEGE_SHARP =
+    listOf("Do", "Do♯", "Ré", "Ré♯", "Mi", "Fa", "Fa♯", "Sol", "Sol♯", "La", "La♯", "Si")
+private val SOLFEGE_FLAT =
+    listOf("Do", "Ré♭", "Ré", "Mi♭", "Mi", "Fa", "Sol♭", "Sol", "La♭", "La", "Si♭", "Si")
+
+private fun pitchClassNames(style: NoteNameStyle, accidental: Accidental): List<String> = when {
+    style == NoteNameStyle.SOLFEGE -> if (accidental == Accidental.FLAT) SOLFEGE_FLAT else SOLFEGE_SHARP
+    accidental == Accidental.FLAT -> LETTER_FLAT
+    else -> LETTER_SHARP
+}
 
 /** A note in 12-tone equal temperament, identified by its MIDI number (E1 = 28, A4 = 69). */
 data class NoteSpec(val midi: Int) {
     fun frequency(a4: Double = 440.0): Double = a4 * 2.0.pow((midi - 69) / 12.0)
 
-    /** Scientific pitch notation with sharps, e.g. "G2", "F#3". */
+    /** Scientific pitch notation with sharps, e.g. "G2", "F♯3". */
     val name: String get() = displayName(NoteNameStyle.LETTERS)
 
     /** Note name in the given style, with scientific octave number ("G2" / "Sol2"). */
-    fun displayName(style: NoteNameStyle): String {
-        val names = if (style == NoteNameStyle.SOLFEGE) SOLFEGE_NAMES else LETTER_NAMES
-        return names[midi % 12] + (midi / 12 - 1)
-    }
+    fun displayName(style: NoteNameStyle, accidental: Accidental = Accidental.SHARP): String =
+        pitchClassNames(style, accidental)[midi % 12] + (midi / 12 - 1)
 
     /** Pitch-class name without octave ("G" / "Sol") — for string hints. */
-    fun pitchClassName(style: NoteNameStyle): String {
-        val names = if (style == NoteNameStyle.SOLFEGE) SOLFEGE_NAMES else LETTER_NAMES
-        return names[midi % 12]
-    }
+    fun pitchClassName(style: NoteNameStyle, accidental: Accidental = Accidental.SHARP): String =
+        pitchClassNames(style, accidental)[midi % 12]
 }
 
 fun centsBetween(frequency: Double, reference: Double): Double =

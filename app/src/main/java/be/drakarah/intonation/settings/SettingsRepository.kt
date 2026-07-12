@@ -22,6 +22,10 @@ import kotlinx.coroutines.flow.map
 
 data class AppSettings(
     val noteNameStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
+    /** Show black-key notes sometimes as sharp (La♯) and sometimes as flat (Si♭) during the
+     * single-note games, so the player learns both names. Off by default — this app is about
+     * intonation, not note-naming; it's opt-in. Naturals are never respelled. */
+    val mixEnharmonics: Boolean = false,
     val a4: Double = 440.0,
     val difficulty: Difficulty = Difficulty.STANDARD,
     /** Time pressure across all games (prompt/reveal/shift/sustain timing). Orthogonal to
@@ -83,6 +87,7 @@ class SettingsRepository(private val context: Context) {
 
     private object Keys {
         val noteNameStyle = stringPreferencesKey("noteNameStyle")
+        val mixEnharmonics = booleanPreferencesKey("mixEnharmonics")
         val a4 = doublePreferencesKey("a4")
         val difficulty = stringPreferencesKey("difficulty")
         val playerLevel = stringPreferencesKey("playerLevel")
@@ -112,6 +117,7 @@ class SettingsRepository(private val context: Context) {
             noteNameStyle = prefs[Keys.noteNameStyle]
                 ?.let { runCatching { NoteNameStyle.valueOf(it) }.getOrNull() }
                 ?: NoteNameStyle.SOLFEGE,
+            mixEnharmonics = prefs[Keys.mixEnharmonics] ?: false,
             a4 = prefs[Keys.a4] ?: 440.0,
             difficulty = prefs[Keys.difficulty]
                 ?.let { runCatching { Difficulty.valueOf(it) }.getOrNull() }
@@ -209,6 +215,10 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setNoteNameStyle(style: NoteNameStyle) {
         context.dataStore.edit { it[Keys.noteNameStyle] = style.name }
+    }
+
+    suspend fun setMixEnharmonics(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.mixEnharmonics] = enabled }
     }
 
     suspend fun setA4(a4: Double) {

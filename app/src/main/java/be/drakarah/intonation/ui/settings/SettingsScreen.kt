@@ -78,6 +78,26 @@ fun SettingsScreen(
             }
 
             SettingBlock(
+                "Mix sharps & flats",
+                "Show a black-key note sometimes as a sharp (La♯) and sometimes as the same " +
+                    "note spelled flat (Si♭), so you get familiar with both names of a position's " +
+                    "notes. Naturals never change. It's a note-naming aid, not an intonation one — " +
+                    "off keeps everything in sharps.",
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(if (settings.mixEnharmonics) "On" else "Off")
+                    Switch(
+                        checked = settings.mixEnharmonics,
+                        onCheckedChange = { scope.launch { repo.setMixEnharmonics(it) } },
+                    )
+                }
+            }
+
+            SettingBlock(
                 "Concert pitch (A4)",
                 "The reference your ensemble tunes to. 440 Hz is standard; some orchestras use 442.",
             ) {

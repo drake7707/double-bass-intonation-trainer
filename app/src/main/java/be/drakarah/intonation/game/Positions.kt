@@ -1,7 +1,9 @@
 package be.drakarah.intonation.game
 
+import be.drakarah.intonation.music.Accidental
 import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.music.NoteSpec
+import kotlin.random.Random
 
 /** A left-hand position: the semitone offsets above the open string that fingers 1-2-4 cover.
  *
@@ -47,12 +49,23 @@ fun positionsFromConfigKey(configKey: String): List<Position> {
     return emptyList()
 }
 
-/** One drawable prompt: a concrete note on a concrete string in a known position. */
+/** One drawable prompt: a concrete note on a concrete string in a known position.
+ *
+ * [spelling] is display-only — which enharmonic name a black-key note is shown with. It never
+ * affects pitch, scoring, or a note's identity (naturals ignore it entirely). Defaults to
+ * sharps; the games flip it per prompt when "mix sharps & flats" is on. */
 data class PromptSpec(
     val target: NoteSpec,
     val string: NoteSpec,
     val position: Position,
+    val spelling: Accidental = Accidental.SHARP,
 )
+
+/** Picks a fresh enharmonic spelling for this prompt: when [mix] is on, sharp or flat at
+ * random (so the same note appears both ways over time — the "mix sharps & flats" setting);
+ * otherwise sharp. Naturals are unaffected by the choice, so it's safe to call on any prompt. */
+fun PromptSpec.withMixedSpelling(random: Random, mix: Boolean): PromptSpec =
+    if (mix) copy(spelling = if (random.nextBoolean()) Accidental.FLAT else Accidental.SHARP) else this
 
 /** All prompts of one position across the four strings. Open strings are deliberately not
  * part of game pools: landing an open string tests the bow, not finger placement. */

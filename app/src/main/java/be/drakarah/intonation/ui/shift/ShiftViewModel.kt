@@ -29,6 +29,7 @@ import be.drakarah.intonation.game.ShiftState
 import be.drakarah.intonation.game.WRONG_NOTE_CENTS
 import be.drakarah.intonation.game.scoreShift
 import be.drakarah.intonation.game.stars
+import be.drakarah.intonation.game.withMixedSpelling
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.music.centsBetween
 import be.drakarah.intonation.settings.SettingsRepository
@@ -138,6 +139,13 @@ class ShiftViewModel(
             engine = PitchEngine(cfg, trace?.waveWriter)
             prompts = ShiftPool(positions, crossString = style == "cross")
                 .draw(settings.roundLength)
+                .map {
+                    val rnd = kotlin.random.Random.Default
+                    it.copy(
+                        start = it.start.withMixedSpelling(rnd, settings.mixEnharmonics),
+                        target = it.target.withMixedSpelling(rnd, settings.mixEnharmonics),
+                    )
+                }
             startedAtWallClock = System.currentTimeMillis()
             capture = newCapture(prompts[0], skipQuiet = true)
             _uiState.value = ShiftUiState(

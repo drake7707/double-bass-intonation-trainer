@@ -5,6 +5,20 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-12 Mix sharps & flats — new setting (your request)
+Settings → Notation & tuning → **"Mix sharps & flats"** (off by default). When on, the
+single-note games (Note Accuracy, Sustain, Shift) spell each black-key prompt as a sharp or
+flat at random, so the same note appears both ways over a session (La♯ / Si♭). Naturals never
+change (no "Si♯" for Do — out of scope). Chords deliberately excluded (their tones have a
+context-correct spelling). Proper ♯/♭ glyphs now used everywhere, not the ASCII "#". Pure
+logic unit-tested (`EnharmonicSpellingTest`, `MixedSpellingTest`). Verify on the phone:
+- [ ] Toggle on → over a Note-Accuracy round, black-key prompts show a mix of ♯ and ♭, and
+      each reveal matches the name its prompt showed.
+- [ ] Naturals (Do Ré Mi Fa Sol La Si) always read normally — never "Si♯" / "Mi♯".
+- [ ] Same in Sustain and Shift (start → target both respell). Chords stay in sharps.
+- [ ] ♯ and ♭ glyphs render cleanly in both solfège and letters mode (no tofu boxes).
+- [ ] Toggle off → everything back to sharps, as before.
+
 ### 2026-07-12 Chords (arpeggio) game — new
 Post-v1 chords game: play a named triad as an ascending arpeggio (root → third → fifth), one
 note at a time, each tone frozen and scored like Note Accuracy. Major + minor. Pure logic is

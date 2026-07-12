@@ -174,7 +174,7 @@ private fun ListeningPrompt(state: RoundUiState) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            prompt.target.displayName(state.noteStyle),
+            prompt.target.displayName(state.noteStyle, prompt.spelling),
             fontSize = 112.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
@@ -208,7 +208,7 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
     }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            result.target.displayName(noteStyle),
+            result.target.displayName(noteStyle, result.spelling),
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

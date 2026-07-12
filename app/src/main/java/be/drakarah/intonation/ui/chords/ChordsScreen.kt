@@ -146,7 +146,7 @@ private fun ToneStrip(chord: ChordSpec, activeIndex: Int, noteStyle: NoteNameSty
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    tone.target.pitchClassName(noteStyle),
+                    tone.target.pitchClassName(noteStyle, tone.spelling),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = if (i == activeIndex) FontWeight.Bold else FontWeight.Normal,
                     color = color,
@@ -171,7 +171,7 @@ private fun PlayingContent(state: ChordsUiState, phase: ChordsPhase.Playing) {
     val tone = chord.tones.getOrNull(phase.toneIndex) ?: return
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            chordName(chord.root, chord.quality, state.noteStyle),
+            chordName(chord.root, chord.quality, state.noteStyle, chord.tones[0].spelling),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
         )
@@ -185,7 +185,7 @@ private fun PlayingContent(state: ChordsUiState, phase: ChordsPhase.Playing) {
         Spacer(Modifier.height(24.dp))
         if (phase.wrongRoot) {
             Text(
-                "that's not it —\nstart on ${chord.tones[0].target.displayName(state.noteStyle)}",
+                "that's not it —\nstart on ${chord.tones[0].target.displayName(state.noteStyle, chord.tones[0].spelling)}",
                 style = MaterialTheme.typography.headlineSmall,
                 color = ResultColors.close,
                 fontWeight = FontWeight.Bold,
@@ -198,7 +198,7 @@ private fun PlayingContent(state: ChordsUiState, phase: ChordsPhase.Playing) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                tone.target.displayName(state.noteStyle),
+                tone.target.displayName(state.noteStyle, tone.spelling),
                 fontSize = 96.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -224,7 +224,7 @@ private fun PlayingContent(state: ChordsUiState, phase: ChordsPhase.Playing) {
 private fun RevealContent(state: ChordsUiState, result: ChordAttemptUi) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            chordName(result.chord.root, result.chord.quality, state.noteStyle),
+            chordName(result.chord.root, result.chord.quality, state.noteStyle, result.chord.tones[0].spelling),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -253,7 +253,7 @@ private fun ToneResult(tone: ToneUi, noteStyle: NoteNameStyle) {
     }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            tone.prompt.target.pitchClassName(noteStyle),
+            tone.prompt.target.pitchClassName(noteStyle, tone.prompt.spelling),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = color,

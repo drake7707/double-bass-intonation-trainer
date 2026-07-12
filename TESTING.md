@@ -15,9 +15,13 @@ logic unit-tested (`EnharmonicSpellingTest`, `MixedSpellingTest`). Verify on the
 - [ ] Toggle on → over a Note-Accuracy round, black-key prompts show a mix of ♯ and ♭, and
       each reveal matches the name its prompt showed.
 - [ ] Naturals (Do Ré Mi Fa Sol La Si) always read normally — never "Si♯" / "Mi♯".
-- [ ] Same in Sustain and Shift (start → target both respell). Chords stay in sharps.
+- [ ] Same in Sustain and Shift (start → target both respell).
 - [ ] ♯ and ♭ glyphs render cleanly in both solfège and letters mode (no tofu boxes).
-- [ ] Toggle off → everything back to sharps, as before.
+- [ ] Toggle off → single-note games back to sharps, as before.
+- [ ] **Chords read by their definition** (this is always on, not tied to the toggle): a flat
+      chord shows Si♭ / Mi♭ etc. and its name reads "Si♭ Majeur", never "La♯". Spot-check a
+      few: B♭ major (Si♭ Ré Fa), G♯ minor (Sol♯ Si Ré♯), E♭ major (Mi♭ Sol Si♭). Locked by
+      `ChordSpellingTest`, but eyeball the ones your positions actually generate.
 
 ### 2026-07-12 Chords (arpeggio) game — new
 Post-v1 chords game: play a named triad as an ascending arpeggio (root → third → fifth), one

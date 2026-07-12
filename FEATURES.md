@@ -154,9 +154,13 @@ its own scoring category** — scores are only ever compared between identical s
   (Note Accuracy, Sustain, Shift) a black-key note shows sometimes as a sharp (La♯) and
   sometimes spelled flat (Si♭), randomly per prompt, so the same note is seen both ways and
   you learn both names of a position's notes. The reveal always matches what the prompt asked.
-  Natural notes are never respelled (never "Si♯" for Do). Chords keep sharps — a chord's tones
-  have a context-correct spelling, so they're left alone. Off keeps everything in sharps; the
+  Natural notes are never respelled (never "Si♯" for Do). Off keeps everything in sharps; the
   app is about intonation, not note-naming, so this is opt-in.
+- **Chords are always spelled by their definition** (independent of the mix setting): a triad
+  reads the way music theory demands — Ré major → Ré–Fa♯–La, B♭ major → Si♭–Ré–Fa (never
+  "A♯"), G♯ minor → Sol♯–Si–Ré♯. Each pitch class uses the clean enharmonic spelling that
+  avoids out-of-scope names (no Mi♯/E♯, Fa♭, or double-flats). The one arbitrary choice is
+  F♯-vs-G♭ major, set to G♭. See `chordToneSpellings`.
 - Concert pitch A4 (415–446 Hz, default 440).
 - **Player level (Beginner / Intermediate / Advanced / Expert, default Beginner)** — one
   friendly setting for time pressure across all games instead of raw timeout values: time

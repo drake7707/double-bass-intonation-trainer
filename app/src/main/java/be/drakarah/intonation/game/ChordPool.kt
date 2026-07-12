@@ -1,5 +1,6 @@
 package be.drakarah.intonation.game
 
+import be.drakarah.intonation.music.Accidental
 import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.music.NoteSpec
@@ -40,15 +41,59 @@ enum class ChordFingering(val label: String, val blurb: String) {
 }
 
 /** A chord's name in the player's note-name style: root pitch class + quality word. Sarah reads
- * fixed-do solfège, so solfège mode says "Ré Majeur / Ré mineur"; letters mode says "D major". */
-fun chordName(root: NoteSpec, quality: ChordQuality, style: NoteNameStyle): String {
+ * fixed-do solfège, so solfège mode says "Ré Majeur / Ré mineur"; letters mode says "D major".
+ * [rootSpelling] is the root's chosen enharmonic spelling (from [chordToneSpellings]) so a flat
+ * chord reads "Si♭ Majeur", never "La♯ Majeur". */
+fun chordName(
+    root: NoteSpec,
+    quality: ChordQuality,
+    style: NoteNameStyle,
+    rootSpelling: Accidental = Accidental.SHARP,
+): String {
     val word = when {
         style == NoteNameStyle.SOLFEGE && quality == ChordQuality.MAJOR -> "Majeur"
         style == NoteNameStyle.SOLFEGE -> "mineur"
         quality == ChordQuality.MAJOR -> "major"
         else -> "minor"
     }
-    return "${root.pitchClassName(style)} $word"
+    return "${root.pitchClassName(style, rootSpelling)} $word"
+}
+
+/** The pitch classes of the seven letters C D E F G A B (Do Ré Mi Fa Sol La Si). */
+private val LETTER_PC = intArrayOf(0, 2, 4, 5, 7, 9, 11)
+
+/** The root's letter (0=C … 6=B) chosen for each pitch class so the triad spells with no double
+ * accidentals and no out-of-scope enharmonics (no Mi♯/E♯, Fa♭/F♭, C♭ — the spellings deliberately
+ * excluded, see [Accidental]). Every remaining tone is then either the sharp-name or the
+ * flat-name of its pitch class, so a plain [Accidental] per tone is enough to render it.
+ *
+ * Only one entry is a real musical choice — pitch class 6 major, F♯ vs G♭: G♭ is used here so the
+ * upper black-key majors are all flat-spelled (D♭ E♭ G♭ A♭ B♭). Flip index 6 to 3 for F♯ major. */
+private val MAJOR_ROOT_LETTER = intArrayOf(0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6)
+private val MINOR_ROOT_LETTER = intArrayOf(0, 0, 1, 2, 2, 3, 3, 4, 4, 5, 6, 6)
+
+/** The enharmonic spelling (sharp vs flat) of each triad tone — root, third, fifth — spelled by
+ * music theory from the chord's root and quality, not by the mic. Independent of the "mix sharps
+ * & flats" setting: a chord always reads the way its definition demands (Ré major → Ré Fa♯ La;
+ * B♭ major → Si♭ Ré Fa, never A♯ …). Naturals ignore the [Accidental], so this is exact. */
+fun chordToneSpellings(root: NoteSpec, quality: ChordQuality): List<Accidental> {
+    val pc = ((root.midi % 12) + 12) % 12
+    val rootLetter = (if (quality == ChordQuality.MAJOR) MAJOR_ROOT_LETTER else MINOR_ROOT_LETTER)[pc]
+    val thirdSemis = if (quality == ChordQuality.MAJOR) 4 else 3
+    return listOf(
+        accidentalFor(pc, rootLetter),
+        accidentalFor((pc + thirdSemis) % 12, (rootLetter + 2) % 7),
+        accidentalFor((pc + 7) % 12, (rootLetter + 4) % 7),
+    )
+}
+
+/** SHARP if the pitch class sits above its letter's natural (or on it — naturals are spelling-
+ * agnostic), FLAT if below. The letters in [chordToneSpellings] are chosen so the offset is only
+ * ever -1, 0 or +1, so the result is always a valid in-scope name. */
+private fun accidentalFor(pc: Int, letter: Int): Accidental {
+    var offset = (((pc - LETTER_PC[letter]) % 12) + 12) % 12
+    if (offset > 6) offset -= 12
+    return if (offset < 0) Accidental.FLAT else Accidental.SHARP
 }
 
 /** One drawable arpeggio prompt: a named triad and the ordered tones to play (ascending —
@@ -112,15 +157,17 @@ class ChordPool(
     val isEmpty: Boolean get() = decks.isEmpty()
 
     private fun chordFor(rootPrompt: PromptSpec, quality: ChordQuality): ChordSpec? {
+        val spellings = chordToneSpellings(rootPrompt.target, quality)
         val tones = ArrayList<PromptSpec>(quality.intervals.size)
         quality.intervals.forEachIndexed { i, interval ->
-            if (i == 0) {
-                tones.add(rootPrompt) // the root keeps the drawn fingering (defines the position)
+            val placement = if (i == 0) {
+                rootPrompt // the root keeps the drawn fingering (defines the position)
             } else {
-                val placement = placementFor(rootPrompt.target.midi + interval, rootPrompt)
+                placementFor(rootPrompt.target.midi + interval, rootPrompt)
                     ?: return null    // a tone can't be fingered in the selection — drop the chord
-                tones.add(placement)
             }
+            // Theory-correct enharmonic name for this degree, so the chord reads as itself.
+            tones.add(placement.copy(spelling = spellings[i]))
         }
         return ChordSpec(rootPrompt.target, quality, tones)
     }

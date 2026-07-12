@@ -5,6 +5,8 @@ import kotlin.math.abs
 /** Everything an achievement check may look at after a completed round. */
 data class RoundFacts(
     val exerciseType: String,
+    /** "arco" | "pizz". */
+    val mode: String,
     /** Signed cents per scored attempt (accuracy/shift; empty for sustain). */
     val attemptCents: List<Float?>,
     val attemptStars: List<Int>,
@@ -13,6 +15,12 @@ data class RoundFacts(
     /** Landing time per attempt (shift only). */
     val landingTimesMs: List<Long?>,
     val avgAbsCents: Float?,
+    /** Distinct positions scored this round (0 for pre-v3 rounds without position tags). */
+    val distinctPositions: Int,
+    /** This round's score beat an existing personal best (false on a first-ever round). */
+    val beatOwnBest: Boolean,
+    /** Local hour of day the round finished, 0..23. */
+    val localHour: Int,
     /** Totals after this round was recorded. */
     val totalAttemptsAllTime: Int,
     val attemptsToday: Int,
@@ -83,6 +91,65 @@ val ACHIEVEMENTS: List<AchievementDef> = listOf(
         "TRIADS_IN_TUNE", "🎼", "Triads in tune",
         "A Chords round with every scored tone in the stars.",
     ) { f -> f.exerciseType == "CHORDS" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it >= 1 } },
+
+    // --- Precision beyond the basics ---
+    AchievementDef(
+        "SNIPER", "🥇", "Sniper",
+        "Finish a round averaging within 5 cents.",
+    ) { f -> f.avgAbsCents != null && f.avgAbsCents <= 5f && f.attemptStars.size >= 5 },
+    AchievementDef(
+        "TIGHT_GROUP", "📍", "Tight group",
+        "Every note in a round within 5 cents.",
+    ) { f ->
+        val scored = f.attemptCents.filterNotNull()
+        scored.size >= 5 && scored.size == f.attemptCents.size && scored.all { abs(it) <= 5f }
+    },
+    AchievementDef(
+        "TRIPLE_BULLSEYE", "🎇", "Triple bullseye",
+        "Three notes within 2 cents in a single round.",
+    ) { f -> f.attemptCents.count { it != null && abs(it) <= 2f } >= 3 },
+    AchievementDef(
+        "NEW_RECORD", "🏆", "New record",
+        "Beat one of your own personal bests.",
+    ) { f -> f.beatOwnBest },
+
+    // --- When you play ---
+    AchievementDef(
+        "EARLY_BIRD", "🌅", "Early bird",
+        "Practise before 7 in the morning.",
+    ) { f -> f.localHour < 7 },
+    AchievementDef(
+        "NIGHT_OWL", "🦉", "Night owl",
+        "Practise at 11 at night or later.",
+    ) { f -> f.localHour >= 23 },
+
+    // --- Per-technique mastery ---
+    AchievementDef(
+        "PIZZ_PRECISION", "🤌", "Pizzicato precision",
+        "Finish a pizz round averaging within 12 cents.",
+    ) { f -> f.mode == "pizz" && f.avgAbsCents != null && f.avgAbsCents <= 12f && f.attemptStars.size >= 5 },
+    AchievementDef(
+        "ARPEGGIO_ACE", "🎹", "Arpeggio ace",
+        "A Chords round with three stars on every tone.",
+    ) { f -> f.exerciseType == "CHORDS" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it == 3 } },
+    AchievementDef(
+        "UNWAVERING", "🕉", "Unwavering",
+        "A Sustain round with three stars on every hold.",
+    ) { f -> f.exerciseType == "SUSTAIN" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it == 3 } },
+    AchievementDef(
+        "SURE_FOOTED", "🧗", "Sure-footed",
+        "A Shift round with three stars on every landing.",
+    ) { f -> f.exerciseType == "SHIFT" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it == 3 } },
+
+    // --- Range & volume ---
+    AchievementDef(
+        "POSITION_EXPLORER", "🗺", "Position explorer",
+        "Score across four or more positions in one round.",
+    ) { f -> f.distinctPositions >= 4 },
+    AchievementDef(
+        "NOTES_500", "🎓", "Five hundred notes",
+        "Play 500 scored notes in total.",
+    ) { f -> f.totalAttemptsAllTime >= 500 },
 )
 
 /** Returns the ids newly earned by this round, given what was already unlocked. */

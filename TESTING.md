@@ -5,6 +5,26 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-12 More achievements + a dedicated gallery grid (your request)
+Grew the set from 13 → 25 badges and moved the gallery off the Progress feed onto its own
+grid screen. All the unlock rules are pure logic and unit-tested (`AchievementsTest`), so this
+is mostly a "do they actually fire in real play and does the screen look right" check.
+- [ ] **Progress page shows a summary card**, not the old scrolling strip: "Achievements
+      N/25 ›" with a row of your most recent badge emoji. Tapping it opens the grid.
+- [ ] **Grid gallery.** Adaptive columns, unlocked badges first, a progress bar up top, locked
+      ones show 🔒 with their title/description still readable. Back button returns to Progress.
+- [ ] **New badges fire in real rounds** (spot-check a few you can trigger):
+      - *Sniper* (round avg ≤5c) and *Tight group* (every note ≤5c) on a clean Note-Accuracy round.
+      - *Triple bullseye* — three notes within 2c in one round.
+      - *New record* — beat a stored PB (play a config you've played before and score higher).
+      - *Position explorer* — select 4+ positions and finish a round.
+      - *Perfect sustain / shift / chords* (*Unwavering* / *Sure-footed* / *Arpeggio ace*) —
+        all-three-star round of that exercise.
+      - *Pizzicato precision* — a pizz round averaging within 12c.
+      - *Early bird / Night owl* — if you happen to practise before 7 a.m. or after 11 p.m.
+- [ ] **No spurious unlocks** — e.g. the shift/sustain/chords perfection badges don't fire on the
+      wrong exercise, and *New record* stays quiet on a first-ever round for a config.
+
 ### 2026-07-12 Mix sharps & flats — new setting (your request)
 Settings → Notation & tuning → **"Mix sharps & flats"** (off by default). When on, the
 single-note games (Note Accuracy, Sustain, Shift) spell each black-key prompt as a sharp or
@@ -326,6 +346,9 @@ The capture rewrite (attack requirement) was verified live via traces — see th
 
 ----
 
+PROCESSED FEEDBACK:
+------------------
+
 Feedback after testing:
 
 Here's some of my feedback:
@@ -364,3 +387,13 @@ Pitch debug:
 Home screen:
 
 - The sustain menu item on pizz is disabled but i would also change the background because it's very subtle now, between light gray and white is almost no difference.
+
+
+OPEN FEEDBACK:
+--------------
+
+- the layout of achievements  does not use tiles of the same size in rows, so it looks messy
+
+- progress view does not have Chords shown yet
+
+- my day streak is still 1 , but i think it should be 2 by now

@@ -9,6 +9,7 @@ import be.drakarah.intonation.ui.drone.DroneScreen
 import be.drakarah.intonation.ui.home.HomeScreen
 import be.drakarah.intonation.ui.round.RoundScreen
 import be.drakarah.intonation.ui.about.AboutScreen
+import be.drakarah.intonation.ui.achievements.AchievementsScreen
 import be.drakarah.intonation.ui.chords.ChordsScreen
 import be.drakarah.intonation.ui.calibrate.CalibrateScreen
 import be.drakarah.intonation.ui.calibrate.WizardScreen
@@ -25,6 +26,7 @@ object Routes {
     const val TUNE = "tune"
     const val SETTINGS = "settings"
     const val PROGRESS = "progress"
+    const val ACHIEVEMENTS = "achievements"
     const val ABOUT = "about"
     const val RECORDINGS = "recordings"
     const val CALIBRATE = "calibrate"
@@ -80,7 +82,13 @@ fun AppNav() {
             WizardScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.PROGRESS) {
-            ProgressScreen(onBack = { navController.popBackStack() })
+            ProgressScreen(
+                onBack = { navController.popBackStack() },
+                onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) },
+            )
+        }
+        composable(Routes.ACHIEVEMENTS) {
+            AchievementsScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.ABOUT) {
             AboutScreen(onBack = { navController.popBackStack() })

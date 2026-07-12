@@ -118,10 +118,14 @@ its own scoring category** — scores are only ever compared between identical s
   position set + variant); round summaries show "New personal best!" or points-to-beat.
 - **Daily practice streak** (flame icon + "N day streak" label on the home screen;
   surviving until end of the next day).
-- **Achievements** (12): first round, bullseye (≤2c), sharpshooter round, perfect round,
-  all four strings, 100/1000 notes, 100 notes in a day, week/month streaks, perfect
-  sustain round, sub-second three-star shift. Unlocks announced on the round summary;
-  gallery on the Progress page.
+- **Achievements** (25): first round, bullseye (≤2c), triple bullseye (3 notes ≤2c),
+  sharpshooter round (avg ≤10c), sniper round (avg ≤5c), tight group (every note ≤5c),
+  perfect round, all four strings, position explorer (≥4 positions in a round),
+  100/500/1000 notes, 100 notes in a day, week/month streaks, new personal best,
+  early bird (before 7 a.m.) / night owl (after 11 p.m.), pizzicato precision (pizz round
+  avg ≤12c), per-technique perfection — perfect sustain / shift / chords rounds — and a
+  sub-second three-star shift. Unlocks announced on the round summary; full grid gallery
+  reached from the Progress page.
 - **Sound feedback** (toggle): rising chime on a good landing, soft blip when close, low
   buzz on a miss — practice without watching the screen.
 - **Pitch-drift warning** (toggle): if everything landed recently trends consistently
@@ -132,8 +136,11 @@ its own scoring category** — scores are only ever compared between identical s
 ## Progress
 
 - **Progress page**: per-exercise score chart (percent per round, colored dots), stats
-  (rounds played, best, average cents of the last 10 rounds), achievements gallery, and a
-  session history list. Each history row shows the **positions practiced** in that round.
+  (rounds played, best, average cents of the last 10 rounds), an achievements summary card
+  (recent badges + unlocked count, tap for the full gallery), and a session history list.
+  Each history row shows the **positions practiced** in that round.
+- **Achievements gallery**: a dedicated grid page (its own screen, reached from Progress)
+  showing every badge, unlocked-first, with an unlock-progress bar; locked ones show 🔒.
 - **Accuracy by position**: a breakdown of your average intonation (cents) in each
   position across all your rounds — a fuller/greener bar means a more secure position, so
   you can see at a glance which positions still feel unfamiliar. (Cents-scored exercises

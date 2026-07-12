@@ -2,20 +2,18 @@ package be.drakarah.intonation.ui.progress
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
@@ -58,6 +56,7 @@ private val exerciseTabs = listOf(
 @Composable
 fun ProgressScreen(
     onBack: () -> Unit,
+    onOpenAchievements: () -> Unit,
     viewModel: ProgressViewModel = viewModel(factory = ProgressViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -114,7 +113,7 @@ fun ProgressScreen(
                     if (state.positionBreakdown.isNotEmpty()) {
                         item { PositionBreakdown(state.positionBreakdown) }
                     }
-                    item { AchievementGallery(unlocked) }
+                    item { AchievementSummaryCard(unlocked, onOpenAchievements) }
                     items(state.sessions.asReversed()) { session ->
                         SessionRow(session)
                     }
@@ -131,54 +130,37 @@ fun ProgressScreen(
     }
 }
 
+/** Compact entry point: recent unlocks + a count, tapping opens the full grid gallery. */
 @Composable
-private fun AchievementGallery(unlocked: Set<String>) {
-    Column {
-        Text(
-            "Achievements  (${unlocked.size}/${ACHIEVEMENTS.size})",
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Spacer(Modifier.height(8.dp))
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                // all cards share the height of the tallest one (longest description)
-                .height(IntrinsicSize.Max),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            ACHIEVEMENTS.sortedByDescending { it.id in unlocked }.forEach { def ->
-                val isUnlocked = def.id in unlocked
-                Card(
-                    Modifier
-                        .width(120.dp)
-                        .fillMaxHeight(),
-                ) {
-                    Column(
-                        Modifier.padding(10.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(
-                            if (isUnlocked) def.emoji else "🔒",
-                            style = MaterialTheme.typography.headlineSmall,
-                        )
-                        Text(
-                            def.title,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (isUnlocked) MaterialTheme.colorScheme.onSurface
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(
-                            def.description,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            minLines = 2,
-                        )
-                    }
-                }
+private fun AchievementSummaryCard(unlocked: Set<String>, onOpen: () -> Unit) {
+    // Preview the most recently earned badges (unlocked kept in definition order here).
+    val recent = ACHIEVEMENTS.filter { it.id in unlocked }.takeLast(5)
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpen),
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Achievements", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "${unlocked.size}/${ACHIEVEMENTS.size}  ›",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                if (recent.isEmpty()) "Play a round to start earning badges."
+                else recent.joinToString(" ") { it.emoji } + "  — tap to see them all",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Spacer(Modifier.height(8.dp))
     }
 }
 

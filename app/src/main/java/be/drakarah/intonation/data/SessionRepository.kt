@@ -43,13 +43,19 @@ class SessionRepository(private val db: IntonationDatabase) {
         }
 
         val now = session.endedAt ?: session.startedAt
+        val localHour = java.time.Instant.ofEpochMilli(now)
+            .atZone(java.time.ZoneId.systemDefault()).hour
         val facts = RoundFacts(
             exerciseType = session.exerciseType,
+            mode = session.mode,
             attemptCents = attempts.map { it.centsError },
             attemptStars = attempts.map { it.stars },
             attemptStrings = attempts.map { it.stringMidi },
             landingTimesMs = attempts.map { it.timeToStableMs },
             avgAbsCents = session.avgAbsCents,
+            distinctPositions = attempts.mapNotNull { it.positionId }.distinct().size,
+            beatOwnBest = isNewBest && previous != null,
+            localHour = localHour,
             totalAttemptsAllTime = db.sessionDao().totalAttempts(),
             attemptsToday = db.sessionDao().attemptsOnSameDay(now),
             practiceStreakDays = practiceStreakDays(),

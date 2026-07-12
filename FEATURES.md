@@ -116,7 +116,12 @@ its own scoring category** — scores are only ever compared between identical s
 
 - **Progress page**: per-exercise score chart (percent per round, colored dots), stats
   (rounds played, best, average cents of the last 10 rounds), achievements gallery, and a
-  session history list.
+  session history list. Each history row shows the **positions practiced** in that round.
+- **Accuracy by position**: a breakdown of your average intonation (cents) in each
+  position across all your rounds — a fuller/greener bar means a more secure position, so
+  you can see at a glance which positions still feel unfamiliar. (Cents-scored exercises
+  only; not shown for Sustain, which isn't measured in cents. Fills in from rounds played
+  after this feature shipped.)
 - **Improvement over points**: round summaries compare this round's average error against
   your previous week ("14.8 cents — last week 18.6 ⬇"), because improving matters more
   than the raw score.

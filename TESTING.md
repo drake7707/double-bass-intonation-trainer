@@ -5,6 +5,21 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-12 progress-by-position (verify on the bass)
+Two Progress-page additions from your feedback. Attempts now store which position each note
+belonged to (DB v2→v3 migration `MIGRATION_2_3`); the per-position breakdown only fills in
+from rounds played *after* installing this build — older history has no position data.
+Regression: `positionsFromConfigKey` round-trip in `ScoringTest`.
+- [ ] **Positions on history rows.** Each round in the Progress history list shows small
+      pills for the positions practiced (e.g. "½ · 1st · 2nd"). Works retroactively (parsed
+      from the stored config), so your existing history should already show them
+- [ ] **Accuracy by position.** Play a few Note-Accuracy (and/or Shift) rounds, then open
+      Progress → an "Accuracy by position" section shows one bar per practiced position,
+      average cents on the right; greener/fuller = more secure. Confirm the ordering is
+      canonical (½, 1st, 2nd, …) and the numbers match your sense of which positions felt shaky
+- [ ] **Sustain tab.** The "Accuracy by position" section does NOT appear on the Sustain tab
+      (sustain isn't cents-scored) — it should just be absent, not empty/broken
+
 ### 2026-07-11 afternoon feedback fixes (verify on the bass)
 Diagnosed from your five afternoon snippets + full game traces; see `docs/DETECTION.md` and
 `FeedbackSnippetAnalysis` / `FeedbackRegressionTest` / `AttemptCaptureTest` in `:app` tests.

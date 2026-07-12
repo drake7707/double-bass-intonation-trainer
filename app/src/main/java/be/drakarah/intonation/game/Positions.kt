@@ -32,6 +32,21 @@ fun positionById(id: String): Position? =
 fun positionSetKey(positions: Set<Position>): String =
     positions.map { it.id }.sorted().joinToString("+")
 
+/** Inverse of [positionSetKey] as it appears inside a configKey: pulls the position segment
+ * back out (the one segment whose every "+"-token is a known position id) and returns the
+ * positions in canonical display order. Empty if none is found. Robust to the configKey layout
+ * so it doesn't hard-code a segment index. */
+fun positionsFromConfigKey(configKey: String): List<Position> {
+    for (segment in configKey.split("|")) {
+        val tokens = segment.split("+")
+        val positions = tokens.mapNotNull { positionById(it) }
+        if (positions.isNotEmpty() && positions.size == tokens.size) {
+            return SELECTABLE_POSITIONS.filter { it in positions }
+        }
+    }
+    return emptyList()
+}
+
 /** One drawable prompt: a concrete note on a concrete string in a known position. */
 data class PromptSpec(
     val target: NoteSpec,

@@ -7,6 +7,8 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.data.SessionEntity
 import be.drakarah.intonation.data.SessionRepository
+import be.drakarah.intonation.game.Position
+import be.drakarah.intonation.game.SELECTABLE_POSITIONS
 import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,12 +17,23 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+
+/** Average intonation accuracy the player has shown in one position, across all their rounds. */
+data class PositionStat(
+    val position: Position,
+    val avgAbsCents: Float,
+    val attemptCount: Int,
+)
 
 data class ProgressUiState(
     val exerciseType: String = EXERCISE_NOTE_ACCURACY,
     /** Oldest -> newest sessions of the selected exercise. */
     val sessions: List<SessionEntity> = emptyList(),
+    /** Per-position accuracy for the selected exercise, in canonical position order.
+     * Empty for exercises that don't score cents (e.g. Sustain). */
+    val positionBreakdown: List<PositionStat> = emptyList(),
 ) {
     val scorePercents: List<Float>
         get() = sessions.map { if (it.maxScore > 0) 100f * it.totalScore / it.maxScore else 0f }
@@ -38,11 +51,27 @@ class ProgressViewModel(
     private val _exerciseType = MutableStateFlow(EXERCISE_NOTE_ACCURACY)
     val exerciseType: StateFlow<String> = _exerciseType.asStateFlow()
 
+    private val positionBreakdown =
+        _exerciseType.flatMapLatest { type ->
+            sessionRepository.positionAccuracy(type).map { rows ->
+                val byId = rows.associateBy { it.positionId }
+                // Canonical position order; only positions actually practiced show up.
+                SELECTABLE_POSITIONS.mapNotNull { pos ->
+                    byId[pos.id]?.let { PositionStat(pos, it.avgAbsCents, it.attemptCount) }
+                }
+            }
+        }
+
     val uiState: StateFlow<ProgressUiState> =
-        combine(sessionRepository.recentSessions(limit = 500), _exerciseType) { sessions, type ->
+        combine(
+            sessionRepository.recentSessions(limit = 500),
+            positionBreakdown,
+            _exerciseType,
+        ) { sessions, breakdown, type ->
             ProgressUiState(
                 exerciseType = type,
                 sessions = sessions.filter { it.exerciseType == type }.sortedBy { it.startedAt },
+                positionBreakdown = breakdown,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProgressUiState())
 

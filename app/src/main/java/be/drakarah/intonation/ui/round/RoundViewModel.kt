@@ -383,6 +383,7 @@ class RoundViewModel(
                     targetFreqHz = r.target.frequency(a4).toFloat(),
                     startMidi = null,
                     stringMidi = prompts.getOrNull(i)?.string?.midi,
+                    positionId = prompts.getOrNull(i)?.position?.id,
                     playedFreqHz = r.playedHz,
                     centsError = r.cents,
                     reactionTimeMs = r.reactionTimeMs,

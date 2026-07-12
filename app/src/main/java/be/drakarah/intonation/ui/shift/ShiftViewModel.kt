@@ -286,6 +286,7 @@ class ShiftViewModel(
                     targetFreqHz = r.prompt.target.target.frequency(a4).toFloat(),
                     startMidi = r.prompt.start.target.midi,
                     stringMidi = r.prompt.start.string.midi,
+                    positionId = r.prompt.target.position.id,
                     playedFreqHz = null,
                     centsError = r.cents,
                     reactionTimeMs = null,

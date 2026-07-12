@@ -1,5 +1,8 @@
 package be.drakarah.intonation.game
 
+import be.drakarah.intonation.data.configKey
+import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
+import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -90,5 +93,36 @@ class ScoringTest {
             positionSetKey(setOf(HALF_POSITION, FIRST_POSITION)),
         )
         assertTrue(positionSetKey(setOf(FIRST_POSITION)) != positionSetKey(setOf(HALF_POSITION)))
+    }
+
+    @Test
+    fun positionsFromConfigKeyRoundTrips() {
+        val positions = setOf(HALF_POSITION, THIRD_POSITION, FIRST_POSITION)
+        val key = configKey(
+            exerciseType = EXERCISE_NOTE_ACCURACY,
+            mode = "arco",
+            difficulty = Difficulty.STANDARD,
+            roundLength = 10,
+            positions = positions,
+        )
+        // Returned in canonical display order regardless of input order.
+        assertEquals(
+            listOf(HALF_POSITION, FIRST_POSITION, THIRD_POSITION),
+            positionsFromConfigKey(key),
+        )
+    }
+
+    @Test
+    fun positionsFromConfigKeyIgnoresVariantSegment() {
+        // Shift adds a "|same"/"|cross" variant segment; the parser must still find positions.
+        val key = configKey(
+            exerciseType = EXERCISE_SHIFT,
+            mode = "pizz",
+            difficulty = Difficulty.STANDARD,
+            roundLength = 8,
+            positions = setOf(SECOND_POSITION, FOURTH_POSITION),
+            variant = "cross",
+        )
+        assertEquals(listOf(SECOND_POSITION, FOURTH_POSITION), positionsFromConfigKey(key))
     }
 }

@@ -32,7 +32,25 @@ interface SessionDao {
             "AND startedAt >= :fromMs AND startedAt < :untilMs"
     )
     suspend fun averageCentsBetween(exerciseType: String, fromMs: Long, untilMs: Long): Float?
+
+    /** Average absolute cents error per position, across all recorded attempts of an exercise.
+     * Only counts attempts that carry both a position and a cents reading (v3+, cents-scored
+     * exercises). */
+    @Query(
+        "SELECT positionId AS positionId, AVG(ABS(centsError)) AS avgAbsCents, " +
+            "COUNT(*) AS attemptCount FROM attempts " +
+            "WHERE exerciseType = :exerciseType AND positionId IS NOT NULL " +
+            "AND centsError IS NOT NULL GROUP BY positionId"
+    )
+    fun positionAccuracy(exerciseType: String): Flow<List<PositionAccuracyRow>>
 }
+
+/** One row of the per-position accuracy aggregation. */
+data class PositionAccuracyRow(
+    val positionId: String,
+    val avgAbsCents: Float,
+    val attemptCount: Int,
+)
 
 @Dao
 interface AchievementDao {

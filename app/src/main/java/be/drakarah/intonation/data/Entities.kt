@@ -39,6 +39,7 @@ data class AttemptEntity(
     val targetFreqHz: Float,
     val startMidi: Int?,               // shift trainer only
     val stringMidi: Int?,              // open-string midi of the prompted string
+    val positionId: String?,           // the position this prompt belonged to (null pre-v3)
     val playedFreqHz: Float?,
     val centsError: Float?,            // signed: + sharp, - flat
     val reactionTimeMs: Long?,

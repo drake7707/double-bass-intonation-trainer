@@ -84,6 +84,9 @@ class SessionRepository(private val db: IntonationDatabase) {
     fun recentSessions(limit: Int = 50): Flow<List<SessionEntity>> =
         db.sessionDao().recentSessions(limit)
 
+    fun positionAccuracy(exerciseType: String): Flow<List<PositionAccuracyRow>> =
+        db.sessionDao().positionAccuracy(exerciseType)
+
     /** Consecutive practice days ending today (or yesterday, so a streak isn't dead at 9 am). */
     suspend fun practiceStreakDays(today: LocalDate = LocalDate.now()): Int =
         computeStreak(db.sessionDao().practiceDays().map { LocalDate.parse(it) }.toSet(), today)

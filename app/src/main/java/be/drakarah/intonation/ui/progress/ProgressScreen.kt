@@ -1,8 +1,10 @@
 package be.drakarah.intonation.ui.progress
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,14 +28,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.data.SessionEntity
 import be.drakarah.intonation.game.ACHIEVEMENTS
+import be.drakarah.intonation.game.positionsFromConfigKey
 import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
 import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
@@ -105,6 +111,9 @@ fun ProgressScreen(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    if (state.positionBreakdown.isNotEmpty()) {
+                        item { PositionBreakdown(state.positionBreakdown) }
+                    }
                     item { AchievementGallery(unlocked) }
                     items(state.sessions.asReversed()) { session ->
                         SessionRow(session)
@@ -224,9 +233,84 @@ private fun ScoreChart(percents: List<Float>) {
     }
 }
 
+/** Color scale shared by the history rows and the position breakdown. */
+private fun centsColor(cents: Float): Color = when {
+    cents <= 8f -> ResultColors.excellent
+    cents <= 18f -> ResultColors.close
+    else -> ResultColors.off
+}
+
+/** A small rounded label naming a practiced position (e.g. "1st"). */
+@Composable
+private fun PositionPill(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+    )
+}
+
+/** Average intonation per position across all rounds — how familiar the player is with each.
+ * Lower cents is better, so a fuller/greener bar means a more secure position. */
+@Composable
+private fun PositionBreakdown(stats: List<PositionStat>) {
+    // 30 cents ≈ "empty" bar; anything at or beyond reads as unfamiliar.
+    val worstCents = 30f
+    Column {
+        Text("Accuracy by position", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        stats.forEach { stat ->
+            val fraction = (1f - (stat.avgAbsCents.coerceIn(0f, worstCents) / worstCents))
+                .coerceIn(0.04f, 1f)
+            val color = centsColor(stat.avgAbsCents)
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(
+                    stat.position.shortLabel,
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.width(28.dp),
+                )
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(7.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                ) {
+                    Box(
+                        Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(fraction)
+                            .clip(RoundedCornerShape(7.dp))
+                            .background(color),
+                    )
+                }
+                Text(
+                    String.format(Locale.US, "%.1f c", stat.avgAbsCents),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = color,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.width(52.dp),
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+    }
+}
+
 @Composable
 private fun SessionRow(session: SessionEntity) {
     val date = Instant.ofEpochMilli(session.startedAt).atZone(ZoneId.systemDefault())
+    val positions = positionsFromConfigKey(session.configKey)
     Card(Modifier.fillMaxWidth()) {
         Row(
             Modifier
@@ -246,16 +330,18 @@ private fun SessionRow(session: SessionEntity) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                if (positions.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        positions.forEach { PositionPill(it.shortLabel) }
+                    }
+                }
             }
             session.avgAbsCents?.let {
                 Text(
                     String.format(Locale.US, "%.1f c", it),
                     style = MaterialTheme.typography.titleMedium,
-                    color = when {
-                        it <= 8f -> ResultColors.excellent
-                        it <= 18f -> ResultColors.close
-                        else -> ResultColors.off
-                    },
+                    color = centsColor(it),
                 )
             }
         }

@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SessionEntity::class, AttemptEntity::class, PersonalBestEntity::class,
         AchievementEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class IntonationDatabase : RoomDatabase() {
@@ -31,9 +31,15 @@ abstract class IntonationDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE attempts ADD COLUMN positionId TEXT")
+            }
+        }
+
         fun build(context: Context): IntonationDatabase =
             Room.databaseBuilder(context, IntonationDatabase::class.java, "intonation.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
     }
 }

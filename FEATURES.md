@@ -81,6 +81,23 @@ with an explanation, when only one is selected).
 - **Cross string**: start and target on different strings *and* different positions — string
   crossing plus shift plus landing.
 
+### Chords (arpeggios)
+The bass is monophonic, so a chord is played as an **arpeggio**: the app names a triad ("Ré
+Majeur") and you play its tones one at a time, ascending — root, then third, then fifth — each
+a separate attack (bow stroke or pluck). Every tone's first stable pitch is frozen and scored in
+cents, so it trains whether your **third and fifth are in tune against the root**, plus the
+string-crossing and hand shape of the chord across the neck. Major and minor triads (the
+major-3rd vs minor-3rd ear is the point). Play in order: a wrong first note re-arms ("that's not
+it"); the tone you just played ringing on is ignored, not scored as a wrong note. Chords are
+drawn only from triads fully reachable within your selected positions, balanced across them (so
+the game is disabled, with an explanation, when the selection can't form a full triad). **Open
+strings are real chord tones** and are played as such, but — like anywhere else — an open
+string's fixed pitch isn't scored for intonation; it's shown as "open". Because the same note
+lives on several strings/positions, a **Chord fingering** setting chooses how each tone is
+placed: *Natural* (closest hand shape, how you'd play it in a piece — the default), *Prefer
+fingered* (finger notes in your positions for practice; open strings only when unavoidable), or
+*Prefer open* (use open strings wherever a tone sits on one).
+
 ## Position system (v1: Simandl)
 
 Prompts are drawn only from positions the player selects (multi-select chips):
@@ -143,6 +160,8 @@ its own scoring category** — scores are only ever compared between identical s
   a round where prompts kept timing out offers more breathing room. Suggestions are
   per-round, so an unfamiliar position naturally holds them back.
 - Difficulty (scoring tolerance), round length (5/10/20).
+- **Chord fingering** (Chords game): how a tone playable several ways is placed — Natural
+  (closest hand shape, default) / Prefer fingered / Prefer open.
 - Sound feedback and pitch-drift warning toggles.
 
 ## Utilities & diagnostics
@@ -183,7 +202,9 @@ its own scoring category** — scores are only ever compared between identical s
 
 ## Planned
 
-- Chord-progression and walking-bass-line exercises (hand movement across the fingerboard).
+- Chord extensions: descending / up-and-down arpeggios, chord progressions (I–IV–V), and
+  walking-bass lines; more qualities (diminished, dominant 7th); a just-intonation mode that
+  scores the third and fifth against the root's 5:4 and 3:2 rather than equal temperament.
 - Guess First ear-training mode (play → predict sharp/flat/in-tune → reveal).
 - Endless streak mode; drone mode.
 - Long-term insights: weakest notes/shifts heatmaps, tendencies per string and position.

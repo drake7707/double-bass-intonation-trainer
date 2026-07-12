@@ -164,6 +164,26 @@ reason.
 **With the §3.6 attack requirement in place, most of these rarely fire** — the ring simply never
 onsets. They remain as defence-in-depth.
 
+### 4.1 Same filter, reused by the Chords (arpeggio) game
+
+`game/ArpeggioCapture` plays a triad tone-by-tone by composing one `AttemptCapture` per tone
+(each armed `skipQuietGate=true, requireOnsetRise=true`, exactly like Note Accuracy) — the same
+way `ShiftCapture` composes its sub-captures. It carries a **copy of the §4 discard filter**
+(ring-over/too-soon/harmonic/unplayable/flimsy) as a pure, parameterized function inside the
+machine (thresholds passed in by the ViewModel from the same calibration/player sources), so it
+stays Android-free and unit-tested (`ArpeggioCaptureTest`). Two arpeggio-specific rules:
+- **Ring-over is against the *previous tone of the same arpeggio*** (not the previous prompt) —
+  this is the dominant risk here because the tone she just played is still sounding when the
+  next tone arms. `too-soon` (`minReadMs`) applies to the **root only**; later tones follow
+  immediately.
+- Strict ascending order: a genuine wrong **root** re-arms ("that's not it", like the shift
+  start); a genuine wrong **third/fifth** is scored as a miss and advances (never stuck).
+
+These thresholds are **provisional** — reused from Note Accuracy, not yet retuned against a real
+arpeggio game-trace. Get one via Settings → Debug "Record & trace games" (tag `chords-*`) and
+replay offline before trusting them. If the filter ever needs a third caller, that's the trigger
+to extract it to one shared pure function (see §8) rather than keep a third copy.
+
 ---
 
 ## 5. Threshold ownership — who sets what (settled WITH the user)

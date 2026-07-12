@@ -5,6 +5,33 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-12 Chords (arpeggio) game — new
+Post-v1 chords game: play a named triad as an ascending arpeggio (root → third → fifth), one
+note at a time, each tone frozen and scored like Note Accuracy. Major + minor. Pure logic is
+unit-tested (`ChordPoolTest`, `ArpeggioCaptureTest`); thresholds reuse the Note-Accuracy
+ring-over/artifact filter and are **provisional until a real game-trace of an arpeggio confirms
+them** (turn on Settings → Debug "Record & trace games", play a round, share the `chords-*`
+files). Arco and pizz both allowed.
+- [ ] **Home card + gate.** "Chords" card under Practice shows its PB; it's disabled with an
+      explanation when the selected positions can't form a full triad (try a single position).
+      Daily focus rotates a "Chords · arco" card too.
+- [ ] **The arpeggio flows.** Each tone captures once and the strip advances root → third →
+      fifth; the note you *just* played ringing on does NOT get scored as the next tone (the
+      dominant risk — watch for it especially in pizz where strings ring).
+- [ ] **Wrong root re-arms.** Start on the wrong note → "that's not it — start on {root}" and it
+      waits; a wrong third/fifth is scored as a miss and moves on (never gets stuck).
+- [ ] **Open strings.** A chord whose tone is an open string shows it as "open" and does NOT
+      score its intonation (only fingered tones score); the "x / y" total reflects that.
+- [ ] **Fingering feels natural.** The string/position chosen for each tone should be a sensible,
+      close hand shape — flag any that feel awkward (the fingering heuristic is tunable).
+- [ ] **Chord fingering setting.** Settings → Gameplay → "Chord fingering" (Natural / Prefer
+      fingered / Prefer open). *Natural* = closest hand shape (default). *Prefer fingered* should
+      make you finger open-pitch tones (A/D/G) in your positions when possible — more scored
+      notes. *Prefer open* should use the open strings (shown "open", unscored). Check the
+      arpeggios change accordingly and that Natural feels like how you'd actually play it.
+- [ ] **Summary/PB/achievements.** Round summary, personal best per exact position set, and the
+      "🎼 Triads in tune" achievement (a round with every scored tone ≥1★) all appear.
+
 ### 2026-07-12 progress-by-position (verify on the bass)
 Two Progress-page additions from your feedback. Attempts now store which position each note
 belonged to (DB v2→v3 migration `MIGRATION_2_3`); the per-position breakdown only fills in

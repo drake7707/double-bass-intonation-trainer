@@ -9,6 +9,7 @@ import be.drakarah.intonation.ui.drone.DroneScreen
 import be.drakarah.intonation.ui.home.HomeScreen
 import be.drakarah.intonation.ui.round.RoundScreen
 import be.drakarah.intonation.ui.about.AboutScreen
+import be.drakarah.intonation.ui.chords.ChordsScreen
 import be.drakarah.intonation.ui.calibrate.CalibrateScreen
 import be.drakarah.intonation.ui.calibrate.WizardScreen
 import be.drakarah.intonation.ui.progress.ProgressScreen
@@ -32,10 +33,12 @@ object Routes {
     const val ROUND = "round/{mode}"
     const val SUSTAIN = "sustain/{mode}"
     const val SHIFT = "shift/{mode}/{style}"
+    const val CHORDS = "chords/{mode}"
 
     fun round(mode: String) = "round/$mode"
     fun sustain(mode: String) = "sustain/$mode"
     fun shift(mode: String, style: String) = "shift/$mode/$style"
+    fun chords(mode: String) = "chords/$mode"
 }
 
 @Composable
@@ -47,6 +50,7 @@ fun AppNav() {
                 onStartNoteAccuracy = { mode -> navController.navigate(Routes.round(mode)) },
                 onStartSustain = { mode -> navController.navigate(Routes.sustain(mode)) },
                 onStartShift = { mode, style -> navController.navigate(Routes.shift(mode, style)) },
+                onStartChords = { mode -> navController.navigate(Routes.chords(mode)) },
                 onOpenTuneUp = { navController.navigate(Routes.TUNE) },
                 onOpenDrone = { navController.navigate(Routes.DRONE) },
                 onOpenCalibrate = { navController.navigate(Routes.CALIBRATE) },
@@ -92,6 +96,9 @@ fun AppNav() {
         }
         composable(Routes.SHIFT) {
             ShiftScreen(onExit = { navController.popBackStack() })
+        }
+        composable(Routes.CHORDS) {
+            ChordsScreen(onExit = { navController.popBackStack() })
         }
         composable(Routes.DEBUG) {
             DebugPitchScreen(

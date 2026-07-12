@@ -8,7 +8,9 @@ import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.data.PersonalBestEntity
 import be.drakarah.intonation.data.SessionRepository
 import be.drakarah.intonation.data.configKey
+import be.drakarah.intonation.game.ChordPool
 import be.drakarah.intonation.settings.SettingsRepository
+import be.drakarah.intonation.ui.chords.EXERCISE_CHORDS
 import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
 import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
@@ -43,6 +45,8 @@ private val FOCUS_ROTATION = listOf(
         EXERCISE_NOTE_ACCURACY, "pizz", null),
     DailyFocus("Shift · cross string", "String crossings that land in tune.",
         EXERCISE_SHIFT, "arco", "cross"),
+    DailyFocus("Chords · arco", "Arpeggiate a triad, tone by tone.",
+        EXERCISE_CHORDS, "arco", null),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -128,6 +132,14 @@ class HomeViewModel(
     val sustainBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SUSTAIN)
     val shiftBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SHIFT, variant = "same")
     val shiftCrossBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SHIFT, variant = "cross")
+    val chordsBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_CHORDS)
+
+    /** A triad spans strings/positions; some selections can't form one. When none is reachable
+     * the home screen disables the chords card and explains, like the shift trainer. */
+    val canPlayChords: StateFlow<Boolean> =
+        settingsRepository.settings
+            .map { !ChordPool(it.positions).isEmpty }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
     fun setMode(mode: String) {
         _mode.value = mode

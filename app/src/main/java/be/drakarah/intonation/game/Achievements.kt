@@ -79,6 +79,10 @@ val ACHIEVEMENTS: List<AchievementDef> = listOf(
         f.exerciseType == "SHIFT" && f.attemptStars.zip(f.landingTimesMs)
             .any { (stars, t) -> stars == 3 && t != null && t < 1000 }
     },
+    AchievementDef(
+        "TRIADS_IN_TUNE", "🎼", "Triads in tune",
+        "A Chords round with every scored tone in the stars.",
+    ) { f -> f.exerciseType == "CHORDS" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it >= 1 } },
 )
 
 /** Returns the ids newly earned by this round, given what was already unlocked. */

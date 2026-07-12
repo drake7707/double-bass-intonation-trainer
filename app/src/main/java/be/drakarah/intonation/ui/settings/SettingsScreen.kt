@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.audio.GameSounds
+import be.drakarah.intonation.game.ChordFingering
 import be.drakarah.intonation.game.Difficulty
 import be.drakarah.intonation.game.PlayerLevel
 import be.drakarah.intonation.music.NoteNameStyle
@@ -150,6 +151,32 @@ fun SettingsScreen(
                         ) { Text("$n") }
                     }
                 }
+            }
+
+            SettingBlock(
+                "Chord fingering",
+                "In the Chords game, a note can often be played several ways — open or fingered in " +
+                    "your positions. This is how the game chooses (open strings are never scored).",
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ChordFingering.entries.forEach { f ->
+                        FilterChip(
+                            selected = settings.chordFingering == f,
+                            onClick = { scope.launch { repo.setChordFingering(f) } },
+                            label = { Text(f.label) },
+                        )
+                    }
+                }
+                Text(
+                    settings.chordFingering.blurb,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             SectionHeader("Feedback")

@@ -47,6 +47,7 @@ fun HomeScreen(
     onStartNoteAccuracy: (mode: String) -> Unit,
     onStartSustain: (mode: String) -> Unit,
     onStartShift: (mode: String, style: String) -> Unit,
+    onStartChords: (mode: String) -> Unit,
     onOpenTuneUp: () -> Unit,
     onOpenDrone: () -> Unit,
     onOpenCalibrate: () -> Unit,
@@ -105,6 +106,8 @@ fun HomeScreen(
     val sustainBest by viewModel.sustainBest.collectAsStateWithLifecycle()
     val shiftBest by viewModel.shiftBest.collectAsStateWithLifecycle()
     val shiftCrossBest by viewModel.shiftCrossBest.collectAsStateWithLifecycle()
+    val chordsBest by viewModel.chordsBest.collectAsStateWithLifecycle()
+    val canPlayChords by viewModel.canPlayChords.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { viewModel.refreshStreak() }
 
@@ -157,21 +160,31 @@ fun HomeScreen(
 
             // one tap into today's suggested session — zero configuration friction
             val focus = viewModel.dailyFocus
-            // a shift needs two positions to shift between; if the focus is a shift and only
-            // one is selected, it can't start — say so instead of launching an empty round.
-            val focusNeedsMorePositions =
-                focus.exerciseType == be.drakarah.intonation.ui.shift.EXERCISE_SHIFT &&
-                    positions.size < 2
+            // some focuses can't start with the current selection: a shift needs two positions to
+            // shift between; a chords round needs a selection that can form a full triad. Say so
+            // instead of launching an empty round.
+            val focusDisabled = when (focus.exerciseType) {
+                be.drakarah.intonation.ui.shift.EXERCISE_SHIFT -> positions.size < 2
+                be.drakarah.intonation.ui.chords.EXERCISE_CHORDS -> !canPlayChords
+                else -> false
+            }
+            val focusDisabledReason = when (focus.exerciseType) {
+                be.drakarah.intonation.ui.shift.EXERCISE_SHIFT ->
+                    "Select at least two positions below to shift between."
+                else -> "Select positions below that can form a full chord."
+            }
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(enabled = !focusNeedsMorePositions) {
+                    .clickable(enabled = !focusDisabled) {
                         gated {
                             when (focus.exerciseType) {
                                 be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN ->
                                     onStartSustain(focus.mode)
                                 be.drakarah.intonation.ui.shift.EXERCISE_SHIFT ->
                                     onStartShift(focus.mode, focus.style ?: "same")
+                                be.drakarah.intonation.ui.chords.EXERCISE_CHORDS ->
+                                    onStartChords(focus.mode)
                                 else -> onStartNoteAccuracy(focus.mode)
                             }
                         }
@@ -193,8 +206,7 @@ fun HomeScreen(
                     )
                     Text(
                         when {
-                            focusNeedsMorePositions ->
-                                "Select at least two positions below to shift between."
+                            focusDisabled -> focusDisabledReason
                             focusBest != null ->
                                 "${focus.subtitle}  ·  PB ${focusBest!!.score}/${focusBest!!.maxScore}"
                             else -> focus.subtitle
@@ -293,6 +305,16 @@ fun HomeScreen(
                 },
                 enabled = canShift,
                 onClick = { gated { onStartShift(mode, "cross") } },
+            )
+            ExerciseCard(
+                title = "Chords",
+                subtitle = when {
+                    !canPlayChords -> "Select positions that can form a full chord."
+                    chordsBest != null -> "Best: ${chordsBest!!.score} / ${chordsBest!!.maxScore}"
+                    else -> "Arpeggiate a triad — root, third, fifth, one note at a time."
+                },
+                enabled = canPlayChords,
+                onClick = { gated { onStartChords(mode) } },
             )
 
             SectionHeader("Tools")

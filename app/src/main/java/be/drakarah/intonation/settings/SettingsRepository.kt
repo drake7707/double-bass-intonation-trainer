@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import be.drakarah.intonation.game.ChordFingering
 import be.drakarah.intonation.game.Difficulty
 import be.drakarah.intonation.game.FIRST_POSITION
 import be.drakarah.intonation.game.PlayerLevel
@@ -28,6 +29,8 @@ data class AppSettings(
     val playerLevel: PlayerLevel = PlayerLevel.BEGINNER,
     val roundLength: Int = 10,
     val positions: Set<Position> = setOf(FIRST_POSITION),
+    /** Chords game: how a tone playable several ways (open vs fingered) is placed. */
+    val chordFingering: ChordFingering = ChordFingering.NATURAL,
     val soundFeedback: Boolean = true,
     /** 0..1 gain for the game sounds (chime/blip/buzz/drift), on top of media volume. */
     val gameVolume: Float = 1f,
@@ -85,6 +88,7 @@ class SettingsRepository(private val context: Context) {
         val playerLevel = stringPreferencesKey("playerLevel")
         val roundLength = intPreferencesKey("roundLength")
         val positions = stringPreferencesKey("positions")
+        val chordFingering = stringPreferencesKey("chordFingering")
         val soundFeedback = booleanPreferencesKey("soundFeedback")
         val gameVolume = floatPreferencesKey("gameVolume")
         val driftWarning = booleanPreferencesKey("driftWarning")
@@ -122,6 +126,9 @@ class SettingsRepository(private val context: Context) {
                 ?.toSet()
                 ?.takeIf { it.isNotEmpty() }
                 ?: setOf(FIRST_POSITION),
+            chordFingering = prefs[Keys.chordFingering]
+                ?.let { runCatching { ChordFingering.valueOf(it) }.getOrNull() }
+                ?: ChordFingering.NATURAL,
             soundFeedback = prefs[Keys.soundFeedback] ?: true,
             gameVolume = prefs[Keys.gameVolume] ?: 1f,
             driftWarning = prefs[Keys.driftWarning] ?: true,
@@ -218,6 +225,10 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setRoundLength(length: Int) {
         context.dataStore.edit { it[Keys.roundLength] = length }
+    }
+
+    suspend fun setChordFingering(fingering: ChordFingering) {
+        context.dataStore.edit { it[Keys.chordFingering] = fingering.name }
     }
 
     suspend fun setDronePitchClass(pitchClass: Int) {

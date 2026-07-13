@@ -115,7 +115,7 @@ class DebugViewModel(
         _isListening.value = true
         listenJob = viewModelScope.launch {
             val settings = settingsRepository.settings.first()
-            config = baseConfig.applying(settings)
+            config = baseConfig.applying(settings, pizz = _captureMode.value == "pizz")
             _gateLevel.value = 100f - config.sensitivity
             engine = PitchEngine(config, waveWriter)
             waveWriter.setBufferSize(SNIPPET_SECONDS * config.sampleRate)
@@ -215,11 +215,7 @@ class DebugViewModel(
 
             val logSnapshot = synchronized(sampleLog) { sampleLog.toList() }
             logFile.bufferedWriter().use { writer ->
-                writer.appendLine(
-                    """{"config":{"sampleRate":${config.sampleRate},"windowSize":${config.windowSize},""" +
-                        """"overlap":${config.overlap},"audioSource":${config.audioSource},""" +
-                        """"sensitivity":${config.sensitivity},"maxNoise":${config.maxNoise}}}"""
-                )
+                writer.appendLine("""{"config":${config.toJson()}}""")
                 logSnapshot.forEach { s ->
                     writer.appendLine(
                         """{"tMs":${s.timestampMs},"frame":${s.framePosition},"hz":${s.frequencyHz},""" +

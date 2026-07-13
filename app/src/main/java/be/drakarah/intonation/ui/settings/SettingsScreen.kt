@@ -259,6 +259,25 @@ fun SettingsScreen(
 
             SectionHeader("Detection & calibration")
             SettingBlock(
+                "Count right note, wrong octave as correct",
+                "If a note is detected the right pitch but a whole octave off, score your " +
+                    "intonation instead of a miss. Plucked low notes sometimes read an octave " +
+                    "high (a weak string fundamental the mic loses while its overtone rings on); " +
+                    "this keeps that detector quirk from counting against you.",
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(if (settings.ignoreWrongOctave) "On" else "Off")
+                    Switch(
+                        checked = settings.ignoreWrongOctave,
+                        onCheckedChange = { scope.launch { repo.setIgnoreWrongOctave(it) } },
+                    )
+                }
+            }
+            SettingBlock(
                 "Noise gate",
                 "Sound below this level is ignored as room noise. Calibrate measures your " +
                     "room and your soft playing, and sets it automatically.",

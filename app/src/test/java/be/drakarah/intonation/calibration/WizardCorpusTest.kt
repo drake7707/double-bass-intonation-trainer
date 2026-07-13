@@ -108,4 +108,32 @@ class WizardCorpusTest {
         )
         assertTrue("open A must stay corrected (rate ${aScore.correctRate})", aScore.correctRate >= 0.7f)
     }
+
+    @Test
+    fun pizzOctaveFitPicksLoosestSafeThatClearsTheOctave() {
+        // one TakeScore per pizz take, per candidate (aligned with PIZZ_OCTAVE_CANDIDATES:
+        // 2.0/.02, 1.8/.01, 1.5/.01, 1.2/.015, 1.2/.01). Mimics the reference rig: the octave-high
+        // reads only clear at ratio 1.2, and only the very loosest starts halving a genuine note.
+        fun ts(up: Float, down: Float) = TakeScore(200, 200, 1f - up - down, up, down, 100)
+        val scores = listOf(
+            listOf(ts(0.11f, 0f), ts(0f, 0f)),   // 2.0/.02  — octave not cleared
+            listOf(ts(0.06f, 0f), ts(0f, 0f)),   // 1.8/.01  — better, still not clear
+            listOf(ts(0.07f, 0f), ts(0f, 0f)),   // 1.5/.01
+            listOf(ts(0.00f, 0.005f), ts(0f, 0f)), // 1.2/.015 — cleared, safe  <-- expected
+            listOf(ts(0.00f, 0.27f), ts(0f, 0f)),  // 1.2/.01  — cleared but HALVES a real note
+        )
+        val fit = CalibrationAnalysis.choosePizzOctaveFit(scores)
+        assertEquals(1.2f, fit.minRatio)
+        assertEquals(0.015f, fit.minRelative) // the safe one, not the halving 0.01
+    }
+
+    @Test
+    fun pizzOctaveFitFallsBackToStrictWhenNothingClears() {
+        // a rig with no octave artifact: every candidate is clean and safe -> keep the strictest.
+        fun ts() = TakeScore(200, 200, 1f, 0f, 0f, 100)
+        val scores = CalibrationAnalysis.PIZZ_OCTAVE_CANDIDATES.map { listOf(ts()) }
+        val fit = CalibrationAnalysis.choosePizzOctaveFit(scores)
+        assertEquals(2.0f, fit.minRatio)
+        assertEquals(0.02f, fit.minRelative)
+    }
 }

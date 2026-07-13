@@ -155,6 +155,38 @@ object CalibrationAnalysis {
 
     // ---- pizz octave-settle profiling (the wizard's pizz phase) ----------------------------
 
+    /** Candidate pizz octave-DOWN correction knobs (odd-harmonic proof), STRICT → LOOSE. Pizz low
+     * notes read an octave high far more readily than arco (weak fundamental + resonance-boosted
+     * 2nd harmonic), so pizz gets its own, looser fit — separate from the arco/high-note thresholds
+     * so neither compromises the other. */
+    val PIZZ_OCTAVE_CANDIDATES = listOf(
+        OddHarmonicFit(minRatio = 2.0f, minRelative = 0.02f),
+        OddHarmonicFit(minRatio = 1.8f, minRelative = 0.01f),
+        OddHarmonicFit(minRatio = 1.5f, minRelative = 0.01f),
+        OddHarmonicFit(minRatio = 1.2f, minRelative = 0.015f),
+        OddHarmonicFit(minRatio = 1.2f, minRelative = 0.01f),
+    )
+
+    /** A candidate that halves more than this fraction of any pizz take's windows is unsafe — it
+     * is dragging a genuine note down an octave, not fixing an artifact. */
+    private const val PIZZ_HALVE_TOLERANCE = 0.05f
+
+    /** Chooses the pizz octave-down knobs from the plucked takes replayed under each candidate
+     * ([scoresByCandidate] aligned with [PIZZ_OCTAVE_CANDIDATES], one [TakeScore] per pizz take).
+     * Picks the candidate that best clears the octave-HIGH reads (lowest worst octaveUpRate) among
+     * those that don't halve any take beyond [PIZZ_HALVE_TOLERANCE]; ties go to the strictest.
+     * Fit per rig from real takes — no rig-specific numbers baked in. */
+    fun choosePizzOctaveFit(scoresByCandidate: List<List<TakeScore>>): OddHarmonicFit {
+        val indexed = PIZZ_OCTAVE_CANDIDATES.indices.toList()
+        val safe = indexed.filter { i ->
+            scoresByCandidate[i].all { it.octaveDownRate <= PIZZ_HALVE_TOLERANCE }
+        }.ifEmpty { indexed } // if none clean, fall back to all (strictest wins the tie-break)
+        val best = safe.minWith(
+            compareBy({ i -> scoresByCandidate[i].maxOfOrNull { it.octaveUpRate } ?: 0f }, { it })
+        )
+        return PIZZ_OCTAVE_CANDIDATES[best]
+    }
+
     /** Candidate pizz octave-settle windows (ms), shortest — least added latency — first.
      * 0 = guard off. The wizard picks the smallest that resolves the recorded pizz takes on
      * THIS rig, exactly like [ODD_HARMONIC_CANDIDATES] for the arco octave thresholds. */

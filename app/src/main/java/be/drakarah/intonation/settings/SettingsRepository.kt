@@ -35,6 +35,13 @@ data class AppSettings(
     val positions: Set<Position> = setOf(FIRST_POSITION),
     /** Chords game: how a tone playable several ways (open vs fingered) is placed. */
     val chordFingering: ChordFingering = ChordFingering.NATURAL,
+    /** Practice aid: when on, a capture that is the right pitch class but a whole octave off is
+     * scored as if it were the correct octave (intonation within the octave still counts) rather
+     * than a miss. Detection sometimes reads a plucked note an octave high (a weak low fundamental
+     * gated out while its 2nd harmonic passes); this lets her practise without those misdetections
+     * counting against her. On by default — the octave error is a detector limitation, not a
+     * playing mistake. See DETECTION.md §2.1. */
+    val ignoreWrongOctave: Boolean = true,
     val soundFeedback: Boolean = true,
     /** 0..1 gain for the game sounds (chime/blip/buzz/drift), on top of media volume. */
     val gameVolume: Float = 1f,
@@ -54,6 +61,13 @@ data class AppSettings(
     val missingFundamentalMaxHz: Float = 63f,
     val oddHarmonicMinRatio: Float = 2f,
     val oddHarmonicMinRelative: Float = 0.02f,
+    /** Pizz-only octave-down correction knobs. Plucked low notes read an octave high far more
+     * readily than bowed ones (a weak fundamental + sympathetic-resonance-boosted 2nd harmonic),
+     * so pizz needs a LOOSER odd-harmonic proof than arco — separate settings avoid one
+     * compromise value that's too strict for pizz or too loose for arco (her call). The wizard's
+     * pizz phase fits these from the plucked takes; defaults are the reference-rig fit. */
+    val pizzOddHarmonicMinRatio: Float = 1.2f,
+    val pizzOddHarmonicMinRelative: Float = 0.01f,
     /** Game detection thresholds the full calibration wizard measures from real playing
      * (defaults are the reference-device provisional values; the wizard overrides per phone):
      * energy below which a *wrong* capture is treated as a stray transient not a played note. */
@@ -77,13 +91,15 @@ data class AppSettings(
     val traceGames: Boolean = false,
 )
 
-/** The one place where saved calibration turns into a runnable detection config. */
-fun PitchEngineConfig.applying(settings: AppSettings): PitchEngineConfig = copy(
+/** The one place where saved calibration turns into a runnable detection config. [pizz] selects
+ * the looser pizz octave-down knobs (plucked low notes read an octave high much more readily);
+ * everything else is shared. Callers pass pizz = (mode == "pizz"); arco/live screens leave it. */
+fun PitchEngineConfig.applying(settings: AppSettings, pizz: Boolean = false): PitchEngineConfig = copy(
     sensitivity = settings.micSensitivity,
     audioSource = settings.audioSource,
     missingFundamentalMaxHz = settings.missingFundamentalMaxHz,
-    oddHarmonicMinRatio = settings.oddHarmonicMinRatio,
-    oddHarmonicMinRelative = settings.oddHarmonicMinRelative,
+    oddHarmonicMinRatio = if (pizz) settings.pizzOddHarmonicMinRatio else settings.oddHarmonicMinRatio,
+    oddHarmonicMinRelative = if (pizz) settings.pizzOddHarmonicMinRelative else settings.oddHarmonicMinRelative,
 )
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
@@ -99,6 +115,7 @@ class SettingsRepository(private val context: Context) {
         val roundLength = intPreferencesKey("roundLength")
         val positions = stringPreferencesKey("positions")
         val chordFingering = stringPreferencesKey("chordFingering")
+        val ignoreWrongOctave = booleanPreferencesKey("ignoreWrongOctave")
         val soundFeedback = booleanPreferencesKey("soundFeedback")
         val gameVolume = floatPreferencesKey("gameVolume")
         val driftWarning = booleanPreferencesKey("driftWarning")
@@ -109,6 +126,8 @@ class SettingsRepository(private val context: Context) {
         val missingFundamentalMaxHz = floatPreferencesKey("missingFundamentalMaxHz")
         val oddHarmonicMinRatio = floatPreferencesKey("oddHarmonicMinRatio")
         val oddHarmonicMinRelative = floatPreferencesKey("oddHarmonicMinRelative")
+        val pizzOddHarmonicMinRatio = floatPreferencesKey("pizzOddHarmonicMinRatio")
+        val pizzOddHarmonicMinRelative = floatPreferencesKey("pizzOddHarmonicMinRelative")
         val wrongNoteMinLevel = floatPreferencesKey("wrongNoteMinLevel")
         val lowestPlayableHz = floatPreferencesKey("lowestPlayableHz")
         val pizzOctaveSettleMs = longPreferencesKey("pizzOctaveSettleMs")
@@ -141,6 +160,7 @@ class SettingsRepository(private val context: Context) {
             chordFingering = prefs[Keys.chordFingering]
                 ?.let { runCatching { ChordFingering.valueOf(it) }.getOrNull() }
                 ?: ChordFingering.NATURAL,
+            ignoreWrongOctave = prefs[Keys.ignoreWrongOctave] ?: true,
             soundFeedback = prefs[Keys.soundFeedback] ?: true,
             gameVolume = prefs[Keys.gameVolume] ?: 1f,
             driftWarning = prefs[Keys.driftWarning] ?: true,
@@ -152,6 +172,8 @@ class SettingsRepository(private val context: Context) {
             missingFundamentalMaxHz = prefs[Keys.missingFundamentalMaxHz] ?: 63f,
             oddHarmonicMinRatio = prefs[Keys.oddHarmonicMinRatio] ?: 2f,
             oddHarmonicMinRelative = prefs[Keys.oddHarmonicMinRelative] ?: 0.02f,
+            pizzOddHarmonicMinRatio = prefs[Keys.pizzOddHarmonicMinRatio] ?: 1.2f,
+            pizzOddHarmonicMinRelative = prefs[Keys.pizzOddHarmonicMinRelative] ?: 0.01f,
             wrongNoteMinLevel = prefs[Keys.wrongNoteMinLevel] ?: 55f,
             lowestPlayableHz = prefs[Keys.lowestPlayableHz] ?: 40f,
             pizzOctaveSettleMs = prefs[Keys.pizzOctaveSettleMs] ?: 300,
@@ -177,6 +199,9 @@ class SettingsRepository(private val context: Context) {
         lowestPlayableHz: Float? = null,
         /** Measured from the pizz phase (0 = no attack-octave artifact); null keeps current. */
         pizzOctaveSettleMs: Long? = null,
+        /** Pizz octave-down knobs fit from the plucked takes; null keeps current. */
+        pizzOddHarmonicMinRatio: Float? = null,
+        pizzOddHarmonicMinRelative: Float? = null,
     ) {
         context.dataStore.edit {
             it[Keys.audioSource] = audioSource
@@ -187,6 +212,8 @@ class SettingsRepository(private val context: Context) {
             wrongNoteMinLevel?.let { v -> it[Keys.wrongNoteMinLevel] = v.coerceIn(20f, 90f) }
             lowestPlayableHz?.let { v -> it[Keys.lowestPlayableHz] = v.coerceIn(30f, 60f) }
             pizzOctaveSettleMs?.let { v -> it[Keys.pizzOctaveSettleMs] = v.coerceIn(0L, 600L) }
+            pizzOddHarmonicMinRatio?.let { v -> it[Keys.pizzOddHarmonicMinRatio] = v.coerceIn(1.05f, 3f) }
+            pizzOddHarmonicMinRelative?.let { v -> it[Keys.pizzOddHarmonicMinRelative] = v.coerceIn(0.005f, 0.05f) }
             it[Keys.fullCalibrationAt] = epochMs
             it[Keys.lastCalibratedAt] = epochMs
         }
@@ -210,6 +237,10 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setSoundFeedback(enabled: Boolean) {
         context.dataStore.edit { it[Keys.soundFeedback] = enabled }
+    }
+
+    suspend fun setIgnoreWrongOctave(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.ignoreWrongOctave] = enabled }
     }
 
     suspend fun setGameVolume(volume: Float) {

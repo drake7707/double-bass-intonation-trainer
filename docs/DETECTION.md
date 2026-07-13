@@ -5,9 +5,10 @@
 problem, every design decision, what worked and what didn't, and how we got there — so after a
 context reset we can be current again in one read.
 
-Last updated: 2026-07-12, after the pizz **octave-settle** fix (a plucked note reading an octave
-high on its attack, then settling onto the fundamental) and the calibration wizard's new **pizz
-phase** that measures that behaviour per rig.
+Last updated: 2026-07-13, after the pizz octave work: the **octave-settle** capture fix (attack
+transient), the **separate pizz octave-DOWN knobs** for the sustained sympathetic-resonance octave
+(§5 A), the **"ignore wrong octave"** scoring aid (§5 A′), full-config recording headers, and the
+**calibration trace**.
 
 ---
 
@@ -232,8 +233,42 @@ point). Measured by the full calibration wizard from prompted notes (ground trut
   exactly like the odd-harmonic thresholds. (This is the answer to "don't hard-code your rig".)
 - **mic source** (Standard/Voice/Unprocessed), **roll-off knee** (`missingFundamentalMaxHz`),
   **octave-correction odd-harmonic thresholds** — as before.
+- **pizz octave-down knobs** (`pizzOddHarmonicMinRatio` / `pizzOddHarmonicMinRelative`) — **separate
+  from the arco/high-note thresholds** (her call, 2026-07-13). A plucked low note reads an octave
+  high far more readily than a bowed one: a weak fundamental plus a 2nd harmonic **boosted by
+  sympathetic resonance of the other open strings** (once they ring, low Mi latches Mi2 and stays
+  there — a *sustained* octave the §2.1 settle can't fix, because there's no fundamental to settle
+  to). Pizz therefore needs a **looser** odd-harmonic octave-DOWN proof than arco; forcing one
+  value would be too loose for arco (halves genuine Do3/Ré3) or too strict for pizz. `applying(
+  settings, pizz)` picks the pizz set when the game mode is pizz (each game VM passes
+  `pizz = mode == "pizz"`; arco/live screens use the strict set). The wizard's pizz phase fits the
+  pizz set from the plucked takes: `CalibrationAnalysis.choosePizzOctaveFit` replays each take under
+  `PIZZ_OCTAVE_CANDIDATES` (strict→loose) and picks the loosest that clears the octave-HIGH reads
+  without halving any genuine pizz note (octaveDownRate ≤ 5%), ties to the strictest. Validated per
+  rig against ground-truth calibration takes (arco strings + Do3 + pizz strings). On the reference
+  rig it lands ratio 1.2 / rel 0.01–0.015 (pizz octave 28%→~0, no note halved); guarded by
+  `PizzOctaveDownTest` (real snippet: arco knobs leave the octave, pizz knobs collapse it) and
+  `WizardCorpusTest` (the chooser logic). This is the "better discriminator with calibration knobs"
+  — the time-based §2.1 settle handles the *attack-transient* octave, this handles the *sustained
+  resonance* octave.
 
 Defaults in `AppSettings` are the reference-Pixel-6a values; the wizard overrides per device.
+
+**Recording headers now carry the FULL detection config** (`PitchEngineConfig.toJson()` in every
+snippet/game-trace/calibration-trace header, not just gate+source) — so a recording replays offline
+*exactly* as the rig ran it. This closed a real reproduction gap (octave correction is
+config-dependent; the old 6-field header couldn't reproduce her rig). The **calibration trace**
+(Settings → Debug "Record & trace games" → run the wizard) saves every ground-truth take
+(`calibration-<stage>-<midi>-*`) with its target and full config — the per-rig data used to fit AND
+validate octave handling without hard-coding a rig.
+
+### A′. Practice aid, NOT calibration — "ignore wrong octave" (`ignoreWrongOctave`, default on)
+Layer 3 (`resultFor`): when a capture is the right pitch class but a whole octave off, fold it onto
+the target octave and score the intonation there instead of a miss. Detection still occasionally
+reads a plucked low note an octave high (the mechanism above); this keeps that from punishing a
+correctly-played note. It folds the *frozen pitch*, never the target, and only for exact-octave
+errors (`OCTAVE_TOLERANCE_CENTS`). It's a scoring-forgiveness toggle, orthogonal to the detection
+fixes — the detection work above still aims to make it unnecessary.
 
 ### B. Player-facing timing → `PlayerLevel` (auto-tuned by `LevelAdvisor`)
 - **`minReadMs`** — the read-time floor used by "too soon". It's her **reading speed**, not a mic
@@ -301,6 +336,10 @@ already pool ~170 windows each and the retry+guard cover the main risk.
   pizz snippet's recorded detection stream (JSONL, not a WAV re-run — octave correction is
   config-dependent, so the recorded stream is the faithful ground truth): guard off reproduces
   the octave bug, guard on eliminates it, and `choosePizzSettle` picks a resolving window.
+- `dsp` `PizzOctaveDownTest` — the **separate pizz octave-DOWN knobs** (§5 A) against her real
+  sympathetic-resonance snippet under its recorded config: the arco knobs leave the sustained
+  octave read (>10%), the pizz knobs collapse it (<2%). `WizardCorpusTest` locks the per-rig
+  `choosePizzOctaveFit` decision (loosest-safe; strict fallback when nothing clears).
 - `app` `FeedbackRegressionTest` — replays her Sol#1/Fa2 snippets; guards the harmonic/unplayable
   /flimsy filters and legato arming.
 - `app` `SustainCaptureTest` — incl. `briefBowReversalScoopDoesNotReset`.

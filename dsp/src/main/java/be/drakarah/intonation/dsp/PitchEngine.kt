@@ -53,6 +53,18 @@ data class PitchEngineConfig(
     /** Time between successive pitch samples. */
     val hopMs: Float
         get() = max(1f, (1f - overlap) * windowSize) * 1000f / sampleRate
+
+    /** Full JSON object of every field that affects detection, so a recording's header captures
+     * the exact config it ran under and offline replay reproduces the rig precisely (no guessing
+     * the missing knobs). Keys match the constructor names. */
+    fun toJson(): String =
+        """{"sampleRate":$sampleRate,"windowSize":$windowSize,"overlap":$overlap,""" +
+            """"audioSource":$audioSource,"maxNoise":$maxNoise,""" +
+            """"minHarmonicEnergyContent":$minHarmonicEnergyContent,"sensitivity":$sensitivity,""" +
+            """"numMovingAverage":$numMovingAverage,"maxNumFaultyValues":$maxNumFaultyValues,""" +
+            """"frequencyMin":$frequencyMin,"frequencyMax":$frequencyMax,""" +
+            """"missingFundamentalMaxHz":$missingFundamentalMaxHz,""" +
+            """"oddHarmonicMinRatio":$oddHarmonicMinRatio,"oddHarmonicMinRelative":$oddHarmonicMinRelative}"""
 }
 
 /** Microphone-to-pitch pipeline: AudioRecord -> overlapping windows -> detector -> gate.

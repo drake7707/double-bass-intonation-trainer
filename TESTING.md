@@ -5,6 +5,45 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-13 Octave misdetection: relief valve + calibration/repro fixes (your feedback)
+From testing: pizz still occasionally scores "right note, wrong octave" — and we found *why*.
+Your second calibration's single Mi pluck read clean (Mi first, before other strings ring) so it
+set **0 ms** (guard off). And the real culprit is **sympathetic resonance**: once the other
+open strings ring, the low note's 2nd harmonic is boosted and the detector latches the octave
+(Mi2) — the fundamental is essentially gone, so the time-based settle can't help. Your priority
+order, addressed:
+- [ ] **"Count right note, wrong octave as correct"** — new setting (Settings → Detection &
+      calibration), **ON by default**. Play the right note, get the wrong octave from the mic, and
+      it now **scores your intonation** instead of a miss. Confirm a pizz round no longer punishes
+      you for octave misdetection; toggle it off to see the old "right note, wrong octave" behaviour.
+- [ ] **Calibration pizz phase reordered** to pluck the strings **high→low (Sol, Ré, La, Mi)** and
+      asks you to *keep the other strings ringing* — so it measures the low strings under the
+      resonance that actually causes the problem, instead of the lucky first pluck. Re-run the full
+      calibration and check the pizz summary now reflects a realistic window (likely non-zero).
+- [x] Not user-visible, but relevant: **every recording's JSONL now stores the full detection
+      config** (all octave-correction knobs, not just gate). So the next snippet you save can be
+      replayed offline *exactly* as your rig ran it — which is what we need to tune the real
+      octave discriminator (see below) without guessing.
+
+- [ ] **Calibration trace (to feed the real fix).** Turn on Settings → Debug → "Record & trace
+      games", then re-run the full calibration. It now saves every take (arco strings, high note,
+      and the pizz strings under resonance) as `calibration-*.wav`/`.jsonl` in Recordings, each
+      with the known target note and your exact config. **Share those** — they're the per-rig,
+      ground-truth data to *fit and validate* the octave-down discriminator (below) without
+      hard-coding anyone's rig. (Reproduction already confirmed: replaying your 07:14 snippet
+      under its recorded config reproduces the 28% Mi2 exactly.)
+
+- [ ] **Separate pizz octave-down correction (the real fix — LANDED).** From your calibration
+      trace: pizz now has its **own, looser** octave-down thresholds (arco stays strict so Do3/Ré3
+      are never halved). Fit per-rig by the wizard's pizz phase and validated against your own
+      ground-truth takes — on your rig the sustained Mi2 read drops from ~28% to ~0 with no
+      genuine note halved. **Re-run the full calibration** (so the pizz knobs are fit), then a pizz
+      round: the octave misdetection should now be rare *at the source*, not just forgiven. If you
+      still hit it, save a pizz snippet — its header carries the full config so it reproduces
+      exactly.
+      Guarded by `PizzOctaveDownTest` (your resonance snippet: arco knobs leave the octave, pizz
+      knobs collapse it) + `WizardCorpusTest` (the per-rig fit logic).
+
 ### 2026-07-12 Pizz octave fix + calibration wizard pizz phase & auto-start (your feedback)
 Two things from your 2026-07-12 batch. **(1)** The occasional pizz "right note, wrong octave"
 (your Fa#1 snippet): every pluck's attack reads an octave high for a moment, then settles onto
@@ -432,3 +471,9 @@ Home screen:
 OPEN FEEDBACK:
 --------------
 
+
+Calibration wizard layout could use some love. Between the switch of arco --> pizz should be a little clearer. I almost missed it so people who don't know there's a pizz round will also miss it.
+
+The pips on top of the rounds in games don't fit fully with 20 notes in a round
+
+I wonder if we play all notes individually, it being monophonic, would we be able to discriminate to the right note in a more polyphonic setting (like playing a piece). Most apps that do this with DNNs don't really make an initial profile of the instrument and individual string harmonic behaviour.

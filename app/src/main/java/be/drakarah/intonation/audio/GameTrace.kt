@@ -31,12 +31,7 @@ class GameTrace(
     private val lines = ArrayList<String>()
 
     init {
-        lines.add(
-            """{"config":{"sampleRate":${config.sampleRate},"windowSize":${config.windowSize},""" +
-                """"overlap":${config.overlap},"audioSource":${config.audioSource},""" +
-                """"sensitivity":${config.sensitivity},"maxNoise":${config.maxNoise}},""" +
-                """"exercise":"$exercise"}"""
-        )
+        lines.add("""{"config":${config.toJson()},"exercise":"$exercise"}""")
     }
 
     /** Size the audio ring. Suspends, so call it from the game's coroutine before recording. */

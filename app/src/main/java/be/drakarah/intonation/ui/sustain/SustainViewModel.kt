@@ -115,7 +115,7 @@ class SustainViewModel(
             positions = settings.positions
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
-            val cfg = config.applying(settings)
+            val cfg = config.applying(settings, pizz = mode == "pizz")
             trace = if (settings.traceGames) GameTrace(appContext, cfg, "sustain-$mode").also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
             sustainParams = SustainParams.forDifficulty(difficulty).copy(

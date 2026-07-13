@@ -146,7 +146,7 @@ class ChordsViewModel(
                 promptTimeoutMs = settings.playerLevel.promptTimeoutMs,
             )
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
-            val cfg = config.applying(settings)
+            val cfg = config.applying(settings, pizz = mode == "pizz")
             trace = if (settings.traceGames)
                 GameTrace(appContext, cfg, "chords-$mode").also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)

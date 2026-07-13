@@ -15,6 +15,7 @@ import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.dsp.PitchSample
 import be.drakarah.intonation.dsp.misc.WaveWriter
+import be.drakarah.intonation.dsp.misc.writeWave
 import be.drakarah.intonation.music.NoteSpec
 import be.drakarah.intonation.music.nearestNote
 import be.drakarah.intonation.settings.SettingsRepository
@@ -93,6 +94,7 @@ class WizardViewModel(
     private val baseConfig: PitchEngineConfig,
     private val settingsRepository: SettingsRepository,
     private val sources: List<SourceCandidate>,
+    private val appContext: Context,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<WizardState>(WizardState.Intro)
@@ -102,6 +104,10 @@ class WizardViewModel(
     /** Pre-take countdown that auto-starts recording (separate from [job], the recording). */
     private var countdownJob: Job? = null
     private var a4 = 440.0
+    /** When on (Settings → Debug "Record & trace games"), save every calibration take (raw audio
+     * + detection + known target + full config) so the whole run can be replayed offline — the
+     * per-rig, ground-truth data for tuning octave handling without hard-coding anyone's rig. */
+    private var traceCalibration = false
 
     private var quietLevels: List<Float> = emptyList()
     /** Source id -> open-Mi take recorded through it. */
@@ -118,7 +124,9 @@ class WizardViewModel(
     fun begin() {
         if (_state.value !is WizardState.Intro) return
         viewModelScope.launch {
-            a4 = settingsRepository.settings.first().a4
+            val settings = settingsRepository.settings.first()
+            a4 = settings.a4
+            traceCalibration = settings.traceGames
             runQuietStage()
         }
     }
@@ -172,7 +180,15 @@ class WizardViewModel(
         val nextPizz = PIZZ_MIDIS.firstOrNull { it !in pizzTakes }
         if (nextPizz != null) {
             awaitPlay(
-                PlayPrompt(midi = nextPizz, stringHint = "pluck it, let it ring", pizz = true),
+                PlayPrompt(
+                    midi = nextPizz,
+                    // Don't damp the other strings between prompts — their sympathetic ringing is
+                    // exactly what pushes a low note to read an octave high, so we want it present
+                    // while we measure (her 2026-07-13 finding: a lone first pluck reads clean,
+                    // the octave only appears once the other strings are resonating).
+                    stringHint = "pluck it a few times — let the other strings keep ringing",
+                    pizz = true,
+                ),
                 stage = "Pizz check",
                 retry = retry,
             )
@@ -294,6 +310,7 @@ class WizardViewModel(
         job = viewModelScope.launch {
             _state.value = WizardState.Analyzing
             val result = withContext(Dispatchers.Default) { computeResult() }
+            saveCalibrationTrace()
             if (result == null) {
                 _state.value = WizardState.Failed(
                     "The recordings didn't contain enough playable signal. " +
@@ -313,6 +330,8 @@ class WizardViewModel(
     private var finalWrongNoteFloor: Float? = null
     private var finalLowestHz: Float = 40f
     private var finalPizzSettleMs: Long = 300L
+    private var finalPizzOddRatio: Float = baseConfig.oddHarmonicMinRatio
+    private var finalPizzOddRelative: Float = baseConfig.oddHarmonicMinRelative
 
     private suspend fun computeResult(): WizardResult? {
         if (quietLevels.size < 30 || stringTakes.size < OPEN_STRING_MIDIS.size + 1) return null
@@ -373,11 +392,25 @@ class WizardViewModel(
             nearestNote(take.expectedHz.toDouble(), a4).midi to (score.correctRate >= 0.7f)
         }
 
-        // 5. pizz octave-settle profile: replay the plucked takes through the game capture under
-        //    every candidate window and pick the smallest that resolves the attack-octave artifact
-        //    ON THIS RIG (0 = this rig has none). Measured, not assumed.
+        // 5a. pizz octave-DOWN knobs: pizz reads the octave far more readily than arco, so it gets
+        //     its own odd-harmonic fit (separate from the arco/high thresholds — her call). Replay
+        //     each plucked take under every candidate and pick the loosest that clears the octave
+        //     without halving a genuine pizz note. ON THIS RIG — no baked-in numbers.
+        val pizzOctScores = CalibrationAnalysis.PIZZ_OCTAVE_CANDIDATES.map { cand ->
+            pizzTakes.values.map { take ->
+                val cfg = finalConfig().copy(
+                    oddHarmonicMinRatio = cand.minRatio, oddHarmonicMinRelative = cand.minRelative)
+                CalibrationAnalysis.score(PitchEngine(cfg).wavSamples(take.pcm).toList(), take.expectedHz)
+            }
+        }
+        val pizzOct = CalibrationAnalysis.choosePizzOctaveFit(pizzOctScores)
+        finalPizzOddRatio = pizzOct.minRatio
+        finalPizzOddRelative = pizzOct.minRelative
+
+        // 5b. pizz octave-settle profile (attack-transient octave), measured under the pizz octave
+        //     knobs just chosen so it reflects the config the game will actually run.
         val pizzGated = pizzTakes.values.associate { take ->
-            take.expectedHz to replaySamples(take)
+            take.expectedHz to PitchEngine(pizzConfig()).wavSamples(take.pcm).toList()
         }
         val pizzProfile = CalibrationAnalysis.choosePizzSettle(pizzGated, finalLowestHz)
         finalPizzSettleMs = pizzProfile.settleMs
@@ -399,17 +432,62 @@ class WizardViewModel(
         )
     }
 
+    /** The detection config the game will run with after this calibration is saved. */
+    private fun finalConfig(): PitchEngineConfig = baseConfig.copy(
+        audioSource = chosenSource.id,
+        sensitivity = finalGate?.let { 100f - it } ?: baseConfig.sensitivity,
+        missingFundamentalMaxHz = finalKnee,
+        oddHarmonicMinRatio = fitted?.first ?: baseConfig.oddHarmonicMinRatio,
+        oddHarmonicMinRelative = fitted?.second ?: baseConfig.oddHarmonicMinRelative,
+    )
+
+    /** The config a PIZZ game will run with (final config + the looser pizz octave-down knobs). */
+    private fun pizzConfig(): PitchEngineConfig = finalConfig().copy(
+        oddHarmonicMinRatio = finalPizzOddRatio,
+        oddHarmonicMinRelative = finalPizzOddRelative,
+    )
+
     /** Replays a recorded take through the final chosen config and returns the gated sample
-     * stream (same config as [replayScore], but the raw samples — used to run the pizz capture). */
-    private suspend fun replaySamples(take: Take): List<PitchSample> {
-        val config = baseConfig.copy(
-            audioSource = chosenSource.id,
-            sensitivity = finalGate?.let { 100f - it } ?: baseConfig.sensitivity,
-            missingFundamentalMaxHz = finalKnee,
-            oddHarmonicMinRatio = fitted?.first ?: baseConfig.oddHarmonicMinRatio,
-            oddHarmonicMinRelative = fitted?.second ?: baseConfig.oddHarmonicMinRelative,
-        )
-        return PitchEngine(config).wavSamples(take.pcm).toList()
+     * stream (used to run the pizz capture during analysis). */
+    private suspend fun replaySamples(take: Take): List<PitchSample> =
+        PitchEngine(finalConfig()).wavSamples(take.pcm).toList()
+
+    /** Saves the whole calibration run as replayable per-take files (raw audio + detection +
+     * known target + final config), when tracing is on. Ground-truth, full-config, per-rig data
+     * for tuning octave handling offline — no rig-specific numbers baked into the app. Files land
+     * in the snippets dir tagged "calibration-*" so Recordings lists and shares them. */
+    private suspend fun saveCalibrationTrace() {
+        if (!traceCalibration) return
+        val config = finalConfig()
+        // (stage label, take) for every recording made this run
+        val takes = buildList {
+            stringTakes.forEach { (midi, t) -> add(Triple("arco", midi, t)) }
+            highTake?.let { add(Triple("arco-high", nearestNote(it.expectedHz.toDouble(), a4).midi, it)) }
+            pizzTakes.forEach { (midi, t) -> add(Triple("pizz", midi, t)) }
+        }
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val dir = java.io.File(appContext.getExternalFilesDir(null), "snippets").apply { mkdirs() }
+                val stamp = java.time.LocalDateTime.now()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
+                takes.forEach { (stage, midi, take) ->
+                    val base = "calibration-$stage-$midi-$stamp"
+                    writeWave(appContext, android.net.Uri.fromFile(java.io.File(dir, "$base.wav")),
+                        config.sampleRate, take.pcm)
+                    java.io.File(dir, "$base.jsonl").bufferedWriter().use { w ->
+                        w.appendLine("""{"config":${config.toJson()},"stage":"$stage",""" +
+                            """"targetMidi":$midi,"expectedHz":${take.expectedHz}}""")
+                        take.samples.forEach { s ->
+                            w.appendLine("""{"tMs":${s.timestampMs},"frame":${s.framePosition},""" +
+                                """"hz":${s.frequencyHz},"smoothedHz":${s.smoothedHz},""" +
+                                """"accepted":${s.accepted},"noise":${s.noise},""" +
+                                """"harmRel":${s.harmonicEnergyRelative},"level":${s.energyLevel},""" +
+                                """"octaveCorrected":${s.octaveCorrected}}""")
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private suspend fun replayScore(
@@ -455,6 +533,8 @@ class WizardViewModel(
                 wrongNoteMinLevel = finalWrongNoteFloor,
                 lowestPlayableHz = finalLowestHz,
                 pizzOctaveSettleMs = finalPizzSettleMs,
+                pizzOddHarmonicMinRatio = finalPizzOddRatio,
+                pizzOddHarmonicMinRelative = finalPizzOddRelative,
             )
             _state.value = summary.copy(saved = true)
         }
@@ -487,8 +567,11 @@ class WizardViewModel(
         private val CORE_OPEN_MIDIS = (listOf(OPEN_MI) + OPEN_STRING_MIDIS).toSet()
         /** Do3 — a fourth above open Sol, the worst sympathetic-collision note. */
         private const val HIGH_NOTE = 48
-        /** The four open strings plucked — profiles the pizz attack-octave behaviour per rig. */
-        private val PIZZ_MIDIS = listOf(OPEN_MI, 33, 38, 43)
+        /** The four open strings plucked, HIGH to LOW (Sol, Ré, La, Mi) so the upper strings are
+         * already ringing by the time the low strings — the ones prone to reading an octave high
+         * from sympathetic resonance — are measured. Plucking Mi first (its best case) is what let
+         * a lucky calibration set 0 ms; measuring it last, under resonance, catches the artifact. */
+        private val PIZZ_MIDIS = listOf(43, 38, 33, OPEN_MI)
 
         fun candidateSources(context: Context): List<SourceCandidate> {
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -512,6 +595,7 @@ class WizardViewModel(
                     baseConfig = app.container.pitchEngineConfig,
                     settingsRepository = app.container.settingsRepository,
                     sources = candidateSources(app.applicationContext),
+                    appContext = app.applicationContext,
                 ) as T
             }
         }

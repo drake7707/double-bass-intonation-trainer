@@ -125,6 +125,8 @@ class RoundViewModel(
     private var startedAtWallClock = 0L
     private var soundFeedback = true
     private var driftWarningEnabled = true
+    /** Practice aid: score a right-note-wrong-octave capture as correct (see [resultFor]). */
+    private var ignoreWrongOctave = true
     /** Calibration-owned detection thresholds (defaults until the wizard measures them). */
     private var wrongNoteMinLevel = 55f
     private var lowestPlayableHz = 40f
@@ -154,6 +156,7 @@ class RoundViewModel(
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
             driftWarningEnabled = settings.driftWarning
+            ignoreWrongOctave = settings.ignoreWrongOctave
             wrongNoteMinLevel = settings.wrongNoteMinLevel
             lowestPlayableHz = settings.lowestPlayableHz
             minReadMs = settings.playerLevel.minReadMs
@@ -170,7 +173,7 @@ class RoundViewModel(
             capture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = true)
             previousAnswerHz = 0f
             promptShownAtMs = -1
-            val cfg = config.applying(settings)
+            val cfg = config.applying(settings, pizz = mode == "pizz")
             trace = if (settings.traceGames) GameTrace(appContext, cfg, "note-accuracy-$mode").also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
             prompts = NotePool(positions).draw(settings.roundLength)
@@ -306,16 +309,25 @@ class RoundViewModel(
             )
         }
         val captured = frozen.result
-        val cents = centsBetween(captured.frequencyHz.toDouble(), target.frequency(a4)).toFloat()
+        val rawCents = centsBetween(captured.frequencyHz.toDouble(), target.frequency(a4)).toFloat()
+        // A wrong note that is really the target pitch class a whole number of octaves away.
+        val octaves = (rawCents / 1200f).let { Math.round(it) }
+        val isOctaveOff = abs(rawCents) > WRONG_NOTE_CENTS && octaves != 0 &&
+                abs(rawCents - octaves * 1200f) <= OCTAVE_TOLERANCE_CENTS
+        // Practice aid: when enabled, fold a right-note-wrong-octave capture onto the target's
+        // octave and score its intonation there, instead of flagging a miss. Detection reads a
+        // plucked low note an octave high often enough (weak fundamental gated out while its 2nd
+        // harmonic — boosted by sympathetic resonance — passes) that scoring it as wrong punishes
+        // her for the mic's error, not her playing. The frozen pitch is folded, not the target.
+        val foldOctave = ignoreWrongOctave && isOctaveOff
+        val playedHz = if (foldOctave) captured.frequencyHz / Math.pow(2.0, octaves.toDouble()).toFloat()
+            else captured.frequencyHz
+        val cents = if (foldOctave) rawCents - octaves * 1200f else rawCents
         val wrongNote = abs(cents) > WRONG_NOTE_CENTS
-        // A wrong note that is really the target pitch class a whole number of octaves away —
-        // report it as such so the player knows the finger was right, only the octave was off.
-        val octaves = (cents / 1200f).let { Math.round(it) }
-        val wrongOctave = wrongNote && octaves != 0 &&
-                abs(cents - octaves * 1200f) <= OCTAVE_TOLERANCE_CENTS
+        val wrongOctave = !foldOctave && isOctaveOff
         return AttemptUi(
             target = target,
-            playedHz = captured.frequencyHz,
+            playedHz = playedHz,
             cents = cents,
             score = scoreAttempt(cents, difficulty),
             starCount = stars(cents),

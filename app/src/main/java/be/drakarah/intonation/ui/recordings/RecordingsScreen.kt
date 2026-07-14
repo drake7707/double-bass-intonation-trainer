@@ -108,11 +108,21 @@ private fun readFloatWav(file: File): Pair<Int, FloatArray> {
 }
 
 @Composable
-fun RecordingsScreen(onBack: () -> Unit) {
+fun RecordingsScreen(
+    onlyTraces: Boolean = false,
+    onBack: () -> Unit
+) {
     val context = LocalContext.current
     val dir = remember { File(context.getExternalFilesDir(null), "snippets") }
     var refresh by remember { mutableIntStateOf(0) }
-    val recordings = remember(refresh) { listRecordings(dir) }
+    val recordings = remember(refresh, onlyTraces) {
+        val all = listRecordings(dir)
+        if (onlyTraces) {
+            all.filter { it.baseName.startsWith("game-trace") || it.baseName.startsWith("calibration-") }
+        } else {
+            all.filter { !it.baseName.startsWith("game-trace") && !it.baseName.startsWith("calibration-") }
+        }
+    }
     val configSummaries = remember(refresh) {
         recordings.associate { it.baseName to recordingConfigSummary(it) }
     }
@@ -206,9 +216,10 @@ fun RecordingsScreen(onBack: () -> Unit) {
                 .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
         ) {
             Spacer(Modifier.height(Spacing.SECTION_BREAK))
-            Text("Recordings", style = MaterialTheme.typography.headlineMedium)
+            Text(if (onlyTraces) "Game traces" else "Recordings", style = MaterialTheme.typography.headlineMedium)
             Text(
-                "Snippets and long captures. Share sends the audio plus its detection log.",
+                if (onlyTraces) "Full game or calibration traces for analysis."
+                else "Snippets and long captures. Share sends the audio plus its detection log.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -216,7 +227,8 @@ fun RecordingsScreen(onBack: () -> Unit) {
 
             if (recordings.isEmpty()) {
                 Text(
-                    "Nothing recorded yet — use the buttons on the Pitch debug screen.",
+                    if (onlyTraces) "No traces saved yet."
+                    else "Nothing recorded yet — use the buttons on the Pitch Analyzer screen.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

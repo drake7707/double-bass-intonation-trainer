@@ -334,8 +334,8 @@ fun HomeScreen(
                 onClick = onOpenCalibrate,
             )
             ExerciseCard(
-                title = "Pitch debug",
-                subtitle = "Live detection diagnostics and the note sweep.",
+                title = "Pitch Analyzer",
+                subtitle = "See how the app hears your notes and explore your instrument's range.",
                 enabled = true,
                 onClick = onOpenDebug,
             )

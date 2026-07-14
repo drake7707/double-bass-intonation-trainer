@@ -1,6 +1,7 @@
 package be.drakarah.intonation.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -20,10 +21,12 @@ import be.drakarah.intonation.ui.settings.SettingsScreen
 import be.drakarah.intonation.ui.shift.ShiftScreen
 import be.drakarah.intonation.ui.sustain.SustainScreen
 import be.drakarah.intonation.ui.tune.TuneUpScreen
-import be.drakarah.intonation.ui.common.rememberAppSettings
 import androidx.compose.ui.platform.LocalContext
 import be.drakarah.intonation.IntonationApplication
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import kotlinx.coroutines.launch
 
 object Routes {
@@ -35,7 +38,7 @@ object Routes {
     const val PROGRESS = "progress"
     const val ACHIEVEMENTS = "achievements"
     const val ABOUT = "about"
-    const val RECORDINGS = "recordings"
+    const val RECORDINGS = "recordings?onlyTraces={onlyTraces}"
     const val CALIBRATE = "calibrate"
     const val WIZARD = "wizard"
     const val DRONE = "drone"
@@ -48,18 +51,26 @@ object Routes {
     fun sustain(mode: String) = "sustain/$mode"
     fun shift(mode: String, style: String) = "shift/$mode/$style"
     fun chords(mode: String) = "chords/$mode"
+    fun recordings(onlyTraces: Boolean = false) = "recordings?onlyTraces=$onlyTraces"
 }
 
 @Composable
 fun AppNav() {
     val navController = rememberNavController()
-    val settings = rememberAppSettings()
     val app = LocalContext.current.applicationContext as IntonationApplication
+    val settings by app.container.settingsRepository.settings
+        .collectAsStateWithLifecycle(initialValue = null)
+
+    // Wait for settings to load to avoid flashing the onboarding screen
+    // when onboarding was already completed.
+    if (settings == null) return
+
+    val currentSettings = settings!!
     val scope = rememberCoroutineScope()
 
     NavHost(
         navController = navController,
-        startDestination = if (settings.onboardingCompleted) Routes.HOME else Routes.ONBOARDING
+        startDestination = if (currentSettings.onboardingCompleted) Routes.HOME else Routes.ONBOARDING
     ) {
         composable(Routes.ONBOARDING) {
             OnboardingScreen(
@@ -104,6 +115,7 @@ fun AppNav() {
                 onOpenAbout = { navController.navigate(Routes.ABOUT) },
                 onOpenCalibrate = { navController.navigate(Routes.CALIBRATE) },
                 onOpenWizard = { navController.navigate(Routes.WIZARD) },
+                onOpenTraces = { navController.navigate(Routes.recordings(onlyTraces = true)) },
             )
         }
         composable(Routes.CALIBRATE) {
@@ -111,7 +123,7 @@ fun AppNav() {
         }
         composable(Routes.WIZARD) {
             WizardScreen(onBack = { 
-                if (!settings.onboardingCompleted) {
+                if (!currentSettings.onboardingCompleted) {
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.WIZARD) { inclusive = true }
                     }
@@ -132,8 +144,18 @@ fun AppNav() {
         composable(Routes.ABOUT) {
             AboutScreen(onBack = { navController.popBackStack() })
         }
-        composable(Routes.RECORDINGS) {
-            RecordingsScreen(onBack = { navController.popBackStack() })
+        composable(
+            Routes.RECORDINGS,
+            arguments = listOf(navArgument("onlyTraces") { 
+                type = NavType.BoolType
+                defaultValue = false
+            })
+        ) { backStackEntry ->
+            val onlyTraces = backStackEntry.arguments?.getBoolean("onlyTraces") ?: false
+            RecordingsScreen(
+                onlyTraces = onlyTraces,
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(Routes.ROUND) {
             RoundScreen(onExit = { navController.popBackStack() })
@@ -150,7 +172,7 @@ fun AppNav() {
         composable(Routes.DEBUG) {
             DebugPitchScreen(
                 onBack = { navController.popBackStack() },
-                onOpenRecordings = { navController.navigate(Routes.RECORDINGS) },
+                onOpenRecordings = { navController.navigate(Routes.recordings(onlyTraces = false)) },
             )
         }
     }

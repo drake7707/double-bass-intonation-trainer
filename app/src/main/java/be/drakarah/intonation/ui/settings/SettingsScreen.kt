@@ -53,6 +53,7 @@ fun SettingsScreen(
     onOpenAbout: () -> Unit = {},
     onOpenCalibrate: () -> Unit = {},
     onOpenWizard: () -> Unit = {},
+    onOpenTraces: () -> Unit = {},
 ) {
     val app = LocalContext.current.applicationContext as IntonationApplication
     val repo = app.container.settingsRepository
@@ -334,6 +335,14 @@ fun SettingsScreen(
                         checked = settings.traceGames,
                         onCheckedChange = { scope.launch { repo.setTraceGames(it) } },
                     )
+                }
+                if (settings.traceGames) {
+                    OutlinedButton(
+                        onClick = onOpenTraces,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("View traces")
+                    }
                 }
             }
 

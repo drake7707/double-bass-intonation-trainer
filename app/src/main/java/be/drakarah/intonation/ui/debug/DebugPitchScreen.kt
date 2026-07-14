@@ -150,7 +150,7 @@ fun DebugPitchScreen(
             verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
         ) {
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
-            Text("Pitch debug", style = MaterialTheme.typography.headlineMedium)
+            Text("Pitch Analyzer", style = MaterialTheme.typography.headlineMedium)
 
             if (!hasPermission) {
                 Text("Microphone permission is required.")

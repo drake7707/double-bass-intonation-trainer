@@ -282,33 +282,11 @@ fun DebugPitchScreen(
                     }
                 }
 
-                Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(Spacing.ITEM_SPACING), verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            val total = DebugViewModel.MIDI_RANGE.count()
-                            Text(
-                                if (sweep.size >= total) "all $total notes game-ready"
-                                else "note sweep: ${sweep.size}/$total game-ready",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (sweep.size >= total) ResultColors.excellent
-                                        else MaterialTheme.colorScheme.onSurface,
-                            )
-                            TextButton(onClick = { viewModel.clearSweep() }) {
-                                Text("Reset")
-                            }
-                        }
-                        SweepGrid(sweep, noteStyle, big = false)
-                        Button(
-                            onClick = { sweepMode = true },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text("Start sweep (big view)")
-                        }
-                    }
+                Button(
+                    onClick = { sweepMode = true },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Note sweep")
                 }
 
                 with(viewModel.engineConfig) {

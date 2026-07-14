@@ -2,7 +2,6 @@ package be.drakarah.intonation.ui.progress
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,14 +20,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -37,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,7 +68,7 @@ private val exerciseTabs = listOf(
     EXERCISE_CHORDS to "Chords",
 )
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ProgressScreen(
     onBack: () -> Unit,
@@ -72,16 +78,41 @@ fun ProgressScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val unlocked by viewModel.unlockedAchievements.collectAsStateWithLifecycle()
 
-    Scaffold { padding ->
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Progress") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    TextButton(onClick = onOpenAchievements) {
+                        Text(
+                            "${unlocked.size}/${ACHIEVEMENTS.size}",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.width(Spacing.COMPONENT_SPACING))
+                        Icon(
+                            Icons.Default.EmojiEvents,
+                            contentDescription = "Achievements",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            )
+        }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
         ) {
-            Spacer(Modifier.height(Spacing.SECTION_BREAK))
-            Text("Progress", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.height(Spacing.ITEM_SPACING))
+            Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
 
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
                 exerciseTabs.forEach { (type, label) ->
@@ -147,7 +178,6 @@ fun ProgressScreen(
                     if (state.positionBreakdown.isNotEmpty()) {
                         item { PositionBreakdown(state.positionBreakdown) }
                     }
-                    item { AchievementSummaryCard(unlocked, onOpenAchievements) }
                     items(state.sessions.asReversed()) { session ->
                         SessionRow(session)
                     }
@@ -157,43 +187,9 @@ fun ProgressScreen(
             if (state.sessions.isEmpty()) Spacer(Modifier.weight(1f))
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text("Back")
+                Text("Done")
             }
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
-        }
-    }
-}
-
-/** Compact entry point: recent unlocks + a count, tapping opens the full grid gallery. */
-@Composable
-private fun AchievementSummaryCard(unlocked: Set<String>, onOpen: () -> Unit) {
-    // Preview the most recently earned badges (unlocked kept in definition order here).
-    val recent = ACHIEVEMENTS.filter { it.id in unlocked }.takeLast(5)
-    Card(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onOpen),
-    ) {
-        Column(Modifier.padding(Spacing.CARD_PADDING)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("Achievements", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    "${unlocked.size}/${ACHIEVEMENTS.size}  ›",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-            Spacer(Modifier.height(Spacing.FINE_SPACING))
-            Text(
-                if (recent.isEmpty()) "Play a round to start earning badges."
-                else recent.joinToString(" ") { it.emoji } + "  — tap to see them all",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }

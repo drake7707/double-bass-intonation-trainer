@@ -468,14 +468,25 @@ Home screen:
 - my day streak is still 1 , but i think it should be 2 by now
 
 
+- [BUG] Calibrate surroundings still use emojis.
+
+
+- [UI ISSUE] The pips on top of the rounds in games don't fit fully with 20 notes in a round so the last few look like it's already finished but we haven't hit the full round yet
+
+- [UI ISSUE] Calibration wizard layout could use some love in spacing, margin and design language consistency. It has to be readable from a distance during calibration sure, and large text takes up more space but that doesn't mean throw every element on screen without proper padding/spacing.
+
+- [UI ISSUES] Review docs/UI_DESIGN_REVIEW.md that Claude Haiku made. Do not take them verbatim but analyze and if you agree fix them. Some are probably listed due to lacking context.
+
+
+- [UI ISSUE] I would move achievements from its row to an icon in the top bar to open the achievements list with how many of total unlocked next to it.
+
+- [UI ISSUE] In pitch debug now that we have the big sweep view there is no need to show the same thing in pitch debug view itself, just the button to start the sweep is good.
+ 
 OPEN FEEDBACK & IDEAS:
 --------------
 
 [2026-13-07]
 
-- [UI ISSUE] The pips on top of the rounds in games don't fit fully with 20 notes in a round so the last few look like it's already finished but we haven't hit the full round yet
-
-- [UI ISSUE] Calibration wizard layout could use some love in spacing, margin and design language consistency. It has to be readable from a distance during calibration sure, and large text takes up more space but that doesn't mean throw every element on screen without proper padding/spacing.
 
 - [QUESTION/BIG ASS FEATURE] (?) I wonder if we play all notes individually, it being monophonic, would we be able to discriminate to the right note in a more polyphonic setting (like playing a piece). Most apps that do this with DNNs don't really make an initial profile of the instrument and individual string harmonic behaviour.
 Polyphonic: is it possible to have a complete breakdown of the instrument with charts, would be cool to build an instrument profile.
@@ -498,11 +509,6 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 
 - [UI ISSUE] What are the cents shown in progress? It's not clear to me "avg cents" off, is that an absolute deviation both flat and sharp? What about each game in progress. The cents shown are what? Finally the cents in accuracy per position is also not something I understand. I honestly would use accuracy % metrics here, far easier to understand than raw cents. Maybe if you tap the accuracy  you can still show the cents to toggle between the 2
 
-- [UI ISSUE] I would move achievements from its row to an icon in the top bar to open the achievements list with how many of total unlocked next to it.
-
-- [UI ISSUE] In pitch debug now that we have the big sweep view there is no need to show the same thing in pitch debug view itself, just the button to start the sweep is good.
-
-- [BUG] Calibrate surroundings still use emojis.
 
 - [FEATURE]  Reminder notification: send the user a reminder they haven't practiced yet if it's been near 24h since the last session. Stop sending notifications if they ignore them and it's more than a week since last practice. Of course with a toggeable setting in the settings to turn this off
 
@@ -540,9 +546,7 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
       It's game logic.
 
 - [REFACTOR] Review docs/CODE_REVIEW_2026-07-12.md findings and refactor where necessary
-
-
-- [UI ISSUES] Review docs/UI_DESIGN_REVIEW.md that Claude Haiku made. Do not take them verbatim but analyze and if you agree fix them. Some are probably listed due to lacking context.
+- [REFACTOR] RoundScreen / round in general is really a misnomer and an artifact when only note accuracy was implemented. I would refactor that to noteaccuracy just like sustain and chords exist
 
 
 - [FEATURE] Teacher's notebook
@@ -580,3 +584,5 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
       No fireworks.
 
       Just someone noticing something you hadn't.
+
+- [CRITICAL] Missing onboarding, no welcome, no anything when the app is first launched. It should have an onboarding to to explain the app and ask for a full calibration, because immediately getting tossed in the app without ever having done a full calibration is just going to lead to poor results

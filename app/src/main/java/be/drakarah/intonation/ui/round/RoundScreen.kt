@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -301,6 +305,14 @@ private fun RoundSummary(
                 thisRoundAvgCents = avgCents.toFloat(),
                 lastWeekAvgCents = state.outcome?.lastWeekAvgCents,
             )
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
+            Text(
+                "cents off per note",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(4.dp))
+            RoundCentsChart(state.results)
         }
         Text(
             "${state.results.sumOf { it.starCount }} of ${state.roundLength * 3} stars",
@@ -348,6 +360,76 @@ private fun RoundSummary(
         Spacer(Modifier.height(Spacing.FINE_SPACING))
         OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
             Text("Done")
+        }
+    }
+}
+
+/**
+ * Per-note signed-cents chart for the round summary. Centre line = in tune; ±15 and ±30 cent
+ * reference bands. Valid notes are coloured by star count; timed-out / wrong notes appear as
+ * grey dots on the centre line so gaps in the line are visually obvious.
+ */
+@Composable
+private fun RoundCentsChart(results: List<AttemptUi>) {
+    val lineColor = MaterialTheme.colorScheme.primary
+    val gridColor = MaterialTheme.colorScheme.outlineVariant
+    val missColor = MaterialTheme.colorScheme.outlineVariant
+
+    Canvas(
+        Modifier
+            .fillMaxWidth()
+            .height(120.dp)
+    ) {
+        val h = size.height
+        val w = size.width
+        val yRange = 50f   // ±50 cents covers virtually all bass intonation
+
+        fun y(cents: Float) = h / 2f - (cents / yRange) * (h / 2f)
+
+        // reference lines: ±30, ±15, 0
+        for (c in listOf(-30f, -15f, 0f, 15f, 30f)) {
+            drawLine(
+                if (c == 0f) gridColor else gridColor.copy(alpha = 0.4f),
+                Offset(0f, y(c)), Offset(w, y(c)),
+                if (c == 0f) 2f else 1f,
+            )
+        }
+
+        val n = results.size
+        if (n == 0) return@Canvas
+        fun x(i: Int) = if (n == 1) w / 2f else i * w / (n - 1).toFloat()
+
+        // connecting line between adjacent valid (pitched, on-target) dots
+        for (i in 0 until n - 1) {
+            val ac = results[i].takeIf { !it.timedOut && !it.wrongNote && !it.wrongOctave }?.cents
+            val bc = results[i + 1].takeIf { !it.timedOut && !it.wrongNote && !it.wrongOctave }?.cents
+            if (ac != null && bc != null) {
+                drawLine(
+                    lineColor.copy(alpha = 0.5f),
+                    Offset(x(i), y(ac.coerceIn(-yRange, yRange))),
+                    Offset(x(i + 1), y(bc.coerceIn(-yRange, yRange))),
+                    3f, cap = StrokeCap.Round,
+                )
+            }
+        }
+
+        // dots
+        results.forEachIndexed { i, r ->
+            val cx = x(i)
+            when {
+                r.timedOut || r.wrongNote || r.wrongOctave -> {
+                    drawCircle(missColor, radius = 7f, center = Offset(cx, h / 2f))
+                }
+                r.cents != null -> {
+                    val cy = y(r.cents.coerceIn(-yRange, yRange))
+                    val dotColor: Color = when (r.starCount) {
+                        3 -> ResultColors.excellent
+                        in 1..2 -> ResultColors.close
+                        else -> ResultColors.off
+                    }
+                    drawCircle(dotColor, radius = 8f, center = Offset(cx, cy))
+                }
+            }
         }
     }
 }

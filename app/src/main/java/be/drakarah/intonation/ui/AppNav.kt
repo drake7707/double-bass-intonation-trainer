@@ -13,15 +13,22 @@ import be.drakarah.intonation.ui.achievements.AchievementsScreen
 import be.drakarah.intonation.ui.chords.ChordsScreen
 import be.drakarah.intonation.ui.calibrate.CalibrateScreen
 import be.drakarah.intonation.ui.calibrate.WizardScreen
+import be.drakarah.intonation.ui.onboarding.OnboardingScreen
 import be.drakarah.intonation.ui.progress.ProgressScreen
 import be.drakarah.intonation.ui.recordings.RecordingsScreen
 import be.drakarah.intonation.ui.settings.SettingsScreen
 import be.drakarah.intonation.ui.shift.ShiftScreen
 import be.drakarah.intonation.ui.sustain.SustainScreen
 import be.drakarah.intonation.ui.tune.TuneUpScreen
+import be.drakarah.intonation.ui.common.rememberAppSettings
+import androidx.compose.ui.platform.LocalContext
+import be.drakarah.intonation.IntonationApplication
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 object Routes {
     const val HOME = "home"
+    const val ONBOARDING = "onboarding"
     const val DEBUG = "debug"
     const val TUNE = "tune"
     const val SETTINGS = "settings"
@@ -46,7 +53,31 @@ object Routes {
 @Composable
 fun AppNav() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = Routes.HOME) {
+    val settings = rememberAppSettings()
+    val app = LocalContext.current.applicationContext as IntonationApplication
+    val scope = rememberCoroutineScope()
+
+    NavHost(
+        navController = navController,
+        startDestination = if (settings.onboardingCompleted) Routes.HOME else Routes.ONBOARDING
+    ) {
+        composable(Routes.ONBOARDING) {
+            OnboardingScreen(
+                onStartCalibration = {
+                    navController.navigate(Routes.WIZARD) {
+                        popUpTo(Routes.ONBOARDING) { inclusive = true }
+                    }
+                },
+                onSkip = {
+                    scope.launch {
+                        app.container.settingsRepository.setOnboardingCompleted(true)
+                    }
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.ONBOARDING) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Routes.HOME) {
             HomeScreen(
                 onStartNoteAccuracy = { mode -> navController.navigate(Routes.round(mode)) },
@@ -79,7 +110,15 @@ fun AppNav() {
             CalibrateScreen(onDone = { navController.popBackStack() })
         }
         composable(Routes.WIZARD) {
-            WizardScreen(onBack = { navController.popBackStack() })
+            WizardScreen(onBack = { 
+                if (!settings.onboardingCompleted) {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.WIZARD) { inclusive = true }
+                    }
+                } else {
+                    navController.popBackStack()
+                }
+            })
         }
         composable(Routes.PROGRESS) {
             ProgressScreen(

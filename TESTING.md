@@ -482,6 +482,15 @@ Home screen:
 
 - [UI ISSUE] In pitch debug now that we have the big sweep view there is no need to show the same thing in pitch debug view itself, just the button to start the sweep is good.
  
+ 
+- [CRITICAL] Missing onboarding, no welcome, no anything when the app is first launched. It should have an onboarding to to explain the app and ask for a full calibration, because immediately getting tossed in the app without ever having done a full calibration is just going to lead to poor results
+
+
+- [UI ISSUE] What are the cents shown in progress? It's not clear to me "avg cents" off, is that an absolute deviation both flat and sharp? What about each game in progress. The cents shown are what? Finally the cents in accuracy per position is also not something I understand. I honestly would use accuracy % metrics here, far easier to understand than raw cents. Maybe if you tap the accuracy  you can still show the cents to toggle between the 2
+
+- [UI ISSUE/FEATURE] In the round complete add a chart of the cents per note. It'll be interesting to see the trend.
+
+
 OPEN FEEDBACK & IDEAS:
 --------------
 
@@ -501,13 +510,10 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 
 - [BUG] Sustain is a lot better with false resets when bow stroke changes but it's not fully solved yet, I had several resets due to bow stroke reversal, see trace.
 
-- [UI ISSUE/FEATURE] In the round complete add a chart of the cents per note. It'll be interesting to see the trend.
 
 - [BUG/FEATURE] Shifting on the same string on 1st and 2nd position made me shift from first finger 1st to 4th finger 2nd, or the other way around. I never used my 2nd finger in any of the positions, I don't mind that at all, but it would be an additional difficulty that students also want to practice. I like this too though, so maybe an option for level of difficulty? Maybe the shifting exercises can be basic 1->4->1, anything in between on the same string and across strings complicating things further, so 3 levels.
 
 - [VERIFY] I played some pizz note accuracy too and I'm not sure if I'm inaccurate or the game is too quick on the trigger to lock onto pitch before it fully stabilised. I have full traces available. It's entirely possible it's me though. But it's good to verify.
-
-- [UI ISSUE] What are the cents shown in progress? It's not clear to me "avg cents" off, is that an absolute deviation both flat and sharp? What about each game in progress. The cents shown are what? Finally the cents in accuracy per position is also not something I understand. I honestly would use accuracy % metrics here, far easier to understand than raw cents. Maybe if you tap the accuracy  you can still show the cents to toggle between the 2
 
 
 - [FEATURE]  Reminder notification: send the user a reminder they haven't practiced yet if it's been near 24h since the last session. Stop sending notifications if they ignore them and it's more than a week since last practice. Of course with a toggeable setting in the settings to turn this off
@@ -584,5 +590,3 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
       No fireworks.
 
       Just someone noticing something you hadn't.
-
-- [CRITICAL] Missing onboarding, no welcome, no anything when the app is first launched. It should have an onboarding to to explain the app and ask for a full calibration, because immediately getting tossed in the app without ever having done a full calibration is just going to lead to poor results

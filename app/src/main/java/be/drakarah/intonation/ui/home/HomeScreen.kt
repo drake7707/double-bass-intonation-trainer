@@ -62,11 +62,12 @@ fun HomeScreen(
     val focusBest by viewModel.dailyFocusBest.collectAsStateWithLifecycle()
     val needsTuneReminder by viewModel.needsTuneReminder.collectAsStateWithLifecycle()
     val needsCalibration by viewModel.needsCalibrationReminder.collectAsStateWithLifecycle()
+    val needsFullCalibration by viewModel.needsFullCalibrationReminder.collectAsStateWithLifecycle()
 
     // pre-game gate: both checks are quick and both make or break the scores
     var pendingStart by remember { mutableStateOf<(() -> Unit)?>(null) }
     fun gated(start: () -> Unit) {
-        if (needsTuneReminder || needsCalibration) pendingStart = start else start()
+        if (needsTuneReminder || needsCalibration || needsFullCalibration) pendingStart = start else start()
     }
 
     pendingStart?.let { start ->
@@ -74,7 +75,10 @@ fun HomeScreen(
             onDismissRequest = { pendingStart = null },
             title = { Text("Ready to play?") },
             text = {
-                Column {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
+                    if (needsFullCalibration) Text(
+                        "• App not calibrated — pitch detection has not been tuned to this phone's microphone and your bass yet. Accuracy will be poor.",
+                    )
                     if (needsTuneReminder) Text(
                         "• No recent tune-up — an out-of-tune bass makes every score meaningless.",
                     )
@@ -85,6 +89,10 @@ fun HomeScreen(
             },
             confirmButton = {
                 Column {
+                    if (needsFullCalibration) TextButton(onClick = {
+                        pendingStart = null
+                        onOpenSettings() // Wizard is linked from settings
+                    }) { Text("Run full calibration wizard") }
                     if (needsTuneReminder) TextButton(onClick = {
                         pendingStart = null
                         onOpenTuneUp()

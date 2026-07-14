@@ -106,6 +106,13 @@ class HomeViewModel(
                 System.currentTimeMillis() - settings.lastCalibratedAt > TUNE_STALE_AFTER_MS
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    /** True when the app has NEVER had a full calibration wizard run. Unlike the daily
+     * surroundings gate, this is about the phone's fundamental mic/filter characteristics. */
+    val needsFullCalibrationReminder: StateFlow<Boolean> =
+        combine(settingsRepository.settings, remindersSuppressed) { settings, suppressed ->
+            !suppressed && settings.fullCalibrationAt == 0L
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
     /** "Start anyway" — stop asking until the app restarts. */
     fun suppressReminders() {
         remindersSuppressed.value = true

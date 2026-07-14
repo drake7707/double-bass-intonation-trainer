@@ -2,6 +2,7 @@ package be.drakarah.intonation.ui.progress
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,6 +72,11 @@ private val exerciseTabs = listOf(
     EXERCISE_CHORDS to "Chords",
 )
 
+/** Converts an average absolute cents deviation to an intonation accuracy percentage.
+ * 0 ¢ → 100 %; 50 ¢ → 0 %. */
+private fun centsToAccuracy(cents: Float): Float =
+    (1f - (cents / 50f).coerceIn(0f, 1f)) * 100f
+
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ProgressScreen(
@@ -77,6 +86,7 @@ fun ProgressScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val unlocked by viewModel.unlockedAchievements.collectAsStateWithLifecycle()
+    var showCents by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -166,9 +176,14 @@ fun ProgressScreen(
                     StatBlock("best", state.bestPercent?.let {
                         String.format(Locale.US, "%.0f%%", it)
                     } ?: "—")
-                    StatBlock("avg cents (last 10)", state.recentAvgCents?.let {
-                        String.format(Locale.US, "%.1f", it)
-                    } ?: "—")
+                    StatBlock(
+                        if (showCents) "avg deviation (last 10)" else "avg accuracy (last 10)",
+                        state.recentAvgCents?.let {
+                            if (showCents) String.format(Locale.US, "%.1f ¢", it)
+                            else String.format(Locale.US, "%.0f%%", centsToAccuracy(it))
+                        } ?: "—",
+                        onClick = { showCents = !showCents },
+                    )
                 }
                 Spacer(Modifier.height(Spacing.SECTION_BREAK))
                 LazyColumn(
@@ -176,10 +191,10 @@ fun ProgressScreen(
                     verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
                 ) {
                     if (state.positionBreakdown.isNotEmpty()) {
-                        item { PositionBreakdown(state.positionBreakdown) }
+                        item { PositionBreakdown(state.positionBreakdown, showCents) }
                     }
                     items(state.sessions.asReversed()) { session ->
-                        SessionRow(session)
+                        SessionRow(session, showCents)
                     }
                 }
             }
@@ -195,8 +210,11 @@ fun ProgressScreen(
 }
 
 @Composable
-private fun StatBlock(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun StatBlock(label: String, value: String, onClick: (() -> Unit)? = null) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
+    ) {
         Text(value, style = MaterialTheme.typography.titleLarge)
         Text(
             label,
@@ -269,7 +287,7 @@ private fun PositionPill(text: String) {
 /** Average intonation per position across all rounds — how familiar the player is with each.
  * Lower cents is better, so a fuller/greener bar means a more secure position. */
 @Composable
-private fun PositionBreakdown(stats: List<PositionStat>) {
+private fun PositionBreakdown(stats: List<PositionStat>, showCents: Boolean) {
     // 30 cents ≈ "empty" bar; anything at or beyond reads as unfamiliar.
     val worstCents = 30f
     Column {
@@ -307,7 +325,8 @@ private fun PositionBreakdown(stats: List<PositionStat>) {
                     )
                 }
                 Text(
-                    String.format(Locale.US, "%.1f c", stat.avgAbsCents),
+                    if (showCents) String.format(Locale.US, "%.1f ¢", stat.avgAbsCents)
+                    else String.format(Locale.US, "%.0f%%", centsToAccuracy(stat.avgAbsCents)),
                     style = MaterialTheme.typography.labelMedium,
                     color = color,
                     textAlign = TextAlign.End,
@@ -320,7 +339,7 @@ private fun PositionBreakdown(stats: List<PositionStat>) {
 }
 
 @Composable
-private fun SessionRow(session: SessionEntity) {
+private fun SessionRow(session: SessionEntity, showCents: Boolean) {
     val date = Instant.ofEpochMilli(session.startedAt).atZone(ZoneId.systemDefault())
     val positions = positionsFromConfigKey(session.configKey)
     Card(Modifier.fillMaxWidth()) {
@@ -351,7 +370,8 @@ private fun SessionRow(session: SessionEntity) {
             }
             session.avgAbsCents?.let {
                 Text(
-                    String.format(Locale.US, "%.1f c", it),
+                    if (showCents) String.format(Locale.US, "%.1f ¢", it)
+                    else String.format(Locale.US, "%.0f%%", centsToAccuracy(it)),
                     style = MaterialTheme.typography.titleMedium,
                     color = centsColor(it),
                 )

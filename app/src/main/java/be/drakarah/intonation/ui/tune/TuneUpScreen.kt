@@ -9,11 +9,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,20 +30,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.common.rememberAppSettings
 import be.drakarah.intonation.ui.theme.ResultColors
+import be.drakarah.intonation.ui.theme.Spacing
+import be.drakarah.intonation.ui.theme.TextSizes
 import java.util.Locale
 import kotlin.math.abs
 
 /** Pre-session tuner: the instrument itself must be in tune or the games are meaningless.
  * This is deliberately the only screen (besides debug) with a live needle. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TuneUpScreen(
     onDone: () -> Unit,
@@ -45,26 +58,37 @@ fun TuneUpScreen(
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         val noteStyle = rememberAppSettings().noteNameStyle
 
-        Scaffold { padding ->
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Tune up") },
+                    navigationIcon = {
+                        IconButton(onClick = onDone) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                )
+            }
+        ) { padding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(Modifier.height(24.dp))
-                Text("Tune up", style = MaterialTheme.typography.headlineMedium)
+                Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
                 Text(
                     "Play each open string and tune until it turns green.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(Spacing.SECTION_BREAK))
 
                 Row(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING),
                 ) {
                     // display order low to high: E A D G
                     BassTuning.openStrings.forEach { string ->
@@ -74,7 +98,7 @@ fun TuneUpScreen(
                             Column(
                                 Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 12.dp),
+                                    .padding(vertical = Spacing.CARD_PADDING),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
                                 Text(
@@ -87,17 +111,20 @@ fun TuneUpScreen(
                                         else -> MaterialTheme.colorScheme.onSurfaceVariant
                                     },
                                 )
-                                Text(
-                                    if (done) "✓" else " ",
-                                    color = ResultColors.excellent,
-                                    style = MaterialTheme.typography.titleMedium,
-                                )
+                                if (done) {
+                                    Icon(
+                                        Icons.Default.CheckCircle,
+                                        contentDescription = string.displayName(noteStyle) + " in tune",
+                                        tint = ResultColors.excellent,
+                                        modifier = Modifier.height(20.dp),
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
-                Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(Spacing.SECTION_BREAK))
 
                 val cents = state.cents
                 if (cents != null) {
@@ -108,7 +135,7 @@ fun TuneUpScreen(
                     }
                     Text(
                         String.format(Locale.US, "%+.1f", cents),
-                        fontSize = 64.sp,
+                        fontSize = TextSizes.SCORE_CENTS,
                         fontWeight = FontWeight.Bold,
                         color = color,
                     )
@@ -117,12 +144,12 @@ fun TuneUpScreen(
                         style = MaterialTheme.typography.titleMedium,
                         color = color,
                     )
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(Spacing.ITEM_SPACING))
                     CentsNeedle(cents = cents)
                 } else {
                     Text(
                         "—",
-                        fontSize = 64.sp,
+                        fontSize = TextSizes.SCORE_CENTS,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
@@ -132,19 +159,19 @@ fun TuneUpScreen(
                     )
                 }
 
-                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.height(Spacing.SECTION_BREAK))
                 if (state.allInTune) {
                     Text(
                         "All strings in tune — go play!",
                         style = MaterialTheme.typography.titleMedium,
                         color = ResultColors.excellent,
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(Spacing.FINE_SPACING))
                 }
                 Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
                     Text(if (state.allInTune) "Done" else "Skip")
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
             }
         }
     }
@@ -164,6 +191,7 @@ private fun CentsNeedle(cents: Float) {
         Modifier
             .fillMaxWidth()
             .height(48.dp)
+            .semantics { contentDescription = "Tuning needle" }
     ) {
         val cx = size.width / 2f
         val scale = size.width / 100f // 100 cents full width

@@ -35,6 +35,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -42,6 +43,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -49,12 +51,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -65,6 +68,8 @@ import be.drakarah.intonation.music.centsBetween
 import be.drakarah.intonation.music.nearestNote
 import be.drakarah.intonation.ui.common.rememberAppSettings
 import be.drakarah.intonation.ui.theme.ResultColors
+import be.drakarah.intonation.ui.theme.Spacing
+import be.drakarah.intonation.ui.theme.TextSizes
 import java.util.Locale
 import kotlin.math.abs
 
@@ -100,12 +105,9 @@ fun DebugPitchScreen(
     val noteStyle = rememberAppSettings().noteNameStyle
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Her request: a dedicated full-screen sweep view, readable from playing distance
-    // (~2 m), instead of squinting at the debug cards while holding the bass.
     var sweepMode by remember { mutableStateOf(false) }
     BackHandler(enabled = sweepMode) { sweepMode = false }
 
-    // practicing hands-free: never let the screen time out while this screen is open
     val view = LocalView.current
     DisposableEffect(Unit) {
         view.keepScreenOn = true
@@ -143,11 +145,11 @@ fun DebugPitchScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
             Text("Pitch debug", style = MaterialTheme.typography.headlineMedium)
 
             if (!hasPermission) {
@@ -168,31 +170,35 @@ fun DebugPitchScreen(
                     }
                     Text(
                         note.displayName(noteStyle),
-                        style = MaterialTheme.typography.displayLarge,
+                        fontSize = TextSizes.PROMPT_NOTE,
+                        fontWeight = FontWeight.Bold,
                         color = color,
                     )
                     Text(
                         String.format(Locale.US, "%+.1f cents", cents),
-                        style = MaterialTheme.typography.headlineSmall,
+                        fontSize = TextSizes.SCORE_CENTS,
+                        fontWeight = FontWeight.Bold,
                         color = color,
                     )
                 } else {
                     Text(
                         "—",
-                        style = MaterialTheme.typography.displayLarge,
+                        fontSize = TextSizes.PROMPT_NOTE,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
                         "listening…",
-                        style = MaterialTheme.typography.headlineSmall,
+                        fontSize = TextSizes.SCORE_CENTS,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
                 Card(Modifier.fillMaxWidth()) {
                     Column(
-                        Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        Modifier.padding(Spacing.CARD_PADDING),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING),
                     ) {
                         DiagnosticRow("raw", current?.frequencyHz?.let { hz ->
                             String.format(Locale.US, "%.2f Hz", hz)
@@ -207,7 +213,7 @@ fun DebugPitchScreen(
                         DiagnosticRow("harmonic energy", current?.harmonicEnergyRelative?.let {
                             String.format(Locale.US, "%.2f", it)
                         } ?: "—")
-                        Spacer(Modifier.height(4.dp))
+                        Spacer(Modifier.height(Spacing.COMPONENT_SPACING))
                         val gate by viewModel.gateLevel.collectAsStateWithLifecycle()
                         val level = current?.energyLevel ?: 0f
                         Text(
@@ -226,9 +232,8 @@ fun DebugPitchScreen(
                     }
                 }
 
-                // the live game-capture machine — proves a note would be accepted by the games
                 Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(Modifier.padding(Spacing.CARD_PADDING), verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
                         Row(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -245,17 +250,18 @@ fun DebugPitchScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     Icons.Filled.CheckCircle,
-                                    contentDescription = null,
+                                    contentDescription = "Capture stable",
                                     tint = ResultColors.excellent,
                                     modifier = Modifier.size(28.dp),
                                 )
-                                Spacer(Modifier.width(8.dp))
+                                Spacer(Modifier.width(Spacing.FINE_SPACING))
                                 Text(
                                     String.format(
                                         Locale.US, "%s  %+.1fc",
                                         note.displayName(noteStyle), cents,
                                     ),
-                                    style = MaterialTheme.typography.displaySmall,
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.Bold,
                                     color = ResultColors.excellent,
                                 )
                             }
@@ -276,12 +282,12 @@ fun DebugPitchScreen(
                     }
                 }
 
-                // sweep checklist: play every note; all green = all good for the games
                 Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(Modifier.padding(Spacing.ITEM_SPACING), verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
                         Row(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             val total = DebugViewModel.MIDI_RANGE.count()
                             Text(
@@ -291,12 +297,9 @@ fun DebugPitchScreen(
                                 color = if (sweep.size >= total) ResultColors.excellent
                                         else MaterialTheme.colorScheme.onSurface,
                             )
-                            Text(
-                                "reset",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.clickable { viewModel.clearSweep() },
-                            )
+                            TextButton(onClick = { viewModel.clearSweep() }) {
+                                Text("Reset")
+                            }
                         }
                         SweepGrid(sweep, noteStyle, big = false)
                         Button(
@@ -330,11 +333,11 @@ fun DebugPitchScreen(
                 ) {
                     Icon(
                         if (isLongCapture) Icons.Filled.Stop else Icons.Filled.FiberManualRecord,
-                        contentDescription = null,
+                        contentDescription = if (isLongCapture) "Stop long capture" else "Start long capture",
                         tint = if (isLongCapture) MaterialTheme.colorScheme.primary else ResultColors.off,
                         modifier = Modifier.size(18.dp),
                     )
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(Spacing.FINE_SPACING))
                     Text(
                         if (isLongCapture) "Stop & save long capture"
                         else "Long capture (up to 2 min) — for test recordings",
@@ -345,11 +348,11 @@ fun DebugPitchScreen(
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text("Back")
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
     }
 }
@@ -362,35 +365,30 @@ private fun DiagnosticRow(label: String, value: String) {
     }
 }
 
-/** Arco/pizz toggle used on both the compact and the big sweep view — a labelled control
- * with a swap icon instead of the old bare "⇄" glyph. */
 @Composable
 private fun ModeToggle(mode: String, big: Boolean, onToggle: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING),
         modifier = Modifier
             .clickable(onClick = onToggle)
-            .padding(4.dp),
+            .padding(Spacing.COMPONENT_SPACING),
     ) {
         Icon(
             Icons.Filled.SwapHoriz,
             contentDescription = "Switch arco / pizz",
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(if (big) 24.dp else 18.dp),
+            modifier = Modifier.size(if (big) 32.dp else 24.dp),
         )
         Text(
             mode,
-            style = if (big) MaterialTheme.typography.titleLarge
+            style = if (big) MaterialTheme.typography.headlineSmall
                     else MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary,
         )
     }
 }
 
-/** The chromatic sweep checklist. [big] renders playing-distance cells for [SweepView];
- * compact cells stay on the debug screen for up-close work. Every cell is the same fixed
- * width so the notes line up into clean columns instead of a ragged flow. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SweepGrid(
@@ -398,8 +396,8 @@ private fun SweepGrid(
     noteStyle: NoteNameStyle,
     big: Boolean,
 ) {
-    val cellWidth = if (big) 76.dp else 48.dp
-    val gap = if (big) 8.dp else 6.dp
+    val cellWidth = if (big) 80.dp else 48.dp
+    val gap = if (big) 10.dp else 6.dp
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),
@@ -415,12 +413,12 @@ private fun SweepGrid(
                         else MaterialTheme.colorScheme.surfaceVariant,
                         RoundedCornerShape(if (big) 10.dp else 6.dp),
                     )
-                    .padding(vertical = if (big) 10.dp else 4.dp),
+                    .padding(vertical = if (big) 12.dp else 4.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     NoteSpec(midi).displayName(noteStyle),
-                    style = if (big) MaterialTheme.typography.titleMedium
+                    style = if (big) MaterialTheme.typography.titleLarge
                             else MaterialTheme.typography.labelSmall,
                     color = if (captured) Color(0xFF003912)
                             else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -431,10 +429,6 @@ private fun SweepGrid(
     }
 }
 
-/** Full-screen note sweep sized for playing distance (~2 m, her request). Everything is
- * centered on one axis with a consistent vertical rhythm: a progress header, a big
- * color-coded state banner (she once stood playing into a machine still waiting for quiet
- * and couldn't read why), the last captured note, the aligned grid, then the actions. */
 @Composable
 private fun SweepView(
     sweep: Map<Int, DebugViewModel.FreezeInfo>,
@@ -450,50 +444,47 @@ private fun SweepView(
 ) {
     val total = DebugViewModel.MIDI_RANGE.count()
     val allDone = sweep.size >= total
-    Column(
+        Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(Spacing.SECTION_BREAK),
     ) {
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
 
-        // Header: title on the left, arco/pizz toggle on the right, baselines aligned.
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Note sweep", style = MaterialTheme.typography.titleLarge)
+            Text("Note sweep", style = MaterialTheme.typography.headlineMedium)
             ModeToggle(captureMode, big = true, onToggle = onToggleMode)
         }
 
-        // Progress: one big count, a caption, and a bar — all centered.
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
                 "${sweep.size} / $total",
-                style = MaterialTheme.typography.displayMedium,
+                style = MaterialTheme.typography.displayLarge,
                 color = if (allDone) ResultColors.excellent
                         else MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 "notes game-ready",
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             LinearProgressIndicator(
                 progress = { if (total == 0) 0f else sweep.size / total.toFloat() },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(12.dp),
                 color = if (allDone) ResultColors.excellent else MaterialTheme.colorScheme.primary,
             )
         }
 
-        // Big color-coded state banner — readable across the room.
         val waiting = captureLabel == "waiting for quiet"
         val capturing = captureLabel == "capturing…"
         val bannerIcon = when {
@@ -514,58 +505,57 @@ private fun SweepView(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 20.dp, horizontal = 16.dp),
+                    .padding(vertical = Spacing.SECTION_BREAK, horizontal = Spacing.CARD_PADDING),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     bannerIcon,
-                    contentDescription = null,
+                    contentDescription = bannerText,
                     tint = bannerColor,
-                    modifier = Modifier.size(40.dp),
+                    modifier = Modifier.size(56.dp),
                 )
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(Spacing.ITEM_SPACING))
                 Text(
                     bannerText,
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.displaySmall,
                     color = bannerColor,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
 
-        // The last note the capture machine accepted.
         freeze?.let { f ->
             val note = nearestNote(f.frequencyHz.toDouble())
             val cents = centsBetween(f.frequencyHz.toDouble(), note.frequency())
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Filled.CheckCircle,
-                    contentDescription = null,
+                    contentDescription = "Capture stable",
                     tint = ResultColors.excellent,
-                    modifier = Modifier.size(36.dp),
+                    modifier = Modifier.size(48.dp),
                 )
-                Spacer(Modifier.width(10.dp))
+                Spacer(Modifier.width(Spacing.ITEM_SPACING))
                 Text(
                     String.format(
                         Locale.US, "%s  %+.1fc", note.displayName(noteStyle), cents,
                     ),
-                    style = MaterialTheme.typography.displaySmall,
+                    style = MaterialTheme.typography.displayMedium,
                     color = ResultColors.excellent,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
 
         SweepGrid(sweep, noteStyle, big = true)
 
-        // her request: a misdetection must be savable right here, before it scrolls
-        // out of the 8 s ring buffer
         Button(onClick = onSaveSnippet, modifier = Modifier.fillMaxWidth()) {
             Text("Save last 8 s (WAV + log)")
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING)) {
             OutlinedButton(onClick = onReset, modifier = Modifier.weight(1f)) { Text("Reset") }
             OutlinedButton(onClick = onExit, modifier = Modifier.weight(1f)) { Text("Exit sweep") }
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
     }
 }

@@ -15,11 +15,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -32,7 +37,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,6 +49,7 @@ import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
 import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
 import be.drakarah.intonation.ui.theme.ResultColors
+import be.drakarah.intonation.ui.theme.Spacing
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -72,13 +77,13 @@ fun ProgressScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SECTION_BREAK))
             Text("Progress", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
 
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
                 exerciseTabs.forEach { (type, label) ->
                     FilterChip(
                         selected = state.exerciseType == type,
@@ -87,17 +92,41 @@ fun ProgressScreen(
                     )
                 }
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SECTION_BREAK))
 
             if (state.sessions.isEmpty()) {
-                Text(
-                    "No rounds yet — play one and it shows up here.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                            MaterialTheme.shapes.medium
+                        )
+                        .padding(Spacing.CARD_PADDING),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)
+                ) {
+                    Icon(
+                        Icons.Outlined.PlayCircleOutline,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "No rounds yet",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        "Play a game to see your progress here.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
             } else {
                 ScoreChart(percents = state.scorePercents)
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -110,10 +139,10 @@ fun ProgressScreen(
                         String.format(Locale.US, "%.1f", it)
                     } ?: "—")
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Spacing.SECTION_BREAK))
                 LazyColumn(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
                 ) {
                     if (state.positionBreakdown.isNotEmpty()) {
                         item { PositionBreakdown(state.positionBreakdown) }
@@ -126,11 +155,11 @@ fun ProgressScreen(
             }
 
             if (state.sessions.isEmpty()) Spacer(Modifier.weight(1f))
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text("Back")
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
     }
 }
@@ -145,7 +174,7 @@ private fun AchievementSummaryCard(unlocked: Set<String>, onOpen: () -> Unit) {
             .fillMaxWidth()
             .clickable(onClick = onOpen),
     ) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(Spacing.CARD_PADDING)) {
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -158,7 +187,7 @@ private fun AchievementSummaryCard(unlocked: Set<String>, onOpen: () -> Unit) {
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(Spacing.FINE_SPACING))
             Text(
                 if (recent.isEmpty()) "Play a round to start earning badges."
                 else recent.joinToString(" ") { it.emoji } + "  — tap to see them all",
@@ -249,7 +278,7 @@ private fun PositionBreakdown(stats: List<PositionStat>) {
     val worstCents = 30f
     Column {
         Text("Accuracy by position", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.FINE_SPACING))
         stats.forEach { stat ->
             val fraction = (1f - (stat.avgAbsCents.coerceIn(0f, worstCents) / worstCents))
                 .coerceIn(0.04f, 1f)
@@ -259,7 +288,7 @@ private fun PositionBreakdown(stats: List<PositionStat>) {
                     .fillMaxWidth()
                     .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
             ) {
                 Text(
                     stat.position.shortLabel,
@@ -290,7 +319,7 @@ private fun PositionBreakdown(stats: List<PositionStat>) {
                 )
             }
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.FINE_SPACING))
     }
 }
 
@@ -302,7 +331,7 @@ private fun SessionRow(session: SessionEntity) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(Spacing.CARD_PADDING),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -318,8 +347,8 @@ private fun SessionRow(session: SessionEntity) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (positions.isNotEmpty()) {
-                    Spacer(Modifier.height(4.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Spacer(Modifier.height(Spacing.COMPONENT_SPACING))
+                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING)) {
                         positions.forEach { PositionPill(it.shortLabel) }
                     }
                 }

@@ -9,12 +9,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
@@ -30,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -39,6 +41,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.music.NoteSpec
 import be.drakarah.intonation.ui.common.rememberAppSettings
 import be.drakarah.intonation.ui.theme.ResultColors
+import be.drakarah.intonation.ui.theme.Spacing
+import be.drakarah.intonation.ui.theme.TextSizes
+import java.util.Locale
 
 /** String roots as pitch classes, low to high: Mi(E) La(A) Ré(D) Sol(G). */
 private val STRING_ROOT_PITCH_CLASSES = listOf(4, 9, 2, 7)
@@ -72,24 +77,24 @@ fun DroneScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(Spacing.SECTION_BREAK))
         Text("Drone", style = MaterialTheme.typography.headlineMedium)
         Text(
-            "A steady reference to tune against by ear. No scoring — just play along.",
+            "Reference pitch for ear training — no scoring",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(Spacing.SECTION_BREAK))
 
         // Big pitch-class name; small line shows where it actually sounds.
         Text(
             NoteSpec(state.pitchClass).pitchClassName(noteStyle),
-            fontSize = 72.sp,
+            fontSize = TextSizes.PROMPT_NOTE,
             fontWeight = FontWeight.Bold,
             color = if (state.isPlaying) ResultColors.excellent
                     else MaterialTheme.colorScheme.onSurface,
@@ -101,7 +106,26 @@ fun DroneScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(Spacing.SECTION_BREAK))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)
+        ) {
+            Icon(
+                if (state.isPlaying) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
+                contentDescription = if (state.isPlaying) "Playing" else "Stopped",
+                tint = if (state.isPlaying) ResultColors.excellent else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                if (state.isPlaying) "Playing" else "Stopped",
+                style = MaterialTheme.typography.titleMedium,
+                color = if (state.isPlaying) ResultColors.excellent else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        Spacer(Modifier.height(Spacing.ITEM_SPACING))
 
         Button(
             onClick = viewModel::togglePlay,
@@ -112,13 +136,13 @@ fun DroneScreen(
         ) {
             Icon(
                 if (state.isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
-                contentDescription = null,
+                contentDescription = if (state.isPlaying) "Stop" else "Play",
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(Spacing.ITEM_HORIZONTAL))
             Text(if (state.isPlaying) "Stop" else "Play")
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.ITEM_SPACING))
 
         FilterChip(
             selected = state.withFifth,
@@ -126,7 +150,7 @@ fun DroneScreen(
             label = { Text("Add fifth") },
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(Spacing.SECTION_BREAK))
 
         Text(
             "Open strings",
@@ -136,7 +160,7 @@ fun DroneScreen(
         )
         Row(
             Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.ITEM_HORIZONTAL),
         ) {
             STRING_ROOT_PITCH_CLASSES.forEach { pc ->
                 FilterChip(
@@ -147,7 +171,7 @@ fun DroneScreen(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.ITEM_SPACING))
 
         Text(
             "Any note",
@@ -159,7 +183,7 @@ fun DroneScreen(
             Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.ITEM_HORIZONTAL),
         ) {
             for (pc in 0..11) {
                 FilterChip(
@@ -170,22 +194,32 @@ fun DroneScreen(
             }
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(Spacing.SECTION_BREAK))
 
-        Text(
-            "Volume",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Volume",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                String.format(Locale.US, "%.0f%%", state.volume * 100f),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         Slider(
             value = state.volume,
             onValueChange = viewModel::setVolume,
             modifier = Modifier.fillMaxWidth(),
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(Spacing.SECTION_BREAK))
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
     }
 }

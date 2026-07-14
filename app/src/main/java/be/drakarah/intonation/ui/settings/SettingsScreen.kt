@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -33,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import be.drakarah.intonation.ui.theme.Spacing
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.audio.GameSounds
@@ -60,11 +64,11 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.SECTION_BREAK),
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
             Text("Settings", style = MaterialTheme.typography.headlineMedium)
 
             SectionHeader("Notation & tuning")
@@ -125,7 +129,7 @@ fun SettingsScreen(
                     Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.ITEM_HORIZONTAL),
                 ) {
                     PlayerLevel.entries.forEach { level ->
                         FilterChip(
@@ -182,7 +186,7 @@ fun SettingsScreen(
                     Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.ITEM_HORIZONTAL),
                 ) {
                     ChordFingering.entries.forEach { f ->
                         FilterChip(
@@ -234,12 +238,24 @@ fun SettingsScreen(
                         as android.media.AudioManager
                 }
                 if (audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC) == 0) {
-                    Text(
-                        "⚠ Your phone's media volume is muted — game sounds stay silent " +
-                            "no matter what this slider says.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.ITEM_HORIZONTAL),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(
+                            Icons.Default.VolumeOff,
+                            contentDescription = "Phone media volume is muted",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.height(20.dp),
+                        )
+                        Text(
+                            "Your phone's media volume is muted — game sounds stay silent " +
+                                "no matter what this slider says.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                 }
             }
 
@@ -295,6 +311,7 @@ fun SettingsScreen(
                 OutlinedButton(onClick = onOpenCalibrate, modifier = Modifier.fillMaxWidth()) {
                     Text("Calibrate surroundings")
                 }
+                Spacer(Modifier.height(Spacing.FINE_SPACING))
                 OutlinedButton(onClick = onOpenWizard, modifier = Modifier.fillMaxWidth()) {
                     Text("Full calibration (new phone or double bass)")
                 }
@@ -320,21 +337,21 @@ fun SettingsScreen(
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
             TextButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
                 Text("About & licenses")
             }
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text("Back")
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
     }
 }
 
 @Composable
 private fun SectionHeader(text: String) {
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(Spacing.FINE_SPACING))
     Text(
         text.uppercase(),
         style = MaterialTheme.typography.labelLarge,
@@ -344,7 +361,7 @@ private fun SectionHeader(text: String) {
 
 @Composable
 private fun SettingBlock(title: String, subtitle: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
         Text(title, style = MaterialTheme.typography.titleMedium)
         Text(
             subtitle,

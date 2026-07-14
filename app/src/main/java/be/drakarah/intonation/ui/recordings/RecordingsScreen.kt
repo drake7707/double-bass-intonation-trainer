@@ -14,8 +14,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -31,8 +38,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import be.drakarah.intonation.ui.theme.Spacing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
@@ -194,16 +203,16 @@ fun RecordingsScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SECTION_BREAK))
             Text("Recordings", style = MaterialTheme.typography.headlineMedium)
             Text(
                 "Snippets and long captures. Share sends the audio plus its detection log.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
 
             if (recordings.isEmpty()) {
                 Text(
@@ -215,14 +224,16 @@ fun RecordingsScreen(onBack: () -> Unit) {
             } else {
                 LazyColumn(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
                 ) {
                     items(recordings, key = { it.baseName }) { recording ->
                         Card(Modifier.fillMaxWidth()) {
-                            Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+                            Column(Modifier.padding(Spacing.CARD_PADDING)) {
                                 Text(
                                     recording.baseName,
-                                    style = MaterialTheme.typography.titleSmall,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     String.format(
@@ -243,16 +254,30 @@ fun RecordingsScreen(onBack: () -> Unit) {
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
+                                
                                 Row(
                                     Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.End,
-                                    verticalAlignment = Alignment.CenterVertically,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    TextButton(onClick = { togglePlay(recording) }) {
-                                        Text(if (playingBase == recording.baseName) "■ Stop" else "▶ Play")
+                                    val isPlaying = playingBase == recording.baseName
+                                    IconButton(onClick = { togglePlay(recording) }) {
+                                        Icon(
+                                            if (isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow,
+                                            contentDescription = if (isPlaying) "Stop" else "Play",
+                                            tint = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        )
                                     }
-                                    TextButton(onClick = { shareRecording(context, recording) }) { Text("Share") }
-                                    TextButton(onClick = { confirmDelete = recording }) { Text("Delete") }
+                                    IconButton(onClick = { shareRecording(context, recording) }) {
+                                        Icon(Icons.Default.Share, contentDescription = "Share")
+                                    }
+                                    IconButton(onClick = { confirmDelete = recording }) {
+                                        Icon(
+                                            Icons.Default.Delete, 
+                                            contentDescription = "Delete", 
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -260,11 +285,11 @@ fun RecordingsScreen(onBack: () -> Unit) {
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text("Back")
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
     }
 }

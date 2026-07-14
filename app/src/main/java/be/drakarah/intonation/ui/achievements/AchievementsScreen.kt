@@ -11,8 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -29,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.game.ACHIEVEMENTS
 import be.drakarah.intonation.game.AchievementDef
+import be.drakarah.intonation.ui.theme.Spacing
 
 @Composable
 fun AchievementsScreen(
@@ -42,24 +46,24 @@ fun AchievementsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SECTION_BREAK))
             Text("Achievements", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(Spacing.FINE_SPACING))
             Text(
                 "${unlocked.size} of ${ACHIEVEMENTS.size} unlocked",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
             LinearProgressIndicator(
                 progress = {
                     if (ACHIEVEMENTS.isEmpty()) 0f else unlocked.size.toFloat() / ACHIEVEMENTS.size
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SECTION_BREAK))
 
             // Unlocked first so a full-looking board rewards the collector; locked ones stay
             // visible as goals. Definition order is preserved within each group (stable sort).
@@ -67,20 +71,19 @@ fun AchievementsScreen(
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 110.dp),
                 modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING),
+                verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING),
+                contentPadding = PaddingValues(bottom = Spacing.FINE_SPACING),
             ) {
                 items(ordered, key = { it.id }) { def ->
                     AchievementCell(def, def.id in unlocked)
                 }
             }
-
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text("Back")
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
     }
 }
@@ -90,24 +93,33 @@ private fun AchievementCell(def: AchievementDef, isUnlocked: Boolean) {
     Card(
         // A fixed height keeps every tile in a row identical — otherwise each cell sizes to its
         // own text and the grid looks ragged. Content is centered and clamped to fit.
-        modifier = Modifier.height(150.dp),
+        modifier = Modifier.height(160.dp),
         colors = if (isUnlocked) CardDefaults.cardColors()
                  else CardDefaults.cardColors(
-                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                  ),
     ) {
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(10.dp),
+                .padding(Spacing.CARD_PADDING),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Text(
-                if (isUnlocked) def.emoji else "🔒",
-                style = MaterialTheme.typography.headlineMedium,
-            )
-            Spacer(Modifier.height(4.dp))
+            if (isUnlocked) {
+                Text(
+                    def.emoji,
+                    style = MaterialTheme.typography.headlineLarge,
+                )
+            } else {
+                Icon(
+                    Icons.Default.Lock,
+                    contentDescription = "Locked achievement",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.height(40.dp),
+                )
+            }
+            Spacer(Modifier.height(Spacing.FINE_SPACING))
             Text(
                 def.title,
                 style = MaterialTheme.typography.labelLarge,
@@ -117,7 +129,7 @@ private fun AchievementCell(def: AchievementDef, isUnlocked: Boolean) {
                 color = if (isUnlocked) MaterialTheme.colorScheme.onSurface
                         else MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(Spacing.COMPONENT_SPACING))
             Text(
                 def.description,
                 style = MaterialTheme.typography.labelSmall,

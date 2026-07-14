@@ -3,8 +3,6 @@ package be.drakarah.intonation.ui.home
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.LocalFireDepartment
@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.game.SELECTABLE_POSITIONS
+import be.drakarah.intonation.ui.theme.Spacing
 
 @Composable
 fun HomeScreen(
@@ -116,11 +117,11 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
         ) {
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -134,11 +135,11 @@ fun HomeScreen(
                     if (streak > 0) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING),
                         ) {
                             Icon(
                                 Icons.Filled.LocalFireDepartment,
-                                contentDescription = null,
+                                contentDescription = if (streak == 1) "1 day streak" else "$streak day streak",
                                 tint = MaterialTheme.colorScheme.primary,
                             )
                             Text(
@@ -148,7 +149,7 @@ fun HomeScreen(
                         }
                     }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING)) {
                     IconButton(onClick = onOpenProgress) {
                         Icon(Icons.Filled.BarChart, contentDescription = "Progress")
                     }
@@ -193,7 +194,7 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                 ),
             ) {
-                Column(Modifier.padding(16.dp)) {
+                Column(Modifier.padding(Spacing.CARD_PADDING)) {
                     Text(
                         "Today's focus",
                         style = MaterialTheme.typography.labelLarge,
@@ -256,7 +257,7 @@ fun HomeScreen(
                     Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.ITEM_HORIZONTAL),
                 ) {
                     SELECTABLE_POSITIONS.forEach { p ->
                         FilterChip(
@@ -330,14 +331,14 @@ fun HomeScreen(
                 enabled = true,
                 onClick = onOpenDebug,
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
     }
 }
 
 @Composable
 private fun SectionHeader(text: String) {
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(Spacing.FINE_SPACING))
     Text(
         text.uppercase(),
         style = MaterialTheme.typography.labelLarge,
@@ -363,7 +364,7 @@ private fun ExerciseCard(
                      containerColor = MaterialTheme.colorScheme.surfaceVariant,
                  ),
     ) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(Spacing.CARD_PADDING)) {
             Text(
                 title,
                 style = MaterialTheme.typography.titleMedium,

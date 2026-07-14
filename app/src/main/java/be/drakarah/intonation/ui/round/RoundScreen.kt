@@ -6,17 +6,18 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.HorizontalRule
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -28,17 +29,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.ui.common.AchievementUnlocks
+import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.ImprovementLine
+import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.theme.ResultColors
+import be.drakarah.intonation.ui.theme.Spacing
+import be.drakarah.intonation.ui.theme.TextSizes
 import java.util.Locale
 
 @Composable
@@ -56,33 +59,65 @@ fun RoundScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(Modifier.height(24.dp))
-                ProgressDots(state)
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Spacing.SECTION_BREAK))
+                ProgressDotsCommon(
+                    dots = List(state.roundLength) { i ->
+                        val result = state.results.getOrNull(i)
+                        val (color, icon, desc) = when {
+                            result == null && i == state.promptIndex -> Triple(
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                                Icons.Default.PlayArrow,
+                                "Note ${i + 1}: next prompt"
+                            )
+                            result == null -> Triple(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                null,
+                                "Note ${i + 1}: pending"
+                            )
+                            result.timedOut || result.starCount == 0 -> Triple(
+                                ResultColors.off,
+                                Icons.Default.Clear,
+                                "Note ${i + 1}: missed"
+                            )
+                            result.starCount == 3 -> Triple(
+                                ResultColors.excellent,
+                                Icons.Default.Check,
+                                "Note ${i + 1}: perfect"
+                            )
+                            else -> Triple(
+                                ResultColors.close,
+                                Icons.Default.HorizontalRule,
+                                "Note ${i + 1}: close"
+                            )
+                        }
+                        DotInfo(color, desc, icon)
+                    }
+                )
+                Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 Text(
                     "${state.totalScore} / ${state.maxScore}",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.headlineSmall, // Bigger for distance
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold
                 )
                 state.driftCents?.let { drift ->
-                    Spacer(Modifier.height(8.dp))
-                    // Big, high-contrast banner: she reads this at arm's length while playing.
+                    Spacer(Modifier.height(Spacing.ITEM_SPACING))
                     Box(
                         Modifier
                             .fillMaxWidth()
                             .background(
-                                ResultColors.close.copy(alpha = 0.18f),
+                                ResultColors.close.copy(alpha = 0.25f),
                                 MaterialTheme.shapes.medium,
                             )
-                            .padding(vertical = 12.dp, horizontal = 16.dp),
+                            .padding(vertical = Spacing.ITEM_SPACING, horizontal = Spacing.CARD_PADDING),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             if (drift > 0) "TRENDING SHARP\ncome down" else "TRENDING FLAT\ncome up",
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.headlineMedium, // Bigger for distance
                             fontWeight = FontWeight.Bold,
                             color = ResultColors.close,
                             textAlign = TextAlign.Center,
@@ -102,57 +137,37 @@ fun RoundScreen(
                         )
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 if (state.phase != RoundPhase.Done) {
                     OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
                         Text("Quit round")
                     }
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
             }
         }
     }
 }
 
-@Composable
-private fun ProgressDots(state: RoundUiState) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        repeat(state.roundLength) { i ->
-            val result = state.results.getOrNull(i)
-            val color = when {
-                result == null && i == state.promptIndex ->
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                result == null -> MaterialTheme.colorScheme.surfaceVariant
-                result.timedOut || result.starCount == 0 -> ResultColors.off
-                result.starCount == 3 -> ResultColors.excellent
-                else -> ResultColors.close
-            }
-            Box(
-                Modifier
-                    .size(12.dp)
-                    .background(color, CircleShape)
-            )
-        }
-    }
-}
+
 
 @Composable
 private fun CountIn(secsLeft: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             "Get ready",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             "$secsLeft",
-            fontSize = 140.sp,
+            fontSize = TextSizes.COUNTDOWN_NUMBER,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
         )
         Text(
             "pick up your bass",
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -170,28 +185,27 @@ private fun ListeningPrompt(state: RoundUiState) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             "Play",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             prompt.target.displayName(state.noteStyle, prompt.spelling),
-            fontSize = 112.sp,
+            fontSize = TextSizes.PROMPT_NOTE,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
         )
-        Spacer(Modifier.height(8.dp))
-        // players read this under time pressure — position and string get real estate
-        // Position only — the player works out which string and where to put the finger.
+        Spacer(Modifier.height(Spacing.FINE_SPACING))
         Text(
             prompt.position.label,
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.displaySmall, // Position is key at distance
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(Spacing.SECTION_BREAK))
         Text(
             "listening…",
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.alpha(pulse),
         )
@@ -209,10 +223,11 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             result.target.displayName(noteStyle, result.spelling),
-            style = MaterialTheme.typography.headlineLarge,
+            style = MaterialTheme.typography.displaySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Bold
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.ITEM_SPACING))
         when {
             result.timedOut -> Text(
                 "no note detected",
@@ -232,20 +247,21 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
             )
             else -> Text(
                 String.format(Locale.US, "%+.1f cents", result.cents),
-                fontSize = 56.sp,
+                fontSize = TextSizes.SCORE_CENTS,
                 fontWeight = FontWeight.Bold,
                 color = color,
             )
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.ITEM_SPACING))
         Text(
             starsText(result.starCount),
-            style = MaterialTheme.typography.headlineSmall,
+            fontSize = TextSizes.SCORE_STARS,
             color = color,
         )
         Text(
             "+${result.score}",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
         )
     }
@@ -262,19 +278,19 @@ private fun RoundSummary(
     val avgCents = scored.mapNotNull { it.cents }.map { kotlin.math.abs(it) }.average()
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text("Round complete", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.CARD_PADDING))
         Text(
             "${state.totalScore}",
-            fontSize = 88.sp,
+            fontSize = TextSizes.SCORE_DISPLAY,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
         )
         Text(
             "of ${state.maxScore}",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(Spacing.ITEM_SPACING))
         if (scored.isNotEmpty()) {
             Text(
                 String.format(Locale.US, "average %.1f cents off", avgCents),
@@ -291,7 +307,7 @@ private fun RoundSummary(
             style = MaterialTheme.typography.bodyLarge,
         )
         state.outcome?.let { outcome ->
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
             when {
                 outcome.isNewBest && outcome.previousBest != null -> Text(
                     "New personal best! (was ${outcome.previousBest})",
@@ -313,7 +329,7 @@ private fun RoundSummary(
         }
         state.suggestedLevel?.let { suggested ->
             val faster = suggested.ordinal > state.playerLevel.ordinal
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.CARD_PADDING))
             Text(
                 if (faster) "You found every note with time to spare — that's progress!"
                 else "Several prompts ran out of time — more breathing room keeps it fun.",
@@ -325,11 +341,11 @@ private fun RoundSummary(
                 Text("Switch to ${suggested.label} pace")
             }
         }
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(Spacing.SECTION_BREAK))
         Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) {
             Text("Let's go again")
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.FINE_SPACING))
         OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
             Text("Done")
         }

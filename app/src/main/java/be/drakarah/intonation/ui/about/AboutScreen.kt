@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import be.drakarah.intonation.ui.theme.Spacing
 
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
@@ -35,22 +36,22 @@ fun AboutScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL)
                 .verticalScroll(rememberScrollState()),
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SECTION_BREAK))
             Text("About", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Spacing.FINE_SPACING))
             Text(
                 "Double bass intonation trainer — a deliberate-practice game, not a tuner. " +
                     "It freezes the first stable pitch of every note so you train accurate " +
                     "landings instead of correcting after the fact.",
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SECTION_BREAK))
 
             Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
+                Column(Modifier.padding(Spacing.CARD_PADDING)) {
                     Text("License", style = MaterialTheme.typography.titleMedium)
                     Text(
                         "This app is free software, licensed under the GNU General Public " +
@@ -58,7 +59,7 @@ fun AboutScreen(onBack: () -> Unit) {
                             "under the terms of that license.",
                         style = MaterialTheme.typography.bodySmall,
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(Spacing.FINE_SPACING))
                     Text("Attribution", style = MaterialTheme.typography.titleMedium)
                     Text(
                         "Pitch detection adapted from Tuner, © Michael Moessner, " +
@@ -83,11 +84,11 @@ fun AboutScreen(onBack: () -> Unit) {
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SECTION_BREAK))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text("Back")
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
     }
 }

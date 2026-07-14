@@ -1,7 +1,6 @@
 package be.drakarah.intonation.ui.sustain
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.HorizontalRule
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -28,13 +32,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import kotlin.math.abs
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.ui.common.AchievementUnlocks
+import be.drakarah.intonation.ui.common.DotInfo
+import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.theme.ResultColors
+import be.drakarah.intonation.ui.theme.Spacing
+import be.drakarah.intonation.ui.theme.TextSizes
 import java.util.Locale
 
 @Composable
@@ -52,16 +58,49 @@ fun SustainScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(Modifier.height(24.dp))
-                ProgressDots(state)
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Spacing.SECTION_BREAK))
+                ProgressDotsCommon(
+                    dots = List(state.roundLength) { i ->
+                        val result = state.results.getOrNull(i)
+                        val (color, icon, desc) = when {
+                            result == null && i == state.promptIndex -> Triple(
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                                Icons.Default.PlayArrow,
+                                "Note ${i + 1}: next prompt"
+                            )
+                            result == null -> Triple(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                null,
+                                "Note ${i + 1}: pending"
+                            )
+                            result.starCount == 3 -> Triple(
+                                ResultColors.excellent,
+                                Icons.Default.Check,
+                                "Note ${i + 1}: perfect"
+                            )
+                            result.starCount >= 1 -> Triple(
+                                ResultColors.close,
+                                Icons.Default.HorizontalRule,
+                                "Note ${i + 1}: close"
+                            )
+                            else -> Triple(
+                                ResultColors.off,
+                                Icons.Default.Clear,
+                                "Note ${i + 1}: missed"
+                            )
+                        }
+                        DotInfo(color, desc, icon)
+                    }
+                )
+                Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 Text(
                     "${state.totalScore} / ${state.maxScore}",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold
                 )
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -72,39 +111,19 @@ fun SustainScreen(
                         SustainPhase.Done -> DoneContent(state, onExit, viewModel::restart)
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 if (state.phase != SustainPhase.Done) {
                     OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
                         Text("Quit round")
                     }
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
             }
         }
     }
 }
 
-@Composable
-private fun ProgressDots(state: SustainUiState) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        repeat(state.roundLength) { i ->
-            val result = state.results.getOrNull(i)
-            val color = when {
-                result == null && i == state.promptIndex ->
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                result == null -> MaterialTheme.colorScheme.surfaceVariant
-                result.starCount == 3 -> ResultColors.excellent
-                result.starCount >= 1 -> ResultColors.close
-                else -> ResultColors.off
-            }
-            Box(
-                Modifier
-                    .size(12.dp)
-                    .background(color, CircleShape)
-            )
-        }
-    }
-}
+
 
 @Composable
 private fun PlayContent(state: SustainUiState, phase: SustainPhase.Play) {
@@ -112,78 +131,78 @@ private fun PlayContent(state: SustainUiState, phase: SustainPhase.Play) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             "Hold",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Box(contentAlignment = Alignment.Center) {
             CircularProgressIndicator(
                 progress = { (phase.heldMs.toFloat() / state.goalMs).coerceIn(0f, 1f) },
-                modifier = Modifier.size(230.dp),
-                strokeWidth = 10.dp,
+                modifier = Modifier.size(260.dp), // Larger for distance
+                strokeWidth = 12.dp,
                 color = if (phase.inTolerance) ResultColors.excellent
                         else MaterialTheme.colorScheme.surfaceVariant,
             )
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     prompt.target.displayName(state.noteStyle, prompt.spelling),
-                    fontSize = 64.sp,
+                    fontSize = TextSizes.PROMPT_NOTE,
                     fontWeight = FontWeight.Bold,
                 )
-                // Position only — the player works out which string and where to put the finger.
                 Text(
                     prompt.position.label,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.SECTION_BREAK))
         val hint = phase.offCents
         when {
             !phase.tracking -> Text(
                 "play and hold ${"%.0f".format(state.goalMs / 1000f)} s…",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold
             )
             hint != null -> Text(
                 if (hint > 0) "▼ too sharp" else "▲ too flat",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.displaySmall,
                 color = ResultColors.close,
                 fontWeight = FontWeight.Bold,
             )
             else -> Text(
                 String.format(Locale.US, "%.1f s", phase.heldMs / 1000f),
-                style = MaterialTheme.typography.headlineSmall,
+                fontSize = TextSizes.HOLD_TIME,
+                fontWeight = FontWeight.Bold,
                 color = ResultColors.excellent,
             )
         }
         if (phase.tracking) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.SECTION_BREAK))
             InTuneBar(phase.currentCents, phase.inTolerance)
         }
     }
 }
 
-/** Tune-up-style bar: a marker slides sharp/flat around a centre line so she can see how in
- * tune the hold is, not just whether it reset (her request). */
 @Composable
 private fun InTuneBar(cents: Float?, inTune: Boolean) {
     val frac = cents?.let { ((it / 50f).coerceIn(-1f, 1f) + 1f) / 2f }
     Box(
         Modifier
             .fillMaxWidth()
-            .height(32.dp),
+            .height(40.dp),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(6.dp)
+                .height(8.dp)
                 .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
         )
         Box(
             Modifier
-                .width(2.dp)
+                .width(4.dp)
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.onSurfaceVariant),
         )
@@ -192,7 +211,7 @@ private fun InTuneBar(cents: Float?, inTune: Boolean) {
                 Spacer(Modifier.weight(frac.coerceIn(0.001f, 0.999f)))
                 Box(
                     Modifier
-                        .size(22.dp)
+                        .size(28.dp)
                         .background(
                             if (inTune) ResultColors.excellent else ResultColors.close,
                             CircleShape,
@@ -209,18 +228,18 @@ private fun CountIn(secsLeft: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             "Get ready",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             "$secsLeft",
-            fontSize = 140.sp,
+            fontSize = TextSizes.COUNTDOWN_NUMBER,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
         )
         Text(
             "pick up your bass",
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
@@ -237,33 +256,38 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             result.prompt.target.displayName(state.noteStyle, result.prompt.spelling),
-            style = MaterialTheme.typography.headlineLarge,
+            style = MaterialTheme.typography.displaySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Bold
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.ITEM_SPACING))
         Text(
             if (result.result.success) "held!" else
                 String.format(Locale.US, "best %.1f s", result.result.bestHeldMs / 1000f),
-            fontSize = 48.sp,
+            fontSize = TextSizes.HOLD_TIME,
             fontWeight = FontWeight.Bold,
             color = color,
         )
         if (result.result.resets > 0) {
             Text(
                 "${result.result.resets} reset${if (result.result.resets > 1) "s" else ""}",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.ITEM_SPACING))
         Text(
             when (result.starCount) {
                 3 -> "★★★"; 2 -> "★★☆"; 1 -> "★☆☆"; else -> "☆☆☆"
             },
-            style = MaterialTheme.typography.headlineSmall,
+            fontSize = TextSizes.SCORE_STARS,
             color = color,
         )
-        Text("+${result.score}", style = MaterialTheme.typography.titleLarge)
+        Text(
+            "+${result.score}", 
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -271,20 +295,20 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
 private fun DoneContent(state: SustainUiState, onExit: () -> Unit, onPlayAgain: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text("Round complete", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.CARD_PADDING))
         Text(
             "${state.totalScore}",
-            fontSize = 88.sp,
+            fontSize = TextSizes.SCORE_DISPLAY,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
         )
         Text(
             "of ${state.maxScore}",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         state.outcome?.let { outcome ->
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
             when {
                 outcome.isNewBest && outcome.previousBest != null -> Text(
                     "New personal best! (was ${outcome.previousBest})",
@@ -304,11 +328,11 @@ private fun DoneContent(state: SustainUiState, onExit: () -> Unit, onPlayAgain: 
             }
             AchievementUnlocks(outcome.newAchievements)
         }
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(Spacing.SECTION_BREAK))
         Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) {
             Text("Let's go again")
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.FINE_SPACING))
         OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
             Text("Done")
         }

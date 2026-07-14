@@ -5,7 +5,7 @@
 problem, every design decision, what worked and what didn't, and how we got there — so after a
 context reset we can be current again in one read.
 
-Last updated: 2026-07-13, after the pizz octave work: the **octave-settle** capture fix (attack
+Last updated: 2026-07-14, after the pizz octave work: the **octave-settle** capture fix (attack
 transient), the **separate pizz octave-DOWN knobs** for the sustained sympathetic-resonance octave
 (§5 A), the **"ignore wrong octave"** scoring aid (§5 A′), full-config recording headers, and the
 **calibration trace**.
@@ -20,6 +20,124 @@ This is **not a tuner**. During an exercise there is **no live pitch readout**. 
 
 Correcting your finger *after* the note is frozen must not change the result. Live needles exist
 only on the Tune-up and Pitch-debug screens. Everything below serves this model.
+
+### 0.1 The big picture, in plain language
+
+If you ignore the implementation details, the app tries to answer four questions in order:
+
+1. **Is there enough real musical signal here to trust this window at all?**
+   The DSP layer looks at a short analysis window (about 23 ms) and rejects it if it looks too
+   noisy, too weak, or too unlike a harmonic tone.
+2. **Did the player actually start a new note just now?**
+   The capture machine does not arm on any sounding pitch. For game prompts it wants a real
+   **attack**: energy rising above the tracked room/instrument floor. This is what stops a
+   previous note, open-string ring, or sympathetic resonance from being treated as a fresh try.
+3. **Did the pitch settle long enough to count as one note?**
+   After onset, the machine skips the messy first milliseconds of the attack, then waits for a
+   stable pitch window. If the pitch is still sliding around, gliding, or dropping in and out,
+   it keeps waiting or times out.
+4. **Even if it froze a pitch, is that likely to be the note she meant?**
+   The Note Accuracy game then applies note-aware rules: discard leftover ring-over, captures that
+   arrived too fast to be physically plausible, harmonic artifacts, impossible low notes, and very
+   faint or shaky stray transients. Only after passing that filter is the note scored.
+
+That gives this overall pipeline:
+
+```mermaid
+flowchart LR
+   A[Raw microphone audio] --> B[PitchEngine detector]
+   B --> C[PitchGate<br/>accepted or rejected per window]
+   C --> D[AttemptCapture or SustainCapture<br/>find onset and wait for stability]
+   D --> E[Frozen CapturedPitch]
+   E --> F[RoundViewModel.onCaptured<br/>discard obvious artifacts]
+   F --> G[Scored note or no note detected]
+```
+
+### 0.2 What each stage is protecting against
+
+| Stage | Main job | Mostly protects against |
+|---|---|---|
+| `PitchEngine` + detector | Estimate a candidate pitch from the raw waveform | Windows with no usable pitch at all |
+| `PitchGate` | Reject bad windows and correct some octave-UP detector errors | Background noise, weak signal, non-harmonic junk, some missing-fundamental octave mistakes |
+| `AttemptCapture` | Decide whether a new played note started and when it became stable | Ring-over, sympathetic resonance with no new attack, unstable attack transients, glides |
+| `RoundViewModel.onCaptured` | Decide whether the frozen note was probably her actual attempt | Leftover previous note, too-fast artifacts, harmonic misreads, impossible low artifacts, flimsy transients |
+
+### 0.3 The main values, translated to human meaning
+
+These names appear throughout the code and traces. This is what they mean in practice.
+
+| Variable / field | Plain-English meaning | Where it matters |
+|---|---|---|
+| `accepted` | This analysis window passed the basic trust checks and is allowed to influence capture | `PitchGate`, then every capture machine |
+| `noise` | How un-pitch-like the window is. Lower is more periodic and more like a note | `PitchGate` |
+| `harmonicEnergyRelative` | How much of the spectrum lines up with one harmonic series | `PitchGate` |
+| `energyLevel` | Loudness-like 0..100 scale used everywhere for thresholds | `PitchGate`, `AttemptCapture`, wrong-note filter |
+| `smoothedHz` | The pitch after accepted windows are smoothed and outliers dropped | Capture machines use this, not raw detector output |
+| `noiseFloor` | The running estimate of what the room/instrument floor currently sounds like | `AttemptCapture` onset test |
+| `quietLevel` | Below this level the room counts as quiet enough to arm in `AWAIT_QUIET` mode | `AttemptCapture` |
+| `onsetRiseLevels` | How far above the current floor energy must jump to count as a fresh attack | `AttemptCapture` |
+| `attackSkipMs` | Attack period intentionally ignored after onset because it is messy | `AttemptCapture` |
+| `stabilityWindowMs` | How long the pitch must stay steady before freezing cleanly | `AttemptCapture` |
+| `stabilityBandCents` | How narrow the pitch spread must stay inside the stability window | `AttemptCapture` |
+| `captureWindowMs` | Maximum time allowed to find a stable pitch after onset | `AttemptCapture` |
+| `wrongNoteMinLevel` | Minimum energy required before a wrong note is treated as a real played wrong note | `RoundViewModel.onCaptured` |
+| `lowestPlayableHz` | Anything below this cannot be a real bass note and is treated as artifact | `RoundViewModel.onCaptured`, pizz octave guard |
+| `missingFundamentalMaxHz` | Highest pitch where octave-down correction is even allowed because above this the mic should hear the true fundamental | `PitchGate` |
+| `oddHarmonicMinRatio` / `oddHarmonicMinRelative` | How strong the 3rd-harmonic evidence must be before halving an octave-high detector read | `PitchGate` |
+| `pizzOddHarmonicMinRatio` / `pizzOddHarmonicMinRelative` | Separate, looser version of the same proof for pizzicato low notes | `PitchGate` when game mode is pizz |
+| `pizzOctaveSettleMs` | How long a plucked note may wait for an octave-high attack reading to settle to the true fundamental | `AttemptCapture` pizz mode |
+
+### 0.4 Which knobs are learned in calibration, and why
+
+The general rule is: if a threshold depends on the phone, room, bow/pluck energy, or player, the
+wizard tries to measure it instead of hard-coding it.
+
+**Measured or derived by calibration and then saved in `AppSettings`:**
+
+| Setting | How calibration decides it | Why it exists |
+|---|---|---|
+| `micSensitivity` | From quiet-room ceiling versus playing floor | Sets the main energy gate so ambient noise stays out but soft playing still gets in |
+| `wrongNoteMinLevel` | Derived from the same noise/play gap, but stricter than the main gate | A wrong note should only count if it had convincing playing energy |
+| `lowestPlayableHz` | Set from the measured open E string pitch, with a semitone of margin | Rejects impossible low artifacts and sets the lowest allowed octave fold |
+| `audioSource` | Chosen from the mic source that behaved best on this phone | Some Android sources are much more usable than others |
+| `missingFundamentalMaxHz` | Found by replaying calibration takes and seeing where octave correction is still helpful | Limits octave correction to the low range where the mic may miss the fundamental |
+| `oddHarmonicMinRatio` / `oddHarmonicMinRelative` | Fitted against calibration takes so low-string octave fixes work without halving genuine higher notes | Governs arco and general octave-down proof |
+| `pizzOddHarmonicMinRatio` / `pizzOddHarmonicMinRelative` | Fitted separately from plucked takes | Pizz low notes need looser octave handling than arco |
+| `pizzOctaveSettleMs` | Smallest tested wait window that eliminates octave-high pizz attack freezes on this rig | Handles pluck-attack octave artifacts without adding unnecessary latency on rigs that do not need it |
+
+**Mostly code-owned behavior knobs (not user-room specific):**
+
+| Knob | Current role |
+|---|---|
+| `onsetConfirmSamples` | Requires more than one accepted window before declaring onset |
+| `quietMs` | Requires quiet to persist briefly before arming in `AWAIT_QUIET` mode |
+| `stabilityBandCents` | Defines what counts as "steady enough" in cents |
+| `maxDropouts` | Allows a short interruption before abandoning a candidate note |
+| `minFallbackSamples` | Allows a SHAKY freeze if the note dies before a clean window completes |
+| `promptTimeoutMs` | Stops the prompt if no onset happens in time |
+| `RING_MATCH_CENTS`, `minReadMs`, harmonic tolerances | Defensive rules for discarding obviously false frozen notes in the Note Accuracy game |
+
+### 0.5 How harmonics, resonance, and instability are kept from scoring
+
+The current system does **not** rely on one magic check. It stacks several filters, each aimed at
+one specific failure mode:
+
+1. **Noise and weak-signal rejection** in `PitchGate` prevent random room sound from even entering
+   the capture machine.
+2. **Octave-down correction** in `PitchGate` fixes the classic low-string problem where the mic
+   misses the fundamental and latches the octave instead.
+3. **Attack-required onset** in `AttemptCapture` blocks old ringing notes and sympathetic
+   resonance from becoming a new attempt if there was no fresh rise in energy.
+4. **Stability waiting** in `AttemptCapture` avoids freezing the note while the attack is still
+   chaotic or while the player is gliding.
+5. **Pizz octave settle** gives plucked notes a short chance to drop from an octave-high attack
+   reading onto the true fundamental before the note is frozen.
+6. **Target-aware discard rules** in `RoundViewModel.onCaptured` throw away captures that still
+   look like leftovers or detector artifacts even after all of the above.
+
+That layered approach is the bigger picture behind the many incremental fixes: each fix landed in
+the stage that actually owns that kind of mistake, instead of making one layer guess about all of
+them.
 
 ---
 

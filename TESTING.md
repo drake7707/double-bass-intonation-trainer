@@ -468,12 +468,115 @@ Home screen:
 - my day streak is still 1 , but i think it should be 2 by now
 
 
-OPEN FEEDBACK:
+OPEN FEEDBACK & IDEAS:
 --------------
 
+[2026-13-07]
 
-Calibration wizard layout could use some love. Between the switch of arco --> pizz should be a little clearer. I almost missed it so people who don't know there's a pizz round will also miss it.
+- [UI ISSUE] The pips on top of the rounds in games don't fit fully with 20 notes in a round so the last few look like it's already finished but we haven't hit the full round yet
 
-The pips on top of the rounds in games don't fit fully with 20 notes in a round
+- [UI ISSUE] Calibration wizard layout could use some love in spacing, margin and design language consistency. It has to be readable from a distance during calibration sure, and large text takes up more space but that doesn't mean throw every element on screen without proper padding/spacing.
 
-I wonder if we play all notes individually, it being monophonic, would we be able to discriminate to the right note in a more polyphonic setting (like playing a piece). Most apps that do this with DNNs don't really make an initial profile of the instrument and individual string harmonic behaviour.
+- [QUESTION/BIG ASS FEATURE] (?) I wonder if we play all notes individually, it being monophonic, would we be able to discriminate to the right note in a more polyphonic setting (like playing a piece). Most apps that do this with DNNs don't really make an initial profile of the instrument and individual string harmonic behaviour.
+Polyphonic: is it possible to have a complete breakdown of the instrument with charts, would be cool to build an instrument profile.
+
+- [FEATURE] Scales exercises or is that covered by chords?
+
+- [FEATURE] If debug traces is on, ask for feedback after a game how it went and embed that in the trace. That will help embed user issues alongside traces, especially if it's other people traces, as well as I .. forget when i do several rounds.
+
+- [FEATURE] Ability to send a trace to feedback@drakarah.be, once i put it on the play store and they say it doesn't work for them i can analyze their trace
+
+- [BUG] I calibrated it said no octave drift in the title but on mi it said octave drift so which is it? I made a trace and have a screenshot. Other than that pizz/Arco split was the right call, after calibration it was far less false trigger prone.
+
+- [BUG] Sustain is a lot better with false resets when bow stroke changes but it's not fully solved yet, I had several resets due to bow stroke reversal, see trace.
+
+- [UI ISSUE/FEATURE] In the round complete add a chart of the cents per note. It'll be interesting to see the trend.
+
+- [BUG/FEATURE] Shifting on the same string on 1st and 2nd position made me shift from first finger 1st to 4th finger 2nd, or the other way around. I never used my 2nd finger in any of the positions, I don't mind that at all, but it would be an additional difficulty that students also want to practice. I like this too though, so maybe an option for level of difficulty? Maybe the shifting exercises can be basic 1->4->1, anything in between on the same string and across strings complicating things further, so 3 levels.
+
+- [VERIFY] I played some pizz note accuracy too and I'm not sure if I'm inaccurate or the game is too quick on the trigger to lock onto pitch before it fully stabilised. I have full traces available. It's entirely possible it's me though. But it's good to verify.
+
+- [UI ISSUE] What are the cents shown in progress? It's not clear to me "avg cents" off, is that an absolute deviation both flat and sharp? What about each game in progress. The cents shown are what? Finally the cents in accuracy per position is also not something I understand. I honestly would use accuracy % metrics here, far easier to understand than raw cents. Maybe if you tap the accuracy  you can still show the cents to toggle between the 2
+
+- [UI ISSUE] I would move achievements from its row to an icon in the top bar to open the achievements list with how many of total unlocked next to it.
+
+- [UI ISSUE] In pitch debug now that we have the big sweep view there is no need to show the same thing in pitch debug view itself, just the button to start the sweep is good.
+
+- [BUG] Calibrate surroundings still use emojis.
+
+- [FEATURE]  Reminder notification: send the user a reminder they haven't practiced yet if it's been near 24h since the last session. Stop sending notifications if they ignore them and it's more than a week since last practice. Of course with a toggeable setting in the settings to turn this off
+
+- [FEATURE] Glissando practice game maybe? Would that be useful, nice and even linear pitch increase/decrease between notes, no fluctuations in speed that might it sound wobbly. Not sure if this can be done with the current settings, this might require a calibration step.
+
+- [MISSING HARDENING] Calibration wizard never asks for accidental touches like putting hand on the strings and then removing them which can cause string to ring very silently. This should be tested clearly that it does not get picked up as an input note for a game. I don't know if it's necessary with the current calibration, i don't have any issue with a correct calibration but it would be worth to verify.
+
+- [REVIEW/EVALUATE] Potentially actionable items for robustness in calibration (not sure if necessary and making things unnecessarily complex, i honestly favor fewer variables that to overcomplicate settings that don't raelly make a big difference), after analysis of the detection algorithm:
+
+ * Expand the calibration corpus beyond open strings. Include a few representative stopped notes (especially low positions and one higher position) so octave-fitting and threshold tuning aren't based almost entirely on open strings.
+ * Validate calibration against playing variation, not just calibration takes. During the wizard's offline replay, simulate or include soft, loud, short, and long attacks to ensure the chosen parameters still work across a realistic range of playing dynamics.
+ * Document that calibration assumes representative playing. State explicitly that users should play naturally during calibration—neither exaggeratedly loud nor overly careful—because energy-related thresholds are derived from those recordings.
+ * Document environmental assumptions. Note that calibration is expected to be rerun after major changes such as switching microphones/devices, changing strings, moving to a dramatically noisier environment, or if Android audio processing changes.
+ * Stress-test onset detection across playing styles. Build a regression corpus containing extremely soft legato, aggressive attacks, different bow pressures, and different pizzicato styles to ensure onset-rise thresholds remain robust.
+ * Broaden the octave-validation corpus. Verify the octave-settle and octave-down calibration against different strings, fingered notes, and multiple instruments if possible, rather than only the reference bass.
+ * Keep calibration and player modelling separate. Continue treating microphone/instrument properties (wizard) and human behaviour (player level, reaction time) as distinct domains, and resist moving player-specific behaviour into calibration.
+ * Add a small generalization margin when selecting fitted parameters. If two candidate thresholds perform equally well on the calibration corpus, prefer the slightly more conservative choice rather than the absolute minimum that passes.
+ * Document the operating assumptions explicitly. Add a section listing assumptions such as: single instrument, one note at a time, acoustic bass, no accompaniment, calibration representative of future playing, and stable microphone behaviour.
+ * Collect calibration traces from multiple devices and players. Before considering the calibration procedure "finished," replay the same corpus across several phones and different basses to identify thresholds that are overfitted to the reference setup
+
+- [REFACTOR] Detection should be UI-agnostic.
+      Right now onCaptured() is essentially implementing a domain rule engine:
+      ring-over rejection
+      too-soon rejection
+      harmonic artifact rejection
+      flimsy rejection
+      unplayable rejection
+      wrong-octave handling
+      ignoreWrongOctave option
+      discard counting
+      continue listening vs score
+
+      That's not presentation logic.
+
+      It's game logic.
+
+- [REFACTOR] Review docs/CODE_REVIEW_2026-07-12.md findings and refactor where necessary
+
+
+- [UI ISSUES] Review docs/UI_DESIGN_REVIEW.md that Claude Haiku made. Do not take them verbatim but analyze and if you agree fix them. Some are probably listed due to lacking context.
+
+
+- [FEATURE] Teacher's notebook
+      Given all the data you collect, you could build a "teacher's notebook."
+
+      Not pages of graphs.
+
+      Just one or two observations after each session.
+
+      For example:
+
+      "Your pitch settled more quickly today than yesterday."
+      "Most misses were slightly flat on descending shifts."
+      "Your pizzicato accuracy is becoming as consistent as your arco."
+      "You've become much more consistent after the first note of each round."
+
+      Those are exactly the kinds of comments a good teacher makes. They connect practice to improvement, which is one of the strongest intrinsic motivators. It's also something a conventional tuner simply can't provide, because it doesn't remember your musical journey—it only reports the present moment.
+
+      It's behaving like a really observant teacher.
+
+      Imagine opening the app and seeing:
+
+      Last week you struggled to find Fa♯2 cleanly.
+
+      Today you hit it first try three times.
+
+      That's real progress.
+
+      That feels personal.
+
+      No leaderboard.
+
+      No coins.
+
+      No fireworks.
+
+      Just someone noticing something you hadn't.

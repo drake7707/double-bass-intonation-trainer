@@ -19,6 +19,7 @@ import be.drakarah.intonation.metrics.RoundRecorder
 import be.drakarah.intonation.settings.toRoundContext
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
+import be.drakarah.intonation.game.CaptureFilterConfig
 import be.drakarah.intonation.game.CaptureParams
 import be.drakarah.intonation.game.CaptureQuality
 import be.drakarah.intonation.game.Difficulty
@@ -128,6 +129,9 @@ class ShiftViewModel(
     private var positions: Set<Position> = setOf(FIRST_POSITION)
     private var soundFeedback = true
     private var driftWarningEnabled = true
+    /** Calibration-owned landing-filter thresholds (shared with Note Accuracy via CaptureFilter). */
+    private var wrongNoteMinLevel = 55f
+    private var lowestPlayableHz = 40f
     private val driftDetector = be.drakarah.intonation.game.DriftDetector()
     private var startedAtWallClock = 0L
     /** Context snapshot for the round in progress; set from settings in [start]. */
@@ -148,9 +152,9 @@ class ShiftViewModel(
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
             driftWarningEnabled = settings.driftWarning
-            captureParams = captureParams.copy(
-                promptTimeoutMs = settings.playerLevel.promptTimeoutMs,
-            )
+            wrongNoteMinLevel = settings.wrongNoteMinLevel
+            lowestPlayableHz = settings.lowestPlayableHz
+            captureParams = captureParams.applying(settings, pizz = mode == "pizz")
             shiftParams = shiftParams.copy(
                 departTimeoutMs = settings.playerLevel.shiftDepartTimeoutMs,
             )
@@ -242,8 +246,22 @@ class ShiftViewModel(
         )
         return ShiftCapture(
             startHz = prompt.start.target.frequency(a4),
+            targetHz = prompt.target.target.frequency(a4),
             captureParams = captureParams,
             params = shiftParams,
+            filterConfig = CaptureFilterConfig(
+                wrongNoteMinLevel = wrongNoteMinLevel,
+                lowestPlayableHz = lowestPlayableHz,
+            ),
+            onDiscard = { phase, captured, filter ->
+                trace?.event(
+                    lastSampleMs, "$phase-discard",
+                    "hz=%.1f lvl=%.0f flimsy=%b harm=%b ring=%b unplay=%b".format(
+                        captured.frequencyHz, captured.energyLevel,
+                        filter.flimsy, filter.harmonicArtifact, filter.ringOver, filter.unplayable,
+                    ),
+                )
+            },
         )
     }
 
@@ -309,6 +327,10 @@ class ShiftViewModel(
         if (next >= state.roundLength) {
             _uiState.value = state.copy(phase = ShiftPhase.Done)
             persistRound(state)
+            // Round over: stop the capture loop (and with it the mic) so we don't keep recording
+            // through the summary + "how did that go" feedback screen. persistRound runs on
+            // viewModelScope, not listenJob, so its trace.save() completes after this cancels us.
+            stop()
         } else {
             capture = newCapture(prompts[next])
             _uiState.value = state.copy(

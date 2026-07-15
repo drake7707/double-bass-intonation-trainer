@@ -25,9 +25,9 @@ class ShiftCaptureTest {
         generateSequence(fromMs) { it + hop }.takeWhile { it < toMs }
             .map { sample(it, 0f, accepted = false, level = 5f) }.toList()
 
-    private fun note(fromMs: Long, toMs: Long, hz: Double) =
+    private fun note(fromMs: Long, toMs: Long, hz: Double, level: Float = 70f) =
         generateSequence(fromMs) { it + hop }.takeWhile { it < toMs }
-            .map { sample(it, hz.toFloat()) }.toList()
+            .map { sample(it, hz.toFloat(), level = level) }.toList()
 
     private fun run(capture: ShiftCapture, script: List<PitchSample>): ShiftState {
         var s: ShiftState = ShiftState.ConfirmStart()
@@ -36,7 +36,7 @@ class ShiftCaptureTest {
     }
 
     private fun capture(seed: Int = 7) =
-        ShiftCapture(startHz, CaptureParams.arco(), ShiftParams(), Random(seed))
+        ShiftCapture(startHz, targetHz, CaptureParams.arco(), ShiftParams(), random = Random(seed))
 
     // With seed 7 the cue delay is fixed; confirm happens ~750 ms in, so by 2600 ms the
     // cue has certainly been shown (max delay 1500 ms).
@@ -116,6 +116,62 @@ class ShiftCaptureTest {
         assertTrue(!result.timedOut)
         val cents = 1200.0 * kotlin.math.ln(result.landedHz!! / targetHz) / kotlin.math.ln(2.0)
         assertTrue("landed on ${result.landedHz} — $cents cents vs target", abs(cents) < 5)
+    }
+
+    @Test
+    fun lowEnergyHarmonicOfRingingStartIsNotFrozenAsTheLanding() {
+        // Her 2026-07-15 report ("wrong note when it wasn't"): during a pizz shift the detector
+        // locked onto the octave of the still-ringing START note (low energy) and the landing froze
+        // on it 348 ms after the cue -> +938 cents false "wrong note". The shared captureFilter must
+        // discard that flimsy artifact and keep listening for the real landing on the target.
+        val artifactHz = startHz * 2  // octave of the start note, far from the target
+        val script = silence(0, 300) +
+            note(300, 2600, startHz) +                   // confirm + hold through the cue
+            note(2600, 3400, artifactHz, level = 45f) +  // ringing-start octave, low energy -> flimsy
+            note(3400, 5200, targetHz)                   // the real landing
+        val state = run(capture(), script)
+        assertTrue("expected Finished, got $state", state is ShiftState.Finished)
+        val result = (state as ShiftState.Finished).result
+        assertTrue("should not time out", !result.timedOut)
+        val cents = 1200.0 * kotlin.math.ln(result.landedHz!! / targetHz) / kotlin.math.ln(2.0)
+        assertTrue("landed on ${result.landedHz} Hz ($cents cents off target) — expected the real " +
+            "landing on the target, not the low-energy start-octave artifact", abs(cents) < 15)
+    }
+
+    @Test
+    fun aFirmlyPlayedWrongNoteStillScoresAndIsNotOverDiscarded() {
+        // Guard against over-filtering: a real, firmly-played wrong note (high energy, not a harmonic
+        // of the target, not the ringing start) must still freeze as the landing so the game can
+        // report it wrong. Only artifacts are discarded — she never wants a note she actually played
+        // thrown away.
+        val wrongHz = 110.0  // A2, ~500 cents below the D3 target, solidly played
+        val script = silence(0, 300) +
+            note(300, 2600, startHz) +
+            note(2600, 5000, wrongHz)   // default level 70 — a firm (wrong) note, not an artifact
+        val state = run(capture(), script)
+        val result = (state as ShiftState.Finished).result
+        assertTrue("should not time out", !result.timedOut)
+        val cents = 1200.0 * kotlin.math.ln(result.landedHz!! / wrongHz) / kotlin.math.ln(2.0)
+        assertTrue("froze on ${result.landedHz} — expected the wrong note actually played (110 Hz)",
+            abs(cents) < 15)
+    }
+
+    @Test
+    fun flimsyArtifactOnTheStartDoesNotFlashThatsNotIt() {
+        // Her "some took a while with 'that's not it'" report: a faint transient / harmonic freezing
+        // off the start note is an artifact, not a played wrong note, so the machine must keep
+        // listening QUIETLY (no wrongNote flash) and still confirm the real start afterward. A note
+        // she genuinely plays wrong still asks again (see wrongStartNoteAsksAgain).
+        val artifactHz = startHz * 2   // octave of the start, low energy -> flimsy
+        val cap = capture()
+        run(cap, silence(0, 300) + note(300, 1400, artifactHz, level = 40f))
+        val afterArtifact = cap.state
+        assertTrue("a flimsy start artifact must not flash wrongNote, got $afterArtifact",
+            afterArtifact is ShiftState.ConfirmStart && !afterArtifact.wrongNote)
+        // the real start still confirms once she plays it
+        run(cap, note(1400, 2600, startHz))
+        assertTrue("start should confirm after the artifact, got ${cap.state}",
+            cap.state is ShiftState.HoldStart || cap.state is ShiftState.Shift)
     }
 
     @Test

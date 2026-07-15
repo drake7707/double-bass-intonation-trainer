@@ -5,6 +5,44 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-15 evening Shift traces truncated + false "wrong notes" — root-caused from your live round (your report)
+Three fixes, all from the shift-trace investigation (you played rounds live while I watched logcat):
+
+**1. Game traces were silently truncated to the first prompt — FIXED & ✅ VERIFIED 2026-07-15 on your
+Pixel 6a.** Your 20-shift trace only logged 1 shift. Cause: `GameTrace.lines` (an ArrayList) was
+appended by the capture loop while `save()` iterated it on the IO thread — a `ConcurrentModification-
+Exception`, swallowed by save's catch, left the JSONL half-written (the WAV always survived, so it
+looked like only the audio recorded). Sitting on the summary/feedback screen made it worse (the loop
+kept appending). Fix: `GameTrace` is now fully thread-safe (all `lines` access locked; `save()`
+snapshots under the lock), AND all four games stop the capture loop at `Done` so recording ends with
+the round instead of running through the feedback screen. Verified: a full 20-shift round now saves
+all 20 results + your appended feedback, `saved trace ... (5917 lines)`, zero exceptions in logcat.
+
+**2. "Wrong note when it wasn't" (your words) — a detection artifact, not your playing.** Confirmed
+from the complete trace: on one shift the landing froze 348 ms after the cue on 225 Hz — the exact 2nd
+harmonic of the still-ringing START note (112 Hz) — reading +938 cents → false "wrong note". You never
+played it. Two causes fixed:
+   - **Shift & Chords weren't applying your calibrated pizz timing.** They used the raw `pizz()`
+     defaults (attack-skip 60 / stability 150) while your calibrated values are 200 / 300 — only Note
+     Accuracy was wired up. Now there's ONE shared `CaptureParams.applying(settings, pizz)` (beside the
+     existing `PitchEngineConfig.applying`) and Note Accuracy, Shift, Chords all go through it. Single
+     source of truth — no more per-game copies drifting apart.
+   - **The Shift landing had no artifact guard.** It now runs through the SAME shared `captureFilter`
+     Note Accuracy/Chords use (judged against the target, with the confirmed start as the ring-over
+     source): a flimsy/harmonic/sub-playable/ring-over "landing" is discarded and it keeps listening
+     for the real one. Covered by two new `ShiftCaptureTest` cases (the harmonic-of-ringing-start repro
+     + a guard that a firmly-played real wrong note is still kept). Chords already shared the filter
+     (`ArpeggioCapture`), so it only needed the timing fix.
+- [ ] Play a **pizz** Shift round — confirm no more false "wrong note?" on notes you played correctly.
+      A note that's genuinely off (you'll know) should still read off; only artifacts should vanish.
+- [ ] Play a **pizz** Chords round — same check (it now uses your calibrated pizz timing too).
+- [ ] If a false wrong-note still slips through, turn on Record & trace and send it — the landing now
+      logs a `landing-discard` event for each artifact it rejected, so the trace shows what it caught.
+
+**3. Follow-ups deferred (my note, not yours to test):** the Shift *start* confirmation ("that's not
+it → retry") could reuse the same filter to suppress flimsy false rejections; and Sustain uses its own
+`SustainParams` (not `CaptureParams`) so it's outside the shared timing/filter — both worth a later pass.
+
 ### 2026-07-15 Send trace/snippet to feedback@drakarah.be (your feature request)
 Recordings screen (and Game traces, same screen) now has an envelope icon per row, next to Delete.
 Replaces the old plain Share icon — removed since picking Gmail from the share chooser fills in
@@ -705,6 +743,37 @@ Home screen:
 
 
 
+- [REFACTOR → DONE 2026-07-15] Detection should be UI-agnostic.
+      You were right — onCaptured() was a domain rule engine living in the ViewModel. It's now moved
+      entirely into the domain (game/), with NoteAccuracyViewModel as a thin adapter:
+      - the discard rules (ring-over / too-soon / harmonic / unplayable / flimsy) → one shared pure
+        function game/CaptureFilter.kt, reused by Note Accuracy AND Chords (no more copies);
+      - classification + wrong-octave handling + ignoreWrongOctave + discard counting + continue-vs-
+        score → game/NoteAttemptCapture.kt (a pure state machine like ArpeggioCapture/ShiftCapture).
+      This also gave the logic the unit coverage it never had while it lived in the UI
+      (CaptureFilterTest, NoteAttemptCaptureTest); all existing regression suites pass unchanged.
+      See docs/SHIFT-TRAINER-REDESIGN.md and DETECTION.md §4.2. (Committed with the shift work, 0245656.)
+
+      Original note:
+      Right now onCaptured() is essentially implementing a domain rule engine:
+      ring-over rejection
+      too-soon rejection
+      harmonic artifact rejection
+      flimsy rejection
+      unplayable rejection
+      wrong-octave handling
+      ignoreWrongOctave option
+      discard counting
+      continue listening vs score
+
+      That's not presentation logic.
+
+      It's game logic.
+
+
+
+
+      
 
 
 OPEN FEEDBACK & IDEAS:
@@ -739,32 +808,6 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
  * Document the operating assumptions explicitly. Add a section listing assumptions such as: single instrument, one note at a time, acoustic bass, no accompaniment, calibration representative of future playing, and stable microphone behaviour.
  * Collect calibration traces from multiple devices and players. Before considering the calibration procedure "finished," replay the same corpus across several phones and different basses to identify thresholds that are overfitted to the reference setup
 
-- [REFACTOR → DONE 2026-07-15] Detection should be UI-agnostic.
-      You were right — onCaptured() was a domain rule engine living in the ViewModel. It's now moved
-      entirely into the domain (game/), with NoteAccuracyViewModel as a thin adapter:
-      - the discard rules (ring-over / too-soon / harmonic / unplayable / flimsy) → one shared pure
-        function game/CaptureFilter.kt, reused by Note Accuracy AND Chords (no more copies);
-      - classification + wrong-octave handling + ignoreWrongOctave + discard counting + continue-vs-
-        score → game/NoteAttemptCapture.kt (a pure state machine like ArpeggioCapture/ShiftCapture).
-      This also gave the logic the unit coverage it never had while it lived in the UI
-      (CaptureFilterTest, NoteAttemptCaptureTest); all existing regression suites pass unchanged.
-      See docs/SHIFT-TRAINER-REDESIGN.md and DETECTION.md §4.2. (Committed with the shift work, 0245656.)
-
-      Original note:
-      Right now onCaptured() is essentially implementing a domain rule engine:
-      ring-over rejection
-      too-soon rejection
-      harmonic artifact rejection
-      flimsy rejection
-      unplayable rejection
-      wrong-octave handling
-      ignoreWrongOctave option
-      discard counting
-      continue listening vs score
-
-      That's not presentation logic.
-
-      It's game logic.
 
 - [REFACTOR] Review docs/CODE_REVIEW_2026-07-12.md findings and refactor where necessary
 
@@ -804,3 +847,9 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
       No fireworks.
 
       Just someone noticing something you hadn't.
+
+
+- [UI Issue] In shifting reveal screen the very small text with cents and some other info is completely unreadable from a distance while holding my bass. Check all the results screens of games and make sure everything is legible from 2 meters away, while also keeping the UI layout nice.
+
+
+- Are pizz and arco notes easily distinguisable? I accidently played pizz while i was on arco and the system should detect that and warn me. Now it happily processed pizz as arco with the pizz settings leading to issues with wrong notes and such.

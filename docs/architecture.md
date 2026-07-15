@@ -162,7 +162,7 @@ flowchart TB
     end
 
     AC --> NAC & ARP & SHF & SUS
-    CF --> NAC & ARP
+    CF --> NAC & ARP & SHF
     POS --> NP & SP & CP
     SC --> NAC & ARP & SHF
     NP --> NAC
@@ -184,8 +184,11 @@ flowchart TB
   confirmation arms like Note Accuracy (fixes the "start didn't register" legato bug); the
   wrong-start re-arm stays `requireOnsetRise=false` so a legato correction is caught. The **landing**
   uses a glide filter so sliding into the note scores where the pitch *stops*; returning to the start
-  re-arms. `ShiftResult` carries `confirmedStartHz` so scoring can separate the shift *distance* from
-  a slightly-off start.
+  re-arms. It also runs the frozen landing through the **shared `captureFilter`** — judged against the
+  target with the **confirmed start as the ring-over source** — so a flimsy/harmonic/sub-playable
+  "landing" (e.g. the ringing start note's octave) is discarded and it keeps listening for the real
+  one, instead of freezing an artifact as a false wrong note. `ShiftResult` carries `confirmedStartHz`
+  so scoring can separate the shift *distance* from a slightly-off start.
 - **`SustainCapture`** — `AwaitQuiet → Listening → Tracking → Finished`. Requires an onset-rise (a
   ring won't start it); tracks how long the target is held in tune, forgiving a brief bow-reversal
   scoop (`outGraceMs`) but resetting on sustained drift.
@@ -240,8 +243,12 @@ flowchart TB
   `ShiftLevel.id`, so each level's personal best is separate.
 - **`SettingsRepository`** (DataStore) owns note-name style (solfège default), A4, difficulty, round
   length, selected positions, sound/drift toggles, `micSensitivity`, and the calibration-owned
-  detection thresholds. `settings.applying(config, pizz)` is the single settings→`PitchEngineConfig`
-  point.
+  detection thresholds. Two parallel extensions are the single point where saved settings turn into a
+  runnable rig, shared by every game: `PitchEngineConfig.applying(settings, pizz)` (sample-level
+  detection knobs) and `CaptureParams.applying(settings, pizz)` (capture timing — calibrated pizz
+  attack-skip / stability window / octave-settle + player-level prompt timeout). Games must build
+  capture params through the latter rather than re-deriving them, so calibrated timing can't drift
+  between exercises (the gap that left Shift/Chords on raw `pizz()` defaults).
 - **`AppContainer`** is manual DI; every ViewModel has a `Factory` companion.
 
 ---
@@ -300,6 +307,10 @@ universals.** Three homes (full detail in [`DETECTION.md`](DETECTION.md) §5):
 - **Game trace** (`audio/GameTrace`, Settings → Debug "Record & trace games") — records a whole round:
   per-sample detection stream + game events (`prompt` / `result` / `discard`) + raw audio. Replay the
   WAV through `PitchEngine.wavSamples` to reconstruct detection exactly and line up decisions. This is
-  the workflow for any detection issue (see [`DETECTION.md`](DETECTION.md) §9).
+  the workflow for any detection issue (see [`DETECTION.md`](DETECTION.md) §9). The event/sample log is
+  appended from the capture coroutine while `save()` snapshots it on the IO dispatcher, so all `lines`
+  access is lock-guarded (an unguarded `forEach` vs. a concurrent append silently truncated traces to
+  the first prompt — 2026-07-15); games also stop the capture loop at round end so recording doesn't
+  run through the summary/feedback screen.
 - **Test corpus** — real recordings in `dsp/src/test/resources/wav/` (WAV float32 + JSONL); `:app`
   tests read it via sourceSets. New detection behavior gets a regression test built from a recording.

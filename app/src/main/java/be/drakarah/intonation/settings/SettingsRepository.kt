@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import be.drakarah.intonation.game.CaptureParams
 import be.drakarah.intonation.game.ChordFingering
 import be.drakarah.intonation.game.Difficulty
 import be.drakarah.intonation.game.FIRST_POSITION
@@ -110,6 +111,26 @@ fun PitchEngineConfig.applying(settings: AppSettings, pizz: Boolean = false): Pi
     missingFundamentalMaxHz = settings.missingFundamentalMaxHz,
     oddHarmonicMinRatio = if (pizz) settings.pizzOddHarmonicMinRatio else settings.oddHarmonicMinRatio,
     oddHarmonicMinRelative = if (pizz) settings.pizzOddHarmonicMinRelative else settings.oddHarmonicMinRelative,
+)
+
+/** The one place saved calibration + the player's level turn into game CAPTURE timing — the
+ * sibling of [applying] for [PitchEngineConfig]. Every capture-based game (Note Accuracy, Shift,
+ * Chords) runs its [CaptureParams] through this so they freeze on the same rig-calibrated pizz
+ * attack-skip / stability window instead of each ViewModel re-deriving it. That divergence is what
+ * left Shift and Chords on the raw [CaptureParams.pizz] defaults (60/150) and froze pizz landings
+ * on the attack transient while Note Accuracy — the only one wired up — used the calibrated 200/300
+ * (the 2026-07-15 "wrong note when it wasn't" report). [pizz] selects the calibrated pizz timing +
+ * octave-settle guard; arco keeps the preset's own attack-skip/stability window. */
+fun CaptureParams.applying(settings: AppSettings, pizz: Boolean): CaptureParams = copy(
+    promptTimeoutMs = settings.playerLevel.promptTimeoutMs,
+    // Pizz only: engage the calibrated attack-octave settle guard (0 = this rig has no artifact).
+    octaveSettleMs = if (pizz) settings.pizzOctaveSettleMs.takeIf { it > 0 } else null,
+    // The octave-down guard floor is the calibrated lowest playable pitch, so a low note is never
+    // guarded needlessly.
+    octaveFoldMinHz = settings.lowestPlayableHz,
+    // Pizz only: the calibrated attack-skip / stability window (arco keeps its preset).
+    attackSkipMs = if (pizz) settings.pizzAttackSkipMs else attackSkipMs,
+    stabilityWindowMs = if (pizz) settings.pizzStabilityWindowMs else stabilityWindowMs,
 )
 
 /** Everything that shapes detection/capture beyond the raw [PitchEngineConfig] block, so a

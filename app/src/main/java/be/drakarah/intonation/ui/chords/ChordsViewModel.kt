@@ -157,9 +157,7 @@ class ChordsViewModel(
             lowestPlayableHz = settings.lowestPlayableHz
             minReadMs = settings.playerLevel.minReadMs
             chordFingering = settings.chordFingering
-            captureParams = captureParams.copy(
-                promptTimeoutMs = settings.playerLevel.promptTimeoutMs,
-            )
+            captureParams = captureParams.applying(settings, pizz = mode == "pizz")
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             val cfg = config.applying(settings, pizz = mode == "pizz")
             trace = if (settings.traceGames)
@@ -304,6 +302,10 @@ class ChordsViewModel(
         if (next >= state.roundLength) {
             _uiState.value = state.copy(phase = ChordsPhase.Done)
             persistRound(state)
+            // Round over: stop the capture loop (and the mic) so recording doesn't continue through
+            // the summary + feedback screen. persistRound runs on viewModelScope, not listenJob, so
+            // its trace.save() completes after this cancels the listen loop.
+            stop()
         } else {
             capture = newCapture(prompts[next])
             _uiState.value = state.copy(

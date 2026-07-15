@@ -31,13 +31,26 @@ class GameTrace(
     /** Pass to PitchEngine so the mic audio is recorded alongside the detection log. */
     val waveWriter = WaveWriter()
 
+    /** The detection/event log, appended from the game's capture coroutine and snapshotted by
+     * [save] on the IO dispatcher. Both touch it from different threads, so EVERY access goes
+     * through [linesLock] — an unguarded `forEach` in [save] racing an [onSample] append is what
+     * silently truncated traces to the first prompt (ConcurrentModificationException, swallowed by
+     * save's catch; found via the 2026-07-15 shift-trace investigation). */
     private val lines = ArrayList<String>()
+    private val linesLock = Any()
     /** Set by [save]; lets [appendFeedback] add to the same file after she's seen the summary,
-     * without delaying when the trace itself is written to disk. */
+     * without delaying when the trace itself is written to disk. Written on IO in [save], read on
+     * IO in [appendFeedback] — volatile so the append sees the saved file. */
+    @Volatile
     private var savedJsonl: File? = null
 
     init {
-        lines.add("""{"config":${config.toJson()},"detection":$detectionExtras,"exercise":"$exercise"}""")
+        append("""{"config":${config.toJson()},"detection":$detectionExtras,"exercise":"$exercise"}""")
+    }
+
+    /** Thread-safe append — the single writer path for [lines]. */
+    private fun append(line: String) {
+        synchronized(linesLock) { lines.add(line) }
     }
 
     /** Size the audio ring. Suspends, so call it from the game's coroutine before recording. */
@@ -46,7 +59,7 @@ class GameTrace(
     }
 
     fun onSample(s: PitchSample) {
-        lines.add(
+        append(
             """{"tMs":${s.timestampMs},"frame":${s.framePosition},"hz":${s.frequencyHz},""" +
                 """"smoothedHz":${s.smoothedHz},"accepted":${s.accepted},"noise":${s.noise},""" +
                 """"harmRel":${s.harmonicEnergyRelative},"level":${s.energyLevel},""" +
@@ -57,7 +70,7 @@ class GameTrace(
     /** Mark a game event on the same clock as the samples (prompt shown, freeze, reset, …). */
     fun event(tMs: Long, type: String, detail: String = "") {
         val d = if (detail.isEmpty()) "" else ""","detail":"$detail""""
-        lines.add("""{"tMs":$tMs,"event":"$type"$d}""")
+        append("""{"tMs":$tMs,"event":"$type"$d}""")
     }
 
     suspend fun save() {
@@ -69,9 +82,13 @@ class GameTrace(
                 waveWriter.storeSnapshot()
                 waveWriter.writeStoredSnapshot(context, Uri.fromFile(File(dir, "$base.wav")), config.sampleRate)
                 val jsonl = File(dir, "$base.jsonl")
-                jsonl.bufferedWriter().use { w -> lines.forEach { w.appendLine(it) } }
+                // Copy under the lock, then write the copy — so a concurrent onSample/event append
+                // can never mutate the list mid-iteration (the ConcurrentModificationException that
+                // silently truncated traces to the first prompt).
+                val snapshot = synchronized(linesLock) { ArrayList(lines) }
+                jsonl.bufferedWriter().use { w -> snapshot.forEach { w.appendLine(it) } }
                 savedJsonl = jsonl
-                Log.d(TAG, "saved trace $base (${lines.size} lines)")
+                Log.d(TAG, "saved trace $base (${snapshot.size} lines)")
             } catch (e: Exception) {
                 Log.w(TAG, "failed to save game trace", e)
             }

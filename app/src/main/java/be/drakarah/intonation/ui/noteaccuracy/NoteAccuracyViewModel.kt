@@ -173,21 +173,9 @@ class NoteAccuracyViewModel(
             wrongNoteMinLevel = settings.wrongNoteMinLevel
             lowestPlayableHz = settings.lowestPlayableHz
             minReadMs = settings.playerLevel.minReadMs
-            captureParams = captureParams.copy(
-                promptTimeoutMs = settings.playerLevel.promptTimeoutMs,
-                // Pizz only: engage the octave-settle guard (fixes the pluck attack reading an
-                // octave high then settling onto the fundamental). Window is calibration-owned
-                // per rig; 0 = this rig has no attack-octave artifact, so no guard. Fold floor is
-                // the calibrated lowest playable pitch so a low note is never guarded needlessly.
-                octaveSettleMs = if (mode == "pizz") settings.pizzOctaveSettleMs.takeIf { it > 0 } else null,
-                octaveFoldMinHz = settings.lowestPlayableHz,
-                // Pizz only: the calibrated capture timing. A plucked attack reads sharp and settles
-                // flatter, so the shipped 60/150 can freeze the transient; the wizard measures the
-                // smallest attack-skip / stability-window that lands the freeze on the settled pitch
-                // for this rig (her 2026-07-15 finding). Arco keeps its preset.
-                attackSkipMs = if (mode == "pizz") settings.pizzAttackSkipMs else captureParams.attackSkipMs,
-                stabilityWindowMs = if (mode == "pizz") settings.pizzStabilityWindowMs else captureParams.stabilityWindowMs,
-            )
+            // Calibrated capture timing (attack-skip / stability window / octave-settle) now lives
+            // in the shared CaptureParams.applying so Shift and Chords freeze on the same rig values.
+            captureParams = captureParams.applying(settings, pizz = mode == "pizz")
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             previousAnswerHz = 0f
             promptTraceLogged = false
@@ -330,6 +318,10 @@ class NoteAccuracyViewModel(
         if (next >= state.roundLength) {
             _uiState.value = state.copy(phase = NoteAccuracyPhase.Done)
             persistRound(state)
+            // Round over: stop the capture loop (and the mic) so recording doesn't continue through
+            // the summary + feedback screen. persistRound runs on viewModelScope, not listenJob, so
+            // its trace.save() completes after this cancels the listen loop.
+            stop()
         } else {
             // Arm the next prompt's domain capture. It arms immediately (skipQuietGate) so legato
             // bowing — which never goes quiet between prompts — is still captured (her Fa2/Fa#2 "no

@@ -258,6 +258,10 @@ class SustainViewModel(
         if (next >= state.roundLength) {
             _uiState.value = state.copy(phase = SustainPhase.Done)
             persistRound(state)
+            // Round over: stop the capture loop (and the mic) so recording doesn't continue through
+            // the summary + feedback screen. persistRound runs on viewModelScope, not listenJob, so
+            // its trace.save() completes after this cancels the listen loop.
+            stop()
         } else {
             // skipQuiet: legato bowing never goes silent between holds, so waiting for quiet
             // left the machine unable to arm (her Do#2 "won't lock" report).

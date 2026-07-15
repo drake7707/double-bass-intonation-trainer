@@ -238,8 +238,11 @@ Result: a correctly-played pizz note scored **~10–20 ¢ sharp** — a directio
 sharp, long-held notes were accurate).
 
 Fix: the pizz **attack-skip and stability-window are now calibration-owned per rig**
-(`AppSettings.pizzAttackSkipMs` / `pizzStabilityWindowMs`, applied by `NoteAccuracyViewModel` for pizz only —
-arco keeps its preset). The wizard's pizz phase replays the recorded plucked takes through the real
+(`AppSettings.pizzAttackSkipMs` / `pizzStabilityWindowMs`, applied for pizz only via the shared
+`CaptureParams.applying(settings, pizz)` so **every** capture game — Note Accuracy, Shift, Chords —
+freezes on the same rig timing; arco keeps its preset). Originally only `NoteAccuracyViewModel` applied
+it, which silently left Shift and Chords on the raw 60/150 defaults and froze pizz landings on the
+attack transient (2026-07-15) — the single builder is what prevents that per-game drift. The wizard's pizz phase replays the recorded plucked takes through the real
 game capture under each `CalibrationAnalysis.PIZZ_TIMING_CANDIDATES` (60/150 … 200/300, least added
 latency first) and picks the **smallest** whose frozen pitch lands within
 `PIZZ_TIMING_TOLERANCE_CENTS` (8 ¢) of where the note actually **settles** — `settledPitchHz`, the
@@ -400,16 +403,34 @@ hand-copy inside `ArpeggioCapture` are both gone.
   and calls `captureFilter`. Ring-over is against the **previous tone of the same arpeggio**;
   too-soon applies to the **root only**. Strict ascending order: a wrong **root** re-arms; a wrong
   **third/fifth** is scored as a miss and advances (never stuck).
-- **Shift**: `game/ShiftCapture` now arms its **start confirmation** identically
+- **Shift**: `game/ShiftCapture` arms its **start confirmation** identically
   (`skipQuietGate=true, requireOnsetRise=true`) so a mid-round legato start registers (see §3 — this
   was the "start note didn't register" bug; the old default armed `AWAIT_QUIET` and starved). The
-  wrong-start re-arm stays `requireOnsetRise=false` so a *legato correction* is still caught. (The
-  glide-filtered **landing** does not yet route through `captureFilter`; that's optional future
-  leniency, not a duplicated copy.)
+  wrong-start re-arm stays `requireOnsetRise=false` so a *legato correction* is still caught. **Both**
+  captures now route through `captureFilter`:
+  - the **landing** — judged against the shift **target**, with the **confirmed start as the
+    ring-over source** (the still-ringing start note is what bleeds into the landing). A
+    flimsy/harmonic/sub-playable/ring-over "landing" is discarded and it keeps listening for the real
+    one (capped at `MAX_DISCARDS`), instead of freezing an artifact as a false wrong note. This closed
+    the 2026-07-15 "wrong note when it wasn't" report: a landing had frozen 348 ms after the cue on
+    225 Hz — the exact 2nd harmonic of the ringing 112 Hz start note — for a false +938 c.
+  - the **start confirmation** — an off-tolerance freeze that the filter flags as an artifact
+    (flimsy/harmonic of the start/sub-playable) re-arms **quietly** rather than flashing "that's not
+    it", so a detector overtone no longer nags her (the "some took a while with 'that's not it'" half
+    of the same report). A note she genuinely plays wrong (off-tolerance but not an artifact) still
+    asks again.
+
+  Three `ShiftCaptureTest` cases guard these (harmonic-of-ringing-start landing repro; a firmly-played
+  real wrong note that must *not* be over-discarded; a flimsy start artifact that must *not* flash).
 
 The per-game **loop** (arm → filter → re-arm) is deliberately *not* factored into a shared wrapper:
-each machine's accept-side differs (score / strict-order-and-wrong-root / start-tolerance), so a
-shared loop would need callbacks that leak more than they save. The shared unit is the filter.
+each machine's accept-side differs (score / strict-order-and-wrong-root / start-tolerance-and-quiet /
+shift landing), so a shared loop would need callbacks that leak more than they save. The shared unit
+is the filter. **Sustain is the one game outside this** — `SustainCapture` holds-in-tune over time
+rather than freezing a first stable pitch, so it has nothing for `captureFilter` (a freeze-time
+discard) or `CaptureParams` timing to attach to; it rejects the same artifacts structurally instead
+(grace window + `holdBandCents`/`statsClampCents` exclude off-pitch glitches, median stats absorb a
+sharp attack). See §6.
 
 Filter thresholds remain **provisional** — retune the arpeggio/shift specifics against a real
 game-trace (Settings → Debug "Record & trace games", tags `chords-*` / `shift-*`) before trusting them.

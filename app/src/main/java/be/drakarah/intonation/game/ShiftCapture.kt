@@ -50,12 +50,26 @@ sealed interface ShiftState {
 
 /** Drives one shift attempt: confirm start -> randomized cue -> departure -> first stable
  * landing. Sliding into the target cannot score: glide samples are excluded from the landing
- * stability window, so only the place where the pitch stops counts. Terminal state sticky. */
+ * stability window, so only the place where the pitch stops counts. Terminal state sticky.
+ *
+ * The landing runs through the SAME shared [captureFilter] Note Accuracy uses (docs/DETECTION.md §4):
+ * a frozen "landing" that is really an artifact — flimsy/low-energy, an integer harmonic of the
+ * target, sub-playable, or the ringing START note bleeding over — is discarded and listening
+ * continues for the real landing, instead of freezing the artifact and scoring a false wrong note
+ * (her 2026-07-15 report: a landing froze on the 2nd harmonic of the still-ringing start note). */
 class ShiftCapture(
     private val startHz: Double,
+    /** The shift target pitch (Hz) — the reference the landing filter judges artifacts against.
+     * 0 disables landing filtering (used by unit tests that only exercise the state machine). */
+    private val targetHz: Double,
     private val captureParams: CaptureParams,
     private val params: ShiftParams = ShiftParams(),
+    /** Calibration-owned discard thresholds, shared with every game (see [CaptureFilterConfig]). */
+    private val filterConfig: CaptureFilterConfig = CaptureFilterConfig(),
     random: Random = Random.Default,
+    /** Trace sink for a discarded artifact (phase = "start" | "landing") — the ViewModel logs it,
+     * mirroring [NoteAttemptCapture]'s onDiscard so the game trace records why one was rejected. */
+    private val onDiscard: ((String, CapturedPitch, CaptureFilterResult) -> Unit)? = null,
 ) {
     var state: ShiftState = ShiftState.ConfirmStart()
         private set
@@ -75,6 +89,11 @@ class ShiftCapture(
     private var departStreak = 0
     private var lastUsableMs = -1L
     private var confirmedStartHz = 0f
+    /** Landing artifacts discarded while listening for the real landing (capped at [MAX_DISCARDS]). */
+    private var landingReArms = 0
+    /** Start-confirm artifacts discarded (a flimsy/harmonic freeze isn't a played wrong note, so it
+     * must NOT flash "that's not it" — it re-arms quietly). Capped at [MAX_DISCARDS]. */
+    private var startReArms = 0
 
     fun process(sample: PitchSample): ShiftState {
         if (state is ShiftState.Finished) return state
@@ -98,11 +117,22 @@ class ShiftCapture(
                     cueAtMs = sample.timestampMs + cueDelayMs
                     state = ShiftState.HoldStart
                 } else {
-                    // wrong note — say so and re-arm permissively: she's already playing and may
-                    // correct legato (slide / re-finger with no fresh attack), so don't require an
-                    // onset-rise here or a slid correction would never be captured.
+                    // Off the start note. Re-arm permissively either way: she's already playing and
+                    // may correct legato (slide / re-finger with no fresh attack), so don't require
+                    // an onset-rise or a slid correction would never be captured.
                     startCapture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = false)
-                    state = ShiftState.ConfirmStart(wrongNote = true)
+                    // But only flash "that's not it" for a note she actually PLAYED wrong — a flimsy
+                    // transient or an integer harmonic of the start (a detector overtone) is an
+                    // artifact, so keep listening quietly instead (shared captureFilter; her
+                    // "some took a while with 'that's not it'" report).
+                    val filter = artifact(s.result, referenceHz = startHz, ringSourceHz = 0f)
+                    if (filter != null && filter.discard && startReArms < MAX_DISCARDS) {
+                        onDiscard?.invoke("start", s.result, filter)
+                        startReArms++
+                        // leave the ConfirmStart(wrongNote) flag as-is — no "that's not it" flash
+                    } else {
+                        state = ShiftState.ConfirmStart(wrongNote = true)
+                    }
                 }
             }
             CaptureState.TimedOut -> state = ShiftState.Finished(
@@ -160,23 +190,61 @@ class ShiftCapture(
                     departStreak = 0
                     lastUsableMs = sample.timestampMs
                     state = ShiftState.Shift
-                } else {
-                    state = ShiftState.Finished(
-                        ShiftResult(
-                            landedHz = s.result.frequencyHz,
-                            landingTimeMs = sample.timestampMs - cueShownMs,
-                            quality = s.result.quality,
-                            timedOut = false,
-                            confirmedStartHz = confirmedStartHz,
-                        )
-                    )
+                    return
                 }
+                val filter = artifact(s.result, referenceHz = targetHz, ringSourceHz = confirmedStartHz)
+                if (filter != null && filter.discard && landingReArms < MAX_DISCARDS) {
+                    // Artifact, not the landing (flimsy / harmonic of target / sub-playable / the
+                    // ringing start note over the landing) — keep listening for the real landing,
+                    // exactly as Note Accuracy re-arms past a discarded capture.
+                    onDiscard?.invoke("landing", s.result, filter)
+                    landingReArms++
+                    landingCapture = AttemptCapture(
+                        captureParams.copy(glideCentsPerSample = params.glideCentsPerSample),
+                        skipQuietGate = true,
+                    )
+                    return
+                }
+                state = ShiftState.Finished(
+                    ShiftResult(
+                        landedHz = s.result.frequencyHz,
+                        landingTimeMs = sample.timestampMs - cueShownMs,
+                        quality = s.result.quality,
+                        timedOut = false,
+                        confirmedStartHz = confirmedStartHz,
+                    )
+                )
             }
             CaptureState.TimedOut -> state = ShiftState.Finished(
                 ShiftResult(null, null, null, timedOut = true)
             )
             else -> {}
         }
+    }
+
+    /** Run a frozen pitch through the shared discard filter against [referenceHz] (the start note
+     * for confirmation, the target for the landing), with [ringSourceHz] as the ring-over source
+     * (the ringing note that bleeds in — the confirmed start for a landing; none for the start).
+     * Null when filtering is disabled ([referenceHz] <= 0, e.g. unit tests without a target). The
+     * shift never applies the too-soon rule (its own cue/depart handshake paces the attempt). */
+    private fun artifact(frozen: CapturedPitch, referenceHz: Double, ringSourceHz: Float): CaptureFilterResult? {
+        if (referenceHz <= 0.0) return null
+        val c = cents(frozen.frequencyHz, referenceHz)
+        val octaves = (c / 1200f).roundToInt()
+        val isOctaveOff = abs(c) > WRONG_NOTE_CENTS && octaves != 0 &&
+            abs(c - octaves * 1200f) <= OCTAVE_TOLERANCE_CENTS
+        return captureFilter(
+            capturedHz = frozen.frequencyHz,
+            quality = frozen.quality,
+            energyLevel = frozen.energyLevel,
+            centsFromTarget = c,
+            wrongNote = abs(c) > WRONG_NOTE_CENTS,
+            wrongOctave = isOctaveOff,
+            targetHz = referenceHz,
+            previousAnswerHz = ringSourceHz,
+            elapsedSincePromptMs = Long.MAX_VALUE,
+            config = filterConfig,
+        )
     }
 
     private fun newStartCapture() =

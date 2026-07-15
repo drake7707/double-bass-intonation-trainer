@@ -85,6 +85,7 @@ These names appear throughout the code and traces. This is what they mean in pra
 | `stabilityBandCents` | How narrow the pitch spread must stay inside the stability window | `AttemptCapture` |
 | `captureWindowMs` | Maximum time allowed to find a stable pitch after onset | `AttemptCapture` |
 | `wrongNoteMinLevel` | Minimum energy required before a wrong note is treated as a real played wrong note | `NoteAccuracyViewModel.onCaptured` |
+| `WRONG_NOTE_CENTS` | How far off the target a frozen pitch may be and still count as an *attempt at that note* (scored, feeds intonation/drift). Beyond it the capture is a different note — flagged `wrongNote`, counted as a note-finding miss, kept OUT of intonation | `Scoring.kt`; every game VM's classification |
 | `lowestPlayableHz` | Anything below this cannot be a real bass note and is treated as artifact | `NoteAccuracyViewModel.onCaptured`, pizz octave guard |
 | `missingFundamentalMaxHz` | Highest pitch where octave-down correction is even allowed because above this the mic should hear the true fundamental | `PitchGate` |
 | `oddHarmonicMinRatio` / `oddHarmonicMinRelative` | How strong the 3rd-harmonic evidence must be before halving an octave-high detector read | `PitchGate` |
@@ -340,7 +341,44 @@ reason.
 **With the §3.6 attack requirement in place, most of these rarely fire** — the ring simply never
 onsets. They remain as defence-in-depth.
 
-### 4.1 Same filter, reused by the Chords (arpeggio) game
+### 4.1 `WRONG_NOTE_CENTS` — the "attempt vs. different note" boundary
+
+The rules above decide whether a frozen pitch is *trustworthy*. `WRONG_NOTE_CENTS` (`Scoring.kt`)
+decides, once trusted, whether it's the note she **meant**. Inside the band it's an attempt at the
+target: scored, and folded into the intonation average and the drift trend. Outside it, it's a
+*different* note — flagged `wrongNote`, surfaced as "wrong note?", counted as its own note-finding
+dimension, and kept **out** of every cents aggregate. It is used identically by all four game VMs
+(Note Accuracy, Shift, Chords, Arpeggio).
+
+**It is a classifier boundary, NOT a scoring one.** Points already reach 0 far earlier — by
+30–75c depending on difficulty (`scoreAttempt`, `Difficulty.zeroAtCents`). So a note 3 semitones
+off scores 0 whether or not it's called a wrong note; the only thing `WRONG_NOTE_CENTS` changes is
+whether that 0 drags down the *cents* average as a "very flat attempt" or is set aside as "she was
+looking for a different note." The metrics rollup follows the same principle: cents sums include
+scored attempts only; `wrongNote`/`wrongOctave`/`timeout` are their own counts (`docs/metrics-plan.md`).
+
+**History — why it was 450, why it's now 250.** From M2 it was **450c** (4.5 semitones): back then
+the detector routinely misread notes a full octave off, and a loose bound stopped those artifacts
+being branded wrong notes she never played — the same "bias toward not-the-student's-fault" that
+governs the whole pipeline. Octave misreads are now handled upstream (§1 `PitchGate` octave-up
+correction, §2.1 octave-settle, §A′ octave-fold), so the only thing the loose bound still did was
+let 1–4.5-semitone mis-detections **pollute the cents trend** — the −375c/−136c artifacts behind
+the 2026-07-15 confusing-drift-banner misfires (that fix clamps drift to ±60c downstream; this
+removes the same artifacts at the source, before they reach any aggregate). Tightened to **250c**:
+≥2.5 semitones is a different note, while a badly-flat *genuine* attempt (1–2 semitones) still scores.
+
+**Interaction with octave classification (why lowering it is safe).** A wrong-octave read is only
+classified as such when it is `> WRONG_NOTE_CENTS` **and** within `OCTAVE_TOLERANCE_CENTS` (60c) of
+a whole octave — i.e. ≥1140c. 250 sits nowhere near that band, so octave detection/folding is
+untouched. Verified: `FeedbackRegressionTest`, `OutcomeClassifierTest`, `PizzOctaveSettleTest`,
+`OctaveCorrectionEvidence`, `RealBassRegressionTest`, `DriftDetectorTest` all green at 250.
+
+**250 is provisional — a pedagogy call, not a device property.** It is NOT calibrated per rig (a
+semitone is a semitone everywhere, like the §5C constants). If in play it brands genuine
+searching-for-the-note attempts as wrong notes, raise toward 300–350; if wrong notes still leak
+into the intonation feel, drop toward 200. One-line change in `Scoring.kt`.
+
+### 4.2 Same filter, reused by the Chords (arpeggio) game
 
 `game/ArpeggioCapture` plays a triad tone-by-tone by composing one `AttemptCapture` per tone
 (each armed `skipQuietGate=true, requireOnsetRise=true`, exactly like Note Accuracy) — the same

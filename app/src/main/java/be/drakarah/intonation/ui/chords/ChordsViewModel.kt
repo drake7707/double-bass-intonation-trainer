@@ -81,7 +81,7 @@ data class ChordsUiState(
     val promptIndex: Int = 0,
     val roundLength: Int = 10,
     val prompt: ChordSpec? = null,
-    val phase: ChordsPhase = ChordsPhase.CountIn(be.drakarah.intonation.ui.round.COUNT_IN_SECS),
+    val phase: ChordsPhase = ChordsPhase.CountIn(be.drakarah.intonation.ui.common.COUNT_IN_SECS),
     val totalScore: Int = 0,
     /** Total scoreable points in the round (fingered tones × 100 — open strings aren't scored),
      * so it can vary with which chords were drawn. */
@@ -128,6 +128,8 @@ class ChordsViewModel(
     private var chordFingering = ChordFingering.NATURAL
     private val driftDetector = be.drakarah.intonation.game.DriftDetector()
     private var startedAtWallClock = 0L
+    /** Latest sample's audio-clock time, so prompt events land on the trace timeline. */
+    private var lastSampleMs = 0L
 
     fun start() {
         if (listenJob != null) return
@@ -159,13 +161,14 @@ class ChordsViewModel(
                 prompt = prompts[0],
                 maxScore = scoreableTones(prompts) * 100,
                 noteStyle = settings.noteNameStyle,
-                phase = ChordsPhase.CountIn(be.drakarah.intonation.ui.round.COUNT_IN_SECS),
+                phase = ChordsPhase.CountIn(be.drakarah.intonation.ui.common.COUNT_IN_SECS),
                 ready = true,
             )
             launch { runCountIn() }
 
             engine.samples().collect { sample ->
                 trace?.onSample(sample)
+                lastSampleMs = sample.timestampMs
                 val state = _uiState.value
                 when (state.phase) {
                     is ChordsPhase.CountIn -> {}
@@ -173,7 +176,15 @@ class ChordsViewModel(
                         when (val cs = capture?.process(sample)) {
                             is ArpeggioState.Capturing -> {
                                 val next = ChordsPhase.Playing(cs.toneIndex, cs.wrongRoot)
-                                if (state.phase != next) _uiState.value = state.copy(phase = next)
+                                if (state.phase != next) {
+                                    if ((state.phase as? ChordsPhase.Playing)?.toneIndex != cs.toneIndex) {
+                                        trace?.event(
+                                            sample.timestampMs, "tone",
+                                            "idx=${cs.toneIndex} wrongRoot=${cs.wrongRoot}",
+                                        )
+                                    }
+                                    _uiState.value = state.copy(phase = next)
+                                }
                             }
                             is ArpeggioState.Finished -> onFinished(cs, state, sample.timestampMs)
                             null -> {}
@@ -189,7 +200,7 @@ class ChordsViewModel(
     }
 
     private suspend fun runCountIn() {
-        for (s in be.drakarah.intonation.ui.round.COUNT_IN_SECS downTo 1) {
+        for (s in be.drakarah.intonation.ui.common.COUNT_IN_SECS downTo 1) {
             _uiState.value = _uiState.value.copy(phase = ChordsPhase.CountIn(s))
             kotlinx.coroutines.delay(1000)
         }
@@ -204,13 +215,19 @@ class ChordsViewModel(
         start()
     }
 
-    private fun newCapture(chord: ChordSpec) = ArpeggioCapture(
-        targetsHz = chord.tones.map { it.target.frequency(a4) },
-        captureParams = captureParams,
-        wrongNoteMinLevel = wrongNoteMinLevel,
-        lowestPlayableHz = lowestPlayableHz,
-        minReadMs = minReadMs,
-    )
+    private fun newCapture(chord: ChordSpec): ArpeggioCapture {
+        trace?.event(
+            lastSampleMs, "prompt",
+            "chord=${chord.root.midi} tones=${chord.tones.joinToString(",") { it.target.midi.toString() }}",
+        )
+        return ArpeggioCapture(
+            targetsHz = chord.tones.map { it.target.frequency(a4) },
+            captureParams = captureParams,
+            wrongNoteMinLevel = wrongNoteMinLevel,
+            lowestPlayableHz = lowestPlayableHz,
+            minReadMs = minReadMs,
+        )
+    }
 
     private fun scoreableTones(chords: List<ChordSpec>): Int =
         chords.sumOf { c -> c.tones.count { !it.isOpenString } }
@@ -252,6 +269,13 @@ class ChordsViewModel(
             }
             drift?.let { sounds.playDrift(sharp = it > 0) }
         }
+        trace?.event(
+            nowMs, "result",
+            "chord=${chord.root.midi} score=${attempt.score} stars=${attempt.weakestStars} " +
+                "tones=" + tones.joinToString(",") {
+                    if (!it.scored) "open" else it.cents?.let { c -> "%.0f".format(c) } ?: "-"
+                },
+        )
         revealUntilMs = nowMs + revealMs
         _uiState.value = state.copy(
             phase = ChordsPhase.Reveal(attempt),

@@ -1,7 +1,7 @@
 # Capture & detection — the definitive reference
 
 **Read this before touching anything in `game/AttemptCapture.kt`, `game/SustainCapture.kt`,
-`dsp/PitchGate.kt`, `ui/round/RoundViewModel.kt`, or the calibration wizard.** It records the
+`dsp/PitchGate.kt`, `ui/noteaccuracy/NoteAccuracyViewModel.kt`, or the calibration wizard.** It records the
 problem, every design decision, what worked and what didn't, and how we got there — so after a
 context reset we can be current again in one read.
 
@@ -53,7 +53,7 @@ flowchart LR
    B --> C[PitchGate<br/>accepted or rejected per window]
    C --> D[AttemptCapture or SustainCapture<br/>find onset and wait for stability]
    D --> E[Frozen CapturedPitch]
-   E --> F[RoundViewModel.onCaptured<br/>discard obvious artifacts]
+   E --> F[NoteAccuracyViewModel.onCaptured<br/>discard obvious artifacts]
    F --> G[Scored note or no note detected]
 ```
 
@@ -64,7 +64,7 @@ flowchart LR
 | `PitchEngine` + detector | Estimate a candidate pitch from the raw waveform | Windows with no usable pitch at all |
 | `PitchGate` | Reject bad windows and correct some octave-UP detector errors | Background noise, weak signal, non-harmonic junk, some missing-fundamental octave mistakes |
 | `AttemptCapture` | Decide whether a new played note started and when it became stable | Ring-over, sympathetic resonance with no new attack, unstable attack transients, glides |
-| `RoundViewModel.onCaptured` | Decide whether the frozen note was probably her actual attempt | Leftover previous note, too-fast artifacts, harmonic misreads, impossible low artifacts, flimsy transients |
+| `NoteAccuracyViewModel.onCaptured` | Decide whether the frozen note was probably her actual attempt | Leftover previous note, too-fast artifacts, harmonic misreads, impossible low artifacts, flimsy transients |
 
 ### 0.3 The main values, translated to human meaning
 
@@ -84,8 +84,8 @@ These names appear throughout the code and traces. This is what they mean in pra
 | `stabilityWindowMs` | How long the pitch must stay steady before freezing cleanly | `AttemptCapture` |
 | `stabilityBandCents` | How narrow the pitch spread must stay inside the stability window | `AttemptCapture` |
 | `captureWindowMs` | Maximum time allowed to find a stable pitch after onset | `AttemptCapture` |
-| `wrongNoteMinLevel` | Minimum energy required before a wrong note is treated as a real played wrong note | `RoundViewModel.onCaptured` |
-| `lowestPlayableHz` | Anything below this cannot be a real bass note and is treated as artifact | `RoundViewModel.onCaptured`, pizz octave guard |
+| `wrongNoteMinLevel` | Minimum energy required before a wrong note is treated as a real played wrong note | `NoteAccuracyViewModel.onCaptured` |
+| `lowestPlayableHz` | Anything below this cannot be a real bass note and is treated as artifact | `NoteAccuracyViewModel.onCaptured`, pizz octave guard |
 | `missingFundamentalMaxHz` | Highest pitch where octave-down correction is even allowed because above this the mic should hear the true fundamental | `PitchGate` |
 | `oddHarmonicMinRatio` / `oddHarmonicMinRelative` | How strong the 3rd-harmonic evidence must be before halving an octave-high detector read | `PitchGate` |
 | `pizzOddHarmonicMinRatio` / `pizzOddHarmonicMinRelative` | Separate, looser version of the same proof for pizzicato low notes | `PitchGate` when game mode is pizz |
@@ -139,7 +139,7 @@ one specific failure mode:
    chaotic or while the player is gliding.
 5. **Pizz octave settle** gives plucked notes a short chance to drop from an octave-high attack
    reading onto the true fundamental before the note is frozen.
-6. **Target-aware discard rules** in `RoundViewModel.onCaptured` throw away captures that still
+6. **Target-aware discard rules** in `NoteAccuracyViewModel.onCaptured` throw away captures that still
    look like leftovers or detector artifacts even after all of the above.
 
 That layered approach is the bigger picture behind the many incremental fixes: each fix landed in
@@ -162,7 +162,7 @@ the user was asked to play. Shared by every screen. Emits a `PitchSample` per wi
 - `game/AttemptCapture` — Note Accuracy & Shift. Freezes the first stable pitch.
 - `game/SustainCapture` — Sustain. Tracks how long a target is held in tune.
 
-### Layer 3 — `ui/round/RoundViewModel.onCaptured` — target-AWARE game rule
+### Layer 3 — `ui/noteaccuracy/NoteAccuracyViewModel.onCaptured` — target-AWARE game rule
 This is the only place that knows the prompted note. It decides whether a frozen pitch is
 *really her attempt* or should be discarded (see §4). Target-aware logic lives here, **not** in
 the target-agnostic machine — that separation is deliberate and keeps the machine reusable by
@@ -232,7 +232,7 @@ Result: a correctly-played pizz note scored **~10–20 ¢ sharp** — a directio
 sharp, long-held notes were accurate).
 
 Fix: the pizz **attack-skip and stability-window are now calibration-owned per rig**
-(`AppSettings.pizzAttackSkipMs` / `pizzStabilityWindowMs`, applied by `RoundViewModel` for pizz only —
+(`AppSettings.pizzAttackSkipMs` / `pizzStabilityWindowMs`, applied by `NoteAccuracyViewModel` for pizz only —
 arco keeps its preset). The wizard's pizz phase replays the recorded plucked takes through the real
 game capture under each `CalibrationAnalysis.PIZZ_TIMING_CANDIDATES` (60/150 … 200/300, least added
 latency first) and picks the **smallest** whose frozen pitch lands within

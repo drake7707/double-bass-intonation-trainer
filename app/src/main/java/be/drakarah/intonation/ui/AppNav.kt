@@ -8,7 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import be.drakarah.intonation.ui.debug.DebugPitchScreen
 import be.drakarah.intonation.ui.drone.DroneScreen
 import be.drakarah.intonation.ui.home.HomeScreen
-import be.drakarah.intonation.ui.round.RoundScreen
+import be.drakarah.intonation.ui.noteaccuracy.NoteAccuracyScreen
 import be.drakarah.intonation.ui.about.AboutScreen
 import be.drakarah.intonation.ui.achievements.AchievementsScreen
 import be.drakarah.intonation.ui.chords.ChordsScreen
@@ -42,12 +42,12 @@ object Routes {
     const val CALIBRATE = "calibrate"
     const val WIZARD = "wizard"
     const val DRONE = "drone"
-    const val ROUND = "round/{mode}"
+    const val NOTE_ACCURACY = "noteaccuracy/{mode}"
     const val SUSTAIN = "sustain/{mode}"
     const val SHIFT = "shift/{mode}/{style}"
     const val CHORDS = "chords/{mode}"
 
-    fun round(mode: String) = "round/$mode"
+    fun noteAccuracy(mode: String) = "noteaccuracy/$mode"
     fun sustain(mode: String) = "sustain/$mode"
     fun shift(mode: String, style: String) = "shift/$mode/$style"
     fun chords(mode: String) = "chords/$mode"
@@ -91,7 +91,7 @@ fun AppNav() {
         }
         composable(Routes.HOME) {
             HomeScreen(
-                onStartNoteAccuracy = { mode -> navController.navigate(Routes.round(mode)) },
+                onStartNoteAccuracy = { mode -> navController.navigate(Routes.noteAccuracy(mode)) },
                 onStartSustain = { mode -> navController.navigate(Routes.sustain(mode)) },
                 onStartShift = { mode, style -> navController.navigate(Routes.shift(mode, style)) },
                 onStartChords = { mode -> navController.navigate(Routes.chords(mode)) },
@@ -157,8 +157,8 @@ fun AppNav() {
                 onBack = { navController.popBackStack() }
             )
         }
-        composable(Routes.ROUND) {
-            RoundScreen(onExit = { navController.popBackStack() })
+        composable(Routes.NOTE_ACCURACY) {
+            NoteAccuracyScreen(onExit = { navController.popBackStack() })
         }
         composable(Routes.SUSTAIN) {
             SustainScreen(onExit = { navController.popBackStack() })

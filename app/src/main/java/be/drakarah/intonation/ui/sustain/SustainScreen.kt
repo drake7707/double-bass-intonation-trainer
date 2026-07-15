@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.game.SustainFocus
 import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
@@ -268,14 +269,6 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
             fontWeight = FontWeight.Bold,
             color = color,
         )
-        if (result.result.resets > 0) {
-            Text(
-                "${result.result.resets} reset${if (result.result.resets > 1) "s" else ""}",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Spacer(Modifier.height(Spacing.ITEM_SPACING))
         Text(
             when (result.starCount) {
                 3 -> "★★★"; 2 -> "★★☆"; 1 -> "★☆☆"; else -> "☆☆☆"
@@ -284,11 +277,77 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
             color = color,
         )
         Text(
-            "+${result.score}", 
+            "+${result.score}",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
         )
+        // The two metrics, broken apart so the number means something, then one coaching line.
+        if (result.result.success) {
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SustainMetric("In tune", accuracyLabel(result.result.medianCents), result.focus != SustainFocus.INTONATION && result.focus != SustainFocus.BOTH)
+                Spacer(Modifier.width(Spacing.SECTION_BREAK))
+                SustainMetric("Steady", steadinessLabel(result.result.steadinessCents), result.focus != SustainFocus.BOW_STEADINESS && result.focus != SustainFocus.BOTH)
+            }
+        }
+        Spacer(Modifier.height(Spacing.FINE_SPACING))
+        Text(
+            coachingText(result),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
     }
+}
+
+/** One labelled metric (In tune / Steady), green tick when it's the part she nailed. */
+@Composable
+private fun SustainMetric(label: String, value: String, good: Boolean) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = if (good) ResultColors.excellent else ResultColors.close,
+        )
+    }
+}
+
+private fun accuracyLabel(medianCents: Float?): String {
+    val c = medianCents ?: return "—"
+    val a = kotlin.math.abs(c)
+    return when {
+        a < 5f -> "spot on"
+        c > 0f -> String.format(Locale.US, "%.0f¢ sharp", a)
+        else -> String.format(Locale.US, "%.0f¢ flat", a)
+    }
+}
+
+private fun steadinessLabel(steadinessCents: Float?): String {
+    val s = steadinessCents ?: return "—"
+    return when {
+        s < 4f -> "rock steady"
+        s < 8f -> String.format(Locale.US, "±%.0f¢", s)
+        else -> String.format(Locale.US, "±%.0f¢ wobble", s)
+    }
+}
+
+/** One focused thing to work on, so the score isn't a bare number. */
+private fun coachingText(result: SustainAttemptUi): String = when (result.focus) {
+    SustainFocus.STEADY_AND_TRUE -> "Rock steady and in tune. 🎯"
+    SustainFocus.INTONATION -> {
+        val c = result.result.medianCents ?: 0f
+        if (c > 0f) "Steady bow — but sitting sharp. Place the note a hair lower."
+        else "Steady bow — but sitting flat. Place the note a hair higher."
+    }
+    SustainFocus.BOW_STEADINESS -> "Good pitch — but the note wandered. Even out your bow speed."
+    SustainFocus.BOTH -> "Settle the pitch on a slow, even bow."
+    SustainFocus.HOLD_LONGER -> "Keep the note ringing longer — hold it steady the whole time."
 }
 
 @Composable

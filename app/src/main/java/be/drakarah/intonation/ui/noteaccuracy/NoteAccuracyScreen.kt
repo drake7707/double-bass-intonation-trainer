@@ -1,4 +1,4 @@
-package be.drakarah.intonation.ui.round
+package be.drakarah.intonation.ui.noteaccuracy
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -49,9 +49,9 @@ import be.drakarah.intonation.ui.theme.TextSizes
 import java.util.Locale
 
 @Composable
-fun RoundScreen(
+fun NoteAccuracyScreen(
     onExit: () -> Unit,
-    viewModel: RoundViewModel = viewModel(factory = RoundViewModel.Factory),
+    viewModel: NoteAccuracyViewModel = viewModel(factory = NoteAccuracyViewModel.Factory),
 ) {
     RequireMicPermission {
         LaunchedEffect(Unit) { viewModel.start() }
@@ -131,10 +131,10 @@ fun RoundScreen(
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     when (val phase = state.phase) {
-                        is RoundPhase.CountIn -> CountIn(phase.secsLeft)
-                        RoundPhase.Listening -> ListeningPrompt(state)
-                        is RoundPhase.Reveal -> RevealResult(phase.result, state.noteStyle)
-                        RoundPhase.Done -> RoundSummary(
+                        is NoteAccuracyPhase.CountIn -> CountIn(phase.secsLeft)
+                        NoteAccuracyPhase.Listening -> ListeningPrompt(state)
+                        is NoteAccuracyPhase.Reveal -> RevealResult(phase.result, state.noteStyle)
+                        NoteAccuracyPhase.Done -> NoteAccuracySummary(
                             state, onExit,
                             onApplyLevel = viewModel::applySuggestedLevel,
                             onPlayAgain = viewModel::restart,
@@ -142,7 +142,7 @@ fun RoundScreen(
                     }
                 }
                 Spacer(Modifier.height(Spacing.ITEM_SPACING))
-                if (state.phase != RoundPhase.Done) {
+                if (state.phase != NoteAccuracyPhase.Done) {
                     OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
                         Text("Quit round")
                     }
@@ -178,7 +178,7 @@ private fun CountIn(secsLeft: Int) {
 }
 
 @Composable
-private fun ListeningPrompt(state: RoundUiState) {
+private fun ListeningPrompt(state: NoteAccuracyUiState) {
     val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
         initialValue = 0.35f,
         targetValue = 1f,
@@ -272,8 +272,8 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
 }
 
 @Composable
-private fun RoundSummary(
-    state: RoundUiState,
+private fun NoteAccuracySummary(
+    state: NoteAccuracyUiState,
     onExit: () -> Unit,
     onApplyLevel: () -> Unit,
     onPlayAgain: () -> Unit,
@@ -312,7 +312,7 @@ private fun RoundSummary(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(4.dp))
-            RoundCentsChart(state.results)
+            NoteAccuracyCentsChart(state.results)
         }
         Text(
             "${state.results.sumOf { it.starCount }} of ${state.roundLength * 3} stars",
@@ -370,7 +370,7 @@ private fun RoundSummary(
  * grey dots on the centre line so gaps in the line are visually obvious.
  */
 @Composable
-private fun RoundCentsChart(results: List<AttemptUi>) {
+private fun NoteAccuracyCentsChart(results: List<AttemptUi>) {
     val lineColor = MaterialTheme.colorScheme.primary
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val missColor = MaterialTheme.colorScheme.outlineVariant

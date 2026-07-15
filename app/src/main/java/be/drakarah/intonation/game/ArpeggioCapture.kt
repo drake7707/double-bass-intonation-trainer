@@ -29,7 +29,7 @@ sealed interface ArpeggioState {
  * (the string is already sounding between tones, no silence to wait for) and
  * `requireOnsetRise=true` (a genuine attack, so the *previous* tone ringing on doesn't onset).
  *
- * The target-aware discard filter is ported from `RoundViewModel.onCaptured`: the tone she just
+ * The target-aware discard filter is ported from `NoteAccuracyViewModel.onCaptured`: the tone she just
  * played ringing into the next capture is the dominant false "wrong note" here, so a frozen
  * pitch that is ring-over of the previous tone, a harmonic artifact, unplayable, flimsy, or too
  * soon (root only) is discarded and listening continues instead of being scored. A confidently

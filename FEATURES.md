@@ -71,12 +71,22 @@ an impossible sub-range reading, or a harmonic overtone of the target is ignored
 app keeps listening for the note you meant.
 
 ### Sustain
-Hold the prompted note inside a tolerance ring (tolerance follows difficulty: ±20/15/10
-cents). The ring fills toward the goal (5 s). A tune-up-style bar shows how sharp/flat you
-are (it greys out when you're not playing). A brief scoop out — like a bow direction change
-— is forgiven; only sustained drift resets the timer. While out of tolerance the big hint
-stays coarse ("too sharp / too flat") — never a needle. Stopping the note banks the best
-stretch; a 20-second cap awards partial credit.
+Hold the prompted note steady for the goal (5 s). The ring fills while you're holding the
+note — a generous ±40-cent band, so it keeps filling through a bow-direction scoop; only a
+sustained departure to a different note (>0.5 s out) resets it. A tune-up-style bar shows how
+sharp/flat you are (it greys out when you're not playing, and goes green inside the
+difficulty tolerance ±20/15/10 cents). While out of tolerance the big hint stays coarse
+("too sharp / too flat") — never a needle. Stopping the note banks the best stretch; a
+20-second cap awards partial credit.
+
+A completed hold is scored on **two things** (50/50): **accuracy** — how close the held pitch
+centre sat to the target (median cents), and **steadiness** — how little the pitch wandered
+(consistent bow speed; measured as the median-absolute-deviation of cents). Both use robust
+statistics, so an unavoidable bow-reversal scoop barely dents the score. The results screen
+breaks the two apart — "In tune: …" and "Steady: …", greening whichever you nailed — and
+coaches one focus, e.g. *"Steady bow — but sitting sharp. Place the note a hair lower."* or
+*"Good pitch — but the note wandered. Even out your bow speed."* Sustain accuracy also feeds
+the Progress cents average.
 
 ### Shift Trainer (two variants, scored separately)
 Confirm the start note (wrong note → "that's not it" and it re-arms), hold it through a
@@ -153,9 +163,9 @@ its own scoring category** — scores are only ever compared between identical s
   showing every badge, unlocked-first, with an unlock-progress bar; locked ones show 🔒.
 - **Accuracy by position**: a breakdown of your average intonation (cents) in each
   position across all your rounds — a fuller/greener bar means a more secure position, so
-  you can see at a glance which positions still feel unfamiliar. (Cents-scored exercises
-  only; not shown for Sustain, which isn't measured in cents. Fills in from rounds played
-  after this feature shipped.)
+  you can see at a glance which positions still feel unfamiliar. (Per exercise tab; Sustain
+  now contributes too, using the held-pitch accuracy. Fills in from rounds played after each
+  exercise started recording cents.)
 - **Improvement over points**: round summaries compare this round's average error against
   your previous week ("14.8 cents — last week 18.6 ⬇"), because improving matters more
   than the raw score.

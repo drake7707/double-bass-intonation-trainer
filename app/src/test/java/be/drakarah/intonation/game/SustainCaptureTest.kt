@@ -32,47 +32,96 @@ class SustainCaptureTest {
         generateSequence(fromMs) { it + hop }.takeWhile { it < toMs }
             .map { sample(it, (target * 2.0.pow(cents / 1200.0)).toFloat()) }.toList()
 
+    /** A wobbling note: cents follows a triangle of amplitude [wobble] around [centre], so the
+     * median/MAD are well-defined (a two-value square wave makes MAD degenerate). */
+    private fun wobble(fromMs: Long, toMs: Long, centre: Float, wobble: Float): List<PitchSample> {
+        val cycle = listOf(-1f, -0.5f, 0f, 0.5f, 1f, 0.5f, 0f, -0.5f)
+        var i = 0
+        return generateSequence(fromMs) { it + hop }.takeWhile { it < toMs }.map { t ->
+            val c = centre + cycle[i++ % cycle.size] * wobble
+            sample(t, (target * 2.0.pow(c / 1200.0)).toFloat())
+        }.toList()
+    }
+
     private fun capture() = SustainCapture(target, SustainParams(), skipQuietGate = false)
 
     @Test
-    fun steadyNoteSucceedsWithNoResets() {
-        // 300 quiet + onset + grace + 5 s hold
+    fun steadyInTuneNoteScoresTop() {
         val state = run(capture(), silence(0, 300) + note(300, 6200, cents = 2f))
-        assertTrue("expected Finished, got $state", state is SustainState.Finished)
         val result = (state as SustainState.Finished).result
         assertTrue(result.success)
         assertEquals(0, result.resets)
+        assertTrue("held pitch centre ~2¢", kotlin.math.abs(result.medianCents ?: 99f) <= 3f)
+        assertTrue("steady", (result.steadinessCents ?: 99f) <= 3f)
         assertEquals(100, scoreSustain(result, 5000))
         assertEquals(3, sustainStars(result))
+        assertEquals(SustainFocus.STEADY_AND_TRUE, sustainFocus(result))
     }
 
     @Test
-    fun briefBowReversalScoopDoesNotReset() {
+    fun steadyButOffPitchCoachesIntonationNotWobble() {
+        // held rock-steady but a consistent 22¢ sharp: accuracy is the problem, not the bow.
+        val state = run(capture(), silence(0, 300) + note(300, 6200, cents = 22f))
+        val result = (state as SustainState.Finished).result
+        assertTrue(result.success)
+        assertTrue("median ~+22¢", (result.medianCents ?: 0f) in 18f..26f)
+        assertTrue("still steady", (result.steadinessCents ?: 99f) <= 3f)
+        assertEquals(SustainFocus.INTONATION, sustainFocus(result))
+        assertTrue("off-pitch costs points", scoreSustain(result, 5000) < 90)
+    }
+
+    @Test
+    fun inTuneButWobblyCoachesBowSteadiness() {
+        // centre on target but ±18¢ wobble each frame (still within a forgiving hold): the bow,
+        // not the ear, is the issue.
+        val state = run(capture(), silence(0, 300) + wobble(300, 6200, centre = 0f, wobble = 18f))
+        val result = (state as SustainState.Finished).result
+        assertTrue(result.success)
+        assertTrue("centre on target", kotlin.math.abs(result.medianCents ?: 99f) <= 4f)
+        assertTrue("wobble shows up", (result.steadinessCents ?: 0f) >= 8f)
+        assertEquals(SustainFocus.BOW_STEADINESS, sustainFocus(result))
+        assertTrue("wobble costs points", scoreSustain(result, 5000) < 90)
+    }
+
+    @Test
+    fun briefBowReversalScoopDoesNotResetAndBarelyDentsSteadiness() {
         // Hold in tune, a ~200 ms scoop out (bow change) that returns, then finish the hold.
-        // The bow reversal must not cost the hold (her report) — 200 ms < outGraceMs 250 ms.
         val script = silence(0, 300) +
                 note(300, 2500, cents = 1f) +
                 note(2500, 2700, cents = 35f) +   // 200 ms scoop out and back
                 note(2700, 8000, cents = 1f)
-        val state = run(capture(), script)
-        val result = (state as SustainState.Finished).result
+        val result = (run(capture(), script) as SustainState.Finished).result
         assertTrue("expected success, got $result", result.success)
         assertEquals("a brief bow-change scoop must be forgiven", 0, result.resets)
+        // MAD shrugs off the handful of scoop samples — steadiness still reads steady.
+        assertTrue("steadiness robust to the scoop", (result.steadinessCents ?: 99f) <= 5f)
     }
 
     @Test
-    fun driftResetsTimerButCanStillSucceed() {
-        // hold 2 s, drift out for 300 ms, then hold 5 s
+    fun longerReversalStillForgivenUpToGrace() {
+        // ~450 ms scoop (the far end of her real reversals) is still forgiven with the 500 ms grace.
+        val script = silence(0, 300) +
+                note(300, 2500, cents = 0f) +
+                note(2500, 2950, cents = 40f) +   // 450 ms out and back
+                note(2950, 8100, cents = 0f)
+        val result = (run(capture(), script) as SustainState.Finished).result
+        assertTrue(result.success)
+        assertEquals("a reversal within the grace window must not reset", 0, result.resets)
+    }
+
+    @Test
+    fun sustainedDepartureResetsTimerButCanStillSucceed() {
+        // hold 2 s, leave the note for 700 ms (past the 500 ms grace — a real departure), then hold 5 s
         val script = silence(0, 300) +
                 note(300, 2300, cents = 0f) +
-                note(2300, 2600, cents = 30f) +
-                note(2600, 8100, cents = -3f)
-        val state = run(capture(), script)
-        val result = (state as SustainState.Finished).result
+                note(2300, 3000, cents = 60f) +
+                note(3000, 8600, cents = -3f)
+        val result = (run(capture(), script) as SustainState.Finished).result
         assertTrue(result.success)
         assertEquals(1, result.resets)
-        assertEquals(85, scoreSustain(result, 5000))
-        assertEquals(2, sustainStars(result))
+        // one reset costs a mild penalty off an otherwise-clean hold
+        assertTrue("resets nick the score", scoreSustain(result, 5000) in 90..96)
+        assertEquals(3, sustainStars(result))
     }
 
     @Test
@@ -80,8 +129,7 @@ class SustainCaptureTest {
         val inTune = note(300, 3000, cents = 1f)
         val outlier = listOf(sample(3000, (target * 2.0.pow(40.0 / 1200)).toFloat()))
         val more = note(3023, 6000, cents = 1f)
-        val state = run(capture(), silence(0, 300) + inTune + outlier + more)
-        val result = (state as SustainState.Finished).result
+        val result = (run(capture(), silence(0, 300) + inTune + outlier + more) as SustainState.Finished).result
         assertTrue(result.success)
         assertEquals("outlier must be debounced, not reset", 0, result.resets)
     }
@@ -92,19 +140,19 @@ class SustainCaptureTest {
         val script = silence(0, 300) +
                 note(300, 2400, cents = 0f) +
                 silence(2400, 20400)
-        val state = run(capture(), script)
-        val result = (state as SustainState.Finished).result
+        val result = (run(capture(), script) as SustainState.Finished).result
         assertTrue(!result.success)
         assertTrue("bestHeld ${result.bestHeldMs}", result.bestHeldMs in 1400..2000)
         val score = scoreSustain(result, 5000)
         assertTrue("partial score $score", score in 15..55)
         assertEquals(0, sustainStars(result))
+        assertEquals(SustainFocus.HOLD_LONGER, sustainFocus(result))
     }
 
     @Test
-    fun neverInToleranceScoresZero() {
-        val state = run(capture(), silence(0, 300) + note(300, 20400, cents = 40f))
-        val result = (state as SustainState.Finished).result
+    fun farOffPitchNeverHoldsAndScoresZero() {
+        // 60¢ off is outside the hold band (a different note / very out) — the ring never fills.
+        val result = (run(capture(), silence(0, 300) + note(300, 20400, cents = 60f)) as SustainState.Finished).result
         assertTrue(!result.success)
         assertEquals(0, result.bestHeldMs)
         assertEquals(0, scoreSustain(result, 5000))

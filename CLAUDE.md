@@ -15,7 +15,7 @@ score it. Live needles exist only on the Tune-up screen and Pitch debug screen.
 - `docs/DETECTION.md` — **the definitive capture/detection reference.** The problem history,
   every design decision, what worked/didn't, the trace-driven fix, threshold ownership, and the
   drill for diagnosing detection issues. Read it before editing `AttemptCapture`, `SustainCapture`,
-  `PitchGate`, `RoundViewModel.onCaptured`, or the calibration wizard.
+  `PitchGate`, `NoteAccuracyViewModel.onCaptured`, or the calibration wizard.
 - `FEATURES.md` — complete user-facing feature description. Keep in sync with changes.
 - `TESTING.md` — her hands-on verification checklist. **Discipline: every change that
   needs bass/phone verification gets a Pending item; move to Verified (dated) when she
@@ -126,7 +126,7 @@ insights/heatmaps, decay-relative pizz hold (maybe).
 ### Two capture-gating layers (don't confuse them)
 - **`dsp/PitchGate`** — target-AGNOSTIC, per-sample: noise/harmonic/energy gate + octave-UP
   correction. Shared by everything.
-- **`RoundViewModel.onCaptured`** — target-AWARE game rule (Note Accuracy only): a frozen
+- **`NoteAccuracyViewModel.onCaptured`** — target-AWARE game rule (Note Accuracy only): a frozen
   *wrong* note is discarded and listening continues when it's flimsy (SHAKY or
   `energyLevel < 55`), unplayable (`< 40 Hz`, below open E1), or a **non-octave integer
   harmonic of the target** (her "harmonic leniency": overtones are detector artifacts, not

@@ -9,7 +9,7 @@ import be.drakarah.intonation.data.SessionEntity
 import be.drakarah.intonation.data.SessionRepository
 import be.drakarah.intonation.game.Position
 import be.drakarah.intonation.game.SELECTABLE_POSITIONS
-import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
+import be.drakarah.intonation.ui.noteaccuracy.EXERCISE_NOTE_ACCURACY
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow

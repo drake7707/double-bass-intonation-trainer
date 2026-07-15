@@ -11,7 +11,7 @@ import be.drakarah.intonation.data.configKey
 import be.drakarah.intonation.game.ChordPool
 import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.ui.chords.EXERCISE_CHORDS
-import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
+import be.drakarah.intonation.ui.noteaccuracy.EXERCISE_NOTE_ACCURACY
 import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
 import kotlinx.coroutines.ExperimentalCoroutinesApi

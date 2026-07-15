@@ -22,10 +22,12 @@ import be.drakarah.intonation.game.NotePool
 import be.drakarah.intonation.game.Position
 import be.drakarah.intonation.game.PromptSpec
 import be.drakarah.intonation.game.SustainCapture
+import be.drakarah.intonation.game.SustainFocus
 import be.drakarah.intonation.game.SustainParams
 import be.drakarah.intonation.game.SustainResult
 import be.drakarah.intonation.game.SustainState
 import be.drakarah.intonation.game.scoreSustain
+import be.drakarah.intonation.game.sustainFocus
 import be.drakarah.intonation.game.sustainStars
 import be.drakarah.intonation.game.withMixedSpelling
 import be.drakarah.intonation.music.NoteNameStyle
@@ -46,6 +48,8 @@ data class SustainAttemptUi(
     val result: SustainResult,
     val score: Int,
     val starCount: Int,
+    /** What the reveal should coach her on (in tune? steady? both?). */
+    val focus: SustainFocus,
 )
 
 sealed interface SustainPhase {
@@ -69,7 +73,7 @@ data class SustainUiState(
     val promptIndex: Int = 0,
     val roundLength: Int = 10,
     val prompt: PromptSpec? = null,
-    val phase: SustainPhase = SustainPhase.CountIn(be.drakarah.intonation.ui.round.COUNT_IN_SECS),
+    val phase: SustainPhase = SustainPhase.CountIn(be.drakarah.intonation.ui.common.COUNT_IN_SECS),
     val totalScore: Int = 0,
     val results: List<SustainAttemptUi> = emptyList(),
     val noteStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
@@ -106,6 +110,8 @@ class SustainViewModel(
     private var positions: Set<Position> = setOf(FIRST_POSITION)
     private var soundFeedback = true
     private var startedAtWallClock = 0L
+    /** Latest sample's audio-clock time, so prompt events land on the trace timeline. */
+    private var lastSampleMs = 0L
 
     fun start() {
         if (listenJob != null) return
@@ -132,13 +138,14 @@ class SustainViewModel(
                 prompt = prompts[0],
                 noteStyle = settings.noteNameStyle,
                 goalMs = sustainParams.goalMs,
-                phase = SustainPhase.CountIn(be.drakarah.intonation.ui.round.COUNT_IN_SECS),
+                phase = SustainPhase.CountIn(be.drakarah.intonation.ui.common.COUNT_IN_SECS),
                 ready = true,
             )
             launch { runCountIn() }
 
             engine.samples().collect { sample ->
                 trace?.onSample(sample)
+                lastSampleMs = sample.timestampMs
                 val state = _uiState.value
                 when (state.phase) {
                     is SustainPhase.CountIn -> {}
@@ -172,7 +179,7 @@ class SustainViewModel(
     }
 
     private suspend fun runCountIn() {
-        for (s in be.drakarah.intonation.ui.round.COUNT_IN_SECS downTo 1) {
+        for (s in be.drakarah.intonation.ui.common.COUNT_IN_SECS downTo 1) {
             _uiState.value = _uiState.value.copy(phase = SustainPhase.CountIn(s))
             kotlinx.coroutines.delay(1000)
         }
@@ -180,8 +187,19 @@ class SustainViewModel(
         _uiState.value = _uiState.value.copy(phase = SustainPhase.Play())
     }
 
-    private fun newCapture(prompt: PromptSpec, skipQuiet: Boolean) =
-        SustainCapture(prompt.target.frequency(a4), sustainParams, skipQuietGate = skipQuiet)
+    private fun newCapture(prompt: PromptSpec, skipQuiet: Boolean): SustainCapture {
+        trace?.let { t ->
+            t.event(
+                lastSampleMs, "prompt",
+                "midi=${prompt.target.midi} hz=%.1f pos=${prompt.position.id}"
+                    .format(prompt.target.frequency(a4)),
+            )
+        }
+        return SustainCapture(
+            prompt.target.frequency(a4), sustainParams, skipQuietGate = skipQuiet,
+            onEvent = trace?.let { t -> { tMs, type, detail -> t.event(tMs, type, detail) } },
+        )
+    }
 
     /** "Play again": fresh round, same settings. */
     fun restart() {
@@ -197,6 +215,7 @@ class SustainViewModel(
             result = result,
             score = scoreSustain(result, sustainParams.goalMs),
             starCount = sustainStars(result),
+            focus = sustainFocus(result),
         )
         if (soundFeedback) {
             when {
@@ -205,6 +224,13 @@ class SustainViewModel(
                 else -> sounds.playMiss()
             }
         }
+        trace?.event(
+            nowMs, "result",
+            "midi=${prompt.target.midi} score=${attempt.score} stars=${attempt.starCount} " +
+                "best=${result.bestHeldMs} resets=${result.resets} ok=${result.success} " +
+                "median=%.0f mad=%.0f focus=${attempt.focus}"
+                    .format(result.medianCents ?: 0f, result.steadinessCents ?: 0f),
+        )
         revealUntilMs = nowMs + revealMs
         _uiState.value = state.copy(
             phase = SustainPhase.Reveal(attempt),
@@ -232,6 +258,8 @@ class SustainViewModel(
     private fun persistRound(state: SustainUiState) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
+            // Accuracy of the held pitch centre now feeds progress like the other games.
+            val accuracies = state.results.mapNotNull { it.result.accuracyCents }
             val session = SessionEntity(
                 startedAt = startedAtWallClock,
                 endedAt = now,
@@ -240,7 +268,7 @@ class SustainViewModel(
                 configKey = configKey(EXERCISE_SUSTAIN, mode, difficulty, state.roundLength, positions),
                 totalScore = state.totalScore,
                 maxScore = state.maxScore,
-                avgAbsCents = null,
+                avgAbsCents = if (accuracies.isEmpty()) null else accuracies.average().toFloat(),
                 completed = true,
             )
             val attempts = state.results.mapIndexed { i, r ->
@@ -255,7 +283,7 @@ class SustainViewModel(
                     stringMidi = r.prompt.string.midi,
                     positionId = r.prompt.position.id,
                     playedFreqHz = null,
-                    centsError = null,
+                    centsError = r.result.medianCents,
                     reactionTimeMs = null,
                     timeToStableMs = null,
                     score = r.score,

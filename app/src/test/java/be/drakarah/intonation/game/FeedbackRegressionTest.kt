@@ -19,7 +19,7 @@ import kotlin.math.pow
  *  - Sol#1 pizz false "wrong note": every confidently-played wrong capture on the Sol#1
  *    snippets is one the game filters out (faint, shaky, or an integer harmonic of the
  *    target), so it never reaches the player as "wrong note?".
- * These are provisional thresholds mirroring RoundViewModel; retune from a full-game trace. */
+ * These are provisional thresholds mirroring NoteAccuracyViewModel; retune from a full-game trace. */
 class FeedbackRegressionTest {
 
     private val wrongNoteMinLevel = 55f

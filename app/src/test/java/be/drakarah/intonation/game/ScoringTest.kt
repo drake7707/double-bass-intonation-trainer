@@ -1,7 +1,7 @@
 package be.drakarah.intonation.game
 
 import be.drakarah.intonation.data.configKey
-import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
+import be.drakarah.intonation.ui.noteaccuracy.EXERCISE_NOTE_ACCURACY
 import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

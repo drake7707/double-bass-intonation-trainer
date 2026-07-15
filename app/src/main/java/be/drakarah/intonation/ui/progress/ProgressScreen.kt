@@ -55,7 +55,7 @@ import be.drakarah.intonation.data.SessionEntity
 import be.drakarah.intonation.game.ACHIEVEMENTS
 import be.drakarah.intonation.game.positionsFromConfigKey
 import be.drakarah.intonation.ui.chords.EXERCISE_CHORDS
-import be.drakarah.intonation.ui.round.EXERCISE_NOTE_ACCURACY
+import be.drakarah.intonation.ui.noteaccuracy.EXERCISE_NOTE_ACCURACY
 import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
 import be.drakarah.intonation.ui.theme.ResultColors

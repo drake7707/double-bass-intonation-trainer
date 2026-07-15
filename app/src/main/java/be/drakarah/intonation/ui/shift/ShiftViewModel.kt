@@ -73,7 +73,7 @@ data class ShiftUiState(
     val promptIndex: Int = 0,
     val roundLength: Int = 10,
     val prompt: ShiftPromptSpec? = null,
-    val phase: ShiftPhase = ShiftPhase.CountIn(be.drakarah.intonation.ui.round.COUNT_IN_SECS),
+    val phase: ShiftPhase = ShiftPhase.CountIn(be.drakarah.intonation.ui.common.COUNT_IN_SECS),
     val totalScore: Int = 0,
     val results: List<ShiftAttemptUi> = emptyList(),
     val noteStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
@@ -117,6 +117,8 @@ class ShiftViewModel(
     private var driftWarningEnabled = true
     private val driftDetector = be.drakarah.intonation.game.DriftDetector()
     private var startedAtWallClock = 0L
+    /** Latest sample's audio-clock time, so prompt events land on the trace timeline. */
+    private var lastSampleMs = 0L
 
     fun start() {
         if (listenJob != null) return
@@ -153,13 +155,14 @@ class ShiftViewModel(
                 roundLength = settings.roundLength,
                 prompt = prompts[0],
                 noteStyle = settings.noteNameStyle,
-                phase = ShiftPhase.CountIn(be.drakarah.intonation.ui.round.COUNT_IN_SECS),
+                phase = ShiftPhase.CountIn(be.drakarah.intonation.ui.common.COUNT_IN_SECS),
                 ready = true,
             )
             launch { runCountIn() }
 
             engine.samples().collect { sample ->
                 trace?.onSample(sample)
+                lastSampleMs = sample.timestampMs
                 val state = _uiState.value
                 when (state.phase) {
                     is ShiftPhase.CountIn -> {}
@@ -174,10 +177,12 @@ class ShiftViewModel(
                                 }
                             ShiftState.HoldStart ->
                                 if (state.phase !is ShiftPhase.Hold) {
+                                    trace?.event(sample.timestampMs, "hold", "start confirmed")
                                     _uiState.value = state.copy(phase = ShiftPhase.Hold)
                                 }
                             ShiftState.Shift, ShiftState.Landing ->
                                 if (state.phase !is ShiftPhase.Go) {
+                                    trace?.event(sample.timestampMs, "go", "departure")
                                     _uiState.value = state.copy(phase = ShiftPhase.Go)
                                 }
                             is ShiftState.Finished ->
@@ -195,7 +200,7 @@ class ShiftViewModel(
     }
 
     private suspend fun runCountIn() {
-        for (s in be.drakarah.intonation.ui.round.COUNT_IN_SECS downTo 1) {
+        for (s in be.drakarah.intonation.ui.common.COUNT_IN_SECS downTo 1) {
             _uiState.value = _uiState.value.copy(phase = ShiftPhase.CountIn(s))
             kotlinx.coroutines.delay(1000)
         }
@@ -210,12 +215,19 @@ class ShiftViewModel(
         start()
     }
 
-    private fun newCapture(prompt: ShiftPromptSpec, skipQuiet: Boolean) = ShiftCapture(
-        startHz = prompt.start.target.frequency(a4),
-        captureParams = captureParams,
-        params = shiftParams,
-        skipQuietGate = skipQuiet,
-    )
+    private fun newCapture(prompt: ShiftPromptSpec, skipQuiet: Boolean): ShiftCapture {
+        trace?.event(
+            lastSampleMs, "prompt",
+            "start=${prompt.start.target.midi} target=${prompt.target.target.midi} " +
+                "string=${prompt.start.string.midi}",
+        )
+        return ShiftCapture(
+            startHz = prompt.start.target.frequency(a4),
+            captureParams = captureParams,
+            params = shiftParams,
+            skipQuietGate = skipQuiet,
+        )
+    }
 
     private fun onFinished(finished: ShiftState.Finished, state: ShiftUiState, nowMs: Long) {
         val prompt = state.prompt ?: return
@@ -245,6 +257,14 @@ class ShiftViewModel(
                 else -> sounds.playMiss()
             }
             if (drift != null) sounds.playDrift(sharp = drift > 0)
+        }
+        trace?.let { t ->
+            val centsStr = cents?.let { "%.0f".format(it) } ?: "-"
+            t.event(
+                nowMs, "result",
+                "target=${prompt.target.target.midi} cents=$centsStr land=${r.landingTimeMs ?: "-"} " +
+                    "score=$score stars=$starCount timeout=${r.timedOut} wrong=$wrongNote",
+            )
         }
         revealUntilMs = nowMs + revealMs
         _uiState.value = state.copy(

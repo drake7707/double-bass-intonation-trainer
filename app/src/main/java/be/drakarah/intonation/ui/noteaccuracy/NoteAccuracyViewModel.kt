@@ -1,5 +1,6 @@
-package be.drakarah.intonation.ui.round
+package be.drakarah.intonation.ui.noteaccuracy
 
+import be.drakarah.intonation.ui.common.COUNT_IN_SECS
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
@@ -49,7 +50,6 @@ import kotlin.math.ln
 const val EXERCISE_NOTE_ACCURACY = "NOTE_ACCURACY"
 
 /** Visual count-in length before a round starts (seconds). */
-const val COUNT_IN_SECS = 5
 
 data class AttemptUi(
     val target: NoteSpec,
@@ -69,19 +69,19 @@ data class AttemptUi(
     val spelling: Accidental = Accidental.SHARP,
 )
 
-sealed interface RoundPhase {
+sealed interface NoteAccuracyPhase {
     /** Visual-only countdown so the player can set the phone down and pick up the bass. */
-    data class CountIn(val secsLeft: Int) : RoundPhase
-    data object Listening : RoundPhase
-    data class Reveal(val result: AttemptUi) : RoundPhase
-    data object Done : RoundPhase
+    data class CountIn(val secsLeft: Int) : NoteAccuracyPhase
+    data object Listening : NoteAccuracyPhase
+    data class Reveal(val result: AttemptUi) : NoteAccuracyPhase
+    data object Done : NoteAccuracyPhase
 }
 
-data class RoundUiState(
+data class NoteAccuracyUiState(
     val promptIndex: Int = 0,
     val roundLength: Int = 10,
     val prompt: PromptSpec? = null,
-    val phase: RoundPhase = RoundPhase.CountIn(COUNT_IN_SECS),
+    val phase: NoteAccuracyPhase = NoteAccuracyPhase.CountIn(COUNT_IN_SECS),
     val totalScore: Int = 0,
     val results: List<AttemptUi> = emptyList(),
     val noteStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
@@ -98,7 +98,7 @@ data class RoundUiState(
     val maxScore: Int get() = roundLength * MAX_ATTEMPT_SCORE
 }
 
-class RoundViewModel(
+class NoteAccuracyViewModel(
     private val config: PitchEngineConfig,
     private val mode: String,
     private val settingsRepository: SettingsRepository,
@@ -112,8 +112,8 @@ class RoundViewModel(
 
     private lateinit var engine: PitchEngine
 
-    private val _uiState = MutableStateFlow(RoundUiState())
-    val uiState: StateFlow<RoundUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(NoteAccuracyUiState())
+    val uiState: StateFlow<NoteAccuracyUiState> = _uiState.asStateFlow()
 
     private var prompts: List<PromptSpec> = emptyList()
     private var capture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = true)
@@ -186,12 +186,12 @@ class RoundViewModel(
             prompts = NotePool(positions).draw(settings.roundLength)
                 .map { it.withMixedSpelling(kotlin.random.Random.Default, mixEnharmonics) }
             startedAtWallClock = System.currentTimeMillis()
-            _uiState.value = RoundUiState(
+            _uiState.value = NoteAccuracyUiState(
                 roundLength = settings.roundLength,
                 prompt = prompts[0],
                 noteStyle = settings.noteNameStyle,
                 playerLevel = settings.playerLevel,
-                phase = RoundPhase.CountIn(COUNT_IN_SECS),
+                phase = NoteAccuracyPhase.CountIn(COUNT_IN_SECS),
                 ready = true,
             )
             launch { runCountIn() }
@@ -202,8 +202,8 @@ class RoundViewModel(
                 val prompt = state.prompt ?: return@collect
                 val target = prompt.target
                 when (state.phase) {
-                    is RoundPhase.CountIn -> {}
-                    RoundPhase.Listening -> {
+                    is NoteAccuracyPhase.CountIn -> {}
+                    NoteAccuracyPhase.Listening -> {
                         if (promptShownAtMs < 0) {
                             promptShownAtMs = sample.timestampMs
                             trace?.event(sample.timestampMs, "prompt",
@@ -222,10 +222,10 @@ class RoundViewModel(
                             else -> {}
                         }
                     }
-                    is RoundPhase.Reveal -> {
+                    is NoteAccuracyPhase.Reveal -> {
                         if (sample.timestampMs >= revealUntilMs) advance()
                     }
-                    RoundPhase.Done -> {}
+                    NoteAccuracyPhase.Done -> {}
                 }
             }
         }
@@ -234,13 +234,13 @@ class RoundViewModel(
     /** Visual-only count-in (no beeps — the mic is live), then arm the first prompt. */
     private suspend fun runCountIn() {
         for (s in COUNT_IN_SECS downTo 1) {
-            _uiState.value = _uiState.value.copy(phase = RoundPhase.CountIn(s))
+            _uiState.value = _uiState.value.copy(phase = NoteAccuracyPhase.CountIn(s))
             kotlinx.coroutines.delay(1000)
         }
         reArmsThisPrompt = 0
         promptShownAtMs = -1
         capture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = true)
-        _uiState.value = _uiState.value.copy(phase = RoundPhase.Listening)
+        _uiState.value = _uiState.value.copy(phase = NoteAccuracyPhase.Listening)
     }
 
     /** A capture froze. Discard it and keep listening (instead of flashing "wrong note?" and
@@ -364,7 +364,7 @@ class RoundViewModel(
         revealUntilMs = nowMs + revealMs
         _uiState.value = _uiState.value.let {
             it.copy(
-                phase = RoundPhase.Reveal(result),
+                phase = NoteAccuracyPhase.Reveal(result),
                 results = it.results + result,
                 totalScore = it.totalScore + result.score,
                 driftCents = drift,
@@ -376,7 +376,7 @@ class RoundViewModel(
         val state = _uiState.value
         val next = state.promptIndex + 1
         if (next >= state.roundLength) {
-            _uiState.value = state.copy(phase = RoundPhase.Done)
+            _uiState.value = state.copy(phase = NoteAccuracyPhase.Done)
             persistRound(state)
         } else {
             // skipQuietGate: arm immediately rather than waiting for silence. Legato bowing
@@ -387,18 +387,18 @@ class RoundViewModel(
             promptShownAtMs = -1
             capture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = true)
             _uiState.value =
-                state.copy(promptIndex = next, prompt = prompts[next], phase = RoundPhase.Listening)
+                state.copy(promptIndex = next, prompt = prompts[next], phase = NoteAccuracyPhase.Listening)
         }
     }
 
     /** "Play again": tear down and start a fresh round on the same settings. */
     fun restart() {
         stop()
-        _uiState.value = RoundUiState()
+        _uiState.value = NoteAccuracyUiState()
         start()
     }
 
-    private fun persistRound(state: RoundUiState) {
+    private fun persistRound(state: NoteAccuracyUiState) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val scored = state.results.mapNotNull { it.cents }
@@ -507,7 +507,7 @@ class RoundViewModel(
                         as IntonationApplication
                 val handle = extras.createSavedStateHandle()
                 val mode = handle.get<String>("mode") ?: "arco"
-                return RoundViewModel(
+                return NoteAccuracyViewModel(
                     config = app.container.pitchEngineConfig,
                     mode = mode,
                     settingsRepository = app.container.settingsRepository,

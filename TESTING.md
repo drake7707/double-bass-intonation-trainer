@@ -5,6 +5,44 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-15 Game traces now record events for every game (your request)
+Only Note Accuracy was writing game-event lines into its trace; Sustain, Shift and Chords
+wrote samples but no events, so a trace couldn't be lined up against game decisions. Fixed:
+all four games now emit `prompt` / onset / reset / result events on the sample clock.
+- **Sustain:** `prompt` (target note), `onset`, `reset` (with reason: `dropout` or `drift
+  cents=… out=…ms`), `hold`, `timeout`, `result`.
+- **Shift:** `prompt` (start→target), `hold` (start confirmed), `go` (departure), `result`.
+- **Chords:** `prompt` (chord + tones), `tone` (per tone captured), `result`.
+- Nothing changes unless "Record & trace games" is on.
+- **VERIFY:** turn tracing on, play one round of each game, Share the traces. I want a fresh
+  **sustain** trace especially — the one I have is from 2026-07-13 and predates these events.
+
+### 2026-07-15 Sustain redesigned: accuracy + steadiness, with coaching (your call) — VERIFY
+Diagnosed from `game-trace-sustain-arco-20260713-181913` (all 20 held notes): your bowing is
+genuinely steady (median deviation 0.6–4.5¢ once detector glitches are dropped); the resets came
+from discrete **bow-reversal scoops** (200–450 ms, ±20–100¢) beating the old 250 ms grace. So the
+fix is a scoring-model change, not a bigger grace window. Now shipped:
+- **Hold band vs in-tune split.** The ring now fills anywhere within a generous **±40¢ band**
+  ("you're holding this note"); ±tolerance (15¢ std) only drives the green colour and the
+  accuracy score. A rock-steady-but-sharp hold now *completes* and gets coached, instead of the
+  ring refusing to fill.
+- **Forgiving grace 250→500 ms**, covering the full range of your real reversal scoops. Only a
+  sustained departure to a different note (>500 ms out of band) still resets.
+- **Two scored metrics per note:** *accuracy* = |median cents| of the held pitch centre;
+  *steadiness* = median-absolute-deviation of cents (your bow-speed-consistency idea). Both are
+  robust stats, so a bow reversal barely moves either. Score = 50/50 of the two, minus a mild
+  per-reset nick.
+- **Results now coach one focus** (your requirement — a bare number is meaningless): the reveal
+  shows "In tune: …" and "Steady: …" separately, greens the one you nailed, and prints a single
+  line — e.g. "Steady bow — but sitting sharp. Place the note a hair lower." vs "Good pitch — but
+  the note wandered. Even out your bow speed."
+- Sustain accuracy now feeds Progress (per-note median cents → session avg), like the other games.
+- **VERIFY (bass):** play a sustain round (trace on). Check: (1) far fewer false resets on bow
+  changes; (2) a deliberately-steady-but-flat note coaches *intonation*, not wobble; (3) a
+  deliberately-wobbly note coaches *bow steadiness*; (4) the two metrics feel right. The score
+  knees (accuracy full ≤5¢/zero ≥35¢, steady full ≤4¢/zero ≥25¢) are **provisional** — Share the
+  trace and I'll retune them to your numbers.
+
 ### 2026-07-15 Pizz scored sharp on the attack: per-rig capture timing (your VERIFY)
 You asked whether pizz Note Accuracy was "too quick on the trigger to lock before the pitch
 stabilised." **Verified from your full game traces: yes, partly — and it's not you.** A plucked
@@ -532,7 +570,8 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 
 - [BUG] I calibrated it said no octave drift in the title but on mi it said octave drift so which is it? I made a trace and have a screenshot. Other than that pizz/Arco split was the right call, after calibration it was far less false trigger prone.
 
-- [BUG] Sustain is a lot better with false resets when bow stroke changes but it's not fully solved yet, I had several resets due to bow stroke reversal, see trace.
+- [BUG → ADDRESSED 2026-07-15] Sustain is a lot better with false resets when bow stroke changes but it's not fully solved yet, I had several resets due to bow stroke reversal, see trace.
+  → Diagnosed from your sustain trace and reworked: hold band widened to ±40¢, reversal grace 250→500 ms (covers your real scoops), and scoring moved to accuracy + steadiness (robust stats that ignore reversal transients). Your pitch-wobble idea is now the *steadiness* metric and part of the score, and the results page coaches which to focus on. See the dated Pending block above — needs a fresh bass VERIFY.
 
 
 - [BUG/FEATURE] Shifting on the same string on 1st and 2nd position made me shift from first finger 1st to 4th finger 2nd, or the other way around. I never used my 2nd finger in any of the positions, I don't mind that at all, but it would be an additional difficulty that students also want to practice. I like this too though, so maybe an option for level of difficulty? Maybe the shifting exercises can be basic 1->4->1, anything in between on the same string and across strings complicating things further, so 3 levels.
@@ -577,7 +616,8 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
       It's game logic.
 
 - [REFACTOR] Review docs/CODE_REVIEW_2026-07-12.md findings and refactor where necessary
-- [REFACTOR] RoundScreen / round in general is really a misnomer and an artifact when only note accuracy was implemented. I would refactor that to noteaccuracy just like sustain and chords exist
+- [REFACTOR → DONE 2026-07-15] RoundScreen / round in general is really a misnomer and an artifact when only note accuracy was implemented. I would refactor that to noteaccuracy just like sustain and chords exist
+  → Done: `ui/round` → `ui/noteaccuracy`; `RoundViewModel`/`RoundScreen`/`RoundUiState`/`RoundPhase` → `NoteAccuracy*`; nav route `round/{mode}` → `noteaccuracy/{mode}`. The shared `COUNT_IN_SECS` moved to `ui/common` (the other games were importing it from the round package). The generic "one playthrough" names stayed (`roundLength`, `RoundOutcome`, `recordCompletedRound`). Persisted DB `exerciseType` value `"NOTE_ACCURACY"` is unchanged, so history/PBs are intact.
 
 
 - [FEATURE] Teacher's notebook
@@ -615,3 +655,6 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
       No fireworks.
 
       Just someone noticing something you hadn't.
+
+
+- [FEATURE] Can you make the marketing material needed to publish on the play store. The app is a double bass intonation trainer so it probably should feature a double bass somewhere. Right now the app's icon is a treble clef which is distinct and good but maybe a double bass would be more distinctive. I also don't have anything for app banner and all the other thigns that play store requires. I heard you are good at generating images, I am definitely not so please have a go at it

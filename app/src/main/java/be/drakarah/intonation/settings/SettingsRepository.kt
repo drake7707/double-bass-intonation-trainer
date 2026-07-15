@@ -80,6 +80,14 @@ data class AppSettings(
      * this rig shows no pizz attack-octave artifact (no guard). Measured per rig by the wizard's
      * pizz phase; the default is the reference-Pixel-6a measurement, overridden on calibration. */
     val pizzOctaveSettleMs: Long = 300,
+    /** Pizz capture timing (calibration-owned per rig): how long the plucked attack transient is
+     * skipped, and how long the pitch must then hold steady, before the note is frozen. A plucked
+     * attack reads sharp and settles flatter, so freezing too early scores the transient not the
+     * note; the wizard's pizz phase measures the smallest timing that lands the freeze on the
+     * settled pitch (her 2026-07-15 pizz-accuracy finding). Defaults are the shipped
+     * [CaptureParams.pizz] preset; the wizard overrides per rig. See DETECTION.md §2.2. */
+    val pizzAttackSkipMs: Long = 60,
+    val pizzStabilityWindowMs: Long = 150,
     /** Last completed full calibration (epoch ms, 0 = never). */
     val fullCalibrationAt: Long = 0,
     /** Drone mode's last pitch class (0 = Do/C … 11 = Si/B) and just-fifth toggle. */
@@ -114,7 +122,8 @@ fun AppSettings.detectionExtrasJson(): String =
         """"pizzOddHarmonicMinRatio":$pizzOddHarmonicMinRatio,""" +
         """"pizzOddHarmonicMinRelative":$pizzOddHarmonicMinRelative,""" +
         """"wrongNoteMinLevel":$wrongNoteMinLevel,"lowestPlayableHz":$lowestPlayableHz,""" +
-        """"pizzOctaveSettleMs":$pizzOctaveSettleMs}"""
+        """"pizzOctaveSettleMs":$pizzOctaveSettleMs,""" +
+        """"pizzAttackSkipMs":$pizzAttackSkipMs,"pizzStabilityWindowMs":$pizzStabilityWindowMs}"""
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
@@ -145,6 +154,8 @@ class SettingsRepository(private val context: Context) {
         val wrongNoteMinLevel = floatPreferencesKey("wrongNoteMinLevel")
         val lowestPlayableHz = floatPreferencesKey("lowestPlayableHz")
         val pizzOctaveSettleMs = longPreferencesKey("pizzOctaveSettleMs")
+        val pizzAttackSkipMs = longPreferencesKey("pizzAttackSkipMs")
+        val pizzStabilityWindowMs = longPreferencesKey("pizzStabilityWindowMs")
         val fullCalibrationAt = longPreferencesKey("fullCalibrationAt")
         val dronePitchClass = intPreferencesKey("dronePitchClass")
         val droneFifth = booleanPreferencesKey("droneFifth")
@@ -192,6 +203,8 @@ class SettingsRepository(private val context: Context) {
             wrongNoteMinLevel = prefs[Keys.wrongNoteMinLevel] ?: 55f,
             lowestPlayableHz = prefs[Keys.lowestPlayableHz] ?: 40f,
             pizzOctaveSettleMs = prefs[Keys.pizzOctaveSettleMs] ?: 300,
+            pizzAttackSkipMs = prefs[Keys.pizzAttackSkipMs] ?: 60,
+            pizzStabilityWindowMs = prefs[Keys.pizzStabilityWindowMs] ?: 150,
             fullCalibrationAt = prefs[Keys.fullCalibrationAt] ?: 0,
             dronePitchClass = (prefs[Keys.dronePitchClass] ?: 9).coerceIn(0, 11),
             droneFifth = prefs[Keys.droneFifth] ?: false,
@@ -218,6 +231,9 @@ class SettingsRepository(private val context: Context) {
         /** Pizz octave-down knobs fit from the plucked takes; null keeps current. */
         pizzOddHarmonicMinRatio: Float? = null,
         pizzOddHarmonicMinRelative: Float? = null,
+        /** Pizz capture timing measured from the plucked takes; null keeps current. */
+        pizzAttackSkipMs: Long? = null,
+        pizzStabilityWindowMs: Long? = null,
     ) {
         context.dataStore.edit {
             it[Keys.audioSource] = audioSource
@@ -228,6 +244,8 @@ class SettingsRepository(private val context: Context) {
             wrongNoteMinLevel?.let { v -> it[Keys.wrongNoteMinLevel] = v.coerceIn(20f, 90f) }
             lowestPlayableHz?.let { v -> it[Keys.lowestPlayableHz] = v.coerceIn(30f, 60f) }
             pizzOctaveSettleMs?.let { v -> it[Keys.pizzOctaveSettleMs] = v.coerceIn(0L, 600L) }
+            pizzAttackSkipMs?.let { v -> it[Keys.pizzAttackSkipMs] = v.coerceIn(0L, 400L) }
+            pizzStabilityWindowMs?.let { v -> it[Keys.pizzStabilityWindowMs] = v.coerceIn(100L, 400L) }
             pizzOddHarmonicMinRatio?.let { v -> it[Keys.pizzOddHarmonicMinRatio] = v.coerceIn(1.05f, 3f) }
             pizzOddHarmonicMinRelative?.let { v -> it[Keys.pizzOddHarmonicMinRelative] = v.coerceIn(0.005f, 0.05f) }
             it[Keys.fullCalibrationAt] = epochMs

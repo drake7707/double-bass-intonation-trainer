@@ -169,6 +169,12 @@ class RoundViewModel(
                 // the calibrated lowest playable pitch so a low note is never guarded needlessly.
                 octaveSettleMs = if (mode == "pizz") settings.pizzOctaveSettleMs.takeIf { it > 0 } else null,
                 octaveFoldMinHz = settings.lowestPlayableHz,
+                // Pizz only: the calibrated capture timing. A plucked attack reads sharp and settles
+                // flatter, so the shipped 60/150 can freeze the transient; the wizard measures the
+                // smallest attack-skip / stability-window that lands the freeze on the settled pitch
+                // for this rig (her 2026-07-15 finding). Arco keeps its preset.
+                attackSkipMs = if (mode == "pizz") settings.pizzAttackSkipMs else captureParams.attackSkipMs,
+                stabilityWindowMs = if (mode == "pizz") settings.pizzStabilityWindowMs else captureParams.stabilityWindowMs,
             )
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             capture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = true)

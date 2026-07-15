@@ -22,6 +22,11 @@ watching-the-needle corrections.
     until the fundamental settles, so it scores the played note, not the wrong octave. The
     settle window is measured per rig by the calibration wizard (a phone with no such artifact
     uses none), and it only ever resolves downward when a real lower octave actually appears.
+  - *pizz settle timing* — a plucked note's pitch reads slightly sharp on the attack and settles
+    flatter as the string tension equalises, so the capture waits until the pitch has settled
+    before scoring, rather than freezing the sharp attack. How long to wait is measured per rig by
+    the calibration wizard (from plucked open **and fingered** notes); a phone whose plucks settle
+    instantly adds no wait. Bowed notes settle gradually and need no such per-rig timing.
 - Real recordings from the target instrument are a permanent regression test suite.
 - Arco and pizzicato have separate capture tunings (attack skip, stability window, decay
   handling); every exercise can be played in either mode.
@@ -210,13 +215,16 @@ its own scoring category** — scores are only ever compared between identical s
   and picks the most reliable one, then bows of the other open strings measure where the
   phone's mic loses low fundamentals (this bounds the octave-up correction per device),
   and a prompted high note (Do3 — the note most prone to false octave halving) verifies
-  the whole chain. A final **pizz phase** has you pluck the open strings so the wizard can
-  measure how plucked notes behave on your rig and set the octave-settle window accordingly.
-  Because every prompted note's true pitch is known, the wizard replays the recordings
-  through candidate settings offline and picks the ones that detect every note correctly —
-  "turning the knobs" against ground truth. Each prompt **auto-starts recording after a
-  short countdown** so you never have to put the bass down, and the text is large enough to
-  read from playing distance. The summary shows a per-note verdict before anything is saved;
+  the whole chain. A final **pizz phase** has you pluck the open strings and a few fingered
+  notes so the wizard can measure how plucked notes behave on your rig: the octave-settle
+  window, the octave-down thresholds, and the **capture timing** (how long to wait for a
+  pluck's pitch to settle before scoring, so a plucked note isn't scored on its slightly-sharp
+  attack). The bowed and plucked phases are clearly marked with a full-width banner so the
+  switch to pizzicato is impossible to miss. Because every prompted note's true pitch is known,
+  the wizard replays the recordings through candidate settings offline and picks the ones that
+  detect every note correctly — "turning the knobs" against ground truth. Each prompt
+  **auto-starts recording after a short countdown** so you never have to put the bass down, and
+  the text is large enough to read from playing distance. The summary shows a per-note verdict before anything is saved;
   a too-noisy room refuses to save at all.
 - **Calibrate surroundings** (quick, per room): quiet phase + soft-playing phase set the
   noise gate; refuses on overlap. The full wizard includes this measurement, so it only

@@ -5,6 +5,30 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-15 Pizz scored sharp on the attack: per-rig capture timing (your VERIFY)
+You asked whether pizz Note Accuracy was "too quick on the trigger to lock before the pitch
+stabilised." **Verified from your full game traces: yes, partly — and it's not you.** A plucked
+attack reads sharp and settles flatter; the shipped lock (skip 60 ms / hold 150 ms) could freeze
+that transient and score a correctly-played pizz note **~10–20 ¢ sharp** (worst on short/loud
+attacks; long-held notes were already accurate). Arco was checked the same way and is fine (bowed
+onset is gradual; scored within ~3 ¢ of where notes settle) — so this is pizz-only.
+- [ ] **Pizz capture timing is now calibration-owned.** The wizard's pizz phase measures the
+      smallest attack-skip / hold that lands the freeze on where the note *settles*, per rig. On the
+      reference-rig takes it picks **200/200** (worst freeze error 10–18 ¢ → ~3 ¢). **Re-run the full
+      calibration** to pick it up (defaults stay at the old 60/150 until you do). Then play a pizz
+      round and confirm pizz notes no longer read sharper than they feel — especially firm, short
+      plucks. Save a trace if any still do.
+- [ ] **Calibration pizz phase now records stopped (fingered) notes too** (Sol1, Do2, Fa2, Si♭2,
+      plucked) — open strings alone don't represent a fingered pluck's attack. The summary shows the
+      chosen "Pizz lock timing (wait X ms, hold Y ms)". Confirm the fingered prompts are clear.
+- [ ] **Arco/pizz phase switch is now unmissable** (your feedback that testers missed it): each play
+      prompt shows a full-width colour-coded banner — "ARCO — BOWED" vs "PIZZICATO — PLUCKED, put the
+      bow down". Confirm the switch is obvious mid-wizard.
+      Guarded by `WizardCorpusTest` (`settledPitchHz` tracks the sustain not the attack;
+      `choosePizzTiming` never regresses the reference freeze error). See DETECTION.md §2.2.
+      (Addresses your [REVIEW/EVALUATE] "expand the calibration corpus beyond open strings —
+      include representative stopped notes" — done for the pizz timing/settle fit.)
+
 ### 2026-07-13 Octave misdetection: relief valve + calibration/repro fixes (your feedback)
 From testing: pizz still occasionally scores "right note, wrong octave" — and we found *why*.
 Your second calibration's single Mi pluck read clean (Mi first, before other strings ring) so it
@@ -513,7 +537,8 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 
 - [BUG/FEATURE] Shifting on the same string on 1st and 2nd position made me shift from first finger 1st to 4th finger 2nd, or the other way around. I never used my 2nd finger in any of the positions, I don't mind that at all, but it would be an additional difficulty that students also want to practice. I like this too though, so maybe an option for level of difficulty? Maybe the shifting exercises can be basic 1->4->1, anything in between on the same string and across strings complicating things further, so 3 levels.
 
-- [VERIFY] I played some pizz note accuracy too and I'm not sure if I'm inaccurate or the game is too quick on the trigger to lock onto pitch before it fully stabilised. I have full traces available. It's entirely possible it's me though. But it's good to verify.
+- [VERIFY → DIAGNOSED 2026-07-15] I played some pizz note accuracy too and I'm not sure if I'm inaccurate or the game is too quick on the trigger to lock onto pitch before it fully stabilised. I have full traces available. It's entirely possible it's me though. But it's good to verify.
+  → Verified from your traces: the game WAS partly too quick on pizz — the plucked attack reads sharp and settles flatter, and the 60/150 lock could freeze the transient (~10–20¢ sharp on short/loud plucks; long notes were fine). Arco checked and fine. Fixed: pizz capture timing is now measured per-rig by the calibration wizard (see the 2026-07-15 Pending block above). Re-run calibration to pick it up.
 
 
 - [FEATURE]  Reminder notification: send the user a reminder they haven't practiced yet if it's been near 24h since the last session. Stop sending notifications if they ignore them and it's more than a week since last practice. Of course with a toggeable setting in the settings to turn this off

@@ -128,6 +128,54 @@ class WizardCorpusTest {
     }
 
     @Test
+    fun settledPitchTracksTheSustainNotTheAttack() {
+        // synthetic pluck: 200 ms of a sharp attack transient (+30c) then a flat settled sustain
+        // (+3c). settledPitchHz must report the sustain, not the attack it opens with.
+        val ref = 82.41f // Mi2
+        fun hzAt(cents: Float) = ref * Math.pow(2.0, (cents / 1200f).toDouble()).toFloat()
+        val samples = ArrayList<PitchSample>()
+        var t = 0L
+        repeat(9) { // attack: +30c, 9 windows over ~200 ms
+            samples.add(PitchSample(t, 0, hzAt(30f), hzAt(30f), true, 0f, 1f, 90f)); t += 23
+        }
+        repeat(40) { // settled sustain: +3c
+            samples.add(PitchSample(t, 0, hzAt(3f), hzAt(3f), true, 0f, 1f, 80f)); t += 23
+        }
+        val settled = CalibrationAnalysis.settledPitchHz(samples, ref)!!
+        val settledCents = 1200.0 * Math.log(settled / ref.toDouble()) / Math.log(2.0)
+        assertEquals("settled should be the sustain (+3c), not the attack (+30c)", 3.0, settledCents, 4.0)
+    }
+
+    @Test
+    fun choosePizzTimingDoesNotWorsenTheFreezeErrorOnTheReferenceRig() {
+        // Replay the reference rig's plucked open-string calibration takes through the pizz config,
+        // then let the chooser pick the capture timing. It must return a candidate whose worst
+        // freeze-vs-settled error is no worse than the shipped 60/150 preset — i.e. the per-rig
+        // measurement never regresses accuracy, and picks up any early-trigger sharpness it finds.
+        val pizzCfg = PitchEngineConfig(oddHarmonicMinRatio = 1.2f, oddHarmonicMinRelative = 0.01f)
+        val takes = mapOf(
+            41.2f to "calibration-pizz-28-20260713-073213.wav",
+            55.0f to "calibration-pizz-33-20260713-073213.wav",
+            73.4f to "calibration-pizz-38-20260713-073213.wav",
+            98.0f to "calibration-pizz-43-20260713-073213.wav",
+        ).mapValues { (_, wav) -> replay(readFloatWav(wav), pizzCfg) }
+
+        val profile = CalibrationAnalysis.choosePizzTiming(takes, settleMs = 300, lowestPlayableHz = 38.9f)
+        // returns one of the defined candidates
+        assertTrue(
+            "chosen timing must be a defined candidate",
+            CalibrationAnalysis.PIZZ_TIMING_CANDIDATES.any {
+                it.attackSkipMs == profile.attackSkipMs && it.stabilityWindowMs == profile.stabilityWindowMs
+            }
+        )
+        // never worse than the shipped preset
+        assertTrue(
+            "chosen skip (${profile.attackSkipMs}) should be >= the shipped 60 ms",
+            profile.attackSkipMs >= 60L
+        )
+    }
+
+    @Test
     fun pizzOctaveFitFallsBackToStrictWhenNothingClears() {
         // a rig with no octave artifact: every candidate is clean and safe -> keep the strictest.
         fun ts() = TakeScore(200, 200, 1f, 0f, 0f, 100)

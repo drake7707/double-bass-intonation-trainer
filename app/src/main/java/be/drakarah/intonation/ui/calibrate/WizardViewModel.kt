@@ -84,6 +84,12 @@ data class WizardResult(
     val pizzChecks: List<Pair<Int, Boolean>>,
     /** True when no settle window fully cleared the pizz attack-octave artifact on this rig. */
     val pizzUnreliable: Boolean,
+    /** Measured pizz capture timing (ms): how long the pluck attack is skipped and how long the
+     * pitch must hold before freezing, so the note is scored where it settles, not on its attack. */
+    val pizzAttackSkipMs: Long,
+    val pizzStabilityWindowMs: Long,
+    /** True when even the slowest timing couldn't land every plucked take on its settled pitch. */
+    val pizzTimingUnreliable: Boolean,
 )
 
 /** Full calibration wizard (M5): measures the room, picks the mic source, measures the
@@ -117,6 +123,10 @@ class WizardViewModel(
     private var highTake: Take? = null
     /** Plucked open-string takes, midi -> take (for the pizz octave-settle profile). */
     private val pizzTakes = LinkedHashMap<Int, Take>()
+    /** Plucked STOPPED-note takes, midi -> take. Open strings alone don't represent a fingered
+     * pluck's attack (no finger damping), so the capture-timing profile is measured from these too
+     * (her request). */
+    private val pizzStoppedTakes = LinkedHashMap<Int, Take>()
     private var chosenSource: SourceCandidate = sources.first()
 
     // ---- stage flow ------------------------------------------------------------------
@@ -194,6 +204,21 @@ class WizardViewModel(
             )
             return
         }
+        val nextStopped = PIZZ_STOPPED_MIDIS.firstOrNull { it !in pizzStoppedTakes }
+        if (nextStopped != null) {
+            awaitPlay(
+                PlayPrompt(
+                    midi = nextStopped,
+                    // A fingered pluck, held to ring, so the capture-timing profile sees a real
+                    // stopped-note attack (finger damping changes how it settles vs an open string).
+                    stringHint = "finger the note, pluck once and let it ring",
+                    pizz = true,
+                ),
+                stage = "Pizz stopped",
+                retry = retry,
+            )
+            return
+        }
         analyze()
     }
 
@@ -239,6 +264,7 @@ class WizardViewModel(
                 }
                 "Open strings" -> stringTakes[await.prompt.midi] = take
                 "Pizz check" -> pizzTakes[await.prompt.midi] = take
+                "Pizz stopped" -> pizzStoppedTakes[await.prompt.midi] = take
                 else -> highTake = take
             }
             promptNextTake()
@@ -332,6 +358,8 @@ class WizardViewModel(
     private var finalPizzSettleMs: Long = 300L
     private var finalPizzOddRatio: Float = baseConfig.oddHarmonicMinRatio
     private var finalPizzOddRelative: Float = baseConfig.oddHarmonicMinRelative
+    private var finalPizzAttackSkipMs: Long = 60L
+    private var finalPizzStabilityWindowMs: Long = 150L
 
     private suspend fun computeResult(): WizardResult? {
         if (quietLevels.size < 30 || stringTakes.size < OPEN_STRING_MIDIS.size + 1) return null
@@ -418,6 +446,19 @@ class WizardViewModel(
             nearestNote(hz.toDouble(), a4).midi to ok
         }
 
+        // 5c. pizz capture timing (attack-skip + stability window). A plucked attack reads sharp and
+        //     settles flatter, so the shipped 60/150 can freeze the transient — measured from the
+        //     open AND stopped plucked takes (a fingered attack settles differently), under the
+        //     chosen settle window so it reflects the config the game will run.
+        val pizzTimingGated = (pizzTakes.values + pizzStoppedTakes.values).associate { take ->
+            take.expectedHz to PitchEngine(pizzConfig()).wavSamples(take.pcm).toList()
+        }
+        val pizzTiming = CalibrationAnalysis.choosePizzTiming(
+            pizzTimingGated, finalPizzSettleMs, finalLowestHz,
+        )
+        finalPizzAttackSkipMs = pizzTiming.attackSkipMs
+        finalPizzStabilityWindowMs = pizzTiming.stabilityWindowMs
+
         return WizardResult(
             sourceLabel = chosenSource.label,
             verdict = verdict,
@@ -429,6 +470,9 @@ class WizardViewModel(
             pizzSettleMs = pizzProfile.settleMs,
             pizzChecks = pizzChecks,
             pizzUnreliable = !pizzProfile.resolved,
+            pizzAttackSkipMs = pizzTiming.attackSkipMs,
+            pizzStabilityWindowMs = pizzTiming.stabilityWindowMs,
+            pizzTimingUnreliable = !pizzTiming.resolved,
         )
     }
 
@@ -467,12 +511,15 @@ class WizardViewModel(
             """"pizzOddHarmonicMinRatio":$finalPizzOddRatio,""" +
             """"pizzOddHarmonicMinRelative":$finalPizzOddRelative,""" +
             """"wrongNoteMinLevel":${finalWrongNoteFloor ?: baseConfig.sensitivity},""" +
-            """"lowestPlayableHz":$finalLowestHz,"pizzOctaveSettleMs":$finalPizzSettleMs}"""
+            """"lowestPlayableHz":$finalLowestHz,"pizzOctaveSettleMs":$finalPizzSettleMs,""" +
+            """"pizzAttackSkipMs":$finalPizzAttackSkipMs,""" +
+            """"pizzStabilityWindowMs":$finalPizzStabilityWindowMs}"""
         // (stage label, take) for every recording made this run
         val takes = buildList {
             stringTakes.forEach { (midi, t) -> add(Triple("arco", midi, t)) }
             highTake?.let { add(Triple("arco-high", nearestNote(it.expectedHz.toDouble(), a4).midi, it)) }
             pizzTakes.forEach { (midi, t) -> add(Triple("pizz", midi, t)) }
+            pizzStoppedTakes.forEach { (midi, t) -> add(Triple("pizz-stopped", midi, t)) }
         }
         withContext(Dispatchers.IO) {
             runCatching {
@@ -482,7 +529,7 @@ class WizardViewModel(
                 takes.forEach { (stage, midi, take) ->
                     val base = "calibration-$stage-$midi-$stamp"
                     // pizz takes carry the pizz octave-down config; arco/high carry the arco config.
-                    val cfg = if (stage == "pizz") pizzCfg else arcoCfg
+                    val cfg = if (stage.startsWith("pizz")) pizzCfg else arcoCfg
                     writeWave(appContext, android.net.Uri.fromFile(java.io.File(dir, "$base.wav")),
                         cfg.sampleRate, take.pcm)
                     java.io.File(dir, "$base.jsonl").bufferedWriter().use { w ->
@@ -546,6 +593,8 @@ class WizardViewModel(
                 pizzOctaveSettleMs = finalPizzSettleMs,
                 pizzOddHarmonicMinRatio = finalPizzOddRatio,
                 pizzOddHarmonicMinRelative = finalPizzOddRelative,
+                pizzAttackSkipMs = finalPizzAttackSkipMs,
+                pizzStabilityWindowMs = finalPizzStabilityWindowMs,
             )
             _state.value = summary.copy(saved = true)
         }
@@ -583,6 +632,10 @@ class WizardViewModel(
          * from sympathetic resonance — are measured. Plucking Mi first (its best case) is what let
          * a lucky calibration set 0 ms; measuring it last, under resonance, catches the artifact. */
         private val PIZZ_MIDIS = listOf(43, 38, 33, OPEN_MI)
+        /** One STOPPED (fingered) note per string, low 1st-position, plucked — so the capture-timing
+         * profile sees a real fingered attack, not just open strings (finger damping changes how the
+         * pluck settles). Sol1 (E str), Do2 (La str), Fa2 (Ré str), Si♭2 (Sol str). */
+        private val PIZZ_STOPPED_MIDIS = listOf(31, 36, 41, 46)
 
         fun candidateSources(context: Context): List<SourceCandidate> {
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager

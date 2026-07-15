@@ -212,11 +212,16 @@ object CalibrationAnalysis {
 
     /** Runs the game's pizz capture over one recorded take, re-arming on each freeze exactly as a
      * round does, and returns the frozen pitches — so the wizard measures the SAME machine that
-     * will run in the game. */
+     * will run in the game. [attackSkipMs]/[stabilityWindowMs] default to the shipped pizz preset;
+     * the timing chooser overrides them to profile freeze latency per rig. */
     private fun pizzFreezes(
         samples: List<PitchSample>, settleMs: Long, lowestPlayableHz: Float,
+        attackSkipMs: Long = CaptureParams.pizz().attackSkipMs,
+        stabilityWindowMs: Long = CaptureParams.pizz().stabilityWindowMs,
     ): List<CapturedPitch> {
         val params = CaptureParams.pizz().copy(
+            attackSkipMs = attackSkipMs,
+            stabilityWindowMs = stabilityWindowMs,
             octaveSettleMs = settleMs.takeIf { it > 0 },
             octaveFoldMinHz = lowestPlayableHz,
             promptTimeoutMs = 20_000,
@@ -255,5 +260,106 @@ object CalibrationAnalysis {
             exp to ok
         }
         return PizzProfile(settle, resolved = chosen != null, checks = checks)
+    }
+
+    // ---- pizz capture-timing profiling (the wizard's pizz phase) ---------------------------
+
+    /** A plucked-note capture timing: how long the attack transient is skipped and how long the
+     * pitch must then hold steady before the note is frozen. */
+    data class PizzTiming(val attackSkipMs: Long, val stabilityWindowMs: Long) {
+        /** Earliest a freeze can happen after onset — the value we minimise for responsiveness. */
+        val latencyMs: Long get() = attackSkipMs + stabilityWindowMs
+    }
+
+    /** Candidate pizz capture timings, least added latency first. The first entry is the shipped
+     * [CaptureParams.pizz] preset; each next waits a little longer for the plucked attack to settle
+     * before freezing. The wizard picks the SMALLEST that lands the frozen pitch within
+     * [PIZZ_TIMING_TOLERANCE_CENTS] of where the note actually settles on THIS rig — a plucked
+     * attack reads sharp and settles flatter, so freezing too early scores the transient, not the
+     * note (her 2026-07-15 pizz-accuracy finding). No rig-specific numbers baked in. */
+    val PIZZ_TIMING_CANDIDATES = listOf(
+        PizzTiming(60, 150),   // 210 ms — shipped default
+        PizzTiming(120, 150),  // 270
+        PizzTiming(60, 250),   // 310
+        PizzTiming(150, 200),  // 350
+        PizzTiming(200, 200),  // 400
+        PizzTiming(200, 300),  // 500
+    )
+
+    /** How close (cents) the frozen pitch must sit to the note's settled pitch for a timing to be
+     * accepted. Pizz pitch genuinely drifts a little as tension relaxes, so this is not zero. */
+    const val PIZZ_TIMING_TOLERANCE_CENTS = 8f
+
+    /** How this rig's plucked-note capture timing was chosen, for the summary + save. */
+    data class PizzTimingProfile(
+        val attackSkipMs: Long,
+        val stabilityWindowMs: Long,
+        /** True when the chosen timing keeps every take's freeze within tolerance of its settled
+         * pitch; false when even the slowest candidate can't (best-effort, surfaced to the user). */
+        val resolved: Boolean,
+        /** Per prompted note (expected Hz) -> freeze error under the chosen timing (cents; NaN when
+         * a take produced no usable settled pitch or freeze). */
+        val checks: List<Pair<Float, Float>>,
+    )
+
+    /** Folds [hz] up/down by octaves to sit closest to [ref] — collapses an octave-high attack read
+     * or an octave-low decay onto the note it belongs to, so pitch comparisons ignore octave slips. */
+    private fun foldToward(hz: Float, ref: Float): Float {
+        if (hz <= 0f || ref <= 0f) return hz
+        var h = hz
+        while (h > ref * 1.4f) h /= 2f
+        while (h < ref / 1.4f) h *= 2f
+        return h
+    }
+
+    /** The pitch a take settles to: the robust median of its LATTER sustain (past the attack), each
+     * window folded onto [nominalHz] so an octave-high attack read or an octave-low decay tail does
+     * not skew it. Self-referential ground truth — it works for a stopped note played slightly off,
+     * where the nominal target is only used to resolve the octave. Null when there isn't enough
+     * steady signal to trust. */
+    fun settledPitchHz(samples: List<PitchSample>, nominalHz: Float): Float? {
+        val acc = samples.filter { it.accepted && it.smoothedHz > 0f }
+        if (acc.size < 8) return null
+        val t0 = acc.first().timestampMs
+        val t1 = acc.last().timestampMs
+        val cutoff = t0 + ((t1 - t0) * 4L) / 10L // drop the first 40% (attack) — keep the sustain
+        val folded = acc.filter { it.timestampMs >= cutoff }
+            .map { foldToward(it.smoothedHz, nominalHz) }
+            .filter { abs(cents(it, nominalHz)) <= 80f }
+        if (folded.size < 4) return null
+        val m = percentile(folded, 50)
+        val tight = folded.filter { abs(cents(it, m)) <= 40f }
+        return if (tight.isEmpty()) m else percentile(tight, 50)
+    }
+
+    /** Chooses the plucked-note capture timing from the recorded pizz takes (open + stopped),
+     * replayed through the real game capture under the chosen octave-settle window. For each
+     * candidate shortest-first, freezes each take and measures how far the frozen pitch sits from
+     * that take's settled pitch; picks the smallest-latency candidate whose worst freeze error is
+     * within [PIZZ_TIMING_TOLERANCE_CENTS]. If none qualifies the slowest candidate is used as best
+     * effort and [PizzTimingProfile.resolved] is false. A rig whose plucked attack settles instantly
+     * keeps the shipped 60/150 (no added latency). */
+    fun choosePizzTiming(
+        takesByExpectedHz: Map<Float, List<PitchSample>>, settleMs: Long, lowestPlayableHz: Float,
+    ): PizzTimingProfile {
+        val settledByHz = takesByExpectedHz.mapValues { (exp, s) -> settledPitchHz(s, exp) }
+        fun freezeError(t: PizzTiming, exp: Float, samples: List<PitchSample>): Float? {
+            val settled = settledByHz[exp] ?: return null
+            val frozen = pizzFreezes(
+                samples, settleMs, lowestPlayableHz, t.attackSkipMs, t.stabilityWindowMs
+            ).firstOrNull() ?: return null
+            return abs(cents(foldToward(frozen.frequencyHz, exp), settled))
+        }
+        fun worstError(t: PizzTiming): Float =
+            takesByExpectedHz.entries.mapNotNull { (exp, s) -> freezeError(t, exp, s) }.maxOrNull()
+                ?: Float.MAX_VALUE
+        val chosen = PIZZ_TIMING_CANDIDATES.firstOrNull { worstError(it) <= PIZZ_TIMING_TOLERANCE_CENTS }
+        val timing = chosen ?: PIZZ_TIMING_CANDIDATES.maxByOrNull { it.latencyMs }!!
+        val checks = takesByExpectedHz.entries.map { (exp, s) ->
+            exp to (freezeError(timing, exp, s) ?: Float.NaN)
+        }
+        return PizzTimingProfile(
+            timing.attackSkipMs, timing.stabilityWindowMs, resolved = chosen != null, checks,
+        )
     }
 }

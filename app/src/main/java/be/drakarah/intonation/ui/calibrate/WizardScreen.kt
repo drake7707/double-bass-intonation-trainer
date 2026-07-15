@@ -96,9 +96,10 @@ fun WizardScreen(
                 when (val s = state) {
                     is WizardState.Intro -> {
                         Text(
-                            "Sets up pitch detection for this phone. You'll be asked to keep " +
-                                    "the room quiet for a moment, then to play a few prompted notes — " +
-                                    "bowed, then a short plucked (pizz) check. Takes about two minutes.",
+                            "Sets up pitch detection for this phone. First a quiet moment to measure " +
+                                    "the room, then two phases of prompted notes: a BOWED phase, then a " +
+                                    "PLUCKED (pizz) phase — open strings and a few fingered notes. Each " +
+                                    "phase is clearly marked. Takes about two to three minutes.",
                             style = MaterialTheme.typography.headlineSmall,
                             textAlign = TextAlign.Center
                         )
@@ -132,6 +133,7 @@ fun WizardScreen(
                     }
 
                     is WizardState.AwaitPlay -> {
+                        PhaseBanner(pizz = s.prompt.pizz)
                         Text(s.stage, style = MaterialTheme.typography.headlineSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                         if (s.retry) {
@@ -172,6 +174,7 @@ fun WizardScreen(
                     }
 
                     is WizardState.Recording -> {
+                        PhaseBanner(pizz = s.prompt.pizz)
                         Text(
                             NoteSpec(s.prompt.midi).displayName(noteStyle),
                             fontSize = TextSizes.PROMPT_NOTE,
@@ -283,6 +286,39 @@ fun WizardScreen(
     }
 }
 
+/** Full-width, colour-coded phase banner so the switch from the bowed phase to the plucked (pizz)
+ * phase is impossible to miss (her feedback: users kept missing that it had switched to pizz).
+ * Distinct colour AND wording per phase; the pizz banner spells out "put the bow down". */
+@Composable
+private fun PhaseBanner(pizz: Boolean) {
+    val container = if (pizz) MaterialTheme.colorScheme.tertiaryContainer
+        else MaterialTheme.colorScheme.primaryContainer
+    val onContainer = if (pizz) MaterialTheme.colorScheme.onTertiaryContainer
+        else MaterialTheme.colorScheme.onPrimaryContainer
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(container, MaterialTheme.shapes.medium)
+            .padding(vertical = Spacing.ITEM_SPACING, horizontal = Spacing.CARD_PADDING),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING),
+    ) {
+        Text(
+            if (pizz) "PIZZICATO — PLUCKED" else "ARCO — BOWED",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = onContainer,
+        )
+        Text(
+            if (pizz) "Put the bow down — the next notes are plucked."
+            else "Play the note shown with the bow.",
+            style = MaterialTheme.typography.titleMedium,
+            color = onContainer,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
 @Composable
 private fun SummaryContent(
     s: WizardState.Summary,
@@ -384,9 +420,27 @@ private fun SummaryContent(
                     }
                 }
             }
+            if (r.pizzChecks.isNotEmpty()) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Pizz lock timing", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "wait ${r.pizzAttackSkipMs} ms, hold ${r.pizzStabilityWindowMs} ms",
+                        style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
             if (r.pizzUnreliable) {
                 Text(
                     "Plucked notes still occasionally read an octave high on this phone. They'll mostly correct themselves, but if you see it in games, save a pizz snippet from the Pitch debug screen.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ResultColors.close,
+                    maxLines = 5,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            if (r.pizzTimingUnreliable) {
+                Text(
+                    "Plucked notes settle slowly on this phone — the lock waits as long as it can, but a pizz note scored a touch sharp can still slip through. It's saved as the best fit measured.",
                     style = MaterialTheme.typography.bodySmall,
                     color = ResultColors.close,
                     maxLines = 5,

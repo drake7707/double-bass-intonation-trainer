@@ -5,10 +5,14 @@
 problem, every design decision, what worked and what didn't, and how we got there — so after a
 context reset we can be current again in one read.
 
-Last updated: 2026-07-14, after the pizz octave work: the **octave-settle** capture fix (attack
-transient), the **separate pizz octave-DOWN knobs** for the sustained sympathetic-resonance octave
-(§5 A), the **"ignore wrong octave"** scoring aid (§5 A′), full-config recording headers, and the
-**calibration trace**.
+Last updated: 2026-07-15, after the **pizz capture-timing** work: the plucked attack reads sharp and
+settles flatter, so the shipped 60/150 lock could freeze the transient and score a pizz note ~10–20¢
+sharp (her pizz-accuracy report, verified from full game traces). Fixed by making the pizz
+attack-skip and stability-window **calibration-owned per rig** (§2.2), measured by the wizard's pizz
+phase which now also records **stopped (fingered) notes** (§7). Earlier: the pizz **octave-settle**
+capture fix (attack transient, §2.1), the **separate pizz octave-DOWN knobs** for the sustained
+sympathetic-resonance octave (§5 A), the **"ignore wrong octave"** scoring aid (§5 A′), full-config
+recording headers, and the **calibration trace**.
 
 ---
 
@@ -86,6 +90,7 @@ These names appear throughout the code and traces. This is what they mean in pra
 | `oddHarmonicMinRatio` / `oddHarmonicMinRelative` | How strong the 3rd-harmonic evidence must be before halving an octave-high detector read | `PitchGate` |
 | `pizzOddHarmonicMinRatio` / `pizzOddHarmonicMinRelative` | Separate, looser version of the same proof for pizzicato low notes | `PitchGate` when game mode is pizz |
 | `pizzOctaveSettleMs` | How long a plucked note may wait for an octave-high attack reading to settle to the true fundamental | `AttemptCapture` pizz mode |
+| `pizzAttackSkipMs` / `pizzStabilityWindowMs` | Pizz-only, calibration-owned override of `attackSkipMs` / `stabilityWindowMs`: how long the pluck attack is skipped and held steady before freezing, so the note is scored where it settles, not on its sharp attack | `AttemptCapture` pizz mode |
 
 ### 0.4 Which knobs are learned in calibration, and why
 
@@ -104,6 +109,7 @@ wizard tries to measure it instead of hard-coding it.
 | `oddHarmonicMinRatio` / `oddHarmonicMinRelative` | Fitted against calibration takes so low-string octave fixes work without halving genuine higher notes | Governs arco and general octave-down proof |
 | `pizzOddHarmonicMinRatio` / `pizzOddHarmonicMinRelative` | Fitted separately from plucked takes | Pizz low notes need looser octave handling than arco |
 | `pizzOctaveSettleMs` | Smallest tested wait window that eliminates octave-high pizz attack freezes on this rig | Handles pluck-attack octave artifacts without adding unnecessary latency on rigs that do not need it |
+| `pizzAttackSkipMs` / `pizzStabilityWindowMs` | Smallest tested pizz capture timing whose freeze lands on the note's *settled* pitch (not its sharp attack) on this rig | A pluck reads sharp and settles flatter; the shipped 60/150 can freeze the transient and score sharp. Measured from open + stopped plucked takes (§2.2) |
 
 **Mostly code-owned behavior knobs (not user-room specific):**
 
@@ -112,6 +118,7 @@ wizard tries to measure it instead of hard-coding it.
 | `onsetConfirmSamples` | Requires more than one accepted window before declaring onset |
 | `quietMs` | Requires quiet to persist briefly before arming in `AWAIT_QUIET` mode |
 | `stabilityBandCents` | Defines what counts as "steady enough" in cents |
+| `attackSkipMs` / `stabilityWindowMs` (arco) | Fixed arco preset (120/250) — a bowed onset is gradual and stable, so no per-rig timing is needed (pizz's are calibrated, §2.2) |
 | `maxDropouts` | Allows a short interruption before abandoning a candidate note |
 | `minFallbackSamples` | Allows a SHAKY freeze if the note dies before a clean window completes |
 | `promptTimeoutMs` | Stops the prompt if no onset happens in time |
@@ -214,6 +221,34 @@ room to settle. Arco/shift leave `octaveSettleMs` null → unchanged first-stabl
 mechanism is universal and non-destructive; **whether to engage it and its window are calibrated
 per rig** (see §5 A). Guarded by `PizzOctaveSettleTest` (her real Fa#1 snippet: guard off → the
 octave bug reproduces; guard on → zero octave-high freezes, fundamental still captured).
+
+### 2.2 Pizz capture timing (attack settles flat → don't freeze the transient)
+A plucked note's attack is not only octave-rich (§2.1) — its **pitch reads sharp and settles flatter**
+over the first ~150–300 ms as string tension equalises. The shipped pizz preset (`attackSkipMs=60`,
+`stabilityWindowMs=150`) can put the earliest freeze ~210 ms after onset, sometimes still inside that
+transient, and the 10-cent stability band can lock onto the *top of a pitch wobble* that then relaxes.
+Result: a correctly-played pizz note scored **~10–20 ¢ sharp** — a directional bias, not noise (her
+2026-07-15 pizz-accuracy report, verified by replaying full game traces: short/loud attacks scored
+sharp, long-held notes were accurate).
+
+Fix: the pizz **attack-skip and stability-window are now calibration-owned per rig**
+(`AppSettings.pizzAttackSkipMs` / `pizzStabilityWindowMs`, applied by `RoundViewModel` for pizz only —
+arco keeps its preset). The wizard's pizz phase replays the recorded plucked takes through the real
+game capture under each `CalibrationAnalysis.PIZZ_TIMING_CANDIDATES` (60/150 … 200/300, least added
+latency first) and picks the **smallest** whose frozen pitch lands within
+`PIZZ_TIMING_TOLERANCE_CENTS` (8 ¢) of where the note actually **settles** — `settledPitchHz`, the
+robust median of each take's *latter* sustain, folded to the nominal octave, so it is self-referential
+ground truth that works even for a stopped note played a few cents off. A rig whose pluck settles
+instantly keeps 60/150 (no added latency); a rig that can't settle within tolerance under any
+candidate uses the slowest as best effort (`resolved=false`, surfaced in the summary). On the
+reference Pixel 6a it lands **200/200** (worst freeze error 10–18 ¢ → ~3 ¢). Guarded by
+`WizardCorpusTest`. The shipped defaults stay 60/150 (reference preset, overridden on calibration) —
+**re-run the wizard to pick up per-rig timing.**
+
+**Arco is deliberately NOT calibrated this way and does not need to be:** a bow ramps the note up
+gradually and the pitch is stable once engaged (no percussive sharp-then-settle), and the arco preset
+is already more forgiving (`attackSkipMs=120`, `stabilityWindowMs=250` → earliest freeze ~370 ms). Her
+real arco traces score within a median ~3 ¢ of where notes settle. Arco keeps the hard-coded preset.
 
 ---
 
@@ -349,6 +384,12 @@ point). Measured by the full calibration wizard from prompted notes (ground trut
   A rig with no attack-octave artifact gets 0 (no guard, no added latency). The shipped default
   (300) is only the reference-Pixel-6a measurement — a rig assumption that calibration replaces,
   exactly like the odd-harmonic thresholds. (This is the answer to "don't hard-code your rig".)
+- **`pizzAttackSkipMs`** / **`pizzStabilityWindowMs`** — the pizz capture timing (§2.2). Measured per
+  rig: the wizard's pizz phase replays the recorded plucked takes (open **and stopped**) through the
+  game capture under each `PIZZ_TIMING_CANDIDATES` window and picks the smallest whose freeze lands
+  within 8 ¢ of the note's *settled* pitch (`CalibrationAnalysis.choosePizzTiming` /
+  `settledPitchHz`). Shipped default 60/150 (reference preset); reference-Pixel-6a measurement lands
+  200/200. Arco keeps its fixed preset — a bowed onset needs no per-rig timing.
 - **mic source** (Standard/Voice/Unprocessed), **roll-off knee** (`missingFundamentalMaxHz`),
   **octave-correction odd-harmonic thresholds** — as before.
 - **pizz octave-down knobs** (`pizzOddHarmonicMinRatio` / `pizzOddHarmonicMinRelative`) — **separate
@@ -425,9 +466,12 @@ Separate machine. Requires onset-rise already (a ring won't start it). Key behav
 `ui/calibrate/WizardViewModel` + pure core `calibration/CalibrationAnalysis`. Flow (~2 min):
 quiet room → gate; open Mi once per mic source → best source; open La/Ré/Sol → playing floor +
 roll-off knee; Do3 → verify + refit octave thresholds only if it halves; **then a pizz phase —
-pluck the four open strings → `choosePizzSettle` measures the octave-settle window for this rig**
-(§2.1, §5 A). Every prompted note's true pitch is known, so takes are **replayed offline through
-candidate configs** and scored against ground truth ("turning the knobs against known notes").
+pluck the four open strings (`choosePizzSettle` → octave-settle window, `choosePizzOctaveFit` →
+octave-down knobs) and a few stopped (fingered) notes; both feed `choosePizzTiming` → the pizz
+capture timing** (§2.1, §2.2, §5 A). Every prompted note's true pitch is known, so takes are
+**replayed offline through candidate configs** and scored against ground truth ("turning the knobs
+against known notes"). The arco and pizz phases are shown with a distinct full-width phase banner (a
+bowed vs plucked colour + wording), because testers kept missing the switch to pizz (her feedback).
 
 **UX (2026-07-12):** each play prompt **auto-starts recording after a short countdown** (no
 putting the bass down to tap a button — her request), with a "Start now" override, and the
@@ -471,7 +515,9 @@ already pool ~170 windows each and the retry+guard cover the main risk.
 - `app` `calibration/WizardCorpusTest` — grounds the wizard's decisions in the corpus: roll-off
   knee ≈ 63 Hz, default octave thresholds win on the reference phone, `wrongNoteFloor` lands above
   the gate in a sane band, `lowestPlayableHz` ≈ a semitone under E1, `isUsableTake` accepts a real
-  open string and rejects the wrong note.
+  open string and rejects the wrong note, and (§2.2) `settledPitchHz` tracks the sustain not the
+  attack + `choosePizzTiming` picks a defined candidate that never regresses the freeze error on the
+  reference pizz takes.
 - `dsp` `RealBassRegressionTest`, `OctaveCorrectionEvidence`, etc. — the octave-correction corpus.
 
 Corpus lives in `dsp/src/test/resources/wav/` (WAV float32 + JSONL). The `:app` tests read it via

@@ -5,6 +5,16 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-15 Post-round trace feedback prompt (your request)
+When "Record & trace games" is on, all four summary screens (Note Accuracy, Sustain, Shift,
+Chords) now ask "how did that round go?" once the round finishes. Tap **👍 Went well** to
+dismiss instantly, or **⚠️ Had issues** to type a note; either way it's appended as a
+`{"feedback":{"rating":…,"note":…}}` line at the end of the trace's `.jsonl`, right after it's
+already been saved — so leaving the prompt unanswered just means no note, nothing is lost or
+delayed. Solves "I forget which of several traced rounds had the problem."
+- **VERIFY:** turn tracing on, play a round of each game, try both the quick-tap and the typed
+  note, then confirm the feedback line shows up at the end of the shared `.jsonl`.
+
 ### 2026-07-15 Game traces now record events for every game (your request)
 Only Note Accuracy was writing game-event lines into its trace; Sustain, Shift and Chords
 wrote samples but no events, so a trace couldn't be lined up against game decisions. Fixed:
@@ -552,6 +562,18 @@ Home screen:
 
 - [UI ISSUE/FEATURE] In the round complete add a chart of the cents per note. It'll be interesting to see the trend.
 
+- [REFACTOR → DONE 2026-07-15] RoundScreen / round in general is really a misnomer and an artifact when only note accuracy was implemented. I would refactor that to noteaccuracy just like sustain and chords exist
+  → Done: `ui/round` → `ui/noteaccuracy`; `RoundViewModel`/`RoundScreen`/`RoundUiState`/`RoundPhase` → `NoteAccuracy*`; nav route `round/{mode}` → `noteaccuracy/{mode}`. The shared `COUNT_IN_SECS` moved to `ui/common` (the other games were importing it from the round package). The generic "one playthrough" names stayed (`roundLength`, `RoundOutcome`, `recordCompletedRound`). Persisted DB `exerciseType` value `"NOTE_ACCURACY"` is unchanged, so history/PBs are intact.
+
+
+- [VERIFY → DIAGNOSED 2026-07-15] I played some pizz note accuracy too and I'm not sure if I'm inaccurate or the game is too quick on the trigger to lock onto pitch before it fully stabilised. I have full traces available. It's entirely possible it's me though. But it's good to verify.
+  → Verified from your traces: the game WAS partly too quick on pizz — the plucked attack reads sharp and settles flatter, and the 60/150 lock could freeze the transient (~10–20¢ sharp on short/loud plucks; long notes were fine). Arco checked and fine. Fixed: pizz capture timing is now measured per-rig by the calibration wizard (see the 2026-07-15 Pending block above). Re-run calibration to pick it up.
+
+
+- [BUG → ADDRESSED 2026-07-15] Sustain is a lot better with false resets when bow stroke changes but it's not fully solved yet, I had several resets due to bow stroke reversal, see trace.
+  → Diagnosed from your sustain trace and reworked: hold band widened to ±40¢, reversal grace 250→500 ms (covers your real scoops), and scoring moved to accuracy + steadiness (robust stats that ignore reversal transients). Your pitch-wobble idea is now the *steadiness* metric and part of the score, and the results page coaches which to focus on. See the dated Pending block above — needs a fresh bass VERIFY.
+
+
 
 OPEN FEEDBACK & IDEAS:
 --------------
@@ -564,20 +586,14 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 
 - [FEATURE] Scales exercises or is that covered by chords?
 
-- [FEATURE] If debug traces is on, ask for feedback after a game how it went and embed that in the trace. That will help embed user issues alongside traces, especially if it's other people traces, as well as I .. forget when i do several rounds.
+- [FEATURE → ADDRESSED 2026-07-15] If debug traces is on, ask for feedback after a game how it went and embed that in the trace. That will help embed user issues alongside traces, especially if it's other people traces, as well as I .. forget when i do several rounds.
+  → Done, see the dated Pending block above — needs a bass VERIFY.
 
 - [FEATURE] Ability to send a trace to feedback@drakarah.be, once i put it on the play store and they say it doesn't work for them i can analyze their trace
 
 - [BUG] I calibrated it said no octave drift in the title but on mi it said octave drift so which is it? I made a trace and have a screenshot. Other than that pizz/Arco split was the right call, after calibration it was far less false trigger prone.
 
-- [BUG → ADDRESSED 2026-07-15] Sustain is a lot better with false resets when bow stroke changes but it's not fully solved yet, I had several resets due to bow stroke reversal, see trace.
-  → Diagnosed from your sustain trace and reworked: hold band widened to ±40¢, reversal grace 250→500 ms (covers your real scoops), and scoring moved to accuracy + steadiness (robust stats that ignore reversal transients). Your pitch-wobble idea is now the *steadiness* metric and part of the score, and the results page coaches which to focus on. See the dated Pending block above — needs a fresh bass VERIFY.
-
-
 - [BUG/FEATURE] Shifting on the same string on 1st and 2nd position made me shift from first finger 1st to 4th finger 2nd, or the other way around. I never used my 2nd finger in any of the positions, I don't mind that at all, but it would be an additional difficulty that students also want to practice. I like this too though, so maybe an option for level of difficulty? Maybe the shifting exercises can be basic 1->4->1, anything in between on the same string and across strings complicating things further, so 3 levels.
-
-- [VERIFY → DIAGNOSED 2026-07-15] I played some pizz note accuracy too and I'm not sure if I'm inaccurate or the game is too quick on the trigger to lock onto pitch before it fully stabilised. I have full traces available. It's entirely possible it's me though. But it's good to verify.
-  → Verified from your traces: the game WAS partly too quick on pizz — the plucked attack reads sharp and settles flatter, and the 60/150 lock could freeze the transient (~10–20¢ sharp on short/loud plucks; long notes were fine). Arco checked and fine. Fixed: pizz capture timing is now measured per-rig by the calibration wizard (see the 2026-07-15 Pending block above). Re-run calibration to pick it up.
 
 
 - [FEATURE]  Reminder notification: send the user a reminder they haven't practiced yet if it's been near 24h since the last session. Stop sending notifications if they ignore them and it's more than a week since last practice. Of course with a toggeable setting in the settings to turn this off
@@ -616,8 +632,6 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
       It's game logic.
 
 - [REFACTOR] Review docs/CODE_REVIEW_2026-07-12.md findings and refactor where necessary
-- [REFACTOR → DONE 2026-07-15] RoundScreen / round in general is really a misnomer and an artifact when only note accuracy was implemented. I would refactor that to noteaccuracy just like sustain and chords exist
-  → Done: `ui/round` → `ui/noteaccuracy`; `RoundViewModel`/`RoundScreen`/`RoundUiState`/`RoundPhase` → `NoteAccuracy*`; nav route `round/{mode}` → `noteaccuracy/{mode}`. The shared `COUNT_IN_SECS` moved to `ui/common` (the other games were importing it from the round package). The generic "one playthrough" names stayed (`roundLength`, `RoundOutcome`, `recordCompletedRound`). Persisted DB `exerciseType` value `"NOTE_ACCURACY"` is unchanged, so history/PBs are intact.
 
 
 - [FEATURE] Teacher's notebook

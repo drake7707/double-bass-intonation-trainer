@@ -80,6 +80,10 @@ data class SustainUiState(
     val goalMs: Long = 5000,
     val outcome: RoundOutcome? = null,
     val ready: Boolean = false,
+    /** True when this round is being recorded to a [be.drakarah.intonation.audio.GameTrace] —
+     * drives the summary's "how did that go" prompt (her idea, see TESTING.md). */
+    val traceActive: Boolean = false,
+    val traceFeedbackGiven: Boolean = false,
 ) {
     val maxScore: Int get() = roundLength * 100
 }
@@ -140,6 +144,7 @@ class SustainViewModel(
                 goalMs = sustainParams.goalMs,
                 phase = SustainPhase.CountIn(be.drakarah.intonation.ui.common.COUNT_IN_SECS),
                 ready = true,
+                traceActive = trace != null,
             )
             launch { runCountIn() }
 
@@ -294,6 +299,15 @@ class SustainViewModel(
             trace?.save()
             val outcome = sessionRepository.recordCompletedRound(session, attempts)
             _uiState.value = _uiState.value.copy(outcome = outcome)
+        }
+    }
+
+    /** Her post-round "how did that go" answer (only offered when [trace] is active) — appended
+     * to the trace already on disk so a batch of pulled traces carries her own notes. */
+    fun submitTraceFeedback(rating: String, note: String) {
+        viewModelScope.launch {
+            trace?.appendFeedback(rating, note)
+            _uiState.value = _uiState.value.copy(traceFeedbackGiven = true)
         }
     }
 

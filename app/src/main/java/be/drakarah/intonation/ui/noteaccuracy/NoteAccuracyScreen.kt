@@ -43,6 +43,7 @@ import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
+import be.drakarah.intonation.ui.common.TraceFeedbackPrompt
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
 import be.drakarah.intonation.ui.theme.TextSizes
@@ -138,6 +139,7 @@ fun NoteAccuracyScreen(
                             state, onExit,
                             onApplyLevel = viewModel::applySuggestedLevel,
                             onPlayAgain = viewModel::restart,
+                            onTraceFeedback = viewModel::submitTraceFeedback,
                         )
                     }
                 }
@@ -277,6 +279,7 @@ private fun NoteAccuracySummary(
     onExit: () -> Unit,
     onApplyLevel: () -> Unit,
     onPlayAgain: () -> Unit,
+    onTraceFeedback: (String, String) -> Unit,
 ) {
     val scored = state.results.filter { it.cents != null && !it.wrongNote }
     val avgCents = scored.mapNotNull { it.cents }.map { kotlin.math.abs(it) }.average()
@@ -352,6 +355,10 @@ private fun NoteAccuracySummary(
             OutlinedButton(onClick = onApplyLevel, modifier = Modifier.fillMaxWidth()) {
                 Text("Switch to ${suggested.label} pace")
             }
+        }
+        if (state.traceActive && !state.traceFeedbackGiven) {
+            Spacer(Modifier.height(Spacing.SECTION_BREAK))
+            TraceFeedbackPrompt(onSubmit = onTraceFeedback)
         }
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
         Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) {

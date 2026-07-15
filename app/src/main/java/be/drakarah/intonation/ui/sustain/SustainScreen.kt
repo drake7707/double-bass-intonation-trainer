@@ -39,6 +39,7 @@ import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
+import be.drakarah.intonation.ui.common.TraceFeedbackPrompt
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
 import be.drakarah.intonation.ui.theme.TextSizes
@@ -109,7 +110,9 @@ fun SustainScreen(
                         is SustainPhase.CountIn -> CountIn(phase.secsLeft)
                         is SustainPhase.Play -> PlayContent(state, phase)
                         is SustainPhase.Reveal -> RevealContent(state, phase.result)
-                        SustainPhase.Done -> DoneContent(state, onExit, viewModel::restart)
+                        SustainPhase.Done -> DoneContent(
+                            state, onExit, viewModel::restart, viewModel::submitTraceFeedback,
+                        )
                     }
                 }
                 Spacer(Modifier.height(Spacing.ITEM_SPACING))
@@ -351,7 +354,12 @@ private fun coachingText(result: SustainAttemptUi): String = when (result.focus)
 }
 
 @Composable
-private fun DoneContent(state: SustainUiState, onExit: () -> Unit, onPlayAgain: () -> Unit) {
+private fun DoneContent(
+    state: SustainUiState,
+    onExit: () -> Unit,
+    onPlayAgain: () -> Unit,
+    onTraceFeedback: (String, String) -> Unit,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text("Round complete", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(Spacing.CARD_PADDING))
@@ -386,6 +394,10 @@ private fun DoneContent(state: SustainUiState, onExit: () -> Unit, onPlayAgain: 
                 )
             }
             AchievementUnlocks(outcome.newAchievements)
+        }
+        if (state.traceActive && !state.traceFeedbackGiven) {
+            Spacer(Modifier.height(Spacing.SECTION_BREAK))
+            TraceFeedbackPrompt(onSubmit = onTraceFeedback)
         }
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
         Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) {

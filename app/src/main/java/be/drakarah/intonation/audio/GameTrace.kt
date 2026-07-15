@@ -32,6 +32,9 @@ class GameTrace(
     val waveWriter = WaveWriter()
 
     private val lines = ArrayList<String>()
+    /** Set by [save]; lets [appendFeedback] add to the same file after she's seen the summary,
+     * without delaying when the trace itself is written to disk. */
+    private var savedJsonl: File? = null
 
     init {
         lines.add("""{"config":${config.toJson()},"detection":$detectionExtras,"exercise":"$exercise"}""")
@@ -65,10 +68,29 @@ class GameTrace(
                 val base = "game-trace-$exercise-$stamp"
                 waveWriter.storeSnapshot()
                 waveWriter.writeStoredSnapshot(context, Uri.fromFile(File(dir, "$base.wav")), config.sampleRate)
-                File(dir, "$base.jsonl").bufferedWriter().use { w -> lines.forEach { w.appendLine(it) } }
+                val jsonl = File(dir, "$base.jsonl")
+                jsonl.bufferedWriter().use { w -> lines.forEach { w.appendLine(it) } }
+                savedJsonl = jsonl
                 Log.d(TAG, "saved trace $base (${lines.size} lines)")
             } catch (e: Exception) {
                 Log.w(TAG, "failed to save game trace", e)
+            }
+        }
+    }
+
+    /** Append her post-round "how did that go" note to the trace already on disk (her idea —
+     * see the FEATURE request in TESTING.md). Called after [save], once the summary screen has
+     * asked her, so recording the audio/detection log is never held up waiting for an answer;
+     * if she skips the prompt the trace is simply saved without one. */
+    suspend fun appendFeedback(rating: String, note: String) {
+        val file = savedJsonl ?: return
+        withContext(Dispatchers.IO) {
+            try {
+                file.appendText(
+                    """{"feedback":{"rating":"$rating","note":"${note.escapeJson()}"}}""" + "\n"
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "failed to append trace feedback", e)
             }
         }
     }
@@ -79,3 +101,6 @@ class GameTrace(
         const val TRACE_SECONDS = 360
     }
 }
+
+private fun String.escapeJson(): String =
+    replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")

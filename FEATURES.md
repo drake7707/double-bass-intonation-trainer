@@ -242,7 +242,9 @@ its own scoring category** — scores are only ever compared between identical s
 - **Record & trace games** (Settings → Debug, off by default): records a whole game — the
   raw audio plus the full detection stream and game events — into Recordings. The entire
   round can then be replayed offline to diagnose and tune detection thresholds against real
-  playing, not isolated snippets. For normal play, leave it off.
+  playing, not isolated snippets. For normal play, leave it off. When on, the round summary
+  asks how it went (a quick 👍/⚠️ tap, or a typed note) and embeds the answer in the trace,
+  so a batch of shared traces carries which round had the issue.
 - Screens stay awake while listening. Dark theme only. Offline; no accounts, no ads,
   no telemetry.
 

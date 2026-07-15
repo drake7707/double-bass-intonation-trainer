@@ -94,6 +94,10 @@ data class NoteAccuracyUiState(
     /** Level the summary offers to switch to (from this round's reaction times), if any. */
     val suggestedLevel: be.drakarah.intonation.game.PlayerLevel? = null,
     val ready: Boolean = false,
+    /** True when this round is being recorded to a [be.drakarah.intonation.audio.GameTrace] —
+     * drives the summary's "how did that go" prompt (her idea, see TESTING.md). */
+    val traceActive: Boolean = false,
+    val traceFeedbackGiven: Boolean = false,
 ) {
     val maxScore: Int get() = roundLength * MAX_ATTEMPT_SCORE
 }
@@ -193,6 +197,7 @@ class NoteAccuracyViewModel(
                 playerLevel = settings.playerLevel,
                 phase = NoteAccuracyPhase.CountIn(COUNT_IN_SECS),
                 ready = true,
+                traceActive = trace != null,
             )
             launch { runCountIn() }
 
@@ -449,6 +454,15 @@ class NoteAccuracyViewModel(
                     },
                 ),
             )
+        }
+    }
+
+    /** Her post-round "how did that go" answer (only offered when [trace] is active) — appended
+     * to the trace already on disk so a batch of pulled traces carries her own notes. */
+    fun submitTraceFeedback(rating: String, note: String) {
+        viewModelScope.launch {
+            trace?.appendFeedback(rating, note)
+            _uiState.value = _uiState.value.copy(traceFeedbackGiven = true)
         }
     }
 

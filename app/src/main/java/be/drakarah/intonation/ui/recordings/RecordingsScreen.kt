@@ -16,8 +16,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -54,7 +54,11 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import kotlin.math.min
+
+private const val FEEDBACK_EMAIL = "feedback@drakarah.be"
 
 /** One recording = a WAV plus its optional detection log, grouped by shared basename. */
 private data class Recording(
@@ -127,6 +131,7 @@ fun RecordingsScreen(
         recordings.associate { it.baseName to recordingConfigSummary(it) }
     }
     var confirmDelete by remember { mutableStateOf<Recording?>(null) }
+    var confirmEmail by remember { mutableStateOf<Recording?>(null) }
 
     val scope = rememberCoroutineScope()
     var playingBase by remember { mutableStateOf<String?>(null) }
@@ -208,6 +213,29 @@ fun RecordingsScreen(
         )
     }
 
+    confirmEmail?.let { recording ->
+        AlertDialog(
+            onDismissRequest = { confirmEmail = null },
+            title = { Text("Send to developer?") },
+            text = {
+                Text(
+                    "This zips ${recording.baseName} (the full microphone audio plus its detection " +
+                        "log) and opens your email app addressed to $FEEDBACK_EMAIL. It contains " +
+                        "everything the mic picked up while recording, not just your playing."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmEmail = null
+                    emailRecording(context, recording)
+                }) { Text("Send") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmEmail = null }) { Text("Cancel") }
+            },
+        )
+    }
+
     Scaffold { padding ->
         Column(
             modifier = Modifier
@@ -219,7 +247,7 @@ fun RecordingsScreen(
             Text(if (onlyTraces) "Game traces" else "Recordings", style = MaterialTheme.typography.headlineMedium)
             Text(
                 if (onlyTraces) "Full game or calibration traces for analysis."
-                else "Snippets and long captures. Share sends the audio plus its detection log.",
+                else "Snippets and long captures. The envelope zips the audio plus its detection log to send.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -280,8 +308,8 @@ fun RecordingsScreen(
                                             tint = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                         )
                                     }
-                                    IconButton(onClick = { shareRecording(context, recording) }) {
-                                        Icon(Icons.Default.Share, contentDescription = "Share")
+                                    IconButton(onClick = { confirmEmail = recording }) {
+                                        Icon(Icons.Default.Email, contentDescription = "Send to developer")
                                     }
                                     IconButton(onClick = { confirmDelete = recording }) {
                                         Icon(
@@ -306,14 +334,33 @@ fun RecordingsScreen(
     }
 }
 
-private fun shareRecording(context: android.content.Context, recording: Recording) {
-    val uris = listOfNotNull(recording.wav, recording.log).map {
-        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", it)
+/** Zips the wav + log pair into the app cache's share/ dir, overwriting any prior zip for this recording. */
+private fun zipRecording(context: android.content.Context, recording: Recording): File {
+    val shareDir = File(context.cacheDir, "share").apply { mkdirs() }
+    val zipFile = File(shareDir, "${recording.baseName}.zip")
+    ZipOutputStream(zipFile.outputStream().buffered()).use { zip ->
+        listOfNotNull(recording.wav, recording.log).forEach { file ->
+            zip.putNextEntry(ZipEntry(file.name))
+            file.inputStream().use { it.copyTo(zip) }
+            zip.closeEntry()
+        }
     }
-    val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
-        type = "*/*"
-        putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+    return zipFile
+}
+
+private fun emailRecording(context: android.content.Context, recording: Recording) {
+    val zipFile = zipRecording(context, recording)
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", zipFile)
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "application/zip"
+        putExtra(Intent.EXTRA_EMAIL, arrayOf(FEEDBACK_EMAIL))
+        putExtra(Intent.EXTRA_SUBJECT, "Intonation Trainer trace: ${recording.baseName}")
+        putExtra(
+            Intent.EXTRA_TEXT,
+            "Attached: ${recording.baseName}.zip (audio + detection log).\n\nWhat happened:\n"
+        )
+        putExtra(Intent.EXTRA_STREAM, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    context.startActivity(Intent.createChooser(intent, "Share recording"))
+    context.startActivity(Intent.createChooser(intent, "Send trace to developer"))
 }

@@ -5,6 +5,19 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-15 Send trace/snippet to feedback@drakarah.be (your feature request)
+Recordings screen (and Game traces, same screen) now has an envelope icon per row, next to Delete.
+Replaces the old plain Share icon — removed since picking Gmail from the share chooser fills in
+the recipient/subject anyway, making the separate generic share redundant.
+- [ ] Tap the envelope on any recording — confirm the warning dialog ("full microphone audio... not
+      just your playing") appears before anything is sent, Cancel backs out cleanly.
+- [ ] Tap Send — confirm your mail app opens with a `.zip` attached (wav + jsonl zipped together)
+      and `feedback@drakarah.be` pre-filled as recipient.
+- [ ] For a full game trace (10s+): check the resulting zip size in your mail app — deflate doesn't
+      compress float32 audio well, so a long trace may still be tens of MB. Tell me if your mail
+      app/provider rejects it; if so the next step is trimming/downsampling the trace before
+      zipping rather than relying on compression alone.
+
 ### 2026-07-15 Calibration summary mislabeled pizz failures as "octave drift" (your bug report)
 You calibrated and saw the title say "no octave drift, no settle needed" while Mi's own row still
 showed the octave-drift warning — a contradiction. **Root cause found:** the wizard picks the
@@ -681,6 +694,19 @@ Home screen:
 
 
 
+- [FEATURE] Can you make the marketing material needed to publish on the play store. The app is a double bass intonation trainer so it probably should feature a double bass somewhere. Right now the app's icon is a treble clef which is distinct and good but maybe a double bass would be more distinctive. I also don't have anything for app banner and all the other thigns that play store requires. I heard you are good at generating images, I am definitely not so please have a go at it
+
+- [BUG → FIXED 2026-07-15] I calibrated it said no octave drift in the title but on mi it said octave drift so which is it? I made a trace and have a screenshot. Other than that pizz/Arco split was the right call, after calibration it was far less false trigger prone.
+  → Found it: the per-note "octave drift" label was shown for any failing pizz check, not just an actual octave-high one — Mi's row was mislabeled. See the dated Pending block above; needs a re-calibration VERIFY.
+
+
+  
+- [FEATURE] Ability to send a trace or snippet to feedback@drakarah.be, once i put it on the play store and they say it doesn't work for them i can analyze their trace. Obviously warn them that it contains the full recording of their microphone. Would probably be best to compress it, my mailbox is going to refuse large files.
+
+
+
+
+
 OPEN FEEDBACK & IDEAS:
 --------------
 
@@ -692,10 +718,6 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 
 - [FEATURE] Scales exercises or is that covered by chords?
 
-- [FEATURE] Ability to send a trace to feedback@drakarah.be, once i put it on the play store and they say it doesn't work for them i can analyze their trace
-
-- [BUG → FIXED 2026-07-15] I calibrated it said no octave drift in the title but on mi it said octave drift so which is it? I made a trace and have a screenshot. Other than that pizz/Arco split was the right call, after calibration it was far less false trigger prone.
-  → Found it: the per-note "octave drift" label was shown for any failing pizz check, not just an actual octave-high one — Mi's row was mislabeled. See the dated Pending block above; needs a re-calibration VERIFY.
 
 
 - [FEATURE]  Reminder notification: send the user a reminder they haven't practiced yet if it's been near 24h since the last session. Stop sending notifications if they ignore them and it's more than a week since last practice. Of course with a toggeable setting in the settings to turn this off
@@ -771,6 +793,3 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
       No fireworks.
 
       Just someone noticing something you hadn't.
-
-
-- [FEATURE] Can you make the marketing material needed to publish on the play store. The app is a double bass intonation trainer so it probably should feature a double bass somewhere. Right now the app's icon is a treble clef which is distinct and good but maybe a double bass would be more distinctive. I also don't have anything for app banner and all the other thigns that play store requires. I heard you are good at generating images, I am definitely not so please have a go at it

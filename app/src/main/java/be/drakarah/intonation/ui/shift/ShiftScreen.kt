@@ -250,12 +250,21 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
                 style = MaterialTheme.typography.headlineMedium,
                 color = color,
             )
-            else -> Text(
-                String.format(Locale.US, "%+.1f cents", result.cents),
-                fontSize = TextSizes.SCORE_CENTS,
-                fontWeight = FontWeight.Bold,
-                color = color,
-            )
+            else -> {
+                // Headline the shift-distance error (the skill); decompose start vs landing below.
+                Text(
+                    String.format(Locale.US, "%+.1f cents", result.shiftCents ?: 0f),
+                    fontSize = TextSizes.SCORE_CENTS,
+                    fontWeight = FontWeight.Bold,
+                    color = color,
+                )
+                Text(
+                    "shift distance",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                ShiftBreakdown(result)
+            }
         }
         if (result.fastBonus) {
             Text(
@@ -276,6 +285,33 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
             "+${result.score}", 
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+/** Start vs landing breakdown, plus a "great shift — bad start" coaching line when the start
+ * error (not the shift itself) is what pushed the landing off (Sarah's request). */
+@Composable
+private fun ShiftBreakdown(result: ShiftAttemptUi) {
+    val landing = result.landingCents ?: return
+    val start = result.startCents
+    val shift = result.shiftCents
+    Spacer(Modifier.height(Spacing.FINE_SPACING))
+    Text(
+        buildString {
+            if (start != null) append(String.format(Locale.US, "start %+.0f¢  ·  ", start))
+            append(String.format(Locale.US, "landed %+.0f¢", landing))
+        },
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    if (start != null && kotlin.math.abs(start) >= 15f &&
+        shift != null && kotlin.math.abs(shift) < kotlin.math.abs(landing) - 5f
+    ) {
+        Text(
+            "great shift — your start was ${if (start > 0) "sharp" else "flat"}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
         )
     }
 }
@@ -342,7 +378,7 @@ private fun DoneContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            val scoredCents = state.results.mapNotNull { it.cents }
+            val scoredCents = state.results.mapNotNull { it.landingCents }
             ImprovementLine(
                 thisRoundAvgCents = scoredCents.takeIf { it.isNotEmpty() }
                     ?.map { kotlin.math.abs(it) }?.average()?.toFloat(),

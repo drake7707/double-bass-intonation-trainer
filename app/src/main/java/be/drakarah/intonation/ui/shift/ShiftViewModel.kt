@@ -26,6 +26,7 @@ import be.drakarah.intonation.game.FIRST_POSITION
 import be.drakarah.intonation.game.MAX_ATTEMPT_SCORE
 import be.drakarah.intonation.game.Position
 import be.drakarah.intonation.game.ShiftCapture
+import be.drakarah.intonation.game.ShiftLevel
 import be.drakarah.intonation.game.ShiftPool
 import be.drakarah.intonation.game.ShiftPromptSpec
 import be.drakarah.intonation.game.ShiftState
@@ -50,7 +51,12 @@ const val EXERCISE_SHIFT = "SHIFT"
 
 data class ShiftAttemptUi(
     val prompt: ShiftPromptSpec,
-    val cents: Float?,
+    /** Shift-distance error (landing − start): the skill the score leans on, headlined in the reveal. */
+    val shiftCents: Float?,
+    /** How off the confirmed start was, vs the ideal start pitch (null = start not confirmed). */
+    val startCents: Float?,
+    /** Landing vs the target — absolute intonation; feeds drift and the recorded cents. */
+    val landingCents: Float?,
     val landingTimeMs: Long?,
     val score: Int,
     val starCount: Int,
@@ -94,8 +100,8 @@ data class ShiftUiState(
 class ShiftViewModel(
     private val config: PitchEngineConfig,
     private val mode: String,
-    /** "same" or "cross" — same-string shifts vs cross-string shifts. */
-    private val style: String,
+    /** Shift difficulty ladder — basic (1↔4) / intermediate (any finger) / advanced (cross string). */
+    private val level: ShiftLevel,
     private val settingsRepository: SettingsRepository,
     private val roundRecorder: RoundRecorder,
     private val appContext: Context,
@@ -150,9 +156,9 @@ class ShiftViewModel(
             )
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             val cfg = config.applying(settings, pizz = mode == "pizz")
-            trace = if (settings.traceGames) GameTrace(appContext, cfg, "shift-$style-$mode", settings.detectionExtrasJson()).also { it.prepare() } else null
+            trace = if (settings.traceGames) GameTrace(appContext, cfg, "shift-${level.id}-$mode", settings.detectionExtrasJson()).also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
-            prompts = ShiftPool(positions, crossString = style == "cross")
+            prompts = ShiftPool(positions, level = level)
                 .draw(settings.roundLength)
                 .map {
                     val rnd = kotlin.random.Random.Default
@@ -162,7 +168,7 @@ class ShiftViewModel(
                     )
                 }
             startedAtWallClock = System.currentTimeMillis()
-            capture = newCapture(prompts[0], skipQuiet = true)
+            capture = newCapture(prompts[0])
             _uiState.value = ShiftUiState(
                 roundLength = settings.roundLength,
                 prompt = prompts[0],
@@ -217,7 +223,7 @@ class ShiftViewModel(
             _uiState.value = _uiState.value.copy(phase = ShiftPhase.CountIn(s))
             kotlinx.coroutines.delay(1000)
         }
-        capture = newCapture(prompts[0], skipQuiet = true)
+        capture = newCapture(prompts[0])
         _uiState.value = _uiState.value.copy(phase = ShiftPhase.Start())
     }
 
@@ -228,7 +234,7 @@ class ShiftViewModel(
         start()
     }
 
-    private fun newCapture(prompt: ShiftPromptSpec, skipQuiet: Boolean): ShiftCapture {
+    private fun newCapture(prompt: ShiftPromptSpec): ShiftCapture {
         trace?.event(
             lastSampleMs, "prompt",
             "start=${prompt.start.target.midi} target=${prompt.target.target.midi} " +
@@ -238,22 +244,29 @@ class ShiftViewModel(
             startHz = prompt.start.target.frequency(a4),
             captureParams = captureParams,
             params = shiftParams,
-            skipQuietGate = skipQuiet,
         )
     }
 
     private fun onFinished(finished: ShiftState.Finished, state: ShiftUiState, nowMs: Long) {
         val prompt = state.prompt ?: return
         val r = finished.result
-        val cents = r.landedHz?.let {
-            centsBetween(it.toDouble(), prompt.target.target.frequency(a4)).toFloat()
-        }
-        val wrongNote = cents != null && abs(cents) > WRONG_NOTE_CENTS
-        val score = if (r.timedOut || cents == null) 0 else scoreShift(cents, r.landingTimeMs, difficulty)
-        val starCount = if (r.timedOut || cents == null) 0 else stars(cents)
+        val targetHz = prompt.target.target.frequency(a4)
+        val idealStartHz = prompt.start.target.frequency(a4)
+        // Landing = absolute intonation; start = how off the confirmed start was; shift distance =
+        // landing − start (the skill). A slightly-off start that shifts the right distance scores well.
+        val landingCents = r.landedHz?.let { centsBetween(it.toDouble(), targetHz).toFloat() }
+        val startCents = r.confirmedStartHz.takeIf { it > 0f }
+            ?.let { centsBetween(it.toDouble(), idealStartHz).toFloat() }
+        val shiftCents = landingCents?.let { it - (startCents ?: 0f) }
+        val wrongNote = landingCents != null && abs(landingCents) > WRONG_NOTE_CENTS
+        val score = if (r.timedOut || landingCents == null) 0
+            else scoreShift(landingCents, startCents ?: 0f, r.landingTimeMs, difficulty)
+        val starCount = if (r.timedOut || shiftCents == null) 0 else stars(shiftCents)
         val attempt = ShiftAttemptUi(
             prompt = prompt,
-            cents = cents,
+            shiftCents = shiftCents,
+            startCents = startCents,
+            landingCents = landingCents,
             landingTimeMs = r.landingTimeMs,
             score = score,
             starCount = starCount,
@@ -261,8 +274,9 @@ class ShiftViewModel(
             wrongNote = wrongNote,
             fastBonus = !r.timedOut && (r.landingTimeMs ?: Long.MAX_VALUE) < 1200 && score > 0,
         )
+        // Drift tracks the absolute landing (what a listener hears), not the interval.
         val drift = if (driftWarningEnabled)
-            driftDetector.onAttempt(attempt.cents.takeUnless { attempt.wrongNote }) else null
+            driftDetector.onAttempt(attempt.landingCents.takeUnless { attempt.wrongNote }) else null
         if (soundFeedback) {
             when {
                 attempt.starCount >= 2 -> sounds.playHit()
@@ -272,10 +286,11 @@ class ShiftViewModel(
             if (drift != null) sounds.playDrift(sharp = drift > 0)
         }
         trace?.let { t ->
-            val centsStr = cents?.let { "%.0f".format(it) } ?: "-"
+            fun f(v: Float?) = v?.let { "%.0f".format(it) } ?: "-"
             t.event(
                 nowMs, "result",
-                "target=${prompt.target.target.midi} cents=$centsStr land=${r.landingTimeMs ?: "-"} " +
+                "target=${prompt.target.target.midi} land=${f(landingCents)} start=${f(startCents)} " +
+                    "shift=${f(shiftCents)} time=${r.landingTimeMs ?: "-"} " +
                     "score=$score stars=$starCount timeout=${r.timedOut} wrong=$wrongNote",
             )
         }
@@ -295,7 +310,7 @@ class ShiftViewModel(
             _uiState.value = state.copy(phase = ShiftPhase.Done)
             persistRound(state)
         } else {
-            capture = newCapture(prompts[next], skipQuiet = false)
+            capture = newCapture(prompts[next])
             _uiState.value = state.copy(
                 promptIndex = next, prompt = prompts[next], phase = ShiftPhase.Start(),
             )
@@ -313,7 +328,7 @@ class ShiftViewModel(
                     startMidi = r.prompt.start.target.midi,
                     stringMidi = r.prompt.start.string.midi,
                     positionId = r.prompt.target.position.id,
-                    centsError = r.cents,
+                    centsError = r.landingCents,
                     timeToStableMs = r.landingTimeMs,
                     score = r.score,
                     stars = r.starCount,
@@ -324,7 +339,7 @@ class ShiftViewModel(
             val round = RoundRecord(
                 exerciseType = EXERCISE_SHIFT,
                 mode = mode,
-                configKey = configKey(EXERCISE_SHIFT, mode, difficulty, state.roundLength, positions, variant = style),
+                configKey = configKey(EXERCISE_SHIFT, mode, difficulty, state.roundLength, positions, variant = level.id),
                 startedAt = startedAtWallClock,
                 endedAt = now,
                 totalScore = state.totalScore,
@@ -366,11 +381,11 @@ class ShiftViewModel(
                         as IntonationApplication
                 val handle = extras.createSavedStateHandle()
                 val mode = handle.get<String>("mode") ?: "arco"
-                val style = handle.get<String>("style") ?: "same"
+                val level = ShiftLevel.fromId(handle.get<String>("level"))
                 return ShiftViewModel(
                     config = app.container.pitchEngineConfig,
                     mode = mode,
-                    style = style,
+                    level = level,
                     settingsRepository = app.container.settingsRepository,
                     roundRecorder = app.container.roundRecorder,
                     appContext = app.applicationContext,

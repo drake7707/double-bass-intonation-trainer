@@ -12,6 +12,8 @@ score it. Live needles exist only on the Tune-up screen and Pitch debug screen.
 
 ## Key documents
 
+- `docs/architecture.md` — **structural overview** of modules, the detection pipeline, and the game
+  domain, with mermaid diagrams. Start here for the big picture; `DETECTION.md` is the deep-dive.
 - `docs/DETECTION.md` — **the definitive capture/detection reference.** The problem history,
   every design decision, what worked/didn't, the trace-driven fix, threshold ownership, and the
   drill for diagnosing detection issues. Read it before editing `AttemptCapture`, `SustainCapture`,

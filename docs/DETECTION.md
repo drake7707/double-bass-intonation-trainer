@@ -163,11 +163,16 @@ the user was asked to play. Shared by every screen. Emits a `PitchSample` per wi
 - `game/AttemptCapture` — Note Accuracy & Shift. Freezes the first stable pitch.
 - `game/SustainCapture` — Sustain. Tracks how long a target is held in tune.
 
-### Layer 3 — `ui/noteaccuracy/NoteAccuracyViewModel.onCaptured` — target-AWARE game rule
-This is the only place that knows the prompted note. It decides whether a frozen pitch is
-*really her attempt* or should be discarded (see §4). Target-aware logic lives here, **not** in
-the target-agnostic machine — that separation is deliberate and keeps the machine reusable by
-the Shift Trainer and the debug screen.
+### Layer 3 — the target-AWARE discard filter, now in the domain
+This is the only layer that knows the prompted note. It decides whether a frozen pitch is
+*really her attempt* or should be discarded (see §4). It is a **single pure function**,
+`game/CaptureFilter.kt` (`captureFilter()` + `CaptureFilterConfig`), used by every game — no copies.
+Note Accuracy's whole capture pipeline (classification + octave-fold + this filter + the re-arm
+loop) lives in the domain state machine `game/NoteAttemptCapture` (mirrors `ArpeggioCapture` /
+`ShiftCapture`); `NoteAccuracyViewModel` is a thin adapter. (This replaced the old
+`NoteAccuracyViewModel.onCaptured`, which was untestable while it lived in the UI — see §4/§8.)
+Target-aware logic stays out of the target-agnostic capture machine (`AttemptCapture`) — that
+separation is deliberate and keeps the machine reusable by every game and the debug screen.
 
 ---
 
@@ -378,25 +383,36 @@ semitone is a semitone everywhere, like the §5C constants). If in play it brand
 searching-for-the-note attempts as wrong notes, raise toward 300–350; if wrong notes still leak
 into the intonation feel, drop toward 200. One-line change in `Scoring.kt`.
 
-### 4.2 Same filter, reused by the Chords (arpeggio) game
+### 4.2 One shared filter — Note Accuracy, Chords, and Shift (the "third caller" extraction)
 
-`game/ArpeggioCapture` plays a triad tone-by-tone by composing one `AttemptCapture` per tone
-(each armed `skipQuietGate=true, requireOnsetRise=true`, exactly like Note Accuracy) — the same
-way `ShiftCapture` composes its sub-captures. It carries a **copy of the §4 discard filter**
-(ring-over/too-soon/harmonic/unplayable/flimsy) as a pure, parameterized function inside the
-machine (thresholds passed in by the ViewModel from the same calibration/player sources), so it
-stays Android-free and unit-tested (`ArpeggioCaptureTest`). Two arpeggio-specific rules:
-- **Ring-over is against the *previous tone of the same arpeggio*** (not the previous prompt) —
-  this is the dominant risk here because the tone she just played is still sounding when the
-  next tone arms. `too-soon` (`minReadMs`) applies to the **root only**; later tones follow
-  immediately.
-- Strict ascending order: a genuine wrong **root** re-arms ("that's not it", like the shift
-  start); a genuine wrong **third/fifth** is scored as a miss and advances (never stuck).
+The §4 rules are now **one pure function**, `game/CaptureFilter.kt` (`captureFilter()` returning the
+individual signals so callers can still log the trace, + `CaptureFilterConfig` for the
+calibration/player thresholds, + `isIntegerHarmonic` and the universal constants). Every game routes
+through it — no copies. This is the extraction §8 anticipated once the filter had a third caller
+(Shift being the trigger); the previous inline copy in `NoteAccuracyViewModel.onCaptured` and the
+hand-copy inside `ArpeggioCapture` are both gone.
 
-These thresholds are **provisional** — reused from Note Accuracy, not yet retuned against a real
-arpeggio game-trace. Get one via Settings → Debug "Record & trace games" (tag `chords-*`) and
-replay offline before trusting them. If the filter ever needs a third caller, that's the trigger
-to extract it to one shared pure function (see §8) rather than keep a third copy.
+- **Note Accuracy**: `game/NoteAttemptCapture` composes `AttemptCapture` (armed
+  `skipQuietGate=true, requireOnsetRise=true`) + `captureFilter` + the re-arm loop, and owns the
+  classification/octave-fold. The ViewModel is a thin adapter. Ring-over is against the **previous
+  prompt's** answer; too-soon applies to any pitch.
+- **Chords (arpeggio)**: `game/ArpeggioCapture` composes one `AttemptCapture` per tone (same arming)
+  and calls `captureFilter`. Ring-over is against the **previous tone of the same arpeggio**;
+  too-soon applies to the **root only**. Strict ascending order: a wrong **root** re-arms; a wrong
+  **third/fifth** is scored as a miss and advances (never stuck).
+- **Shift**: `game/ShiftCapture` now arms its **start confirmation** identically
+  (`skipQuietGate=true, requireOnsetRise=true`) so a mid-round legato start registers (see §3 — this
+  was the "start note didn't register" bug; the old default armed `AWAIT_QUIET` and starved). The
+  wrong-start re-arm stays `requireOnsetRise=false` so a *legato correction* is still caught. (The
+  glide-filtered **landing** does not yet route through `captureFilter`; that's optional future
+  leniency, not a duplicated copy.)
+
+The per-game **loop** (arm → filter → re-arm) is deliberately *not* factored into a shared wrapper:
+each machine's accept-side differs (score / strict-order-and-wrong-root / start-tolerance), so a
+shared loop would need callbacks that leak more than they save. The shared unit is the filter.
+
+Filter thresholds remain **provisional** — retune the arpeggio/shift specifics against a real
+game-trace (Settings → Debug "Record & trace games", tags `chords-*` / `shift-*`) before trusting them.
 
 ---
 
@@ -538,6 +554,12 @@ already pool ~170 windows each and the retry+guard cover the main risk.
 
 - `app` `AttemptCaptureTest` — the state machine incl. the **attack-requirement** cases (a ring
   with no attack must not freeze; a genuine attack must; an attack after a ring decays must).
+- `app` `CaptureFilterTest` — the shared §4 discard rules as pure logic: every rule (ring-over,
+  too-soon, harmonic, unplayable, flimsy), their boundaries, the OR-combination, octave-not-harmonic,
+  and `isIntegerHarmonic`. Independent hand-derived expectations (a spec, not a mirror).
+- `app` `NoteAttemptCaptureTest` — the Note Accuracy pipeline end to end in the domain:
+  classification, octave-fold on/off, ring-over/too-soon/harmonic/flimsy discard + re-arm, and
+  timeout. This is the coverage the filter never had while it lived in the ViewModel (§4.2).
 - `app` `PizzOctaveSettleTest` — the pizz **octave-settle** fix (§2.1), replaying her real Fa#1
   pizz snippet's recorded detection stream (JSONL, not a WAV re-run — octave correction is
   config-dependent, so the recorded stream is the faithful ground truth): guard off reproduces

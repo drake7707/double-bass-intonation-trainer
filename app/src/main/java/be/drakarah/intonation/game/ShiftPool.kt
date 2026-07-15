@@ -8,26 +8,30 @@ data class ShiftPromptSpec(
     val target: PromptSpec,
 )
 
-/** Draws shift pairs from the selected positions, in one of two styles (user's design —
- * they train different skills and score separately). A shift always CHANGES POSITION
- * (start.position != target.position) — that is what "shifting" means to the player; two
- * notes in the same position aren't a shift, they're just fingering. So both styles need
- * at least two selected positions to produce anything (the home screen disables them
- * otherwise):
+/** Draws shift pairs from the selected positions, at one of three difficulty [ShiftLevel]s (Sarah's
+ * design — they train different skills and score separately). A shift always CHANGES POSITION
+ * (start.position != target.position) — that is what "shifting" means to the player; two notes in
+ * the same position aren't a shift, they're just fingering. So every level needs at least two
+ * selected positions to produce anything (the home screen disables the exercise otherwise):
  *
- * - same-string: the classic shift along one string, between positions. Prefers longer
- *   shifts (>= [preferredDistance] semitones) but falls back to any cross-position pair.
- * - cross-string: start and target on different strings AND different positions — a string
- *   crossing combined with a shift and a landing.
+ * - [ShiftLevel.BASIC]: same string, finger 1 ↔ 4 only — the classic outer-finger shift. Prefers
+ *   longer shifts (>= [preferredDistance] semitones), falling back to any 1↔4 pair, then any
+ *   same-string pair.
+ * - [ShiftLevel.INTERMEDIATE]: same string, ANY fingers and any distance — the full same-string
+ *   variety (2nd finger and smaller shifts included, which is exactly what "anything in between"
+ *   trains, so unlike basic it is deliberately NOT filtered to the long shifts).
+ * - [ShiftLevel.ADVANCED]: start and target on different strings AND different positions — a string
+ *   crossing combined with the shift and landing.
  */
 class ShiftPool(
     positions: Set<Position>,
-    private val crossString: Boolean = false,
+    private val level: ShiftLevel = ShiftLevel.INTERMEDIATE,
     private val random: Random = Random.Default,
     preferredDistance: Int = 3,
 ) {
     private val pairs: List<ShiftPromptSpec> = run {
         val prompts = promptsFor(positions)
+        val crossString = level == ShiftLevel.ADVANCED
         val all = prompts.flatMap { a ->
             prompts.mapNotNull { b ->
                 val stringsMatch = a.string == b.string
@@ -40,11 +44,18 @@ class ShiftPool(
                 if (valid) ShiftPromptSpec(a, b) else null
             }
         }
-        if (crossString) return@run all
-        val far = all.filter {
+        fun far(from: List<ShiftPromptSpec>) = from.filter {
             kotlin.math.abs(it.target.target.midi - it.start.target.midi) >= preferredDistance
         }
-        far.ifEmpty { all }
+        when (level) {
+            // any-finger variety, small shifts included — no "prefer far" filter here
+            ShiftLevel.INTERMEDIATE, ShiftLevel.ADVANCED -> all
+            ShiftLevel.BASIC -> {
+                // finger 1 ↔ finger 4 only (the classic outer-finger shift), preferring longer ones
+                val outer = all.filter { setOf(it.start.finger(), it.target.finger()) == setOf(1, 4) }
+                far(outer).ifEmpty { outer }.ifEmpty { all }
+            }
+        }
     }
 
     /** True when the selection can produce at least one shift (needs 2+ positions). */

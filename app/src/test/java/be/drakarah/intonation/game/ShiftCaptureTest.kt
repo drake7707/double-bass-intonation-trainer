@@ -53,6 +53,9 @@ class ShiftCaptureTest {
         val cents = 1200.0 * kotlin.math.ln(result.landedHz!! / targetHz) / kotlin.math.ln(2.0)
         assertTrue("landed $cents cents off target", abs(cents) < 5)
         assertTrue("landingTime ${result.landingTimeMs}", result.landingTimeMs!! > 0)
+        // the confirmed start is carried through so scoring can credit the shift distance
+        val startCents = 1200.0 * kotlin.math.ln(result.confirmedStartHz / startHz) / kotlin.math.ln(2.0)
+        assertTrue("confirmed start $startCents cents off the requested start", abs(startCents) < 5)
     }
 
     @Test
@@ -68,6 +71,22 @@ class ShiftCaptureTest {
         val result = (state as ShiftState.Finished).result
         val centsVsStop = 1200.0 * kotlin.math.ln(result.landedHz!! / stopHz) / kotlin.math.ln(2.0)
         assertTrue("landed $centsVsStop cents off the stop point", abs(centsVsStop) < 5)
+    }
+
+    @Test
+    fun legatoStartConfirmsWithoutASilenceGap() {
+        // Mid-round: the previous note is still ringing (the room never goes quiet), then she plays
+        // the start with a fresh bow attack. The old arming (AWAIT_QUIET) starved here — "the start
+        // note of the shift didn't register". Arming like Note Accuracy (skipQuiet + onset-rise)
+        // must still confirm the start off the attack.
+        val ringing = generateSequence(0L) { it + hop }.takeWhile { it < 500 }
+            .map { sample(it, targetHz.toFloat(), level = 45f) }.toList()   // previous note, never quiet
+        val startAttack = generateSequence(500L) { it + hop }.takeWhile { it < 2600 }
+            .map { sample(it, startHz.toFloat(), level = 80f) }.toList()    // fresh attack on the start
+        val cap = capture()
+        run(cap, ringing + startAttack)
+        assertTrue("start must confirm under legato, got ${cap.state}",
+            cap.state !is ShiftState.ConfirmStart)
     }
 
     @Test
@@ -109,20 +128,82 @@ class ShiftCaptureTest {
 
     @Test
     fun confidentShiftBonusAppliesUnder1200ms() {
-        assertEquals(100, scoreShift(0f, 500, Difficulty.STANDARD))   // capped at 100
-        assertEquals(97, scoreShift(10f, 500, Difficulty.STANDARD))   // 89 + 8 bonus
-        assertEquals(89, scoreShift(10f, 2000, Difficulty.STANDARD))  // no bonus
-        assertEquals(0, scoreShift(60f, 500, Difficulty.STANDARD))
+        // With a perfect start (startCents = 0) the blend reduces to the old landing-only curve.
+        assertEquals(100, scoreShift(0f, 0f, 500, Difficulty.STANDARD))   // capped at 100
+        assertEquals(97, scoreShift(10f, 0f, 500, Difficulty.STANDARD))   // 89 + 8 bonus
+        assertEquals(89, scoreShift(10f, 0f, 2000, Difficulty.STANDARD))  // no bonus
+        assertEquals(0, scoreShift(60f, 0f, 500, Difficulty.STANDARD))
     }
 
     @Test
-    fun shiftPoolPrefersRealShiftsAndStaysOnOneStringAndChangesPosition() {
+    fun blendedScoreCreditsAGoodShiftOffABadStart() {
+        // Started 20¢ sharp and landed 20¢ sharp: the interval travelled was perfect. The blend
+        // (0.7·shift + 0.3·landing) rewards the shift while landing intonation keeps some weight,
+        // so it scores far above the old landing-only value (scoreAttempt(20) = 67).
+        val goodShiftBadStart = scoreShift(20f, 20f, 2000, Difficulty.STANDARD)
+        assertEquals(90, goodShiftBadStart)
+        assertTrue("a good shift off a bad start beats landing-only scoring",
+            goodShiftBadStart > scoreAttempt(20f, Difficulty.STANDARD))
+        // A genuinely bad shift (wrong distance) still scores low even from a near-perfect start.
+        assertTrue("a bad shift scores low", scoreShift(45f, 5f, 2000, Difficulty.STANDARD) < 25)
+    }
+
+    @Test
+    fun shiftPoolStaysOnOneStringAndChangesPosition() {
+        // Default level is INTERMEDIATE: same string, any fingers, any distance.
         val pool = ShiftPool(setOf(FIRST_POSITION, THIRD_POSITION), random = Random(1))
         val prompts = pool.draw(100)
         prompts.forEach {
             assertEquals(it.start.string, it.target.string)
             assertTrue("a shift must change position", it.start.position != it.target.position)
-            assertTrue(abs(it.target.target.midi - it.start.target.midi) >= 3)
+            assertTrue("a shift must change pitch", it.start.target.midi != it.target.target.midi)
+        }
+    }
+
+    @Test
+    fun basicLevelDrawsOnlyFingerOneToFourSameStringShifts() {
+        val pool = ShiftPool(setOf(FIRST_POSITION, THIRD_POSITION), level = ShiftLevel.BASIC, random = Random(3))
+        val prompts = pool.draw(100)
+        prompts.forEach {
+            assertEquals("basic stays on one string", it.start.string, it.target.string)
+            assertTrue("a shift must change position", it.start.position != it.target.position)
+            assertEquals("basic is finger 1 <-> 4 only",
+                setOf(1, 4), setOf(it.start.finger(), it.target.finger()))
+        }
+    }
+
+    @Test
+    fun intermediateLevelIncludesTheSecondFinger() {
+        val pool = ShiftPool(setOf(FIRST_POSITION, SECOND_POSITION), level = ShiftLevel.INTERMEDIATE, random = Random(5))
+        val prompts = pool.draw(200)
+        assertEquals("intermediate stays on one string", prompts.map { it.start.string }, prompts.map { it.target.string })
+        assertTrue("intermediate should use the 2nd finger at least once",
+            prompts.any { it.start.finger() == 2 || it.target.finger() == 2 })
+    }
+
+    @Test
+    fun fingerMapsOffsetWithinPositionToOneTwoFour() {
+        // Each selectable position spans three semitones covered by fingers 1-2-4.
+        val byOffset = promptsOf(FIRST_POSITION).groupBy { it.target.midi - it.string.midi }
+        assertTrue("lowest offset is finger 1", byOffset.getValue(2).all { it.finger() == 1 })
+        assertTrue("middle offset is finger 2", byOffset.getValue(3).all { it.finger() == 2 })
+        assertTrue("highest offset is finger 4", byOffset.getValue(4).all { it.finger() == 4 })
+    }
+
+    @Test
+    fun shiftLevelFromIdParsesAndDefaultsToIntermediate() {
+        assertEquals(ShiftLevel.BASIC, ShiftLevel.fromId("basic"))
+        assertEquals(ShiftLevel.INTERMEDIATE, ShiftLevel.fromId("intermediate"))
+        assertEquals(ShiftLevel.ADVANCED, ShiftLevel.fromId("advanced"))
+        assertEquals(ShiftLevel.INTERMEDIATE, ShiftLevel.fromId(null))
+        assertEquals(ShiftLevel.INTERMEDIATE, ShiftLevel.fromId("nonsense"))
+    }
+
+    @Test
+    fun everyLevelIsEmptyForASinglePosition() {
+        ShiftLevel.entries.forEach { level ->
+            assertTrue("$level needs 2+ positions",
+                ShiftPool(setOf(FIRST_POSITION), level = level, random = Random(1)).isEmpty)
         }
     }
 
@@ -136,7 +217,7 @@ class ShiftCaptureTest {
 
     @Test
     fun crossStringPoolChangesStringAndPositionAndNeverUnison() {
-        val pool = ShiftPool(setOf(FIRST_POSITION, SECOND_POSITION), crossString = true, random = Random(1))
+        val pool = ShiftPool(setOf(FIRST_POSITION, SECOND_POSITION), level = ShiftLevel.ADVANCED, random = Random(1))
         val prompts = pool.draw(100)
         prompts.forEach {
             assertTrue("strings must differ", it.start.string != it.target.string)

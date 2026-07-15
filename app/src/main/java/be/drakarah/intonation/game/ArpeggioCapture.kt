@@ -3,7 +3,6 @@ package be.drakarah.intonation.game
 import be.drakarah.intonation.dsp.PitchSample
 import be.drakarah.intonation.music.centsBetween
 import kotlin.math.abs
-import kotlin.math.ln
 import kotlin.math.roundToInt
 
 /** The frozen result of one arpeggio tone. [frequencyHz] null = no scoreable note (timed out
@@ -82,7 +81,8 @@ class ArpeggioCapture(
     private fun onFrozen(frozen: CapturedPitch, nowMs: Long) {
         val target = targetsHz[toneIndex]
         val cents = centsBetween(frozen.frequencyHz.toDouble(), target).toFloat()
-        val nearTarget = abs(cents) <= NEAR_TARGET_CENTS
+        // too-soon applies to the ROOT only (later tones follow immediately); ring-over is against
+        // the previous tone of THIS arpeggio (the dominant false capture here).
         val elapsed = if (toneIndex == 0 && startMs >= 0) nowMs - startMs else Long.MAX_VALUE
 
         val wrongNote = abs(cents) > WRONG_NOTE_CENTS
@@ -90,17 +90,19 @@ class ArpeggioCapture(
         val wrongOctave = wrongNote && octaves != 0 &&
                 abs(cents - octaves * 1200f) <= OCTAVE_TOLERANCE_CENTS
 
-        val ringOver = previousToneHz > 0f && !nearTarget &&
-                abs(centsBetween(frozen.frequencyHz.toDouble(), previousToneHz.toDouble())) < RING_MATCH_CENTS
-        val tooSoon = elapsed < minReadMs
-        val harmonicArtifact = wrongNote && !wrongOctave &&
-                isIntegerHarmonic(frozen.frequencyHz.toDouble(), target)
-        val unplayable = wrongNote && frozen.frequencyHz < lowestPlayableHz
-        val flimsy = wrongNote &&
-                (frozen.quality == CaptureQuality.SHAKY || frozen.energyLevel < wrongNoteMinLevel)
-
-        val discard = ringOver || tooSoon || harmonicArtifact || unplayable || flimsy
-        if (discard) {
+        val filter = captureFilter(
+            capturedHz = frozen.frequencyHz,
+            quality = frozen.quality,
+            energyLevel = frozen.energyLevel,
+            centsFromTarget = cents,
+            wrongNote = wrongNote,
+            wrongOctave = wrongOctave,
+            targetHz = target,
+            previousAnswerHz = previousToneHz,
+            elapsedSincePromptMs = elapsed,
+            config = CaptureFilterConfig(wrongNoteMinLevel, lowestPlayableHz, minReadMs),
+        )
+        if (filter.discard) {
             if (reArmsThisTone < MAX_DISCARDS) {
                 reArmsThisTone++
                 current = armTone()
@@ -149,28 +151,4 @@ class ArpeggioCapture(
         if (state != next) state = next
     }
 
-    /** True when [playedHz] sits on a non-octave integer harmonic (or subharmonic) of [targetHz]
-     * — a detection overtone artifact, not a plausibly-played wrong note. Octaves are excluded
-     * (a wrong octave is a real misread). Universal math — deliberately not device-calibrated. */
-    private fun isIntegerHarmonic(playedHz: Double, targetHz: Double): Boolean {
-        if (playedHz <= 0.0 || targetHz <= 0.0) return false
-        val ratioCents = 1200.0 * ln(maxOf(playedHz, targetHz) / minOf(playedHz, targetHz)) / ln(2.0)
-        return NON_OCTAVE_HARMONICS.any { k ->
-            abs(ratioCents - 1200.0 * ln(k.toDouble()) / ln(2.0)) < HARMONIC_TOLERANCE_CENTS
-        }
-    }
-
-    private companion object {
-        /** Cap on discarded/wrong-root re-arms per tone before giving up (mirrors Round). */
-        const val MAX_DISCARDS = 25
-        /** Within this of the target, a capture is a plausible real attempt — never discarded. */
-        const val NEAR_TARGET_CENTS = 150f
-        /** A capture this close to the previous tone's pitch is that tone still ringing. */
-        const val RING_MATCH_CENTS = 60f
-        /** How close to an exact octave a wrong note must be to count as a wrong-octave misread. */
-        const val OCTAVE_TOLERANCE_CENTS = 60f
-        /** Non-octave integer harmonics the detector reads as overtones of the target. */
-        val NON_OCTAVE_HARMONICS = intArrayOf(3, 5, 6, 7, 9, 10)
-        const val HARMONIC_TOLERANCE_CENTS = 50.0
-    }
 }

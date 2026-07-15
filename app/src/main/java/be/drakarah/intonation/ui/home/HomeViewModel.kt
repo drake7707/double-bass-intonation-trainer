@@ -9,6 +9,7 @@ import be.drakarah.intonation.data.PersonalBestEntity
 import be.drakarah.intonation.data.SessionRepository
 import be.drakarah.intonation.data.configKey
 import be.drakarah.intonation.game.ChordPool
+import be.drakarah.intonation.game.ShiftLevel
 import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.ui.chords.EXERCISE_CHORDS
 import be.drakarah.intonation.ui.noteaccuracy.EXERCISE_NOTE_ACCURACY
@@ -37,14 +38,14 @@ data class DailyFocus(
 private val FOCUS_ROTATION = listOf(
     DailyFocus("Note Accuracy · arco", "Land clean first notes with the bow.",
         EXERCISE_NOTE_ACCURACY, "arco", null),
-    DailyFocus("Shift · same string", "Confident shifts along one string.",
-        EXERCISE_SHIFT, "arco", "same"),
+    DailyFocus("Shift · one string", "Confident shifts along one string.",
+        EXERCISE_SHIFT, "arco", ShiftLevel.INTERMEDIATE.id),
     DailyFocus("Sustain · arco", "Steady bow, steady pitch.",
         EXERCISE_SUSTAIN, "arco", null),
     DailyFocus("Note Accuracy · pizz", "First landings, plucked.",
         EXERCISE_NOTE_ACCURACY, "pizz", null),
-    DailyFocus("Shift · cross string", "String crossings that land in tune.",
-        EXERCISE_SHIFT, "arco", "cross"),
+    DailyFocus("Shift · across strings", "String crossings that land in tune.",
+        EXERCISE_SHIFT, "arco", ShiftLevel.ADVANCED.id),
     DailyFocus("Chords · arco", "Arpeggiate a triad, tone by tone.",
         EXERCISE_CHORDS, "arco", null),
 )
@@ -137,8 +138,9 @@ class HomeViewModel(
     /** Personal bests for the currently selected mode and settings. */
     val noteAccuracyBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_NOTE_ACCURACY)
     val sustainBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SUSTAIN)
-    val shiftBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SHIFT, variant = "same")
-    val shiftCrossBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_SHIFT, variant = "cross")
+    /** Per-level shift bests, keyed by [ShiftLevel.id] (the scoring variant). */
+    val shiftBests: Map<ShiftLevel, StateFlow<PersonalBestEntity?>> =
+        ShiftLevel.entries.associateWith { bestFor(EXERCISE_SHIFT, variant = it.id) }
     val chordsBest: StateFlow<PersonalBestEntity?> = bestFor(EXERCISE_CHORDS)
 
     /** A triad spans strings/positions; some selections can't form one. When none is reachable

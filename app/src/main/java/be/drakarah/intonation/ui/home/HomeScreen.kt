@@ -113,8 +113,6 @@ fun HomeScreen(
     val streak by viewModel.streak.collectAsStateWithLifecycle()
     val best by viewModel.noteAccuracyBest.collectAsStateWithLifecycle()
     val sustainBest by viewModel.sustainBest.collectAsStateWithLifecycle()
-    val shiftBest by viewModel.shiftBest.collectAsStateWithLifecycle()
-    val shiftCrossBest by viewModel.shiftCrossBest.collectAsStateWithLifecycle()
     val chordsBest by viewModel.chordsBest.collectAsStateWithLifecycle()
     val canPlayChords by viewModel.canPlayChords.collectAsStateWithLifecycle()
 
@@ -191,7 +189,8 @@ fun HomeScreen(
                                 be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN ->
                                     onStartSustain(focus.mode)
                                 be.drakarah.intonation.ui.shift.EXERCISE_SHIFT ->
-                                    onStartShift(focus.mode, focus.style ?: "same")
+                                    onStartShift(focus.mode, focus.style
+                                        ?: be.drakarah.intonation.game.ShiftLevel.INTERMEDIATE.id)
                                 be.drakarah.intonation.ui.chords.EXERCISE_CHORDS ->
                                     onStartChords(focus.mode)
                                 else -> onStartNoteAccuracy(focus.mode)
@@ -293,28 +292,22 @@ fun HomeScreen(
                 enabled = mode == "arco",
                 onClick = { gated { onStartSustain(mode) } },
             )
-            // A shift moves between positions, so both need at least two selected.
+            // A shift moves between positions, so it needs at least two selected. Three difficulty
+            // levels (Sarah's design): basic 1↔4 → any-finger same string → across strings.
             val canShift = positions.size >= 2
-            ExerciseCard(
-                title = "Shift Trainer — same string",
-                subtitle = when {
-                    !canShift -> "Select at least two positions to shift between."
-                    shiftBest != null -> "Best: ${shiftBest!!.score} / ${shiftBest!!.maxScore}"
-                    else -> "Shift along one string and land. No corrections."
-                },
-                enabled = canShift,
-                onClick = { gated { onStartShift(mode, "same") } },
-            )
-            ExerciseCard(
-                title = "Shift Trainer — cross string",
-                subtitle = when {
-                    !canShift -> "Select at least two positions to shift between."
-                    shiftCrossBest != null -> "Best: ${shiftCrossBest!!.score} / ${shiftCrossBest!!.maxScore}"
-                    else -> "Cross to another string and land."
-                },
-                enabled = canShift,
-                onClick = { gated { onStartShift(mode, "cross") } },
-            )
+            be.drakarah.intonation.game.ShiftLevel.entries.forEach { level ->
+                val levelBest by viewModel.shiftBests.getValue(level).collectAsStateWithLifecycle()
+                ExerciseCard(
+                    title = "Shift Trainer — ${level.shortLabel}",
+                    subtitle = when {
+                        !canShift -> "Select at least two positions to shift between."
+                        levelBest != null -> "Best: ${levelBest!!.score} / ${levelBest!!.maxScore}"
+                        else -> level.label
+                    },
+                    enabled = canShift,
+                    onClick = { gated { onStartShift(mode, level.id) } },
+                )
+            }
             ExerciseCard(
                 title = "Chords",
                 subtitle = when {

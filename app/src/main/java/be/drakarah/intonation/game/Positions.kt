@@ -61,6 +61,32 @@ data class PromptSpec(
     val spelling: Accidental = Accidental.SHARP,
 )
 
+/** Which left-hand finger (1, 2, or 4 — the double-bass fingering, no 3rd in these positions)
+ * plays this note. Every selectable position spans exactly three semitones covered by fingers
+ * 1-2-4, so the offset within the range fixes the finger: lowest = 1, middle = 2, highest = 4. */
+fun PromptSpec.finger(): Int {
+    val offset = target.midi - string.midi
+    return when (offset) {
+        position.offsets.first -> 1
+        position.offsets.last -> 4
+        else -> 2
+    }
+}
+
+/** Shift-Trainer difficulty ladder (Sarah's design). Each level is its own scoring category.
+ *  - [BASIC]: same string, finger 1 ↔ 4 only — the classic outer-finger shift.
+ *  - [INTERMEDIATE]: same string, any fingers — adds the 2nd finger and smaller shifts.
+ *  - [ADVANCED]: across strings — a string crossing combined with the shift and landing. */
+enum class ShiftLevel(val id: String, val label: String, val shortLabel: String) {
+    BASIC("basic", "Basic — one string, 1↔4", "Basic"),
+    INTERMEDIATE("intermediate", "Intermediate — one string, any finger", "Intermediate"),
+    ADVANCED("advanced", "Advanced — across strings", "Advanced");
+
+    companion object {
+        fun fromId(id: String?): ShiftLevel = entries.firstOrNull { it.id == id } ?: INTERMEDIATE
+    }
+}
+
 /** Picks a fresh enharmonic spelling for this prompt: when [mix] is on, sharp or flat at
  * random (so the same note appears both ways over time — the "mix sharps & flats" setting);
  * otherwise sharp. Naturals are unaffected by the choice, so it's safe to call on any prompt. */

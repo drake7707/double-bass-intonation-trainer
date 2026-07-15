@@ -5,6 +5,43 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-15 Shift Trainer: 3 levels, blended scoring, and the "start didn't register" fix (your feedback)
+Your two shift feedback items, plus the detection unification they surfaced. See
+`docs/SHIFT-TRAINER-REDESIGN.md` for the full design.
+- **"The start note of the shift didn't register" (the real bug).** You were right that this wasn't
+  a timeout and didn't happen in Note Accuracy — and that the two games *didn't* share a detection
+  flow. Note Accuracy arms every prompt with no silence-wait + onset-rise (the legato fix); the Shift
+  trainer, on every prompt after the first, still armed the **start** in the old `AWAIT_QUIET` mode,
+  which starves under legato/ringing (the room never goes quiet). Fixed: the shift start now arms
+  exactly like Note Accuracy. A wrong-start re-arm stays permissive so a *legato correction* (slide /
+  re-finger, no fresh attack) is still caught. Guarded by a new legato `ShiftCaptureTest` case.
+- **One detection pipeline (your "avoid code duplication").** The target-aware discard filter
+  (ring-over / too-soon / harmonic / unplayable / flimsy) was duplicated (Note Accuracy inline in its
+  ViewModel, a hand-copy in the Chords game). It's now a single pure function `game/CaptureFilter.kt`,
+  and the **whole Note Accuracy pipeline moved into the domain** (`game/NoteAttemptCapture.kt`) — the
+  ViewModel is a thin adapter now, like the metrics refactor. This also *created* unit coverage the
+  filter never had while it lived in the UI (`CaptureFilterTest`, `NoteAttemptCaptureTest`). All the
+  existing regression suites pass unchanged.
+- **3 difficulty levels (your idea).** Basic = one string, finger 1↔4; Intermediate = one string, any
+  finger (adds the 2nd finger + smaller shifts); Advanced = across strings. Replaces the old
+  same/cross split; each level scores separately. (Old shift scores don't carry over — you said you'd
+  wipe, so no migration.)
+- **Blended scoring + coaching (your point).** Score = 0.7·shift-distance + 0.3·landing, so "started
+  20¢ off, landed 20¢ off" reads as a good shift with a bad start (~90, not a 20¢ miss). The reveal
+  headlines the shift distance and shows `start · landed`, calling out "great shift — your start was
+  sharp/flat" when the start is what pushed the landing off.
+- **VERIFY on the bass:**
+  1. Play a **legato arco shift round** (the case that failed) — every start note should now register
+     mid-round; none should silently fail to confirm. If any still doesn't, turn on Settings → Debug
+     "Record & trace games" first so I get an **event** trace to pull (your earlier shift traces had
+     no game events, so I couldn't line up decisions).
+  2. Try all **three levels** — Basic should only give you 1↔4 shifts; Intermediate should bring in
+     the 2nd finger and shorter shifts; Advanced crosses strings.
+  3. Deliberately **start a shift slightly off** but move the right distance — the reveal should credit
+     the shift and point at the start, and the score should be high.
+  4. Confirm Note Accuracy and Chords still feel exactly as before (the pipeline moved but behavior
+     shouldn't change).
+
 ### 2026-07-15 Drift warning was misfiring — fixed from your game traces (you noticed this)
 You reported the drift banner popping up "trending flat" right after you scored a note at **+20
 cents sharp** — confusing, and it happened over the last couple of days. I replayed the exact

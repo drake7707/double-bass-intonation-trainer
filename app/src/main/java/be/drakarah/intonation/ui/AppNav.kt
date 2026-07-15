@@ -44,12 +44,12 @@ object Routes {
     const val DRONE = "drone"
     const val NOTE_ACCURACY = "noteaccuracy/{mode}"
     const val SUSTAIN = "sustain/{mode}"
-    const val SHIFT = "shift/{mode}/{style}"
+    const val SHIFT = "shift/{mode}/{level}"
     const val CHORDS = "chords/{mode}"
 
     fun noteAccuracy(mode: String) = "noteaccuracy/$mode"
     fun sustain(mode: String) = "sustain/$mode"
-    fun shift(mode: String, style: String) = "shift/$mode/$style"
+    fun shift(mode: String, level: String) = "shift/$mode/$level"
     fun chords(mode: String) = "chords/$mode"
     fun recordings(onlyTraces: Boolean = false) = "recordings?onlyTraces=$onlyTraces"
 }
@@ -93,7 +93,7 @@ fun AppNav() {
             HomeScreen(
                 onStartNoteAccuracy = { mode -> navController.navigate(Routes.noteAccuracy(mode)) },
                 onStartSustain = { mode -> navController.navigate(Routes.sustain(mode)) },
-                onStartShift = { mode, style -> navController.navigate(Routes.shift(mode, style)) },
+                onStartShift = { mode, level -> navController.navigate(Routes.shift(mode, level)) },
                 onStartChords = { mode -> navController.navigate(Routes.chords(mode)) },
                 onOpenTuneUp = { navController.navigate(Routes.TUNE) },
                 onOpenDrone = { navController.navigate(Routes.DRONE) },

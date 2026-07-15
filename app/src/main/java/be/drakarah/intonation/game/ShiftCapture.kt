@@ -3,6 +3,7 @@ package be.drakarah.intonation.game
 import be.drakarah.intonation.dsp.PitchSample
 import kotlin.math.abs
 import kotlin.math.ln
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 data class ShiftParams(
@@ -29,6 +30,10 @@ data class ShiftResult(
     val landingTimeMs: Long?,
     val quality: CaptureQuality?,
     val timedOut: Boolean,
+    /** The confirmed start pitch (Hz), so scoring can credit the shift *distance* separately from a
+     * slightly-off start (Sarah's "start 20¢ off, land 20¢ off = good shift, bad start"). 0 = the
+     * start was never confirmed (e.g. a timeout). */
+    val confirmedStartHz: Float = 0f,
 )
 
 sealed interface ShiftState {
@@ -51,7 +56,6 @@ class ShiftCapture(
     private val captureParams: CaptureParams,
     private val params: ShiftParams = ShiftParams(),
     random: Random = Random.Default,
-    skipQuietGate: Boolean = false,
 ) {
     var state: ShiftState = ShiftState.ConfirmStart()
         private set
@@ -59,7 +63,11 @@ class ShiftCapture(
     private val cueDelayMs =
         random.nextLong(params.cueDelayMinMs, params.cueDelayMaxMs + 1)
 
-    private var startCapture = AttemptCapture(captureParams, skipQuietGate)
+    // Start confirmation arms exactly like a Note Accuracy prompt: no silence wait (legato bowing
+    // never goes quiet between prompts) AND a genuine onset-rise required (so a ringing previous
+    // note doesn't confirm). The old default (skipQuietGate off → AWAIT_QUIET) starved under legato
+    // and was why "the start note of the shift didn't register" mid-round. See docs/DETECTION.md §3.
+    private var startCapture = newStartCapture()
     private var landingCapture: AttemptCapture? = null
     private var cueAtMs = -1L
     private var cueShownMs = -1L
@@ -90,8 +98,10 @@ class ShiftCapture(
                     cueAtMs = sample.timestampMs + cueDelayMs
                     state = ShiftState.HoldStart
                 } else {
-                    // wrong note — say so and re-arm without the quiet gate (string is sounding)
-                    startCapture = AttemptCapture(captureParams, skipQuietGate = true)
+                    // wrong note — say so and re-arm permissively: she's already playing and may
+                    // correct legato (slide / re-finger with no fresh attack), so don't require an
+                    // onset-rise here or a slid correction would never be captured.
+                    startCapture = AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = false)
                     state = ShiftState.ConfirmStart(wrongNote = true)
                 }
             }
@@ -157,6 +167,7 @@ class ShiftCapture(
                             landingTimeMs = sample.timestampMs - cueShownMs,
                             quality = s.result.quality,
                             timedOut = false,
+                            confirmedStartHz = confirmedStartHz,
                         )
                     )
                 }
@@ -168,13 +179,34 @@ class ShiftCapture(
         }
     }
 
+    private fun newStartCapture() =
+        AttemptCapture(captureParams, skipQuietGate = true, requireOnsetRise = true)
+
     private fun cents(hz: Float, referenceHz: Double): Float =
         (1200.0 * ln(hz / referenceHz) / ln(2.0)).toFloat()
 }
 
-/** Note Accuracy scoring plus a 10% confident-shift bonus for fast landings. */
-fun scoreShift(centsError: Float, landingTimeMs: Long?, difficulty: Difficulty): Int {
-    val base = scoreAttempt(centsError, difficulty)
+/** Weights for the blended shift score (Sarah's design): mostly the shift *distance* — did she move
+ * the right interval, regardless of a slightly-off start — plus some absolute landing intonation, so
+ * ending in tune still matters. */
+const val SHIFT_DISTANCE_WEIGHT = 0.7
+const val SHIFT_LANDING_WEIGHT = 0.3
+
+/**
+ * Blended shift score + a 10% confident-shift bonus for fast landings.
+ *
+ * The shift *distance* error is [landCents] − [startCents]: if she started 20¢ sharp and landed 20¢
+ * sharp, the interval she travelled was correct (a good shift off a bad start) and scores high,
+ * while the landing term keeps some weight on absolute intonation. A perfect start ([startCents] = 0)
+ * reduces this to the old landing-only curve.
+ *
+ * @param landCents landing vs the target (absolute intonation).
+ * @param startCents confirmed start vs the ideal start (how off the start was).
+ */
+fun scoreShift(landCents: Float, startCents: Float, landingTimeMs: Long?, difficulty: Difficulty): Int {
+    val shiftCents = landCents - startCents
+    val base = (SHIFT_DISTANCE_WEIGHT * scoreAttempt(shiftCents, difficulty) +
+        SHIFT_LANDING_WEIGHT * scoreAttempt(landCents, difficulty)).roundToInt()
     val bonus = if (landingTimeMs != null && landingTimeMs < 1200) (base * 0.1).toInt() else 0
     return (base + bonus).coerceAtMost(MAX_ATTEMPT_SCORE)
 }

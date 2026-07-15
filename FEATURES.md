@@ -39,7 +39,7 @@ arm's length while holding the instrument.
 
 ### Daily focus
 The home screen leads with one highlighted card — a suggested session that rotates with
-the calendar day (accuracy arco, same-string shifts, sustain, pizz accuracy, cross-string
+the calendar day (accuracy arco, one-string shifts, sustain, pizz accuracy, across-string
 shifts) with its personal best. One tap and practice starts: no configuring, no decision
 fatigue.
 
@@ -88,18 +88,27 @@ coaches one focus, e.g. *"Steady bow — but sitting sharp. Place the note a hai
 *"Good pitch — but the note wandered. Even out your bow speed."* Sustain accuracy also feeds
 the Progress cents average.
 
-### Shift Trainer (two variants, scored separately)
+### Shift Trainer (three difficulty levels, scored separately)
 Confirm the start note (wrong note → "that's not it" and it re-arms), hold it through a
 randomized 0.5–1.5 s wait, then **GO**: shift to the target. Only the first stable landing
 counts — glide samples are excluded, so sliding into the note scores where the pitch
 *stops*; returning to the start note scores nothing. Landings under 1.2 s earn a
 ⚡ confident-shift bonus.
 A shift always moves **between two positions** — two notes in the same position aren't a
-shift — so both variants need at least two selected positions (the home cards are disabled,
+shift — so every level needs at least two selected positions (the home cards are disabled,
 with an explanation, when only one is selected).
-- **Same string**: the classic shift along one string, between positions (prefers ≥3-semitone shifts).
-- **Cross string**: start and target on different strings *and* different positions — string
+- **Basic**: same string, finger **1 ↔ 4** only — the classic outer-finger shift (prefers longer shifts).
+- **Intermediate**: same string, **any fingers** and any distance — adds the 2nd finger and smaller
+  shifts (the varied "anything in between" set).
+- **Advanced**: start and target on **different strings** *and* different positions — string
   crossing plus shift plus landing.
+
+**Scoring credits the shift, not just the landing.** The score blends the shift *distance* (did you
+move the right interval, regardless of a slightly-off start — weighted 0.7) with the absolute landing
+intonation (0.3). So starting 20¢ sharp and landing 20¢ sharp reads as a *good shift with a bad
+start*, not a 20¢ miss. The reveal headlines the shift-distance error and breaks it down
+(`start +20¢ · landed +20¢`), calling out "great shift — your start was sharp" when the start is what
+pushed the landing off.
 
 ### Chords (arpeggios)
 The bass is monophonic, so a chord is played as an **arpeggio**: the app names a triad ("Ré

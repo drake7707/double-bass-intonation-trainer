@@ -739,7 +739,18 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
  * Document the operating assumptions explicitly. Add a section listing assumptions such as: single instrument, one note at a time, acoustic bass, no accompaniment, calibration representative of future playing, and stable microphone behaviour.
  * Collect calibration traces from multiple devices and players. Before considering the calibration procedure "finished," replay the same corpus across several phones and different basses to identify thresholds that are overfitted to the reference setup
 
-- [REFACTOR] Detection should be UI-agnostic.
+- [REFACTOR → DONE 2026-07-15] Detection should be UI-agnostic.
+      You were right — onCaptured() was a domain rule engine living in the ViewModel. It's now moved
+      entirely into the domain (game/), with NoteAccuracyViewModel as a thin adapter:
+      - the discard rules (ring-over / too-soon / harmonic / unplayable / flimsy) → one shared pure
+        function game/CaptureFilter.kt, reused by Note Accuracy AND Chords (no more copies);
+      - classification + wrong-octave handling + ignoreWrongOctave + discard counting + continue-vs-
+        score → game/NoteAttemptCapture.kt (a pure state machine like ArpeggioCapture/ShiftCapture).
+      This also gave the logic the unit coverage it never had while it lived in the UI
+      (CaptureFilterTest, NoteAttemptCaptureTest); all existing regression suites pass unchanged.
+      See docs/SHIFT-TRAINER-REDESIGN.md and DETECTION.md §4.2. (Committed with the shift work, 0245656.)
+
+      Original note:
       Right now onCaptured() is essentially implementing a domain rule engine:
       ring-over rejection
       too-soon rejection

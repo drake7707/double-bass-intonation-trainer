@@ -169,9 +169,16 @@ its own scoring category** — scores are only ever compared between identical s
 - **Improvement over points**: round summaries compare this round's average error against
   your previous week ("14.8 cents — last week 18.6 ⬇"), because improving matters more
   than the raw score.
-- Every attempt is stored locally (Room) with target, cents error, **reaction time,
-  time-to-stable and shift landing time**, and capture quality — so future insights
-  (average shift speed, slow-but-accurate vs fast-but-wild) need no schema changes.
+- Every attempt is stored locally (Room) with a rich set of coaching signals: target, signed
+  cents error, **reaction time, time-to-stable and shift landing time**, capture quality, a
+  musical **outcome** (scored / wrong-note / wrong-octave / timeout — so genuine mistakes are
+  counted on their own and never dragged into your intonation average), note **loudness**, pitch
+  **wobble** at the moment of freeze (all games), **retry count**, and Sustain's held time /
+  resets / steadiness. Each round also snapshots its context (tuning, difficulty, how long since
+  you tuned/calibrated). This is the raw material for future coaching ("your pitch settled faster
+  today", "Fa♯2 is first-try now").
+- Built to scale: aggregates read a small daily rollup that's updated as you play, so years of
+  daily practice stay fast. Intonation stats are computed over trustworthy (scored) attempts only.
 
 ## Settings
 
@@ -202,6 +209,12 @@ its own scoring category** — scores are only ever compared between identical s
 - **Chord fingering** (Chords game): how a tone playable several ways is placed — Natural
   (closest hand shape, default) / Prefer fingered / Prefer open.
 - Sound feedback and pitch-drift warning toggles.
+- **Your data — backup & restore**: export your entire practice history to a single
+  `.json.gz` file (via the share sheet, so you choose where it goes — Drive, email, Files) and
+  restore it on a new phone. Import offers **Merge** (adds only rounds not already present,
+  deduped by day + config + score; keeps what's on the phone) or **Replace** (wipes this phone
+  first, behind a destructive-action confirmation). Nothing is stored in the cloud — the backup
+  file is your only copy. The derived rollup is rebuilt automatically on import.
 
 ## Utilities & diagnostics
 

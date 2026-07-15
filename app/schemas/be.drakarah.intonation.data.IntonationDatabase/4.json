@@ -1,0 +1,534 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 4,
+    "identityHash": "17e4a1d6b63f6cff8b0b207f7a8fae17",
+    "entities": [
+      {
+        "tableName": "sessions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `startedAt` INTEGER NOT NULL, `endedAt` INTEGER, `exerciseType` TEXT NOT NULL, `mode` TEXT NOT NULL, `configKey` TEXT NOT NULL, `totalScore` INTEGER NOT NULL, `maxScore` INTEGER NOT NULL, `avgAbsCents` REAL, `completed` INTEGER NOT NULL, `epochDay` INTEGER, `contextJson` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startedAt",
+            "columnName": "startedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endedAt",
+            "columnName": "endedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "exerciseType",
+            "columnName": "exerciseType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mode",
+            "columnName": "mode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "configKey",
+            "columnName": "configKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalScore",
+            "columnName": "totalScore",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxScore",
+            "columnName": "maxScore",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "avgAbsCents",
+            "columnName": "avgAbsCents",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "completed",
+            "columnName": "completed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "epochDay",
+            "columnName": "epochDay",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "contextJson",
+            "columnName": "contextJson",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_sessions_exerciseType_epochDay",
+            "unique": false,
+            "columnNames": [
+              "exerciseType",
+              "epochDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sessions_exerciseType_epochDay` ON `${TABLE_NAME}` (`exerciseType`, `epochDay`)"
+          }
+        ]
+      },
+      {
+        "tableName": "attempts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sessionId` INTEGER NOT NULL, `promptIndex` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `exerciseType` TEXT NOT NULL, `targetMidi` INTEGER NOT NULL, `targetFreqHz` REAL NOT NULL, `startMidi` INTEGER, `stringMidi` INTEGER, `positionId` TEXT, `playedFreqHz` REAL, `centsError` REAL, `reactionTimeMs` INTEGER, `timeToStableMs` INTEGER, `score` INTEGER NOT NULL, `stars` INTEGER NOT NULL, `quality` TEXT NOT NULL, `epochDay` INTEGER, `outcome` TEXT, `energyLevel` REAL, `retryCount` INTEGER, `sustainHeldMs` INTEGER, `sustainResets` INTEGER, `steadinessCents` REAL, `captureWobbleCents` REAL, `extrasJson` TEXT, FOREIGN KEY(`sessionId`) REFERENCES `sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "promptIndex",
+            "columnName": "promptIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exerciseType",
+            "columnName": "exerciseType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetMidi",
+            "columnName": "targetMidi",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetFreqHz",
+            "columnName": "targetFreqHz",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startMidi",
+            "columnName": "startMidi",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "stringMidi",
+            "columnName": "stringMidi",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "positionId",
+            "columnName": "positionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "playedFreqHz",
+            "columnName": "playedFreqHz",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "centsError",
+            "columnName": "centsError",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "reactionTimeMs",
+            "columnName": "reactionTimeMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "timeToStableMs",
+            "columnName": "timeToStableMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "score",
+            "columnName": "score",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stars",
+            "columnName": "stars",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quality",
+            "columnName": "quality",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "epochDay",
+            "columnName": "epochDay",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "outcome",
+            "columnName": "outcome",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "energyLevel",
+            "columnName": "energyLevel",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "retryCount",
+            "columnName": "retryCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "sustainHeldMs",
+            "columnName": "sustainHeldMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "sustainResets",
+            "columnName": "sustainResets",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "steadinessCents",
+            "columnName": "steadinessCents",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "captureWobbleCents",
+            "columnName": "captureWobbleCents",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "extrasJson",
+            "columnName": "extrasJson",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_attempts_sessionId",
+            "unique": false,
+            "columnNames": [
+              "sessionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_attempts_sessionId` ON `${TABLE_NAME}` (`sessionId`)"
+          },
+          {
+            "name": "index_attempts_timestamp",
+            "unique": false,
+            "columnNames": [
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_attempts_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          },
+          {
+            "name": "index_attempts_exerciseType_epochDay",
+            "unique": false,
+            "columnNames": [
+              "exerciseType",
+              "epochDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_attempts_exerciseType_epochDay` ON `${TABLE_NAME}` (`exerciseType`, `epochDay`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "sessions",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "sessionId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "personal_bests",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`configKey` TEXT NOT NULL, `sessionId` INTEGER NOT NULL, `score` INTEGER NOT NULL, `maxScore` INTEGER NOT NULL, `achievedAt` INTEGER NOT NULL, PRIMARY KEY(`configKey`))",
+        "fields": [
+          {
+            "fieldPath": "configKey",
+            "columnName": "configKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "score",
+            "columnName": "score",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxScore",
+            "columnName": "maxScore",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "achievedAt",
+            "columnName": "achievedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "configKey"
+          ]
+        }
+      },
+      {
+        "tableName": "achievements",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`achievementId` TEXT NOT NULL, `unlockedAt` INTEGER NOT NULL, PRIMARY KEY(`achievementId`))",
+        "fields": [
+          {
+            "fieldPath": "achievementId",
+            "columnName": "achievementId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unlockedAt",
+            "columnName": "unlockedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "achievementId"
+          ]
+        }
+      },
+      {
+        "tableName": "daily_stats",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`epochDay` INTEGER NOT NULL, `exerciseType` TEXT NOT NULL, `mode` TEXT NOT NULL, `positionId` TEXT NOT NULL, `attemptCount` INTEGER NOT NULL, `scoredCount` INTEGER NOT NULL, `sessionCount` INTEGER NOT NULL, `sumAbsCents` REAL NOT NULL, `sumSqAbsCents` REAL NOT NULL, `sumSignedCents` REAL NOT NULL, `cleanCount` INTEGER NOT NULL, `timeoutCount` INTEGER NOT NULL, `wrongNoteCount` INTEGER NOT NULL, `wrongOctaveCount` INTEGER NOT NULL, `firstTryCount` INTEGER NOT NULL, `sumRetries` INTEGER NOT NULL, `sumTimeToStableMs` INTEGER NOT NULL, `sumEnergy` REAL NOT NULL, `sumHeldMs` INTEGER NOT NULL, `sumResets` INTEGER NOT NULL, `sumSteadiness` REAL NOT NULL, `sumWobbleCents` REAL NOT NULL, PRIMARY KEY(`epochDay`, `exerciseType`, `mode`, `positionId`))",
+        "fields": [
+          {
+            "fieldPath": "epochDay",
+            "columnName": "epochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exerciseType",
+            "columnName": "exerciseType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mode",
+            "columnName": "mode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "positionId",
+            "columnName": "positionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attemptCount",
+            "columnName": "attemptCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "scoredCount",
+            "columnName": "scoredCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionCount",
+            "columnName": "sessionCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sumAbsCents",
+            "columnName": "sumAbsCents",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sumSqAbsCents",
+            "columnName": "sumSqAbsCents",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sumSignedCents",
+            "columnName": "sumSignedCents",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cleanCount",
+            "columnName": "cleanCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeoutCount",
+            "columnName": "timeoutCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "wrongNoteCount",
+            "columnName": "wrongNoteCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "wrongOctaveCount",
+            "columnName": "wrongOctaveCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firstTryCount",
+            "columnName": "firstTryCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sumRetries",
+            "columnName": "sumRetries",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sumTimeToStableMs",
+            "columnName": "sumTimeToStableMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sumEnergy",
+            "columnName": "sumEnergy",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sumHeldMs",
+            "columnName": "sumHeldMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sumResets",
+            "columnName": "sumResets",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sumSteadiness",
+            "columnName": "sumSteadiness",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sumWobbleCents",
+            "columnName": "sumWobbleCents",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "epochDay",
+            "exerciseType",
+            "mode",
+            "positionId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_daily_stats_epochDay",
+            "unique": false,
+            "columnNames": [
+              "epochDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_stats_epochDay` ON `${TABLE_NAME}` (`epochDay`)"
+          },
+          {
+            "name": "index_daily_stats_exerciseType_epochDay",
+            "unique": false,
+            "columnNames": [
+              "exerciseType",
+              "epochDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_stats_exerciseType_epochDay` ON `${TABLE_NAME}` (`exerciseType`, `epochDay`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '17e4a1d6b63f6cff8b0b207f7a8fae17')"
+    ]
+  }
+}

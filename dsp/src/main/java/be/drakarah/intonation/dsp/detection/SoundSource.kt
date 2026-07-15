@@ -1,5 +1,5 @@
 // Adapted from Tuner (https://codeberg.org/thetwom/Tuner), Copyright Michael Moessner,
-// licensed under GPL-3.0-or-later. Modifications: repackaged for BassPitch, added a
+// licensed under GPL-3.0-or-later. Modifications: repackaged for Intonation Trainer, added a
 // configurable audioSource parameter (Tuner hardcodes MediaRecorder.AudioSource.MIC).
 /*
  * Copyright 2020 Michael Moessner

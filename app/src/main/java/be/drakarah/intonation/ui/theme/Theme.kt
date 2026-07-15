@@ -34,7 +34,7 @@ object ResultColors {
 }
 
 @Composable
-fun BassPitchTheme(content: @Composable () -> Unit) {
+fun IntonationTrainerTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = DarkColors,
         content = content,

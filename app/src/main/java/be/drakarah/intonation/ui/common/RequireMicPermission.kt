@@ -55,7 +55,7 @@ fun RequireMicPermission(content: @Composable () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("BassPitch needs the microphone to hear your bass.")
+            Text("Intonation Trainer needs the microphone to hear your bass.")
             Button(onClick = { launcher.launch(Manifest.permission.RECORD_AUDIO) }) {
                 Text("Grant microphone access")
             }

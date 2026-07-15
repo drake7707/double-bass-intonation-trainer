@@ -9,11 +9,14 @@ import android.content.Context
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.audio.GameSounds
 import be.drakarah.intonation.audio.GameTrace
-import be.drakarah.intonation.data.AttemptEntity
-import be.drakarah.intonation.data.RoundOutcome
-import be.drakarah.intonation.data.SessionEntity
-import be.drakarah.intonation.data.SessionRepository
 import be.drakarah.intonation.data.configKey
+import be.drakarah.intonation.metrics.AttemptQuality
+import be.drakarah.intonation.metrics.AttemptRecord
+import be.drakarah.intonation.metrics.RoundContext
+import be.drakarah.intonation.metrics.RoundOutcome
+import be.drakarah.intonation.metrics.RoundRecord
+import be.drakarah.intonation.metrics.RoundRecorder
+import be.drakarah.intonation.settings.toRoundContext
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.game.ArpeggioCapture
@@ -101,7 +104,7 @@ class ChordsViewModel(
     private val config: PitchEngineConfig,
     private val mode: String,
     private val settingsRepository: SettingsRepository,
-    private val sessionRepository: SessionRepository,
+    private val roundRecorder: RoundRecorder,
     private val appContext: Context,
 ) : ViewModel() {
 
@@ -132,6 +135,8 @@ class ChordsViewModel(
     private var chordFingering = ChordFingering.NATURAL
     private val driftDetector = be.drakarah.intonation.game.DriftDetector()
     private var startedAtWallClock = 0L
+    /** Context snapshot for the round in progress; set from settings in [start]. */
+    private lateinit var roundContext: RoundContext
     /** Latest sample's audio-clock time, so prompt events land on the trace timeline. */
     private var lastSampleMs = 0L
 
@@ -141,6 +146,9 @@ class ChordsViewModel(
             val settings = settingsRepository.settings.first()
             a4 = settings.a4
             difficulty = settings.difficulty
+            roundContext = settings.toRoundContext(
+                be.drakarah.intonation.BuildConfig.VERSION_CODE, System.currentTimeMillis()
+            )
             positions = settings.positions
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
@@ -308,26 +316,10 @@ class ChordsViewModel(
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             // Only scored (fingered) tones become attempts; open strings are played but not scored.
-            val scoredTones = state.results.flatMap { it.tones }.filter { it.scored }
-            val cents = scoredTones.mapNotNull { it.cents }
-            val session = SessionEntity(
-                startedAt = startedAtWallClock,
-                endedAt = now,
-                exerciseType = EXERCISE_CHORDS,
-                mode = mode,
-                configKey = configKey(EXERCISE_CHORDS, mode, difficulty, state.roundLength, positions),
-                totalScore = state.totalScore,
-                maxScore = state.maxScore,
-                avgAbsCents = if (cents.isEmpty()) null else cents.map { abs(it) }.average().toFloat(),
-                completed = true,
-            )
             val attempts = state.results.flatMapIndexed { chordIndex, chord ->
                 chord.tones.filter { it.scored }.map { tone ->
-                    AttemptEntity(
-                        sessionId = 0,
+                    AttemptRecord(
                         promptIndex = chordIndex,      // all tones of a chord share the chord index
-                        timestamp = startedAtWallClock,
-                        exerciseType = EXERCISE_CHORDS,
                         targetMidi = tone.prompt.target.midi,
                         targetFreqHz = tone.prompt.target.frequency(a4).toFloat(),
                         startMidi = chord.chord.root.midi, // the chord's root groups its tones
@@ -335,16 +327,27 @@ class ChordsViewModel(
                         positionId = tone.prompt.position.id,
                         playedFreqHz = tone.playedHz,
                         centsError = tone.cents,
-                        reactionTimeMs = null,
-                        timeToStableMs = null,
                         score = tone.score,
                         stars = tone.starCount,
-                        quality = if (tone.timedOut) "TIMEOUT" else "CLEAN",
+                        quality = if (tone.timedOut) AttemptQuality.TIMEOUT else AttemptQuality.CLEAN,
+                        wrongNote = tone.wrongNote,
+                        timedOut = tone.timedOut,
                     )
                 }
             }
+            val round = RoundRecord(
+                exerciseType = EXERCISE_CHORDS,
+                mode = mode,
+                configKey = configKey(EXERCISE_CHORDS, mode, difficulty, state.roundLength, positions),
+                startedAt = startedAtWallClock,
+                endedAt = now,
+                totalScore = state.totalScore,
+                maxScore = state.maxScore,
+                context = roundContext,
+                attempts = attempts,
+            )
             trace?.save()
-            val outcome = sessionRepository.recordCompletedRound(session, attempts)
+            val outcome = roundRecorder.record(round)
             _uiState.value = _uiState.value.copy(outcome = outcome)
         }
     }
@@ -381,7 +384,7 @@ class ChordsViewModel(
                     config = app.container.pitchEngineConfig,
                     mode = mode,
                     settingsRepository = app.container.settingsRepository,
-                    sessionRepository = app.container.sessionRepository,
+                    roundRecorder = app.container.roundRecorder,
                     appContext = app.applicationContext,
                 ) as T
             }

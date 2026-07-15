@@ -1,4 +1,4 @@
-# Double Bass Intonation Trainer (working name BassPitch)
+# Double Bass Intonation Trainer
 
 Gamified intonation trainer for double bass. Kotlin + Jetpack Compose, GPL-3.0-or-later,
 package `be.drakarah.intonation`. User: Sarah — double bassist, thinks in **fixed-do

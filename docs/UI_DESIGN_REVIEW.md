@@ -1,4 +1,4 @@
-# UI Design & Consistency Review — BassPitch Intonation Trainer
+# UI Design & Consistency Review — Intonation Trainer
 
 **Date:** 2026-07-14  
 **Scope:** Comprehensive design language audit across all 15 UI screens  

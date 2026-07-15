@@ -5,6 +5,32 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-15 Metrics capture v4 + backup export/import (your request)
+Big change, all behind the scenes plus one new Settings section. Every completed round now
+records much richer per-attempt data for future coaching (bow steadiness/hold/resets, note
+loudness, capture wobble across all games, retry counts, a musical `outcome` so wrong
+notes/octaves/timeouts are counted separately and **never** dragged into the intonation average,
+and a per-session context snapshot). Storage is built to scale to years of daily play: raw rows
+stay the source of truth, and all aggregates read a small incrementally-maintained `daily_stats`
+rollup (DB migrated v3→v4). All metrics logic now lives in a separate pure `metrics/` domain layer
+(`RoundRecorder`), out of the game ViewModels.
+- **DB migration (highest risk): ✅ VERIFIED 2026-07-15 on your Pixel 6a** by DB inspection after an
+  in-place update over your v3 install: `user_version=4`, all 35 sessions / 540 attempts / 9 PBs /
+  8 achievements preserved, `epochDay` backfilled on every row, outcomes classified, and the rollup
+  total reconciles exactly with the raw attempts (540 = 540). No crash on launch. Still worth a
+  glance: open Progress and confirm the numbers look like your real history.
+- **New data populates:** play one round of each game (arco + pizz), then it's fine to just trust
+  it — but if curious, a later coaching view will surface it.
+- **Settings → "Your data" → Backup & restore:**
+  - **Export backup:** creates an `intonation-trainer-backup-*.json.gz` and opens the share sheet — send it
+    to Drive/email/Files. Confirm the file saves and is a few KB.
+  - **Import → Merge:** pick a backup; confirm it says "Imported N rounds, skipped M already
+    present" and nothing existing is lost.
+  - **Import → Replace…:** confirm the scary "Replace all data?" dialog appears, and after
+    confirming, the phone's data matches the backup.
+  - Round-trip test: export, then import (Replace) the same file into the same phone — history
+    should be unchanged.
+
 ### 2026-07-15 Post-round trace feedback prompt (your request)
 When "Record & trace games" is on, all four summary screens (Note Accuracy, Sustain, Shift,
 Chords) now ask "how did that round go?" once the round finishes. Tap **👍 Went well** to
@@ -594,6 +620,9 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 - [BUG] I calibrated it said no octave drift in the title but on mi it said octave drift so which is it? I made a trace and have a screenshot. Other than that pizz/Arco split was the right call, after calibration it was far less false trigger prone.
 
 - [BUG/FEATURE] Shifting on the same string on 1st and 2nd position made me shift from first finger 1st to 4th finger 2nd, or the other way around. I never used my 2nd finger in any of the positions, I don't mind that at all, but it would be an additional difficulty that students also want to practice. I like this too though, so maybe an option for level of difficulty? Maybe the shifting exercises can be basic 1->4->1, anything in between on the same string and across strings complicating things further, so 3 levels.
+
+- [VERIFY/FIX] Shifting: how is cents off calculated. If you start 20 cents off and you end 20 cents off that's technically a good shift but just a bad start. That should be taken into account in the score and coaching at the results page. During shifting exercises I thought I was playing the right note on several occasions but it didn't register and then timed out. Not sure if it follows the same logic as note accuracy or the detection is handled separate, ideally we have one detention pipeline for all games to avoid code duplication. You can pull my shifting traces.I did play some wrong notes though, so take them with a grain of salt.
+
 
 
 - [FEATURE]  Reminder notification: send the user a reminder they haven't practiced yet if it's been near 24h since the last session. Stop sending notifications if they ignore them and it's more than a week since last practice. Of course with a toggeable setting in the settings to turn this off

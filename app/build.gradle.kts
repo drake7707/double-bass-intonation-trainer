@@ -5,6 +5,11 @@ plugins {
     alias(libs.plugins.devtools.ksp)
 }
 
+ksp {
+    // Export Room schemas so migrations are validated against the generated schema history.
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 android {
     namespace = "be.drakarah.intonation"
     compileSdk = 36
@@ -31,6 +36,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     compileOptions {

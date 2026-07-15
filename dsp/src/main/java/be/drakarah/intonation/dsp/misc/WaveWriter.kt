@@ -1,5 +1,5 @@
 // Adapted from Tuner (https://codeberg.org/thetwom/Tuner), Copyright Michael Moessner,
-// licensed under GPL-3.0-or-later. Modifications: repackaged for BassPitch; added
+// licensed under GPL-3.0-or-later. Modifications: repackaged for Intonation Trainer; added
 // snapshotData() so the calibration wizard can replay a take in memory.
 /*
 * Copyright 2024 Michael Moessner
@@ -99,7 +99,7 @@ class WaveWriter {
         }
     }
 
-    /** Returns a copy of the current buffer contents, oldest sample first (BassPitch
+    /** Returns a copy of the current buffer contents, oldest sample first (Intonation Trainer
      * modification: lets the calibration wizard replay a recorded take in memory). */
     suspend fun snapshotData(): FloatArray {
         mutex.withLock {

@@ -1,5 +1,5 @@
 // Adapted from Tuner (https://codeberg.org/thetwom/Tuner), Copyright Michael Moessner,
-// licensed under GPL-3.0-or-later. Modifications: repackaged for BassPitch.
+// licensed under GPL-3.0-or-later. Modifications: repackaged for Intonation Trainer.
 /*
 * Copyright 2024 Michael Moessner
 *

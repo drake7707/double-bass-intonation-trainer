@@ -66,6 +66,10 @@ data class CapturedPitch(
      * transient freezes low here; a genuinely played note is high. Lets the game reject a
      * transient that happens to be a wrong note instead of scoring it. */
     val energyLevel: Float = 0f,
+    /** Cents spread of the frozen stability window — micro pitch-wobble at the moment of freeze.
+     * Bounded by the stability band on CLEAN freezes, wider on SHAKY ones. A steadiness proxy for
+     * every exercise (not just Sustain); persisted for coaching. */
+    val captureWobbleCents: Float = 0f,
 )
 
 sealed interface CaptureState {
@@ -318,6 +322,7 @@ class AttemptCapture(
                 timeToStableMs = nowMs - onsetMs,
                 quality = quality,
                 energyLevel = median(window.map { it.level }),
+                captureWobbleCents = spreadCents(window.map { it.hz }),
             )
         )
     }

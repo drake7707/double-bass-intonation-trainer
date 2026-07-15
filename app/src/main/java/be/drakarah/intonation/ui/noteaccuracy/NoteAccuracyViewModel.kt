@@ -10,11 +10,14 @@ import android.content.Context
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.audio.GameSounds
 import be.drakarah.intonation.audio.GameTrace
-import be.drakarah.intonation.data.AttemptEntity
-import be.drakarah.intonation.data.RoundOutcome
-import be.drakarah.intonation.data.SessionEntity
-import be.drakarah.intonation.data.SessionRepository
 import be.drakarah.intonation.data.configKey
+import be.drakarah.intonation.metrics.AttemptQuality
+import be.drakarah.intonation.metrics.AttemptRecord
+import be.drakarah.intonation.metrics.RoundContext
+import be.drakarah.intonation.metrics.RoundOutcome
+import be.drakarah.intonation.metrics.RoundRecord
+import be.drakarah.intonation.metrics.RoundRecorder
+import be.drakarah.intonation.settings.toRoundContext
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.game.AttemptCapture
@@ -67,6 +70,10 @@ data class AttemptUi(
     /** Enharmonic spelling to reveal this note with — carried from the prompt so the reveal
      * always matches what was asked. */
     val spelling: Accidental = Accidental.SHARP,
+    // Coaching metrics carried through to the recorder (null on timeouts).
+    val energyLevel: Float? = null,
+    val captureWobbleCents: Float? = null,
+    val retryCount: Int? = null,
 )
 
 sealed interface NoteAccuracyPhase {
@@ -106,7 +113,7 @@ class NoteAccuracyViewModel(
     private val config: PitchEngineConfig,
     private val mode: String,
     private val settingsRepository: SettingsRepository,
-    private val sessionRepository: SessionRepository,
+    private val roundRecorder: RoundRecorder,
     private val appContext: Context,
 ) : ViewModel() {
 
@@ -128,6 +135,8 @@ class NoteAccuracyViewModel(
     private var positions: Set<Position> = setOf(FIRST_POSITION)
     private var mixEnharmonics = false
     private var startedAtWallClock = 0L
+    /** Context snapshot for the round in progress; set from settings in [start]. */
+    private lateinit var roundContext: RoundContext
     private var soundFeedback = true
     private var driftWarningEnabled = true
     /** Practice aid: score a right-note-wrong-octave capture as correct (see [resultFor]). */
@@ -156,6 +165,9 @@ class NoteAccuracyViewModel(
             val settings = settingsRepository.settings.first()
             a4 = settings.a4
             difficulty = settings.difficulty
+            roundContext = settings.toRoundContext(
+                be.drakarah.intonation.BuildConfig.VERSION_CODE, System.currentTimeMillis()
+            )
             positions = settings.positions
             mixEnharmonics = settings.mixEnharmonics
             soundFeedback = settings.soundFeedback
@@ -350,10 +362,14 @@ class NoteAccuracyViewModel(
             reactionTimeMs = captured.reactionTimeMs,
             timeToStableMs = captured.timeToStableMs,
             spelling = spelling,
+            energyLevel = captured.energyLevel,
+            captureWobbleCents = captured.captureWobbleCents,
         )
     }
 
-    private fun onAttemptFinished(result: AttemptUi, nowMs: Long) {
+    private fun onAttemptFinished(rawResult: AttemptUi, nowMs: Long) {
+        // Stamp how many captures were discarded before this one landed ("took N tries").
+        val result = rawResult.copy(retryCount = reArmsThisPrompt)
         trace?.event(nowMs, "result",
             "midi=${result.target.midi} cents=${result.cents} wrong=${result.wrongNote} timeout=${result.timedOut}")
         val drift = if (driftWarningEnabled)
@@ -406,28 +422,11 @@ class NoteAccuracyViewModel(
     private fun persistRound(state: NoteAccuracyUiState) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
-            val scored = state.results.mapNotNull { it.cents }
-            val session = SessionEntity(
-                startedAt = startedAtWallClock,
-                endedAt = now,
-                exerciseType = EXERCISE_NOTE_ACCURACY,
-                mode = mode,
-                configKey = currentConfigKey(),
-                totalScore = state.totalScore,
-                maxScore = state.maxScore,
-                avgAbsCents = if (scored.isEmpty()) null
-                              else scored.map { abs(it) }.average().toFloat(),
-                completed = true,
-            )
             val attempts = state.results.mapIndexed { i, r ->
-                AttemptEntity(
-                    sessionId = 0, // replaced by the repository with the real id
+                AttemptRecord(
                     promptIndex = i,
-                    timestamp = startedAtWallClock,
-                    exerciseType = EXERCISE_NOTE_ACCURACY,
                     targetMidi = r.target.midi,
                     targetFreqHz = r.target.frequency(a4).toFloat(),
-                    startMidi = null,
                     stringMidi = prompts.getOrNull(i)?.string?.midi,
                     positionId = prompts.getOrNull(i)?.position?.id,
                     playedFreqHz = r.playedHz,
@@ -437,14 +436,31 @@ class NoteAccuracyViewModel(
                     score = r.score,
                     stars = r.starCount,
                     quality = when {
-                        r.timedOut -> "TIMEOUT"
-                        r.quality == CaptureQuality.SHAKY -> "SHAKY"
-                        else -> "CLEAN"
+                        r.timedOut -> AttemptQuality.TIMEOUT
+                        r.quality == CaptureQuality.SHAKY -> AttemptQuality.SHAKY
+                        else -> AttemptQuality.CLEAN
                     },
+                    wrongNote = r.wrongNote,
+                    wrongOctave = r.wrongOctave,
+                    timedOut = r.timedOut,
+                    energyLevel = r.energyLevel,
+                    retryCount = r.retryCount,
+                    captureWobbleCents = r.captureWobbleCents,
                 )
             }
+            val round = RoundRecord(
+                exerciseType = EXERCISE_NOTE_ACCURACY,
+                mode = mode,
+                configKey = currentConfigKey(),
+                startedAt = startedAtWallClock,
+                endedAt = now,
+                totalScore = state.totalScore,
+                maxScore = state.maxScore,
+                context = roundContext,
+                attempts = attempts,
+            )
             trace?.save()
-            val outcome = sessionRepository.recordCompletedRound(session, attempts)
+            val outcome = roundRecorder.record(round)
             _uiState.value = _uiState.value.copy(
                 outcome = outcome,
                 suggestedLevel = be.drakarah.intonation.game.LevelAdvisor.suggest(
@@ -525,7 +541,7 @@ class NoteAccuracyViewModel(
                     config = app.container.pitchEngineConfig,
                     mode = mode,
                     settingsRepository = app.container.settingsRepository,
-                    sessionRepository = app.container.sessionRepository,
+                    roundRecorder = app.container.roundRecorder,
                     appContext = app.applicationContext,
                 ) as T
             }

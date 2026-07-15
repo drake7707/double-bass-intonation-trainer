@@ -11,8 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.horizontalScroll
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,9 +49,15 @@ import be.drakarah.intonation.audio.GameSounds
 import be.drakarah.intonation.game.ChordFingering
 import be.drakarah.intonation.game.Difficulty
 import be.drakarah.intonation.game.PlayerLevel
+import be.drakarah.intonation.BuildConfig
+import be.drakarah.intonation.data.ImportMode
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.settings.AppSettings
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 
 @Composable
 fun SettingsScreen(
@@ -56,9 +68,111 @@ fun SettingsScreen(
     onOpenTraces: () -> Unit = {},
 ) {
     val app = LocalContext.current.applicationContext as IntonationApplication
+    val context = LocalContext.current
     val repo = app.container.settingsRepository
+    val backup = app.container.backupService
     val settings by repo.settings.collectAsStateWithLifecycle(AppSettings())
     val scope = rememberCoroutineScope()
+
+    // Backup UI state.
+    var backupStatus by remember { mutableStateOf<String?>(null) }
+    var backupBusy by remember { mutableStateOf(false) }
+    var pendingImportUri by remember { mutableStateOf<Uri?>(null) }   // shows Merge/Replace chooser
+    var pendingReplaceUri by remember { mutableStateOf<Uri?>(null) }  // shows destructive confirm
+
+    val runImport: (Uri, ImportMode) -> Unit = { uri, mode ->
+        scope.launch {
+            backupBusy = true
+            backupStatus = null
+            backupStatus = try {
+                val summary = withContext(Dispatchers.IO) {
+                    val input = context.contentResolver.openInputStream(uri)
+                        ?: error("Could not open the file.")
+                    input.use { backup.import(it, mode) }
+                }
+                "Imported ${summary.importedSessions} rounds" +
+                    if (summary.skippedSessions > 0) ", skipped ${summary.skippedSessions} already present." else "."
+            } catch (e: Exception) {
+                "Import failed: ${e.message}"
+            }
+            backupBusy = false
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri -> if (uri != null) pendingImportUri = uri }
+
+    val runExport: () -> Unit = {
+        scope.launch {
+            backupBusy = true
+            backupStatus = null
+            backupStatus = try {
+                val now = System.currentTimeMillis()
+                val file = withContext(Dispatchers.IO) {
+                    val dir = File(context.getExternalFilesDir(null), "backups").apply { mkdirs() }
+                    File(dir, "intonation-trainer-backup-$now.json.gz").also { f ->
+                        FileOutputStream(f).use { backup.export(it, BuildConfig.VERSION_CODE, now) }
+                    }
+                }
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                context.startActivity(
+                    Intent.createChooser(
+                        Intent(Intent.ACTION_SEND).apply {
+                            type = "application/gzip"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        },
+                        "Share backup",
+                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+                "Backup created — save it somewhere safe."
+            } catch (e: Exception) {
+                "Export failed: ${e.message}"
+            }
+            backupBusy = false
+        }
+    }
+
+    if (pendingImportUri != null) {
+        val uri = pendingImportUri!!
+        AlertDialog(
+            onDismissRequest = { pendingImportUri = null },
+            title = { Text("Import backup") },
+            text = {
+                Text(
+                    "Merge keeps what's on this phone and adds any rounds from the backup that " +
+                        "aren't already here. Replace wipes this phone's history first."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { pendingImportUri = null; runImport(uri, ImportMode.MERGE) }) {
+                    Text("Merge")
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = { pendingImportUri = null; pendingReplaceUri = uri }) {
+                        Text("Replace…")
+                    }
+                    TextButton(onClick = { pendingImportUri = null }) { Text("Cancel") }
+                }
+            },
+        )
+    }
+    if (pendingReplaceUri != null) {
+        val uri = pendingReplaceUri!!
+        AlertDialog(
+            onDismissRequest = { pendingReplaceUri = null },
+            title = { Text("Replace all data?") },
+            text = { Text("This permanently deletes all history, personal bests and achievements on this phone, then loads the backup. This can't be undone.") },
+            confirmButton = {
+                TextButton(onClick = { pendingReplaceUri = null; runImport(uri, ImportMode.REPLACE) }) {
+                    Text("Replace everything")
+                }
+            },
+            dismissButton = { TextButton(onClick = { pendingReplaceUri = null }) { Text("Cancel") } },
+        )
+    }
 
     Scaffold { padding ->
         Column(
@@ -315,6 +429,28 @@ fun SettingsScreen(
                 Spacer(Modifier.height(Spacing.FINE_SPACING))
                 OutlinedButton(onClick = onOpenWizard, modifier = Modifier.fillMaxWidth()) {
                     Text("Full calibration (new phone or double bass)")
+                }
+            }
+
+            SectionHeader("Your data")
+            SettingBlock(
+                "Backup & restore",
+                "Export your whole practice history to a file you can keep, then restore it on a " +
+                    "new phone. Nothing is stored in the cloud — this file is your only copy.",
+            ) {
+                OutlinedButton(
+                    onClick = runExport,
+                    enabled = !backupBusy,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Export backup") }
+                OutlinedButton(
+                    onClick = { importLauncher.launch(arrayOf("application/gzip", "application/octet-stream", "*/*")) },
+                    enabled = !backupBusy,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Import backup") }
+                if (backupStatus != null) {
+                    Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                    Text(backupStatus!!, style = MaterialTheme.typography.bodySmall)
                 }
             }
 

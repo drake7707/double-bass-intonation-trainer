@@ -9,11 +9,14 @@ import android.content.Context
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.audio.GameSounds
 import be.drakarah.intonation.audio.GameTrace
-import be.drakarah.intonation.data.AttemptEntity
-import be.drakarah.intonation.data.RoundOutcome
-import be.drakarah.intonation.data.SessionEntity
-import be.drakarah.intonation.data.SessionRepository
 import be.drakarah.intonation.data.configKey
+import be.drakarah.intonation.metrics.AttemptQuality
+import be.drakarah.intonation.metrics.AttemptRecord
+import be.drakarah.intonation.metrics.RoundContext
+import be.drakarah.intonation.metrics.RoundOutcome
+import be.drakarah.intonation.metrics.RoundRecord
+import be.drakarah.intonation.metrics.RoundRecorder
+import be.drakarah.intonation.settings.toRoundContext
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.game.CaptureParams
@@ -94,7 +97,7 @@ class ShiftViewModel(
     /** "same" or "cross" — same-string shifts vs cross-string shifts. */
     private val style: String,
     private val settingsRepository: SettingsRepository,
-    private val sessionRepository: SessionRepository,
+    private val roundRecorder: RoundRecorder,
     private val appContext: Context,
 ) : ViewModel() {
 
@@ -121,6 +124,8 @@ class ShiftViewModel(
     private var driftWarningEnabled = true
     private val driftDetector = be.drakarah.intonation.game.DriftDetector()
     private var startedAtWallClock = 0L
+    /** Context snapshot for the round in progress; set from settings in [start]. */
+    private lateinit var roundContext: RoundContext
     /** Latest sample's audio-clock time, so prompt events land on the trace timeline. */
     private var lastSampleMs = 0L
 
@@ -130,6 +135,9 @@ class ShiftViewModel(
             val settings = settingsRepository.settings.first()
             a4 = settings.a4
             difficulty = settings.difficulty
+            roundContext = settings.toRoundContext(
+                be.drakarah.intonation.BuildConfig.VERSION_CODE, System.currentTimeMillis()
+            )
             positions = settings.positions
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
@@ -297,41 +305,35 @@ class ShiftViewModel(
     private fun persistRound(state: ShiftUiState) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
-            val scored = state.results.mapNotNull { it.cents }
-            val session = SessionEntity(
-                startedAt = startedAtWallClock,
-                endedAt = now,
-                exerciseType = EXERCISE_SHIFT,
-                mode = mode,
-                configKey = configKey(EXERCISE_SHIFT, mode, difficulty, state.roundLength, positions, variant = style),
-                totalScore = state.totalScore,
-                maxScore = state.maxScore,
-                avgAbsCents = if (scored.isEmpty()) null
-                              else scored.map { abs(it) }.average().toFloat(),
-                completed = true,
-            )
             val attempts = state.results.mapIndexed { i, r ->
-                AttemptEntity(
-                    sessionId = 0,
+                AttemptRecord(
                     promptIndex = i,
-                    timestamp = startedAtWallClock,
-                    exerciseType = EXERCISE_SHIFT,
                     targetMidi = r.prompt.target.target.midi,
                     targetFreqHz = r.prompt.target.target.frequency(a4).toFloat(),
                     startMidi = r.prompt.start.target.midi,
                     stringMidi = r.prompt.start.string.midi,
                     positionId = r.prompt.target.position.id,
-                    playedFreqHz = null,
                     centsError = r.cents,
-                    reactionTimeMs = null,
                     timeToStableMs = r.landingTimeMs,
                     score = r.score,
                     stars = r.starCount,
-                    quality = if (r.timedOut) "TIMEOUT" else "CLEAN",
+                    quality = if (r.timedOut) AttemptQuality.TIMEOUT else AttemptQuality.CLEAN,
+                    timedOut = r.timedOut,
                 )
             }
+            val round = RoundRecord(
+                exerciseType = EXERCISE_SHIFT,
+                mode = mode,
+                configKey = configKey(EXERCISE_SHIFT, mode, difficulty, state.roundLength, positions, variant = style),
+                startedAt = startedAtWallClock,
+                endedAt = now,
+                totalScore = state.totalScore,
+                maxScore = state.maxScore,
+                context = roundContext,
+                attempts = attempts,
+            )
             trace?.save()
-            val outcome = sessionRepository.recordCompletedRound(session, attempts)
+            val outcome = roundRecorder.record(round)
             _uiState.value = _uiState.value.copy(outcome = outcome)
         }
     }
@@ -370,7 +372,7 @@ class ShiftViewModel(
                     mode = mode,
                     style = style,
                     settingsRepository = app.container.settingsRepository,
-                    sessionRepository = app.container.sessionRepository,
+                    roundRecorder = app.container.roundRecorder,
                     appContext = app.applicationContext,
                 ) as T
             }

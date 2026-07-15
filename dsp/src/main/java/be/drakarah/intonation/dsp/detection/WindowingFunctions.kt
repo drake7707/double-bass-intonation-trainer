@@ -1,5 +1,5 @@
 // Adapted from Tuner (https://codeberg.org/thetwom/Tuner), Copyright Michael Moessner,
-// licensed under GPL-3.0-or-later. Modifications: repackaged for BassPitch, removed
+// licensed under GPL-3.0-or-later. Modifications: repackaged for Intonation Trainer, removed
 // Android string-resource ids from the enum.
 /*
  * Copyright 2020 Michael Moessner

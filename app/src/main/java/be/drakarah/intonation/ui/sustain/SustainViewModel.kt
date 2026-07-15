@@ -9,11 +9,14 @@ import android.content.Context
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.audio.GameSounds
 import be.drakarah.intonation.audio.GameTrace
-import be.drakarah.intonation.data.AttemptEntity
-import be.drakarah.intonation.data.RoundOutcome
-import be.drakarah.intonation.data.SessionEntity
-import be.drakarah.intonation.data.SessionRepository
 import be.drakarah.intonation.data.configKey
+import be.drakarah.intonation.metrics.AttemptQuality
+import be.drakarah.intonation.metrics.AttemptRecord
+import be.drakarah.intonation.metrics.RoundContext
+import be.drakarah.intonation.metrics.RoundOutcome
+import be.drakarah.intonation.metrics.RoundRecord
+import be.drakarah.intonation.metrics.RoundRecorder
+import be.drakarah.intonation.settings.toRoundContext
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.game.Difficulty
@@ -92,7 +95,7 @@ class SustainViewModel(
     private val config: PitchEngineConfig,
     private val mode: String,
     private val settingsRepository: SettingsRepository,
-    private val sessionRepository: SessionRepository,
+    private val roundRecorder: RoundRecorder,
     private val appContext: Context,
 ) : ViewModel() {
 
@@ -114,6 +117,8 @@ class SustainViewModel(
     private var positions: Set<Position> = setOf(FIRST_POSITION)
     private var soundFeedback = true
     private var startedAtWallClock = 0L
+    /** Context snapshot for the round in progress; set from settings in [start]. */
+    private lateinit var roundContext: RoundContext
     /** Latest sample's audio-clock time, so prompt events land on the trace timeline. */
     private var lastSampleMs = 0L
 
@@ -123,6 +128,9 @@ class SustainViewModel(
             val settings = settingsRepository.settings.first()
             a4 = settings.a4
             difficulty = settings.difficulty
+            roundContext = settings.toRoundContext(
+                be.drakarah.intonation.BuildConfig.VERSION_CODE, System.currentTimeMillis()
+            )
             positions = settings.positions
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
@@ -263,41 +271,36 @@ class SustainViewModel(
     private fun persistRound(state: SustainUiState) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
-            // Accuracy of the held pitch centre now feeds progress like the other games.
-            val accuracies = state.results.mapNotNull { it.result.accuracyCents }
-            val session = SessionEntity(
-                startedAt = startedAtWallClock,
-                endedAt = now,
+            val attempts = state.results.mapIndexed { i, r ->
+                AttemptRecord(
+                    promptIndex = i,
+                    targetMidi = r.prompt.target.midi,
+                    targetFreqHz = r.prompt.target.frequency(a4).toFloat(),
+                    stringMidi = r.prompt.string.midi,
+                    positionId = r.prompt.position.id,
+                    centsError = r.result.medianCents,
+                    score = r.score,
+                    stars = r.starCount,
+                    quality = if (r.result.success) AttemptQuality.CLEAN else AttemptQuality.TIMEOUT,
+                    timedOut = !r.result.success,
+                    sustainHeldMs = r.result.bestHeldMs,
+                    sustainResets = r.result.resets,
+                    steadinessCents = r.result.steadinessCents,
+                )
+            }
+            val round = RoundRecord(
                 exerciseType = EXERCISE_SUSTAIN,
                 mode = mode,
                 configKey = configKey(EXERCISE_SUSTAIN, mode, difficulty, state.roundLength, positions),
+                startedAt = startedAtWallClock,
+                endedAt = now,
                 totalScore = state.totalScore,
                 maxScore = state.maxScore,
-                avgAbsCents = if (accuracies.isEmpty()) null else accuracies.average().toFloat(),
-                completed = true,
+                context = roundContext,
+                attempts = attempts,
             )
-            val attempts = state.results.mapIndexed { i, r ->
-                AttemptEntity(
-                    sessionId = 0,
-                    promptIndex = i,
-                    timestamp = startedAtWallClock,
-                    exerciseType = EXERCISE_SUSTAIN,
-                    targetMidi = r.prompt.target.midi,
-                    targetFreqHz = r.prompt.target.frequency(a4).toFloat(),
-                    startMidi = null,
-                    stringMidi = r.prompt.string.midi,
-                    positionId = r.prompt.position.id,
-                    playedFreqHz = null,
-                    centsError = r.result.medianCents,
-                    reactionTimeMs = null,
-                    timeToStableMs = null,
-                    score = r.score,
-                    stars = r.starCount,
-                    quality = if (r.result.success) "CLEAN" else "TIMEOUT",
-                )
-            }
             trace?.save()
-            val outcome = sessionRepository.recordCompletedRound(session, attempts)
+            val outcome = roundRecorder.record(round)
             _uiState.value = _uiState.value.copy(outcome = outcome)
         }
     }
@@ -334,7 +337,7 @@ class SustainViewModel(
                     config = app.container.pitchEngineConfig,
                     mode = mode,
                     settingsRepository = app.container.settingsRepository,
-                    sessionRepository = app.container.sessionRepository,
+                    roundRecorder = app.container.roundRecorder,
                     appContext = app.applicationContext,
                 ) as T
             }

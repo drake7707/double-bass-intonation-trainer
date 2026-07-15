@@ -151,7 +151,10 @@ its own scoring category** — scores are only ever compared between identical s
 - **Pitch-drift warning** (toggle): if everything landed recently trends consistently
   sharp or flat (≥8 cents median, 5 of the last 6 attempts same direction), the app warns
   visually and with a directional sound ("come down" / "come up") — better to reset the
-  inner reference than to train wrong pitches.
+  inner reference than to train wrong pitches. Only notes within ±60 cents of the target
+  count toward the trend (gross mis-detections aren't intonation), and the warning only
+  shows when the note you just played is itself off in the same direction — so it never
+  contradicts the note in front of you.
 
 ## Progress
 

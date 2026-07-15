@@ -5,6 +5,26 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-15 Drift warning was misfiring — fixed from your game traces (you noticed this)
+You reported the drift banner popping up "trending flat" right after you scored a note at **+20
+cents sharp** — confusing, and it happened over the last couple of days. I replayed the exact
+`DriftDetector` logic against every Note-Accuracy trace in `.trace-incoming/`: it fired **33 times,
+15 of them confusing** (banner direction contradicting the note you'd just played, or firing right
+after a near-in-tune note). Two causes, both fixed:
+- **Detector artifacts were counted as intonation.** `WRONG_NOTE_CENTS=450` let captures up to 4.5
+  semitones off (e.g. wrong-octave reads of −375c, −136c) feed the trend, faking a "flat" run.
+  Now only notes within **±60c** of the target count toward drift.
+- **The banner didn't have to agree with the note you just saw.** Now it's suppressed unless the
+  triggering note is itself off by ≥10c *and on the same side* as the trend. (The window still
+  records the note; a genuine drift just surfaces on your next same-side note instead.)
+  Replaying your traces with the fix: **0 confusing fires**, and every genuine sustained-sharp /
+  sustained-flat run still warns. Guarded by new cases in `DriftDetectorTest` built from your real
+  sequences (180739 +20→flat, 180245 +6→flat, 201133 genuine sharp).
+- **VERIFY on the bass:** play Note Accuracy and deliberately drift sharp (or flat) for several
+  notes in a row — the banner should still appear, matching the direction you're actually going.
+  And it should **not** pop up the instant you play one good/opposite note. Tell me if it ever
+  still contradicts the note in front of you.
+
 ### 2026-07-15 Metrics capture v4 + backup export/import (your request)
 Big change, all behind the scenes plus one new Settings section. Every completed round now
 records much richer per-attempt data for future coaching (bow steadiness/hold/resets, note
@@ -600,6 +620,9 @@ Home screen:
   → Diagnosed from your sustain trace and reworked: hold band widened to ±40¢, reversal grace 250→500 ms (covers your real scoops), and scoring moved to accuracy + steadiness (robust stats that ignore reversal transients). Your pitch-wobble idea is now the *steadiness* metric and part of the score, and the results page coaches which to focus on. See the dated Pending block above — needs a fresh bass VERIFY.
 
 
+- [FEATURE → ADDRESSED 2026-07-15] If debug traces is on, ask for feedback after a game how it went and embed that in the trace. That will help embed user issues alongside traces, especially if it's other people traces, as well as I .. forget when i do several rounds.
+  → Done, see the dated Pending block above — needs a bass VERIFY.
+
 
 OPEN FEEDBACK & IDEAS:
 --------------
@@ -611,9 +634,6 @@ OPEN FEEDBACK & IDEAS:
 Polyphonic: is it possible to have a complete breakdown of the instrument with charts, would be cool to build an instrument profile.
 
 - [FEATURE] Scales exercises or is that covered by chords?
-
-- [FEATURE → ADDRESSED 2026-07-15] If debug traces is on, ask for feedback after a game how it went and embed that in the trace. That will help embed user issues alongside traces, especially if it's other people traces, as well as I .. forget when i do several rounds.
-  → Done, see the dated Pending block above — needs a bass VERIFY.
 
 - [FEATURE] Ability to send a trace to feedback@drakarah.be, once i put it on the play store and they say it doesn't work for them i can analyze their trace
 

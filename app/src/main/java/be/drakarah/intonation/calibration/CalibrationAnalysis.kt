@@ -192,14 +192,29 @@ object CalibrationAnalysis {
      * THIS rig, exactly like [ODD_HARMONIC_CANDIDATES] for the arco octave thresholds. */
     val PIZZ_SETTLE_CANDIDATES = listOf(0L, 200L, 300L, 400L)
 
+    /** Why one note's pizz check did or didn't pass — kept distinct so the summary never labels
+     * a take "octave drift" when the actual reason was a missed capture or an off-pitch freeze
+     * (her 2026-07-15 report: title said "no octave drift" while Mi's row still showed the octave
+     * warning — the row reused that label for every failure, not just an actual octave-high one). */
+    enum class PizzCheckStatus {
+        /** Froze at the correct octave, within tolerance of the expected pitch. */
+        OK,
+        /** A frozen pitch landed an octave (or more) above the expected note. */
+        OCTAVE_DRIFT,
+        /** No freeze was produced at all for this take. */
+        NOT_DETECTED,
+        /** Froze, at the right octave, but not within tolerance of the expected pitch. */
+        OFF_PITCH,
+    }
+
     /** How pizz notes behave on this rig, from replaying the recorded pizz takes. */
     data class PizzProfile(
         /** Chosen octave-settle window (ms); 0 = no attack-octave artifact, guard stays off. */
         val settleMs: Long,
         /** True when the chosen window leaves zero octave-high captures across the pizz takes. */
         val resolved: Boolean,
-        /** Per prompted note (expected Hz) -> captured cleanly at the correct octave. */
-        val checks: List<Pair<Float, Boolean>>,
+        /** Per prompted note (expected Hz) -> why it did or didn't check out. */
+        val checks: List<Pair<Float, PizzCheckStatus>>,
     )
 
     /** True when [hz] sits a whole octave (or more) ABOVE [expectedHz] — the pizz attack artifact
@@ -254,10 +269,13 @@ object CalibrationAnalysis {
         val settle = chosen ?: PIZZ_SETTLE_CANDIDATES.last()
         val checks = takesByExpectedHz.entries.map { (exp, samples) ->
             val freezes = pizzFreezes(samples, settle, lowestPlayableHz)
-            val ok = freezes.isNotEmpty() &&
-                freezes.none { octaveHigh(it.frequencyHz, exp) } &&
-                freezes.any { abs(cents(it.frequencyHz, exp)) <= 60f }
-            exp to ok
+            val status = when {
+                freezes.isEmpty() -> PizzCheckStatus.NOT_DETECTED
+                freezes.any { octaveHigh(it.frequencyHz, exp) } -> PizzCheckStatus.OCTAVE_DRIFT
+                freezes.any { abs(cents(it.frequencyHz, exp)) <= 60f } -> PizzCheckStatus.OK
+                else -> PizzCheckStatus.OFF_PITCH
+            }
+            exp to status
         }
         return PizzProfile(settle, resolved = chosen != null, checks = checks)
     }

@@ -80,8 +80,8 @@ data class WizardResult(
     val highNoteUnreliable: Boolean,
     /** Pizz octave-settle window measured for this rig (ms); 0 = no attack-octave artifact. */
     val pizzSettleMs: Long,
-    /** Per plucked open string: display midi -> captured cleanly at the right octave. */
-    val pizzChecks: List<Pair<Int, Boolean>>,
+    /** Per plucked open string: display midi -> why it did or didn't check out. */
+    val pizzChecks: List<Pair<Int, CalibrationAnalysis.PizzCheckStatus>>,
     /** True when no settle window fully cleared the pizz attack-octave artifact on this rig. */
     val pizzUnreliable: Boolean,
     /** Measured pizz capture timing (ms): how long the pluck attack is skipped and how long the
@@ -442,8 +442,8 @@ class WizardViewModel(
         }
         val pizzProfile = CalibrationAnalysis.choosePizzSettle(pizzGated, finalLowestHz)
         finalPizzSettleMs = pizzProfile.settleMs
-        val pizzChecks = pizzProfile.checks.map { (hz, ok) ->
-            nearestNote(hz.toDouble(), a4).midi to ok
+        val pizzChecks = pizzProfile.checks.map { (hz, status) ->
+            nearestNote(hz.toDouble(), a4).midi to status
         }
 
         // 5c. pizz capture timing (attack-skip + stability window). A plucked attack reads sharp and

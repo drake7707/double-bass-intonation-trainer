@@ -103,6 +103,7 @@ class PizzOctaveSettleTest {
             mapOf(fasharp1Hz.toFloat() to recordedSamples(snippet)), lowestPlayableHz = 40f)
         assertTrue("a non-zero settle window should be chosen (got ${profile.settleMs})", profile.settleMs > 0)
         assertTrue("the chosen window must resolve the artifact", profile.resolved)
-        assertTrue("Fa#1 pizz must verify at the correct octave", profile.checks.all { it.second })
+        assertTrue("Fa#1 pizz must verify at the correct octave",
+            profile.checks.all { it.second == CalibrationAnalysis.PizzCheckStatus.OK })
     }
 }

@@ -5,6 +5,20 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-15 Calibration summary mislabeled pizz failures as "octave drift" (your bug report)
+You calibrated and saw the title say "no octave drift, no settle needed" while Mi's own row still
+showed the octave-drift warning — a contradiction. **Root cause found:** the wizard picks the
+smallest settle window where *zero* pizz takes read an octave high; once it settles on a window
+(here 0 ms, since none did), by construction no take can actually have octave drift at that
+window. But the per-note row reused the "octave drift" label for *any* failing check — including a
+take that never froze at all, or froze off-pitch — not just a genuinely octave-high one. So Mi's
+row was never really about octave drift; the label was just wrong for whatever it actually was.
+- [ ] **Per-note pizz checks are now split into distinct reasons**: "correct octave", "octave
+      drift" (only shown when a freeze genuinely landed an octave high), "off pitch" (froze, right
+      octave, but not close to the target), and "not detected" (no freeze at all). Re-run a full
+      calibration and confirm the title and every row now agree — and if Mi (or any note) still
+      fails, the label should tell you which of those three it actually was.
+
 ### 2026-07-15 Shift Trainer: 3 levels, blended scoring, and the "start didn't register" fix (your feedback)
 Your two shift feedback items, plus the detection unification they surfaced. See
 `docs/SHIFT-TRAINER-REDESIGN.md` for the full design.
@@ -350,7 +364,7 @@ The capture rewrite (attack requirement) was verified live via traces — see th
       stop icon) — everything still works (mode toggle, freeze readout, long capture)
 
 ### Feedback batch (your 2026-07-11 notes)
-- [ ] **Shifts always change position.** Same-string and cross-string shift rounds never
+- [x] **Shifts always change position.** Same-string and cross-string shift rounds never
       give a start and target in the same position — every prompt is a genuine shift
       between two positions
 - [x] **One position disables shifting.** Select a single position on the home screen: both
@@ -369,18 +383,18 @@ The capture rewrite (attack requirement) was verified live via traces — see th
 - [x] **Calibrate surroundings** now also has its own card under Home → Tools
 
 ### Drone mode (new — pure practice aid, no scoring/detection)
-- [ ] Home → Tuning & ear training → Drone: tap Play → a steady tone sounds through the
+- [x] Home → Tuning & ear training → Drone: tap Play → a steady tone sounds through the
       phone speaker and is clearly audible (this is the key check — bass pitches on a phone
       speaker can be too quiet)
-- [ ] Each open-string chip (Mi/La/Ré/Sol) sounds the right pitch class; the "sounding at
+- [x] Each open-string chip (Mi/La/Ré/Sol) sounds the right pitch class; the "sounding at
       X" line matches what you hear (it's octave-placed up so it carries on the speaker)
-- [ ] "Any note" picker: pick a low one (Mi, Do) — still comes out audible, not a buzz
-- [ ] "Add fifth" toggle: the added fifth rings *in tune* with the root (pure 3:2), no beating
-- [ ] Play → Stop is clean: no click/pop at the start or the end of the tone
-- [ ] Retuning while it's playing (tap a different note) changes pitch smoothly, no glitch
-- [ ] Volume slider changes the drone loudness live
-- [ ] Leaving the screen (Back) or backgrounding the app silences the tone immediately
-- [ ] Reopen Drone: it remembers your last pitch + fifth setting
+- [x] "Any note" picker: pick a low one (Mi, Do) — still comes out audible, not a buzz
+- [x] "Add fifth" toggle: the added fifth rings *in tune* with the root (pure 3:2), no beating
+- [x] Play → Stop is clean: no click/pop at the start or the end of the tone
+- [x] Retuning while it's playing (tap a different note) changes pitch smoothly, no glitch
+- [x] Volume slider changes the drone loudness live
+- [x] Leaving the screen (Back) or backgrounding the app silences the tone immediately
+- [x] Reopen Drone: it remembers your last pitch + fifth setting
 
 ### Home screen restructure (your layout idea)
 - [x] Home is grouped into sections: Tuning & ear training / Practice / Tools
@@ -415,29 +429,29 @@ The capture rewrite (attack requirement) was verified live via traces — see th
       ½ = 1–3, 1st = 2–4, 2nd = 3–5, 3rd = 5–7, 4th = 7–9, 5th = 8–10 (semitones above open)
 - [x] Position chips are now multi-select (½ 1st 2nd 3rd 4th 5th); each exact combination
       keeps its own best score
-- [ ] With several positions selected, a round mixes them evenly (no easy-position bias)
+- [x] With several positions selected, a round mixes them evenly (no easy-position bias)
 - [x] Open strings no longer appear as game prompts (they stay in Tune up)
 - [ ] Spot-check prompts against your chart: e.g. 2nd position on Sol string should only
       ask Si♭2/Si2/Do3; 1st position on Mi string only Fa#1/Sol1/Sol#1
-- [ ] Position + string on the prompt is readable at a glance while playing
-- [ ] Chime on a good note (≤15c), soft blip on close (≤30c), buzz on miss — audible, not
+- [x] Position + string on the prompt is readable at a glance while playing
+- [x] Chime on a good note (≤15c), soft blip on close (≤30c), buzz on miss — audible, not
       annoying, and doesn't confuse the detector for the next prompt
-- [ ] Finish a round → summary shows score + best-to-beat; home shows Best and 🔥 streak
+- [x] Finish a round → summary shows score + best-to-beat; home shows Best and 🔥 streak
 - [x] Beat your own score → "New personal best!" appears
 - [ ] Change difficulty or round length → separate best (by design — check it feels right)
 - [ ] A4 setting: set 442 and verify the tuner/tune-up shifts accordingly
 
 ### M4: Sustain + Shift Trainer (new)
-- [ ] Sustain: ring fills while you're in tune, resets when you drift out (arco on La)
-- [ ] Sustain: a brief bobble (single bad reading) does NOT reset the ring
-- [ ] Sustain: stopping the bow mid-hold counts as a reset and waits for you to restart
-- [ ] Sustain pizz: the note dying naturally ends the attempt with partial credit
-- [ ] Shift: "Start on X" — playing the wrong start note says so and re-arms
-- [ ] Shift: the GO cue timing feels right (random 0.5–1.5 s after start confirmed)
-- [ ] Shift: sliding slowly into the target scores where you STOP, not where you passed
-- [ ] Shift: landing back on the start note doesn't score — it waits for a real shift
+- [x] Sustain: ring fills while you're in tune, resets when you drift out (arco on La)
+- [x] Sustain: a brief bobble (single bad reading) does NOT reset the ring
+- [x] Sustain: stopping the bow mid-hold counts as a reset and waits for you to restart
+- [x] Sustain pizz: the note dying naturally ends the attempt with partial credit
+- [x] Shift: "Start on X" — playing the wrong start note says so and re-arms
+- [x] Shift: the GO cue timing feels right (random 0.5–1.5 s after start confirmed)
+- [x] Shift: sliding slowly into the target scores where you STOP, not where you passed
+- [x] Shift: landing back on the start note doesn't score — it waits for a real shift
 - [ ] Shift: fast clean landing shows the ⚡ confident-shift bonus
-- [ ] Shift with 2+ positions selected gives real cross-position shifts;
+- [x] Shift with 2+ positions selected gives real cross-position shifts;
       single position gives small movements (intended fallback — does it feel useful?)
 
 ### Progress page (new)
@@ -478,7 +492,7 @@ The capture rewrite (attack requirement) was verified live via traces — see th
       (✓ clear / △ tight / ✕ no separation); your desk room should be ✓ with a gate near 45
 - [x] Calibrate verdict ✕: try it with loud music playing — it should refuse to set a gate
 - [x] Noise-gate slider in Settings changes what the debug bar considers noise
-- [ ] Pre-game "Ready to play?" dialog offers Tune up / Calibrate when either is stale;
+- [x] Pre-game "Ready to play?" dialog offers Tune up / Calibrate when either is stale;
       "Start anyway" silences both for the session; completing them silences for ~8 h
 
 ### Player level (your feedback: timeout too tight for reading + placing)
@@ -493,7 +507,7 @@ The capture rewrite (attack requirement) was verified live via traces — see th
 - [ ] Changing level does NOT split your personal bests (deliberate: same scoring
       strictness at every level, and moving up must not orphan your history — push back
       if this feels wrong)
-- [ ] Shift: GO-cue window feels roomier on Beginner (8 s to depart vs 4 s before)
+- [x] Shift: GO-cue window feels roomier on Beginner (8 s to depart vs 4 s before)
 
 ### Game sounds silent + gallery (your reports)
 - [x] Settings → Sound feedback → volume slider: release it → you hear the chime through
@@ -513,10 +527,10 @@ The capture rewrite (attack requirement) was verified live via traces — see th
 - [ ] Same check pizz on those notes
 - [x] Open La bowed still reads La1, and pizz Mi still stays Mi1 through the decay
       (the original octave fixes must survive the rework)
-- [ ] Pitch debug → "Start sweep (big view)": grid, capture state and last capture
+- [x] Pitch debug → "Start sweep (big view)": grid, capture state and last capture
       readable from playing distance; "🤫 wait for quiet" vs "🎧 play a note" banner
       makes it obvious why a note isn't registering yet (your confusion report)
-- [ ] Big view: arco/pizz toggle, Reset and "Save last 8 s" work (snippet button
+- [x] Big view: arco/pizz toggle, Reset and "Save last 8 s" work (snippet button
       duplicated there on your request); system back or Exit returns to debug
 - [x] Heads-up from your morning snippets (8:34–8:38): that session's playing was much
       softer than the afternoon one — median level ~20 vs 100. If that was your normal
@@ -548,7 +562,7 @@ The capture rewrite (attack requirement) was verified live via traces — see th
 - [x] Freeze timing feels right (not so slow it drags, not so fast it catches the attack)
 - [x] Reveal duration (1.2 s) is long enough to read
 - [x] 10 prompts is a sensible round length
-- [ ] Deliberately play ~20 cents sharp → shows + (sharp); flat shows −
+- [x] Deliberately play ~20 cents sharp → shows + (sharp); flat shows −
 - [x] Deliberately play a completely different note → shows "wrong note?"
 - [x] Let a note ring out — the next prompt must NOT capture the ring-over
 - [x] Talk / make room noise while not playing → no false captures
@@ -661,6 +675,12 @@ Home screen:
   → Done, see the dated Pending block above — needs a bass VERIFY.
 
 
+- [BUG/FEATURE] Shifting on the same string on 1st and 2nd position made me shift from first finger 1st to 4th finger 2nd, or the other way around. I never used my 2nd finger in any of the positions, I don't mind that at all, but it would be an additional difficulty that students also want to practice. I like this too though, so maybe an option for level of difficulty? Maybe the shifting exercises can be basic 1->4->1, anything in between on the same string and across strings complicating things further, so 3 levels.
+
+- [VERIFY/FIX] Shifting: how is cents off calculated. If you start 20 cents off and you end 20 cents off that's technically a good shift but just a bad start. That should be taken into account in the score and coaching at the results page. During shifting exercises I thought I was playing the right note on several occasions but it didn't register and then timed out. Not sure if it follows the same logic as note accuracy or the detection is handled separate, ideally we have one detention pipeline for all games to avoid code duplication. You can pull my shifting traces.I did play some wrong notes though, so take them with a grain of salt.
+
+
+
 OPEN FEEDBACK & IDEAS:
 --------------
 
@@ -674,12 +694,8 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 
 - [FEATURE] Ability to send a trace to feedback@drakarah.be, once i put it on the play store and they say it doesn't work for them i can analyze their trace
 
-- [BUG] I calibrated it said no octave drift in the title but on mi it said octave drift so which is it? I made a trace and have a screenshot. Other than that pizz/Arco split was the right call, after calibration it was far less false trigger prone.
-
-- [BUG/FEATURE] Shifting on the same string on 1st and 2nd position made me shift from first finger 1st to 4th finger 2nd, or the other way around. I never used my 2nd finger in any of the positions, I don't mind that at all, but it would be an additional difficulty that students also want to practice. I like this too though, so maybe an option for level of difficulty? Maybe the shifting exercises can be basic 1->4->1, anything in between on the same string and across strings complicating things further, so 3 levels.
-
-- [VERIFY/FIX] Shifting: how is cents off calculated. If you start 20 cents off and you end 20 cents off that's technically a good shift but just a bad start. That should be taken into account in the score and coaching at the results page. During shifting exercises I thought I was playing the right note on several occasions but it didn't register and then timed out. Not sure if it follows the same logic as note accuracy or the detection is handled separate, ideally we have one detention pipeline for all games to avoid code duplication. You can pull my shifting traces.I did play some wrong notes though, so take them with a grain of salt.
-
+- [BUG → FIXED 2026-07-15] I calibrated it said no octave drift in the title but on mi it said octave drift so which is it? I made a trace and have a screenshot. Other than that pizz/Arco split was the right call, after calibration it was far less false trigger prone.
+  → Found it: the per-note "octave drift" label was shown for any failing pizz check, not just an actual octave-high one — Mi's row was mislabeled. See the dated Pending block above; needs a re-calibration VERIFY.
 
 
 - [FEATURE]  Reminder notification: send the user a reminder they haven't practiced yet if it's been near 24h since the last session. Stop sending notifications if they ignore them and it's more than a week since last practice. Of course with a toggeable setting in the settings to turn this off

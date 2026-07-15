@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.calibration.CalibrationAnalysis
 import be.drakarah.intonation.calibration.SeparationVerdict
 import be.drakarah.intonation.music.NoteSpec
 import be.drakarah.intonation.music.nearestNote
@@ -399,22 +400,32 @@ private fun SummaryContent(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                r.pizzChecks.forEach { (midi, ok) ->
+                r.pizzChecks.forEach { (midi, status) ->
+                    val (label, icon, tint) = when (status) {
+                        CalibrationAnalysis.PizzCheckStatus.OK ->
+                            Triple("correct octave", Icons.Default.CheckCircle, ResultColors.excellent)
+                        CalibrationAnalysis.PizzCheckStatus.OCTAVE_DRIFT ->
+                            Triple("octave drift", Icons.Default.Warning, ResultColors.close)
+                        CalibrationAnalysis.PizzCheckStatus.NOT_DETECTED ->
+                            Triple("not detected", Icons.Default.Close, ResultColors.off)
+                        CalibrationAnalysis.PizzCheckStatus.OFF_PITCH ->
+                            Triple("off pitch", Icons.Default.Warning, ResultColors.close)
+                    }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Text("${NoteSpec(midi).displayName(noteStyle)} pizz",
                             style = MaterialTheme.typography.bodyLarge)
                         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING), verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                if (ok) Icons.Default.CheckCircle else Icons.Default.Warning,
-                                contentDescription = if (ok) "correct octave" else "octave drift",
-                                tint = if (ok) ResultColors.excellent else ResultColors.close,
+                                icon,
+                                contentDescription = label,
+                                tint = tint,
                                 modifier = Modifier.size(24.dp),
                             )
                             Text(
-                                if (ok) "correct octave" else "octave drift",
+                                label,
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = if (ok) ResultColors.excellent else ResultColors.close,
+                                color = tint,
                             )
                         }
                     }

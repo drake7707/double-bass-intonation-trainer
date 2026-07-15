@@ -33,6 +33,7 @@ import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.music.centsBetween
 import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.settings.applying
+import be.drakarah.intonation.settings.detectionExtrasJson
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -148,7 +149,7 @@ class ChordsViewModel(
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             val cfg = config.applying(settings, pizz = mode == "pizz")
             trace = if (settings.traceGames)
-                GameTrace(appContext, cfg, "chords-$mode").also { it.prepare() } else null
+                GameTrace(appContext, cfg, "chords-$mode", settings.detectionExtrasJson()).also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
             prompts = ChordPool(positions, fingering = chordFingering).draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()

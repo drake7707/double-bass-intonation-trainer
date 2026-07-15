@@ -31,6 +31,7 @@ import be.drakarah.intonation.game.withMixedSpelling
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.settings.applying
+import be.drakarah.intonation.settings.detectionExtrasJson
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -116,7 +117,7 @@ class SustainViewModel(
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
             val cfg = config.applying(settings, pizz = mode == "pizz")
-            trace = if (settings.traceGames) GameTrace(appContext, cfg, "sustain-$mode").also { it.prepare() } else null
+            trace = if (settings.traceGames) GameTrace(appContext, cfg, "sustain-$mode", settings.detectionExtrasJson()).also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
             sustainParams = SustainParams.forDifficulty(difficulty).copy(
                 attemptTimeoutMs = settings.playerLevel.sustainAttemptTimeoutMs,

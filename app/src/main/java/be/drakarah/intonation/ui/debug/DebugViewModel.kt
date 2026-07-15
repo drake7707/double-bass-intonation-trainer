@@ -10,6 +10,7 @@ import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.settings.applying
+import be.drakarah.intonation.settings.detectionExtrasJson
 import be.drakarah.intonation.dsp.PitchSample
 import be.drakarah.intonation.dsp.misc.WaveWriter
 import be.drakarah.intonation.game.AttemptCapture
@@ -43,6 +44,9 @@ class DebugViewModel(
     private val waveWriter = WaveWriter()
     private lateinit var engine: PitchEngine
     private var config: PitchEngineConfig = baseConfig
+    /** Both playing styles' octave knobs + capture thresholds, for the snippet header — a debug
+     * snippet has no arco/pizz mode, so it must carry everything either replay would need. */
+    private var detectionExtras: String = "{}"
 
     private val _latestSample = MutableStateFlow<PitchSample?>(null)
     val latestSample: StateFlow<PitchSample?> = _latestSample.asStateFlow()
@@ -116,6 +120,7 @@ class DebugViewModel(
         listenJob = viewModelScope.launch {
             val settings = settingsRepository.settings.first()
             config = baseConfig.applying(settings, pizz = _captureMode.value == "pizz")
+            detectionExtras = settings.detectionExtrasJson()
             _gateLevel.value = 100f - config.sensitivity
             engine = PitchEngine(config, waveWriter)
             waveWriter.setBufferSize(SNIPPET_SECONDS * config.sampleRate)
@@ -215,7 +220,7 @@ class DebugViewModel(
 
             val logSnapshot = synchronized(sampleLog) { sampleLog.toList() }
             logFile.bufferedWriter().use { writer ->
-                writer.appendLine("""{"config":${config.toJson()}}""")
+                writer.appendLine("""{"config":${config.toJson()},"detection":$detectionExtras}""")
                 logSnapshot.forEach { s ->
                     writer.appendLine(
                         """{"tMs":${s.timestampMs},"frame":${s.framePosition},"hz":${s.frequencyHz},""" +

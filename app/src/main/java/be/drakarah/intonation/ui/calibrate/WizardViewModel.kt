@@ -458,7 +458,16 @@ class WizardViewModel(
      * in the snippets dir tagged "calibration-*" so Recordings lists and shares them. */
     private suspend fun saveCalibrationTrace() {
         if (!traceCalibration) return
-        val config = finalConfig()
+        val arcoCfg = finalConfig()
+        val pizzCfg = pizzConfig()
+        // Both playing styles' octave knobs + capture thresholds this run produced, so each take's
+        // header is fully self-contained (like the live recordings' detectionExtrasJson).
+        val extras = """{"arcoOddHarmonicMinRatio":${arcoCfg.oddHarmonicMinRatio},""" +
+            """"arcoOddHarmonicMinRelative":${arcoCfg.oddHarmonicMinRelative},""" +
+            """"pizzOddHarmonicMinRatio":$finalPizzOddRatio,""" +
+            """"pizzOddHarmonicMinRelative":$finalPizzOddRelative,""" +
+            """"wrongNoteMinLevel":${finalWrongNoteFloor ?: baseConfig.sensitivity},""" +
+            """"lowestPlayableHz":$finalLowestHz,"pizzOctaveSettleMs":$finalPizzSettleMs}"""
         // (stage label, take) for every recording made this run
         val takes = buildList {
             stringTakes.forEach { (midi, t) -> add(Triple("arco", midi, t)) }
@@ -472,10 +481,12 @@ class WizardViewModel(
                     .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
                 takes.forEach { (stage, midi, take) ->
                     val base = "calibration-$stage-$midi-$stamp"
+                    // pizz takes carry the pizz octave-down config; arco/high carry the arco config.
+                    val cfg = if (stage == "pizz") pizzCfg else arcoCfg
                     writeWave(appContext, android.net.Uri.fromFile(java.io.File(dir, "$base.wav")),
-                        config.sampleRate, take.pcm)
+                        cfg.sampleRate, take.pcm)
                     java.io.File(dir, "$base.jsonl").bufferedWriter().use { w ->
-                        w.appendLine("""{"config":${config.toJson()},"stage":"$stage",""" +
+                        w.appendLine("""{"config":${cfg.toJson()},"detection":$extras,"stage":"$stage",""" +
                             """"targetMidi":$midi,"expectedHz":${take.expectedHz}}""")
                         take.samples.forEach { s ->
                             w.appendLine("""{"tMs":${s.timestampMs},"frame":${s.framePosition},""" +

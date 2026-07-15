@@ -36,6 +36,7 @@ import be.drakarah.intonation.music.NoteSpec
 import be.drakarah.intonation.music.centsBetween
 import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.settings.applying
+import be.drakarah.intonation.settings.detectionExtrasJson
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -174,7 +175,7 @@ class RoundViewModel(
             previousAnswerHz = 0f
             promptShownAtMs = -1
             val cfg = config.applying(settings, pizz = mode == "pizz")
-            trace = if (settings.traceGames) GameTrace(appContext, cfg, "note-accuracy-$mode").also { it.prepare() } else null
+            trace = if (settings.traceGames) GameTrace(appContext, cfg, "note-accuracy-$mode", settings.detectionExtrasJson()).also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
             prompts = NotePool(positions).draw(settings.roundLength)
                 .map { it.withMixedSpelling(kotlin.random.Random.Default, mixEnharmonics) }

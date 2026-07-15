@@ -24,6 +24,9 @@ class GameTrace(
     private val context: Context,
     private val config: PitchEngineConfig,
     private val exercise: String,
+    /** `AppSettings.detectionExtrasJson()` — both playing styles' octave knobs + capture
+     * thresholds, so the header is fully self-contained (see SettingsRepository). */
+    private val detectionExtras: String = "{}",
 ) {
     /** Pass to PitchEngine so the mic audio is recorded alongside the detection log. */
     val waveWriter = WaveWriter()
@@ -31,7 +34,7 @@ class GameTrace(
     private val lines = ArrayList<String>()
 
     init {
-        lines.add("""{"config":${config.toJson()},"exercise":"$exercise"}""")
+        lines.add("""{"config":${config.toJson()},"detection":$detectionExtras,"exercise":"$exercise"}""")
     }
 
     /** Size the audio ring. Suspends, so call it from the game's coroutine before recording. */

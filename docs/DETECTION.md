@@ -372,13 +372,19 @@ point). Measured by the full calibration wizard from prompted notes (ground trut
 
 Defaults in `AppSettings` are the reference-Pixel-6a values; the wizard overrides per device.
 
-**Recording headers now carry the FULL detection config** (`PitchEngineConfig.toJson()` in every
-snippet/game-trace/calibration-trace header, not just gate+source) — so a recording replays offline
-*exactly* as the rig ran it. This closed a real reproduction gap (octave correction is
-config-dependent; the old 6-field header couldn't reproduce her rig). The **calibration trace**
-(Settings → Debug "Record & trace games" → run the wizard) saves every ground-truth take
-(`calibration-<stage>-<midi>-*`) with its target and full config — the per-rig data used to fit AND
-validate octave handling without hard-coding a rig.
+**Recording headers are fully self-contained.** Every snippet/game-trace/calibration-trace header
+carries `{"config": <PitchEngineConfig.toJson()>, "detection": <AppSettings.detectionExtrasJson()>}`:
+the `config` block is the resolved detection config that ran (all fields, not just gate+source),
+and the `detection` block adds **both playing styles' octave-down knobs** (arco AND pizz) plus the
+capture thresholds (`wrongNoteMinLevel`, `lowestPlayableHz`, `pizzOctaveSettleMs`). This closed a
+real reproduction gap (octave correction is config-dependent; the old 6-field header couldn't
+reproduce her rig) AND handles the fact that **a debug snippet has no arco/pizz mode** — it must
+carry everything either replay would need (ask her which she played if it isn't stated; game
+traces and calibration takes carry the mode/stage so it's deducible). Pizz calibration takes carry
+the pizz config in their `config` block; arco/high takes carry the arco config. The **calibration
+trace** (Settings → Debug "Record & trace games" → run the wizard) saves every ground-truth take
+(`calibration-<stage>-<midi>-*`) with its target — the per-rig data used to fit AND validate octave
+handling without hard-coding a rig.
 
 ### A′. Practice aid, NOT calibration — "ignore wrong octave" (`ignoreWrongOctave`, default on)
 Layer 3 (`resultFor`): when a capture is the right pitch class but a whole octave off, fold it onto

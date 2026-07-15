@@ -89,6 +89,8 @@ data class AppSettings(
      * can be replayed offline to diagnose thresholds. Off by default; files land in
      * Recordings tagged "game-trace". */
     val traceGames: Boolean = false,
+    /** Whether the user has seen the welcome onboarding. */
+    val onboardingCompleted: Boolean = false,
 )
 
 /** The one place where saved calibration turns into a runnable detection config. [pizz] selects
@@ -101,6 +103,18 @@ fun PitchEngineConfig.applying(settings: AppSettings, pizz: Boolean = false): Pi
     oddHarmonicMinRatio = if (pizz) settings.pizzOddHarmonicMinRatio else settings.oddHarmonicMinRatio,
     oddHarmonicMinRelative = if (pizz) settings.pizzOddHarmonicMinRelative else settings.oddHarmonicMinRelative,
 )
+
+/** Everything that shapes detection/capture beyond the raw [PitchEngineConfig] block, so a
+ * recording's header is fully self-contained — BOTH playing styles' octave-down knobs (a snippet
+ * has no arco/pizz mode, so replay may need either) plus the game capture thresholds. Emitted as a
+ * sibling "detection" object next to "config" in every snippet/trace header. */
+fun AppSettings.detectionExtrasJson(): String =
+    """{"arcoOddHarmonicMinRatio":$oddHarmonicMinRatio,""" +
+        """"arcoOddHarmonicMinRelative":$oddHarmonicMinRelative,""" +
+        """"pizzOddHarmonicMinRatio":$pizzOddHarmonicMinRatio,""" +
+        """"pizzOddHarmonicMinRelative":$pizzOddHarmonicMinRelative,""" +
+        """"wrongNoteMinLevel":$wrongNoteMinLevel,"lowestPlayableHz":$lowestPlayableHz,""" +
+        """"pizzOctaveSettleMs":$pizzOctaveSettleMs}"""
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
@@ -135,6 +149,7 @@ class SettingsRepository(private val context: Context) {
         val dronePitchClass = intPreferencesKey("dronePitchClass")
         val droneFifth = booleanPreferencesKey("droneFifth")
         val traceGames = booleanPreferencesKey("traceGames")
+        val onboardingCompleted = booleanPreferencesKey("onboardingCompleted")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -181,6 +196,7 @@ class SettingsRepository(private val context: Context) {
             dronePitchClass = (prefs[Keys.dronePitchClass] ?: 9).coerceIn(0, 11),
             droneFifth = prefs[Keys.droneFifth] ?: false,
             traceGames = prefs[Keys.traceGames] ?: false,
+            onboardingCompleted = prefs[Keys.onboardingCompleted] ?: false,
         )
     }
 
@@ -216,7 +232,12 @@ class SettingsRepository(private val context: Context) {
             pizzOddHarmonicMinRelative?.let { v -> it[Keys.pizzOddHarmonicMinRelative] = v.coerceIn(0.005f, 0.05f) }
             it[Keys.fullCalibrationAt] = epochMs
             it[Keys.lastCalibratedAt] = epochMs
+            it[Keys.onboardingCompleted] = true
         }
+    }
+
+    suspend fun setOnboardingCompleted(completed: Boolean) {
+        context.dataStore.edit { it[Keys.onboardingCompleted] = completed }
     }
 
     suspend fun setLastCalibratedAt(epochMs: Long) {

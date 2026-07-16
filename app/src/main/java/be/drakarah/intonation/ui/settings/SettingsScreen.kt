@@ -41,10 +41,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import be.drakarah.intonation.ui.theme.Spacing
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import be.drakarah.intonation.IntonationApplication
+import be.drakarah.intonation.R
 import be.drakarah.intonation.audio.GameSounds
 import be.drakarah.intonation.game.ChordFingering
 import be.drakarah.intonation.game.Difficulty
@@ -90,13 +92,15 @@ fun SettingsScreen(
             backupStatus = try {
                 val summary = withContext(Dispatchers.IO) {
                     val input = context.contentResolver.openInputStream(uri)
-                        ?: error("Could not open the file.")
+                        ?: error(context.getString(R.string.settings_open_file_failed))
                     input.use { backup.import(it, mode) }
                 }
-                "Imported ${summary.importedSessions} rounds" +
-                    if (summary.skippedSessions > 0) ", skipped ${summary.skippedSessions} already present." else "."
+                if (summary.skippedSessions > 0) context.getString(
+                    R.string.settings_imported_skipped,
+                    summary.importedSessions, summary.skippedSessions,
+                ) else context.getString(R.string.settings_imported, summary.importedSessions)
             } catch (e: Exception) {
-                "Import failed: ${e.message}"
+                context.getString(R.string.settings_import_failed, e.message ?: "")
             }
             backupBusy = false
         }
@@ -125,12 +129,12 @@ fun SettingsScreen(
                             putExtra(Intent.EXTRA_STREAM, uri)
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         },
-                        "Share backup",
+                        context.getString(R.string.settings_share_backup),
                     ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 )
-                "Backup created — save it somewhere safe."
+                context.getString(R.string.settings_backup_created)
             } catch (e: Exception) {
-                "Export failed: ${e.message}"
+                context.getString(R.string.settings_export_failed, e.message ?: "")
             }
             backupBusy = false
         }
@@ -140,24 +144,21 @@ fun SettingsScreen(
         val uri = pendingImportUri!!
         AlertDialog(
             onDismissRequest = { pendingImportUri = null },
-            title = { Text("Import backup") },
-            text = {
-                Text(
-                    "Merge keeps what's on this phone and adds any rounds from the backup that " +
-                        "aren't already here. Replace wipes this phone's history first."
-                )
-            },
+            title = { Text(stringResource(R.string.settings_import_title)) },
+            text = { Text(stringResource(R.string.settings_import_body)) },
             confirmButton = {
                 TextButton(onClick = { pendingImportUri = null; runImport(uri, ImportMode.MERGE) }) {
-                    Text("Merge")
+                    Text(stringResource(R.string.settings_merge))
                 }
             },
             dismissButton = {
                 Row {
                     TextButton(onClick = { pendingImportUri = null; pendingReplaceUri = uri }) {
-                        Text("Replace…")
+                        Text(stringResource(R.string.settings_replace_ellipsis))
                     }
-                    TextButton(onClick = { pendingImportUri = null }) { Text("Cancel") }
+                    TextButton(onClick = { pendingImportUri = null }) {
+                        Text(stringResource(R.string.wizard_cancel))
+                    }
                 }
             },
         )
@@ -166,14 +167,18 @@ fun SettingsScreen(
         val uri = pendingReplaceUri!!
         AlertDialog(
             onDismissRequest = { pendingReplaceUri = null },
-            title = { Text("Replace all data?") },
-            text = { Text("This permanently deletes all history, personal bests and achievements on this phone, then loads the backup. This can't be undone.") },
+            title = { Text(stringResource(R.string.settings_replace_title)) },
+            text = { Text(stringResource(R.string.settings_replace_body)) },
             confirmButton = {
                 TextButton(onClick = { pendingReplaceUri = null; runImport(uri, ImportMode.REPLACE) }) {
-                    Text("Replace everything")
+                    Text(stringResource(R.string.settings_replace_confirm))
                 }
             },
-            dismissButton = { TextButton(onClick = { pendingReplaceUri = null }) { Text("Cancel") } },
+            dismissButton = {
+                TextButton(onClick = { pendingReplaceUri = null }) {
+                    Text(stringResource(R.string.wizard_cancel))
+                }
+            },
         )
     }
 
@@ -187,20 +192,19 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(Spacing.SECTION_BREAK),
         ) {
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
-            Text("Settings", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium)
 
-            SectionHeader("Coaching")
+            SectionHeader(stringResource(R.string.settings_section_coaching))
             SettingBlock(
-                "Show technical details",
-                "Show exact cents, percentages and measurements everywhere. Off keeps the app " +
-                    "in plain language.",
+                stringResource(R.string.settings_technical_title),
+                stringResource(R.string.settings_technical_sub),
             ) {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(if (settings.expertMode) "On" else "Off")
+                    Text(onOffLabel(settings.expertMode))
                     Switch(
                         checked = settings.expertMode,
                         onCheckedChange = { scope.launch { repo.setExpertMode(it) } },
@@ -209,9 +213,8 @@ fun SettingsScreen(
             }
 
             SettingBlock(
-                "Pace",
-                "How much time you get to read the prompt and find the note. Scoring is " +
-                    "equally fair at every pace, and your bests carry over when you move up.",
+                stringResource(R.string.settings_pace_title),
+                stringResource(R.string.settings_pace_sub),
             ) {
                 Row(
                     Modifier
@@ -228,13 +231,19 @@ fun SettingsScreen(
                     }
                 }
                 Text(
-                    "Up to ${settings.playerLevel.promptTimeoutMs / 1000} s to start each note.",
+                    stringResource(
+                        R.string.settings_pace_current,
+                        (settings.playerLevel.promptTimeoutMs / 1000).toInt(),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
-            SettingBlock("Difficulty", "How forgiving the scoring is when a note isn't perfectly in tune.") {
+            SettingBlock(
+                stringResource(R.string.settings_difficulty_title),
+                stringResource(R.string.settings_difficulty_sub),
+            ) {
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     Difficulty.entries.forEachIndexed { i, d ->
                         SegmentedButton(
@@ -248,14 +257,20 @@ fun SettingsScreen(
                 }
                 if (LocalTechnicalDetails.current) {
                     Text(
-                        "Points reach zero at ±${settings.difficulty.zeroAtCents.toInt()} cents.",
+                        stringResource(
+                            R.string.settings_difficulty_zero,
+                            settings.difficulty.zeroAtCents.toInt(),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
 
-            SettingBlock("Round length", "How many notes in one round. Scores only compare within the same length.") {
+            SettingBlock(
+                stringResource(R.string.settings_length_title),
+                stringResource(R.string.settings_length_sub),
+            ) {
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     listOf(5, 10, 20).forEachIndexed { i, n ->
                         SegmentedButton(
@@ -267,27 +282,30 @@ fun SettingsScreen(
                 }
             }
 
-            SectionHeader("Notes & tuning")
-            SettingBlock("Note names", "Whatever your teacher uses — notes are written this way everywhere.") {
+            SectionHeader(stringResource(R.string.settings_section_notes))
+            SettingBlock(
+                stringResource(R.string.settings_note_names_title),
+                stringResource(R.string.settings_note_names_sub),
+            ) {
                 TwoChoice(
-                    left = "Do Ré Mi", leftSelected = settings.noteNameStyle == NoteNameStyle.SOLFEGE,
-                    right = "C D E",
+                    left = stringResource(R.string.wizard_notes_solfege_title),
+                    leftSelected = settings.noteNameStyle == NoteNameStyle.SOLFEGE,
+                    right = stringResource(R.string.wizard_notes_letters_title),
                     onLeft = { scope.launch { repo.setNoteNameStyle(NoteNameStyle.SOLFEGE) } },
                     onRight = { scope.launch { repo.setNoteNameStyle(NoteNameStyle.LETTERS) } },
                 )
             }
 
             SettingBlock(
-                "Mix sharps & flats",
-                "Sometimes show La♯ as Si♭ — the same note has two names, and this way you " +
-                    "learn both. Off keeps everything written as sharps.",
+                stringResource(R.string.settings_enharmonics_title),
+                stringResource(R.string.settings_enharmonics_sub),
             ) {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(if (settings.mixEnharmonics) "On" else "Off")
+                    Text(onOffLabel(settings.mixEnharmonics))
                     Switch(
                         checked = settings.mixEnharmonics,
                         onCheckedChange = { scope.launch { repo.setMixEnharmonics(it) } },
@@ -296,8 +314,8 @@ fun SettingsScreen(
             }
 
             SettingBlock(
-                "Concert pitch (A4)",
-                "The A your orchestra tunes to. Leave at 440 unless your teacher says otherwise.",
+                stringResource(R.string.settings_a4_title),
+                stringResource(R.string.settings_a4_sub),
             ) {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -306,7 +324,7 @@ fun SettingsScreen(
                 ) {
                     IconButton(onClick = { scope.launch { repo.setA4(settings.a4 - 1) } }) { Text("−") }
                     Text(
-                        "${settings.a4.toInt()} Hz",
+                        stringResource(R.string.settings_hz, settings.a4.toInt()),
                         style = MaterialTheme.typography.headlineSmall,
                     )
                     IconButton(onClick = { scope.launch { repo.setA4(settings.a4 + 1) } }) { Text("+") }
@@ -314,9 +332,8 @@ fun SettingsScreen(
             }
 
             SettingBlock(
-                "Chord fingering",
-                "In the Chords game, a note can often be played several ways — open or fingered in " +
-                    "your positions. This is how the game chooses (open strings are never scored).",
+                stringResource(R.string.settings_chord_fingering_title),
+                stringResource(R.string.settings_chord_fingering_sub),
             ) {
                 Row(
                     Modifier
@@ -339,14 +356,17 @@ fun SettingsScreen(
                 )
             }
 
-            SectionHeader("Sounds & warnings")
-            SettingBlock("Sound feedback", "Chime when you land a note, buzz when you miss — so you can keep your eyes on the fingerboard.") {
+            SectionHeader(stringResource(R.string.settings_section_sounds))
+            SettingBlock(
+                stringResource(R.string.settings_sound_title),
+                stringResource(R.string.settings_sound_sub),
+            ) {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(if (settings.soundFeedback) "On" else "Off")
+                    Text(onOffLabel(settings.soundFeedback))
                     Switch(
                         checked = settings.soundFeedback,
                         onCheckedChange = { scope.launch { repo.setSoundFeedback(it) } },
@@ -358,7 +378,7 @@ fun SettingsScreen(
                 var volume by remember(settings.gameVolume) {
                     mutableStateOf(settings.gameVolume)
                 }
-                Text("Volume (release to hear it)", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.settings_volume_label), style = MaterialTheme.typography.bodyMedium)
                 Slider(
                     value = volume,
                     onValueChange = { volume = it },
@@ -381,13 +401,12 @@ fun SettingsScreen(
                     ) {
                         Icon(
                             Icons.Default.VolumeOff,
-                            contentDescription = "Phone media volume is muted",
+                            contentDescription = stringResource(R.string.settings_muted_cd),
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.height(20.dp),
                         )
                         Text(
-                            "Your phone's media volume is muted — game sounds stay silent " +
-                                "no matter what this slider says.",
+                            stringResource(R.string.settings_muted_warning),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                         )
@@ -395,13 +414,16 @@ fun SettingsScreen(
                 }
             }
 
-            SettingBlock("Drift warning", "Warns when everything you play starts leaning sharp or flat, so you can reset your ear instead of practicing wrong notes.") {
+            SettingBlock(
+                stringResource(R.string.settings_drift_title),
+                stringResource(R.string.settings_drift_sub),
+            ) {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(if (settings.driftWarning) "On" else "Off")
+                    Text(onOffLabel(settings.driftWarning))
                     Switch(
                         checked = settings.driftWarning,
                         onCheckedChange = { scope.launch { repo.setDriftWarning(it) } },
@@ -409,26 +431,23 @@ fun SettingsScreen(
                 }
             }
 
-            SectionHeader("Set-up")
+            SectionHeader(stringResource(R.string.settings_section_setup))
             SettingBlock(
-                "Listening set-up",
-                "Room check measures your room's background noise (quick — run it when you " +
-                    "practice somewhere new). Full setup teaches the app how your bass sounds " +
-                    "on this phone (run it once, or with a new phone or a new bass).",
+                stringResource(R.string.settings_listening_title),
+                stringResource(R.string.settings_listening_sub),
             ) {
                 OutlinedButton(onClick = onOpenCalibrate, modifier = Modifier.fillMaxWidth()) {
-                    Text("Room check")
+                    Text(stringResource(R.string.settings_room_check_btn))
                 }
                 Spacer(Modifier.height(Spacing.FINE_SPACING))
                 OutlinedButton(onClick = onOpenWizard, modifier = Modifier.fillMaxWidth()) {
-                    Text("Full setup (new phone or new bass)")
+                    Text(stringResource(R.string.settings_full_setup_btn))
                 }
                 if (LocalTechnicalDetails.current) {
                     val gate = 100f - settings.micSensitivity
                     Spacer(Modifier.height(Spacing.FINE_SPACING))
                     Text(
-                        "Noise gate: sound below this level is ignored as room noise " +
-                            "(gate at level ${gate.toInt()} / 100 — Room check sets it automatically).",
+                        stringResource(R.string.settings_noise_gate, gate.toInt()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -440,16 +459,15 @@ fun SettingsScreen(
                 }
             }
             SettingBlock(
-                "Right note, wrong octave still counts",
-                "Low notes can fool the microphone by a whole octave. Keep this on so that " +
-                    "never costs you points — the app scores how in tune you were instead.",
+                stringResource(R.string.settings_octave_title),
+                stringResource(R.string.settings_octave_sub),
             ) {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(if (settings.ignoreWrongOctave) "On" else "Off")
+                    Text(onOffLabel(settings.ignoreWrongOctave))
                     Switch(
                         checked = settings.ignoreWrongOctave,
                         onCheckedChange = { scope.launch { repo.setIgnoreWrongOctave(it) } },
@@ -457,41 +475,38 @@ fun SettingsScreen(
                 }
             }
 
-            SectionHeader("Your data")
+            SectionHeader(stringResource(R.string.settings_section_data))
             SettingBlock(
-                "Backup & restore",
-                "Export your whole practice history to a file you can keep, then restore it on a " +
-                    "new phone. Nothing is stored in the cloud — this file is your only copy.",
+                stringResource(R.string.settings_backup_title),
+                stringResource(R.string.settings_backup_sub),
             ) {
                 OutlinedButton(
                     onClick = runExport,
                     enabled = !backupBusy,
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Export backup") }
+                ) { Text(stringResource(R.string.settings_export_btn)) }
                 OutlinedButton(
                     onClick = { importLauncher.launch(arrayOf("application/gzip", "application/octet-stream", "*/*")) },
                     enabled = !backupBusy,
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Import backup") }
+                ) { Text(stringResource(R.string.settings_import_btn)) }
                 if (backupStatus != null) {
                     Spacer(Modifier.height(Spacing.ITEM_SPACING))
                     Text(backupStatus!!, style = MaterialTheme.typography.bodySmall)
                 }
             }
 
-            SectionHeader("Help improve the app")
+            SectionHeader(stringResource(R.string.settings_section_help))
             SettingBlock(
-                "Record practice reports",
-                "Records your rounds — the sound and what the app heard — so that when " +
-                    "something seems wrong (a note not picked up, a weird score), you can email " +
-                    "the report to the developer and the app gets fixed. Leave off for normal play.",
+                stringResource(R.string.settings_traces_title),
+                stringResource(R.string.settings_traces_sub),
             ) {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(if (settings.traceGames) "On" else "Off")
+                    Text(onOffLabel(settings.traceGames))
                     Switch(
                         checked = settings.traceGames,
                         onCheckedChange = { scope.launch { repo.setTraceGames(it) } },
@@ -502,22 +517,26 @@ fun SettingsScreen(
                         onClick = onOpenTraces,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("View practice reports")
+                        Text(stringResource(R.string.settings_view_reports))
                     }
                 }
             }
 
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             TextButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
-                Text("About & licenses")
+                Text(stringResource(R.string.settings_about))
             }
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text("Back")
+                Text(stringResource(R.string.settings_back))
             }
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
     }
 }
+
+@Composable
+private fun onOffLabel(on: Boolean): String =
+    stringResource(if (on) R.string.settings_on else R.string.settings_off)
 
 @Composable
 private fun SectionHeader(text: String) {

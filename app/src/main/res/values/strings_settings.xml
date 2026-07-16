@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings screen (ui/settings/). -->
+<resources>
+
+    <string name="settings_title">Settings</string>
+
+    <string name="settings_section_coaching">Coaching</string>
+    <string name="settings_section_notes">Notes &amp; tuning</string>
+    <string name="settings_section_sounds">Sounds &amp; warnings</string>
+    <string name="settings_section_setup">Set-up</string>
+    <string name="settings_section_data">Your data</string>
+    <string name="settings_section_help">Help improve the app</string>
+
+    <string name="settings_on">On</string>
+    <string name="settings_off">Off</string>
+
+    <string name="settings_technical_title">Show technical details</string>
+    <string name="settings_technical_sub">Show exact cents, percentages and measurements everywhere. Off keeps the app in plain language.</string>
+
+    <string name="settings_pace_title">Pace</string>
+    <string name="settings_pace_sub">How much time you get to read the prompt and find the note. Scoring is equally fair at every pace, and your bests carry over when you move up.</string>
+    <!-- %1$d = seconds -->
+    <string name="settings_pace_current">Up to %1$d s to start each note.</string>
+
+    <string name="settings_difficulty_title">Difficulty</string>
+    <string name="settings_difficulty_sub">How forgiving the scoring is when a note isn\'t perfectly in tune.</string>
+    <!-- %1$d = cents -->
+    <string name="settings_difficulty_zero">Points reach zero at ±%1$d cents.</string>
+
+    <string name="settings_length_title">Round length</string>
+    <string name="settings_length_sub">How many notes in one round. Scores only compare within the same length.</string>
+
+    <string name="settings_note_names_title">Note names</string>
+    <string name="settings_note_names_sub">Whatever your teacher uses — notes are written this way everywhere.</string>
+
+    <string name="settings_enharmonics_title">Mix sharps &amp; flats</string>
+    <string name="settings_enharmonics_sub">Sometimes show La♯ as Si♭ — the same note has two names, and this way you learn both. Off keeps everything written as sharps.</string>
+
+    <string name="settings_a4_title">Concert pitch (A4)</string>
+    <string name="settings_a4_sub">The A your orchestra tunes to. Leave at 440 unless your teacher says otherwise.</string>
+    <!-- %1$d = frequency -->
+    <string name="settings_hz">%1$d Hz</string>
+
+    <string name="settings_chord_fingering_title">Chord fingering</string>
+    <string name="settings_chord_fingering_sub">In the Chords game, a note can often be played several ways — open or fingered in your positions. This is how the game chooses (open strings are never scored).</string>
+
+    <string name="settings_sound_title">Sound feedback</string>
+    <string name="settings_sound_sub">Chime when you land a note, buzz when you miss — so you can keep your eyes on the fingerboard.</string>
+    <string name="settings_volume_label">Volume (release to hear it)</string>
+    <string name="settings_muted_cd">Phone media volume is muted</string>
+    <string name="settings_muted_warning">Your phone\'s media volume is muted — game sounds stay silent no matter what this slider says.</string>
+
+    <string name="settings_drift_title">Drift warning</string>
+    <string name="settings_drift_sub">Warns when everything you play starts leaning sharp or flat, so you can reset your ear instead of practicing wrong notes.</string>
+
+    <string name="settings_listening_title">Listening set-up</string>
+    <string name="settings_listening_sub">Room check measures your room\'s background noise (quick — run it when you practice somewhere new). Full setup teaches the app how your bass sounds on this phone (run it once, or with a new phone or a new bass).</string>
+    <string name="settings_room_check_btn">Room check</string>
+    <string name="settings_full_setup_btn">Full setup (new phone or new bass)</string>
+    <!-- %1$d = gate level -->
+    <string name="settings_noise_gate">Noise gate: sound below this level is ignored as room noise (gate at level %1$d / 100 — Room check sets it automatically).</string>
+
+    <string name="settings_octave_title">Right note, wrong octave still counts</string>
+    <string name="settings_octave_sub">Low notes can fool the microphone by a whole octave. Keep this on so that never costs you points — the app scores how in tune you were instead.</string>
+
+    <string name="settings_backup_title">Backup &amp; restore</string>
+    <string name="settings_backup_sub">Export your whole practice history to a file you can keep, then restore it on a new phone. Nothing is stored in the cloud — this file is your only copy.</string>
+    <string name="settings_export_btn">Export backup</string>
+    <string name="settings_import_btn">Import backup</string>
+    <string name="settings_share_backup">Share backup</string>
+    <string name="settings_backup_created">Backup created — save it somewhere safe.</string>
+    <!-- %1$s = error message -->
+    <string name="settings_export_failed">Export failed: %1$s</string>
+    <string name="settings_import_failed">Import failed: %1$s</string>
+    <string name="settings_open_file_failed">Could not open the file.</string>
+    <!-- %1$d = imported rounds -->
+    <string name="settings_imported">Imported %1$d rounds.</string>
+    <!-- %1$d = imported rounds, %2$d = skipped rounds -->
+    <string name="settings_imported_skipped">Imported %1$d rounds, skipped %2$d already present.</string>
+    <string name="settings_import_title">Import backup</string>
+    <string name="settings_import_body">Merge keeps what\'s on this phone and adds any rounds from the backup that aren\'t already here. Replace wipes this phone\'s history first.</string>
+    <string name="settings_merge">Merge</string>
+    <string name="settings_replace_ellipsis">Replace…</string>
+    <string name="settings_replace_title">Replace all data?</string>
+    <string name="settings_replace_body">This permanently deletes all history, personal bests and achievements on this phone, then loads the backup. This can\'t be undone.</string>
+    <string name="settings_replace_confirm">Replace everything</string>
+
+    <string name="settings_traces_title">Record practice reports</string>
+    <string name="settings_traces_sub">Records your rounds — the sound and what the app heard — so that when something seems wrong (a note not picked up, a weird score), you can email the report to the developer and the app gets fixed. Leave off for normal play.</string>
+    <string name="settings_view_reports">View practice reports</string>
+
+    <string name="settings_about">About &amp; licenses</string>
+    <string name="settings_back">Back</string>
+
+</resources>

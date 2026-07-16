@@ -255,8 +255,9 @@ private fun RevealContent(state: ChordsUiState, result: ChordAttemptUi) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             chordName(result.chord.root, result.chord.quality, state.noteStyle, result.chord.tones[0].spelling),
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.displaySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Bold,
         )
         Spacer(Modifier.height(Spacing.CARD_PADDING))
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.SECTION_BREAK)) {
@@ -265,7 +266,7 @@ private fun RevealContent(state: ChordsUiState, result: ChordAttemptUi) {
         Spacer(Modifier.height(Spacing.CARD_PADDING))
         Text(
             "+${result.score}",
-            style = MaterialTheme.typography.headlineLarge, // Bumped
+            fontSize = TextSizes.SCORE_DISPLAY,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
         )
@@ -284,23 +285,25 @@ private fun ToneResult(tone: ToneUi, noteStyle: NoteNameStyle) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             tone.prompt.target.pitchClassName(noteStyle, tone.prompt.spelling),
-            style = MaterialTheme.typography.headlineSmall, // Bumped
+            fontSize = TextSizes.REVEAL_LABEL,
             fontWeight = FontWeight.Bold,
             color = color,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
         when {
-            !tone.scored -> Text("open", style = MaterialTheme.typography.bodyLarge, color = color)
-            tone.timedOut -> Text("—", style = MaterialTheme.typography.headlineSmall, color = color)
-            tone.wrongNote -> Text("wrong?", style = MaterialTheme.typography.bodyLarge, color = color)
+            !tone.scored -> Text("open", fontSize = TextSizes.REVEAL_SUBTEXT, color = color)
+            tone.timedOut -> Text("—", fontSize = TextSizes.REVEAL_LABEL, color = color)
+            tone.wrongNote -> Text("wrong?", fontSize = TextSizes.REVEAL_SUBTEXT, color = color)
             else -> Text(
                 String.format(Locale.US, "%+.0f", tone.cents),
-                style = MaterialTheme.typography.headlineSmall, // Bumped
+                fontSize = TextSizes.REVEAL_LABEL,
                 color = color,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        Text(starsText(if (tone.scored) tone.starCount else 3), style = MaterialTheme.typography.titleLarge, color = color)
+        Text(starsText(if (tone.scored) tone.starCount else 3), fontSize = TextSizes.REVEAL_SUBTEXT, color = color)
     }
 }
 

@@ -12,6 +12,7 @@ import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.settings.applying
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,13 +22,14 @@ import kotlinx.coroutines.launch
 
 private const val NOISE_MS = 5000L
 private const val PLAYING_MS = 8000L
+private const val TRANSITION_SEC = 5
 
 sealed interface CalibrateState {
     data object Idle : CalibrateState
     data class MeasuringNoise(val progress: Float) : CalibrateState
-    /** Quiet phase done; waiting for the user to start the soft-playing phase. */
-    data class NoiseMeasured(val noiseCeil: Float) : CalibrateState
-    data class MeasuringPlaying(val noiseCeil: Float, val progress: Float) : CalibrateState
+    /** Hands-free transition between phases: countdown before auto-starting soft playing. */
+    data class Transition(val secsLeft: Int) : CalibrateState
+    data class MeasuringPlaying(val progress: Float) : CalibrateState
     data class Done(
         val noiseCeil: Float,
         val playingFloor: Float,
@@ -39,8 +41,8 @@ sealed interface CalibrateState {
 }
 
 /** "Calibrate surroundings" (user's design): measure the room quiet, then measure SOFT
- * playing, and only set a gate if the two are actually separable. If they overlap, the
- * honest answer is "move somewhere quieter", not a gate that eats quiet notes. */
+ * playing, and only set a gate if the two are actually separable. 
+ * Updated to be hands-free: auto-proceeds from noise to playing with a countdown. */
 class CalibrateViewModel(
     private val config: PitchEngineConfig,
     private val settingsRepository: SettingsRepository,
@@ -50,18 +52,28 @@ class CalibrateViewModel(
     val state: StateFlow<CalibrateState> = _state.asStateFlow()
 
     private var job: Job? = null
+    private var noiseCeil: Float = 0f
 
     fun startNoisePhase() {
         if (job != null) return
         job = measure(NOISE_MS, { p -> CalibrateState.MeasuringNoise(p) }) { levels ->
-            _state.value = CalibrateState.NoiseMeasured(noiseCeil = percentile(levels, 95))
+            noiseCeil = percentile(levels, 95)
+            runTransition()
         }
     }
 
-    fun startPlayingPhase() {
-        val noiseCeil = (_state.value as? CalibrateState.NoiseMeasured)?.noiseCeil ?: return
-        if (job != null) return
-        job = measure(PLAYING_MS, { p -> CalibrateState.MeasuringPlaying(noiseCeil, p) }) { levels ->
+    private fun runTransition() {
+        job = viewModelScope.launch {
+            for (n in TRANSITION_SEC downTo 1) {
+                _state.value = CalibrateState.Transition(n)
+                delay(1000)
+            }
+            startPlayingPhase()
+        }
+    }
+
+    private fun startPlayingPhase() {
+        job = measure(PLAYING_MS, { p -> CalibrateState.MeasuringPlaying(p) }) { levels ->
             // notes alternate with silences during the playing phase: the upper part of the
             // distribution is the note bodies — p70 sits inside them for normal phrasing
             val playingFloor = percentile(levels, 70)

@@ -234,7 +234,7 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
         Text(
             "${result.prompt.start.target.displayName(state.noteStyle, result.prompt.start.spelling)} → " +
                 result.prompt.target.target.displayName(state.noteStyle, result.prompt.target.spelling),
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.displaySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Bold
         )
@@ -242,12 +242,12 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
         when {
             result.timedOut -> Text(
                 "no shift detected",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.displaySmall,
                 color = color,
             )
             result.wrongNote -> Text(
                 "wrong note?",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.displaySmall,
                 color = color,
             )
             else -> {
@@ -260,7 +260,8 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
                 )
                 Text(
                     "shift distance",
-                    style = MaterialTheme.typography.labelLarge,
+                    fontSize = TextSizes.REVEAL_LABEL,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 ShiftBreakdown(result)
@@ -269,7 +270,8 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
         if (result.fastBonus) {
             Text(
                 "⚡ confident shift",
-                style = MaterialTheme.typography.headlineSmall,
+                fontSize = TextSizes.REVEAL_LABEL,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
             )
         }
@@ -282,8 +284,8 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
             color = color,
         )
         Text(
-            "+${result.score}", 
-            style = MaterialTheme.typography.headlineLarge,
+            "+${result.score}",
+            fontSize = TextSizes.SCORE_DISPLAY,
             fontWeight = FontWeight.Bold
         )
     }
@@ -302,7 +304,7 @@ private fun ShiftBreakdown(result: ShiftAttemptUi) {
             if (start != null) append(String.format(Locale.US, "start %+.0f¢  ·  ", start))
             append(String.format(Locale.US, "landed %+.0f¢", landing))
         },
-        style = MaterialTheme.typography.bodyMedium,
+        fontSize = TextSizes.REVEAL_SUBTEXT,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     if (start != null && kotlin.math.abs(start) >= 15f &&
@@ -310,7 +312,8 @@ private fun ShiftBreakdown(result: ShiftAttemptUi) {
     ) {
         Text(
             "great shift — your start was ${if (start > 0) "sharp" else "flat"}",
-            style = MaterialTheme.typography.bodyMedium,
+            fontSize = TextSizes.REVEAL_SUBTEXT,
+            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.primary,
         )
     }

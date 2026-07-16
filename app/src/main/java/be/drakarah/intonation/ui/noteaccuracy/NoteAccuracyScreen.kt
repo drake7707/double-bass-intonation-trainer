@@ -104,7 +104,7 @@ fun NoteAccuracyScreen(
                 Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 Text(
                     "${state.totalScore} / ${state.maxScore}",
-                    style = MaterialTheme.typography.headlineSmall, // Bigger for distance
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Bold
                 )
@@ -122,7 +122,7 @@ fun NoteAccuracyScreen(
                     ) {
                         Text(
                             if (drift > 0) "TRENDING SHARP\ncome down" else "TRENDING FLAT\ncome up",
-                            style = MaterialTheme.typography.headlineMedium, // Bigger for distance
+                            style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = ResultColors.close,
                             textAlign = TextAlign.Center,
@@ -237,18 +237,18 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
         when {
             result.timedOut -> Text(
                 "no note detected",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.displaySmall,
                 color = color,
             )
             result.wrongOctave -> Text(
                 "right note,\nwrong octave",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.displaySmall,
                 color = color,
                 textAlign = TextAlign.Center,
             )
             result.wrongNote -> Text(
                 "wrong note?",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.displaySmall,
                 color = color,
             )
             else -> Text(
@@ -266,7 +266,7 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
         )
         Text(
             "+${result.score}",
-            style = MaterialTheme.typography.headlineMedium,
+            fontSize = TextSizes.SCORE_DISPLAY,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
         )
@@ -301,7 +301,8 @@ private fun NoteAccuracySummary(
         if (scored.isNotEmpty()) {
             Text(
                 String.format(Locale.US, "average %.1f cents off", avgCents),
-                style = MaterialTheme.typography.bodyLarge,
+                fontSize = TextSizes.REVEAL_LABEL,
+                fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
             )
             ImprovementLine(
@@ -311,7 +312,7 @@ private fun NoteAccuracySummary(
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             Text(
                 "cents off per note",
-                style = MaterialTheme.typography.labelMedium,
+                fontSize = TextSizes.REVEAL_SUBTEXT,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(4.dp))
@@ -319,7 +320,7 @@ private fun NoteAccuracySummary(
         }
         Text(
             "${state.results.sumOf { it.starCount }} of ${state.roundLength * 3} stars",
-            style = MaterialTheme.typography.bodyLarge,
+            fontSize = TextSizes.REVEAL_LABEL,
         )
         state.outcome?.let { outcome ->
             Spacer(Modifier.height(Spacing.ITEM_SPACING))

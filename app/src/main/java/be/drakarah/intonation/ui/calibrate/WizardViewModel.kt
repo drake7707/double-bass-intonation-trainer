@@ -62,6 +62,8 @@ sealed interface WizardState {
         val prompt: PlayPrompt, val stage: String, val retry: Boolean, val secsLeft: Int,
     ) : WizardState
     data class Recording(val prompt: PlayPrompt, val progress: Float, val heardHz: Float?) : WizardState
+    /** 5-second countdown to switch from arco to pizz phase. */
+    data class PizzTransition(val secsLeft: Int) : WizardState
     data object Analyzing : WizardState
     data class Summary(val result: WizardResult, val saved: Boolean) : WizardState
     data class Failed(val reason: String) : WizardState
@@ -128,11 +130,13 @@ class WizardViewModel(
      * (her request). */
     private val pizzStoppedTakes = LinkedHashMap<Int, Take>()
     private var chosenSource: SourceCandidate = sources.first()
+    private var pizzTransitionShown = false
 
     // ---- stage flow ------------------------------------------------------------------
 
     fun begin() {
         if (_state.value !is WizardState.Intro) return
+        pizzTransitionShown = false
         viewModelScope.launch {
             val settings = settingsRepository.settings.first()
             a4 = settings.a4
@@ -189,6 +193,11 @@ class WizardViewModel(
         }
         val nextPizz = PIZZ_MIDIS.firstOrNull { it !in pizzTakes }
         if (nextPizz != null) {
+            // arco -> pizz transition (5 second warning)
+            if (!pizzTransitionShown && !retry) {
+                runPizzTransition()
+                return
+            }
             awaitPlay(
                 PlayPrompt(
                     midi = nextPizz,
@@ -210,7 +219,7 @@ class WizardViewModel(
                 PlayPrompt(
                     midi = nextStopped,
                     // A fingered pluck, held to ring, so the capture-timing profile sees a real
-                    // stopped-note attack (finger damping changes how it settles vs an open string).
+                    // stopped-note attack (finger damping changes how the pluck settles).
                     stringHint = "finger the note, pluck once and let it ring",
                     pizz = true,
                 ),
@@ -220,6 +229,18 @@ class WizardViewModel(
             return
         }
         analyze()
+    }
+
+    private fun runPizzTransition() {
+        pizzTransitionShown = true
+        _state.value = WizardState.PizzTransition(5)
+        job = viewModelScope.launch {
+            for (n in 5 downTo 1) {
+                _state.value = WizardState.PizzTransition(n)
+                delay(1000)
+            }
+            promptNextTake()
+        }
     }
 
     /** Show the play prompt and start the auto-start countdown so she never has to put the bass

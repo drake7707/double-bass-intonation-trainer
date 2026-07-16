@@ -1,6 +1,5 @@
 package be.drakarah.intonation.ui.calibrate
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,7 +20,6 @@ import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.calibration.CalibrationAnalysis
@@ -53,8 +52,9 @@ import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
 import be.drakarah.intonation.ui.theme.TextSizes
 
-/** Full calibration wizard: per-phone detection setup from prompted notes. All playing
- * prompts are sized to be readable from the bass (2 m), like the debug sweep view. */
+/** Full calibration wizard: per-phone detection setup from prompted notes.
+ * Active playing prompts are sized to be readable from the bass (2 m).
+ * The flow is centered and hands-free, auto-moving through stages and transitions. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WizardScreen(
@@ -90,92 +90,99 @@ fun WizardScreen(
                     .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
+                verticalArrangement = Arrangement.Center,
             ) {
-                Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
+                // Large spacing for 2m readability and to avoid bunching at top
+                val largeGap = Spacing.SECTION_BREAK * 1.5f
 
                 when (val s = state) {
                     is WizardState.Intro -> {
                         Text(
                             "Sets up pitch detection for this phone. First a quiet moment to measure " +
-                                    "the room, then two phases of prompted notes: a BOWED phase, then a " +
-                                    "PLUCKED (pizz) phase — open strings and a few fingered notes. Each " +
-                                    "phase is clearly marked. Takes about two to three minutes.",
+                                    "the room, then two phases: BOWED, then PIZZ (plucked). " +
+                                    "Takes about two minutes.",
                             style = MaterialTheme.typography.headlineSmall,
                             textAlign = TextAlign.Center
                         )
+                        Spacer(Modifier.height(largeGap))
                         Text(
-                            "Have your bass ready and tuned. Each note starts recording on its own " +
+                            "Have your bass ready and tuned. Each note starts recording automatically " +
                                     "after a short countdown, so you never have to put the bass down.",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
-                        Spacer(Modifier.height(Spacing.SECTION_BREAK))
+                        Spacer(Modifier.height(largeGap))
                         Button(onClick = viewModel::begin, modifier = Modifier.fillMaxWidth()) {
-                            Text("Start")
+                            Text("Start", fontSize = 24.sp, modifier = Modifier.padding(8.dp))
                         }
                     }
 
                     is WizardState.Quiet -> {
-                        Text("Keep quiet…", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+                        Text("Keep quiet…", style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(largeGap))
                         Text(
-                            "Measuring the room. Don't play, don't talk.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            textAlign = TextAlign.Center
+                            "Measuring the room background.",
+                            style = MaterialTheme.typography.headlineSmall,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                        Spacer(Modifier.height(largeGap))
                         LinearProgressIndicator(
                             progress = { s.progress },
-                            modifier = Modifier.fillMaxWidth().height(12.dp),
+                            modifier = Modifier.fillMaxWidth().height(20.dp),
                             color = MaterialTheme.colorScheme.primary,
                             trackColor = MaterialTheme.colorScheme.primaryContainer
                         )
                     }
 
                     is WizardState.AwaitPlay -> {
-                        PhaseBanner(pizz = s.prompt.pizz)
-                        Text(s.stage, style = MaterialTheme.typography.headlineSmall,
+                        Text(s.stage, style = MaterialTheme.typography.headlineMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        
                         if (s.retry) {
                             Text(
-                                "Didn't catch that clearly — let's do it again. Play the note shown, " +
-                                        (if (s.prompt.pizz) "plucking firmly, " else "with long steady bows, ") +
-                                        "a bit closer to the phone.",
-                                style = MaterialTheme.typography.titleMedium,
+                                "Didn't catch that — let's try again.",
+                                style = MaterialTheme.typography.headlineSmall,
                                 color = ResultColors.close,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Bold
                             )
                         }
+
+                        Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                        
                         Text(
                             NoteSpec(s.prompt.midi).displayName(noteStyle),
                             fontSize = TextSizes.PROMPT_NOTE,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
                         )
+                        
                         Text(
                             (if (s.prompt.pizz) "PLUCK — " else "BOW — ") + s.prompt.stringHint,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
                         )
-                        s.prompt.repeatHint?.let {
-                            Text(it, style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                        
+                        Spacer(Modifier.height(largeGap))
+                        
                         Text(
-                            "Get ready — recording starts in ${s.secsLeft}…",
-                            style = MaterialTheme.typography.displaySmall,
+                            "Get ready… ${s.secsLeft}",
+                            style = MaterialTheme.typography.displayLarge,
                             color = ResultColors.excellent,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
+                        
+                        Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                        
                         OutlinedButton(onClick = viewModel::startTake, modifier = Modifier.fillMaxWidth()) {
                             Text("Start now")
                         }
                     }
 
                     is WizardState.Recording -> {
-                        PhaseBanner(pizz = s.prompt.pizz)
                         Text(
                             NoteSpec(s.prompt.midi).displayName(noteStyle),
                             fontSize = TextSizes.PROMPT_NOTE,
@@ -184,139 +191,107 @@ fun WizardScreen(
                         )
                         Text(
                             if (s.prompt.pizz) "Pluck & let it ring…" else "Keep bowing…",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
                         )
-                        Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                        
+                        Spacer(Modifier.height(largeGap))
+                        
                         LinearProgressIndicator(
                             progress = { s.progress },
-                            modifier = Modifier.fillMaxWidth().height(12.dp),
+                            modifier = Modifier.fillMaxWidth().height(20.dp),
                             color = ResultColors.excellent,
                             trackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
+                        
+                        Spacer(Modifier.height(largeGap))
+                        
                         Text(
                             s.heardHz?.let { "hearing ${nearestNote(it.toDouble()).displayName(noteStyle)}" }
                                 ?: "listening…",
-                            style = MaterialTheme.typography.displaySmall,
+                            style = MaterialTheme.typography.displayMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Bold
                         )
                     }
 
+                    is WizardState.PizzTransition -> {
+                        Text(
+                            "Now it's time for pizz",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                        Text(
+                            "Put your bow away and get ready",
+                            style = MaterialTheme.typography.headlineLarge,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(largeGap))
+                        Text(
+                            s.secsLeft.toString(),
+                            fontSize = TextSizes.COUNTDOWN_NUMBER,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
                     is WizardState.Analyzing -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
-                                    MaterialTheme.shapes.medium
-                                )
-                                .padding(Spacing.CARD_PADDING),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING)
-                        ) {
-                            Icon(
-                                Icons.Default.HourglassEmpty,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(64.dp)
-                            )
-                            Text("Turning the knobs…", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-                            Text(
-                                "Replaying your notes through candidate settings and picking " +
-                                        "the ones that detect every note correctly.",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                            LinearProgressIndicator(
-                                modifier = Modifier.fillMaxWidth().height(12.dp),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                        Icon(
+                            Icons.Default.HourglassEmpty,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(100.dp)
+                        )
+                        Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                        Text("Analyzing…", style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(largeGap))
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth().height(20.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
 
                     is WizardState.Summary -> SummaryContent(s, noteStyle, viewModel, onBack)
 
                     is WizardState.Failed -> {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = ResultColors.off.copy(alpha = 0.1f)
-                            )
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(Spacing.CARD_PADDING),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING)
-                            ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = null,
-                                    tint = ResultColors.off,
-                                    modifier = Modifier.size(64.dp)
-                                )
-                                Text(
-                                    "Couldn't calibrate",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    color = ResultColors.off,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    s.reason,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    textAlign = TextAlign.Center
-                                )
-                                Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                                    Text("Close")
-                                }
-                            }
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = null,
+                            tint = ResultColors.off,
+                            modifier = Modifier.size(100.dp)
+                        )
+                        Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                        Text(
+                            "Calibration failed",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = ResultColors.off,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                        Text(
+                            s.reason,
+                            style = MaterialTheme.typography.titleLarge,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(largeGap))
+                        Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+                            Text("Close", fontSize = 24.sp, modifier = Modifier.padding(8.dp))
                         }
                     }
                 }
 
-                if (state !is WizardState.Summary && state !is WizardState.Failed) {
-                    Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                if (state !is WizardState.Summary && state !is WizardState.Failed && state !is WizardState.PizzTransition) {
+                    Spacer(Modifier.height(largeGap))
                     OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                         Text("Cancel")
                     }
                 }
-                Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
             }
         }
-    }
-}
-
-/** Full-width, colour-coded phase banner so the switch from the bowed phase to the plucked (pizz)
- * phase is impossible to miss (her feedback: users kept missing that it had switched to pizz).
- * Distinct colour AND wording per phase; the pizz banner spells out "put the bow down". */
-@Composable
-private fun PhaseBanner(pizz: Boolean) {
-    val container = if (pizz) MaterialTheme.colorScheme.tertiaryContainer
-        else MaterialTheme.colorScheme.primaryContainer
-    val onContainer = if (pizz) MaterialTheme.colorScheme.onTertiaryContainer
-        else MaterialTheme.colorScheme.onPrimaryContainer
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(container, MaterialTheme.shapes.medium)
-            .padding(vertical = Spacing.ITEM_SPACING, horizontal = Spacing.CARD_PADDING),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING),
-    ) {
-        Text(
-            if (pizz) "PIZZICATO — PLUCKED" else "ARCO — BOWED",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = onContainer,
-        )
-        Text(
-            if (pizz) "Put the bow down — the next notes are plucked."
-            else "Play the note shown with the bow.",
-            style = MaterialTheme.typography.titleMedium,
-            color = onContainer,
-            textAlign = TextAlign.Center,
-        )
     }
 }
 
@@ -343,11 +318,7 @@ private fun SummaryContent(
                             SeparationVerdict.TIGHT -> Icons.Default.Warning
                             SeparationVerdict.OVERLAP -> Icons.Default.Close
                         },
-                        contentDescription = when (r.verdict) {
-                            SeparationVerdict.GOOD -> "clear of noise"
-                            SeparationVerdict.TIGHT -> "tight — soft notes may drop"
-                            SeparationVerdict.OVERLAP -> "too noisy to set a gate"
-                        },
+                        contentDescription = null,
                         tint = when (r.verdict) {
                             SeparationVerdict.GOOD -> ResultColors.excellent
                             SeparationVerdict.TIGHT -> ResultColors.close
@@ -378,7 +349,7 @@ private fun SummaryContent(
                     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING), verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             if (ok) Icons.Default.CheckCircle else Icons.Default.Warning,
-                            contentDescription = if (ok) "detected" else "unreliable",
+                            contentDescription = null,
                             tint = if (ok) ResultColors.excellent else ResultColors.close,
                             modifier = Modifier.size(24.dp),
                         )
@@ -417,7 +388,7 @@ private fun SummaryContent(
                         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING), verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 icon,
-                                contentDescription = label,
+                                contentDescription = null,
                                 tint = tint,
                                 modifier = Modifier.size(24.dp),
                             )
@@ -494,12 +465,12 @@ private fun SummaryContent(
                 Spacer(Modifier.width(Spacing.FINE_SPACING))
                 Text("Saved — all games now use these settings.", color = ResultColors.excellent, style = MaterialTheme.typography.titleLarge)
             }
-            Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Done") }
+            Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Done", fontSize = 24.sp, modifier = Modifier.padding(8.dp)) }
         }
     } else {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
             Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) {
-                Text("Save calibration")
+                Text("Save calibration", fontSize = 24.sp, modifier = Modifier.padding(8.dp))
             }
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text("Discard")

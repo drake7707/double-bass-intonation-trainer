@@ -260,7 +260,7 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             result.prompt.target.displayName(state.noteStyle, result.prompt.spelling),
-            style = MaterialTheme.typography.displaySmall,
+            fontSize = TextSizes.PROMPT_NOTE,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Bold
         )
@@ -281,7 +281,7 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
         )
         Text(
             "+${result.score}",
-            style = MaterialTheme.typography.headlineLarge,
+            fontSize = TextSizes.SCORE_DISPLAY,
             fontWeight = FontWeight.Bold
         )
         // The two metrics, broken apart so the number means something, then one coaching line.
@@ -296,7 +296,7 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
         Spacer(Modifier.height(Spacing.FINE_SPACING))
         Text(
             coachingText(result),
-            style = MaterialTheme.typography.titleMedium,
+            fontSize = TextSizes.REVEAL_SUBTEXT,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
@@ -309,12 +309,12 @@ private fun SustainMetric(label: String, value: String, good: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             label,
-            style = MaterialTheme.typography.labelLarge,
+            fontSize = TextSizes.REVEAL_LABEL,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             value,
-            style = MaterialTheme.typography.titleLarge,
+            fontSize = TextSizes.REVEAL_LABEL,
             fontWeight = FontWeight.Bold,
             color = if (good) ResultColors.excellent else ResultColors.close,
         )

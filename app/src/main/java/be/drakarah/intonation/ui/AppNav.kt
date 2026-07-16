@@ -23,10 +23,15 @@ import be.drakarah.intonation.ui.sustain.SustainScreen
 import be.drakarah.intonation.ui.tune.TuneUpScreen
 import androidx.compose.ui.platform.LocalContext
 import be.drakarah.intonation.IntonationApplication
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import be.drakarah.intonation.settings.AppSettings
+import be.drakarah.intonation.ui.common.LocalTechnicalDetails
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 object Routes {
@@ -68,6 +73,18 @@ fun AppNav() {
     val currentSettings = settings!!
     val scope = rememberCoroutineScope()
 
+    CompositionLocalProvider(LocalTechnicalDetails provides currentSettings.expertMode) {
+        AppNavGraph(navController, currentSettings, app, scope)
+    }
+}
+
+@Composable
+private fun AppNavGraph(
+    navController: NavHostController,
+    currentSettings: AppSettings,
+    app: IntonationApplication,
+    scope: CoroutineScope,
+) {
     NavHost(
         navController = navController,
         startDestination = if (currentSettings.onboardingCompleted) Routes.HOME else Routes.ONBOARDING

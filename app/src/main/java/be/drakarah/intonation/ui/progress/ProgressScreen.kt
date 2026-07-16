@@ -64,6 +64,7 @@ import be.drakarah.intonation.metrics.SustainSummary
 import be.drakarah.intonation.metrics.TrendDirection
 import be.drakarah.intonation.metrics.WeekTrend
 import be.drakarah.intonation.ui.chords.EXERCISE_CHORDS
+import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.noteaccuracy.EXERCISE_NOTE_ACCURACY
 import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
@@ -98,7 +99,7 @@ fun ProgressScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val unlocked by viewModel.unlockedAchievements.collectAsStateWithLifecycle()
-    val expert by viewModel.expertMode.collectAsStateWithLifecycle()
+    val expert = LocalTechnicalDetails.current
 
     Scaffold(
         topBar = {

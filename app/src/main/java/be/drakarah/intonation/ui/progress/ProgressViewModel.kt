@@ -8,7 +8,6 @@ import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.data.SessionEntity
 import be.drakarah.intonation.data.SessionRepository
 import be.drakarah.intonation.data.WindowAgg
-import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.game.SELECTABLE_POSITIONS
 import be.drakarah.intonation.game.positionById
 import be.drakarah.intonation.metrics.CoachingSummary
@@ -54,17 +53,10 @@ data class ProgressUiState(
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProgressViewModel(
     private val sessionRepository: SessionRepository,
-    settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val _exerciseType = MutableStateFlow(EXERCISE_NOTE_ACCURACY)
     val exerciseType: StateFlow<String> = _exerciseType.asStateFlow()
-
-    /** Expert mode shows raw cents/percentages; off shows plain language for beginners. */
-    val expertMode: StateFlow<Boolean> =
-        settingsRepository.settings
-            .map { it.expertMode }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     val uiState: StateFlow<ProgressUiState> =
         _exerciseType.flatMapLatest { type ->
@@ -168,7 +160,6 @@ class ProgressViewModel(
                         as IntonationApplication
                 return ProgressViewModel(
                     app.container.sessionRepository,
-                    app.container.settingsRepository,
                 ) as T
             }
         }

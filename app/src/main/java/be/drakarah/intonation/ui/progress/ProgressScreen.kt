@@ -65,6 +65,9 @@ import be.drakarah.intonation.metrics.TrendDirection
 import be.drakarah.intonation.metrics.WeekTrend
 import be.drakarah.intonation.ui.chords.EXERCISE_CHORDS
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
+import be.drakarah.intonation.ui.common.detailedLabel
+import be.drakarah.intonation.ui.common.label
+import be.drakarah.intonation.ui.common.sentence
 import be.drakarah.intonation.ui.noteaccuracy.EXERCISE_NOTE_ACCURACY
 import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
@@ -312,7 +315,7 @@ private fun CoachingSummaryCard(summary: CoachingSummary, isSustain: Boolean, ex
 
             if (expert) ExpertSummary(summary, isSustain) else PlainSummary(summary, isSustain)
 
-            summary.insight?.let { InsightLine(it) }
+            summary.insight?.let { InsightLine(it.sentence()) }
         }
     }
 }

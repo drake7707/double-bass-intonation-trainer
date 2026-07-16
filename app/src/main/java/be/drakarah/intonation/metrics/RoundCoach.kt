@@ -3,7 +3,9 @@ package be.drakarah.intonation.metrics
 import kotlin.math.abs
 
 /**
- * The one coach line on a round summary — the seed of the "teacher's notebook" (TESTING.md).
+ * The one coach observation on a round summary — the seed of the "teacher's notebook"
+ * (TESTING.md). This file picks WHAT to say as data; the UI layer words it (and localizes it,
+ * see `ui/common/CoachingLabels.kt`).
  *
  * Voice rules (Sarah, 2026-07-16, plan §10.5): always pair acknowledgment with at most ONE
  * actionable point; praise names *what* was good, never generic cheerleading; detection artifacts
@@ -23,20 +25,43 @@ data class RoundCoachInput(
     val lastWeekAvgCents: Float? = null,
 )
 
+enum class RoundCoachVerdict {
+    /** Nothing scored: steady the player, don't grade. */
+    NOTHING_SCORED,
+
+    /** Most notes leaned sharp — one aim adjustment. */
+    LEAN_SHARP,
+
+    /** Most notes leaned flat — one aim adjustment. */
+    LEAN_FLAT,
+
+    /** Intonation was fine; the timer beat the player. */
+    TIME_PRESSURE,
+
+    /** Locked-in round — celebrate by name. */
+    LOCKED,
+
+    /** Measurably more in tune than last week. */
+    IMPROVED,
+
+    /** Solid round, close to center. */
+    SOLID,
+
+    /** Developing — encourage without fake praise. */
+    DEVELOPING,
+}
+
 /** A round must land at least this many scored notes before the line states a verdict. */
 const val COACH_MIN_SCORED = 3
 
 /** |median signed cents| at or above this reads as a real lean worth one tip. */
 const val COACH_BIAS_MIN = 12f
 
-fun roundCoachLine(input: RoundCoachInput): String? {
+fun roundCoachVerdict(input: RoundCoachInput): RoundCoachVerdict? {
     val scored = input.scoredCents
     if (input.attemptCount == 0) return null
 
-    // Nothing scored: steady the player, don't grade.
-    if (scored.isEmpty()) {
-        return "Tough round — no clean notes this time. Slow down and land them one at a time."
-    }
+    if (scored.isEmpty()) return RoundCoachVerdict.NOTHING_SCORED
     if (scored.size < COACH_MIN_SCORED) return null
 
     val avgAbs = scored.map { abs(it) }.average().toFloat()
@@ -47,39 +72,35 @@ fun roundCoachLine(input: RoundCoachInput): String? {
 
     // One systematic lean is the most actionable thing a coach can name.
     if (abs(median) >= COACH_BIAS_MIN) {
-        return if (median > 0f)
-            "Good round — most notes leaned sharp. Try aiming a touch lower next time."
-        else
-            "Good round — most notes leaned flat. Try aiming a touch higher next time."
+        return if (median > 0f) RoundCoachVerdict.LEAN_SHARP else RoundCoachVerdict.LEAN_FLAT
     }
 
     // Time pressure beat the player more than intonation did.
     if (input.timeoutCount >= 2 && input.timeoutCount * 4 >= input.attemptCount) {
-        return "The notes you played were in tune — some just ran out of time. Take a breath before each one."
+        return RoundCoachVerdict.TIME_PRESSURE
     }
 
     val improved = input.lastWeekAvgCents?.let { it - avgAbs > 2f } == true
     return when {
-        band == MasteryBand.LOCKED ->
-            "Locked in — your notes landed right in the center today."
-        improved ->
-            "More in tune than last week — your practice is paying off."
-        band == MasteryBand.SOLID ->
-            "Solid round — your notes are sitting close to center."
-        else ->
-            "Every round trains your ear a little — keep landing them."
+        band == MasteryBand.LOCKED -> RoundCoachVerdict.LOCKED
+        improved -> RoundCoachVerdict.IMPROVED
+        band == MasteryBand.SOLID -> RoundCoachVerdict.SOLID
+        else -> RoundCoachVerdict.DEVELOPING
     }
 }
 
 /** Long Notes rounds have no scored cents; the coach speaks to the holds instead. */
-fun sustainRoundCoachLine(successfulHolds: Int, attemptCount: Int): String? {
+enum class SustainCoachVerdict {
+    ALL_HELD,
+    MOST_HELD,
+    FEW_HELD,
+}
+
+fun sustainRoundCoachVerdict(successfulHolds: Int, attemptCount: Int): SustainCoachVerdict? {
     if (attemptCount == 0) return null
     return when {
-        successfulHolds == attemptCount ->
-            "Every hold made it — lovely steady bowing."
-        successfulHolds * 2 >= attemptCount ->
-            "Good holding — a few notes slipped away early. Keep the bow moving evenly."
-        else ->
-            "Long notes are hard — slower, lighter bows help the note settle."
+        successfulHolds == attemptCount -> SustainCoachVerdict.ALL_HELD
+        successfulHolds * 2 >= attemptCount -> SustainCoachVerdict.MOST_HELD
+        else -> SustainCoachVerdict.FEW_HELD
     }
 }

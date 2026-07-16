@@ -69,14 +69,11 @@ class CoachingTest {
     }
 
     @Test fun biasSignConvention() {
-        // + sharp, − flat.
+        // + sharp, − flat. (Wording lives in ui/common/CoachingLabels.kt, not the domain.)
         assertEquals(BiasDirection.FLAT, biasOf(-22f).direction)
         assertEquals(BiasDirection.SHARP, biasOf(22f).direction)
-        assertEquals("a bit flat", biasOf(-22f).label)
-        assertEquals("a bit sharp", biasOf(22f).label)
-        assertEquals("runs 22¢ flat", biasOf(-22f).detailedLabel)
-        assertEquals("runs 22¢ sharp", biasOf(22f).detailedLabel)
-        assertEquals("centered", biasOf(1f).label)
+        assertEquals(22f, biasOf(-22f).cents, 1e-4f)
+        assertEquals(BiasDirection.CENTERED, biasOf(1f).direction)
     }
 
     // --- Week trend ------------------------------------------------------------------------
@@ -109,24 +106,22 @@ class CoachingTest {
             pos("1st", 24f, -22f),   // strong flat bias — the flagship case
             pos("2nd", 18f, -8f),
         )
-        val insight = selectInsight(positions, weekTrend(20f, 21f))!!
-        assertTrue(insight.contains("1st"))
-        assertTrue(insight.contains("flat"))
-        assertTrue("flat → aim higher (pitch terms, not hand geometry)", insight.contains("higher"))
-        assertTrue("insight names the mode", insight.contains("arco"))
+        val insight = selectInsight(positions, weekTrend(20f, 21f)) as Insight.PositionBias
+        assertEquals("1st", insight.positionShortLabel)
+        assertEquals(BiasDirection.FLAT, insight.direction)
+        assertEquals("insight names the mode", "arco", insight.mode)
     }
 
     @Test fun insightCelebratesImprovementWhenNoBias() {
         val positions = listOf(pos("1st", 18f, -2f))
-        val insight = selectInsight(positions, weekTrend(18f, 25f))!! // 7¢ tighter
-        assertTrue(insight.contains("more in tune"))
+        val insight = selectInsight(positions, weekTrend(18f, 25f)) // 7¢ tighter
+        assertEquals(Insight.Tightening, insight)
     }
 
     @Test fun insightNamesAnchorWhenSteadyAndCentered() {
         val positions = listOf(pos("1st", 8f, -1f), pos("2nd", 20f, 2f))
-        val insight = selectInsight(positions, weekTrend(15f, 15f))!!
-        assertTrue(insight.contains("anchor"))
-        assertTrue(insight.contains("1st")) // the most secure (lowest cents) position
+        val insight = selectInsight(positions, weekTrend(15f, 15f)) as Insight.Anchor
+        assertEquals("1st", insight.positionShortLabel) // the most secure (lowest cents) position
     }
 
     @Test fun insightNullWhenNothingConfident() {
@@ -141,9 +136,8 @@ class CoachingTest {
 
     @Test fun sharpBiasSuggestsAimingLower() {
         val positions = listOf(pos("2nd", 22f, 20f))
-        val insight = selectInsight(positions, null)!!
-        assertTrue(insight.contains("sharp"))
-        assertTrue("sharp → aim lower", insight.contains("lower"))
+        val insight = selectInsight(positions, null) as Insight.PositionBias
+        assertEquals(BiasDirection.SHARP, insight.direction)
     }
 
     @Test fun positionMasteryDerivations() {

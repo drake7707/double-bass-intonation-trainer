@@ -26,11 +26,12 @@ data class MasteryThresholds(val lockedMax: Float, val solidMax: Float) {
     }
 }
 
-/** How secure something is, by average absolute cents. Words, not a percentage grade. */
-enum class MasteryBand(val label: String) {
-    LOCKED("Locked in"),
-    SOLID("Solid"),
-    DEVELOPING("Developing");
+/** How secure something is, by average absolute cents. Words, not a percentage grade — the
+ * display words live in the UI layer (`ui/common/CoachingLabels.kt`) so they can be localized. */
+enum class MasteryBand {
+    LOCKED,
+    SOLID,
+    DEVELOPING;
 
     companion object {
         fun of(avgAbsCents: Float, thresholds: MasteryThresholds): MasteryBand = when {
@@ -63,23 +64,8 @@ private fun lerp(a: Float, b: Float, t: Float): Float = a + (b - a) * t.coerceIn
 /** Systematic sharp/flat tendency in a position. Cents convention: + sharp, − flat. */
 enum class BiasDirection { CENTERED, FLAT, SHARP }
 
-data class Bias(val direction: BiasDirection, val cents: Float) {
-    /** Plain-language label (beginner). The UI supplies the arrow icon. */
-    val label: String
-        get() = when (direction) {
-            BiasDirection.CENTERED -> "centered"
-            BiasDirection.FLAT -> "a bit flat"
-            BiasDirection.SHARP -> "a bit sharp"
-        }
-
-    /** Expert label with the exact cents. */
-    val detailedLabel: String
-        get() = when (direction) {
-            BiasDirection.CENTERED -> "centered"
-            BiasDirection.FLAT -> "runs ${cents.roundToInt()}¢ flat"
-            BiasDirection.SHARP -> "runs ${cents.roundToInt()}¢ sharp"
-        }
-}
+/** Direction + magnitude only; wording ("a bit flat" / "runs 22¢ flat") is the UI layer's job. */
+data class Bias(val direction: BiasDirection, val cents: Float)
 
 /** Below this |signed cents| there's no meaningful bias to report. */
 const val BIAS_CENTERED_MAX = 6f
@@ -105,15 +91,6 @@ data class WeekTrend(
     val deltaCents: Float,
 ) {
     val hasComparison: Boolean get() = lastWeekCents != null
-
-    /** Plain-language phrase for a beginner — no "cents". */
-    val phrase: String
-        get() = when {
-            !hasComparison -> "keep playing to compare with next week"
-            direction == TrendDirection.TIGHTER -> "more in tune than last week"
-            direction == TrendDirection.LOOSER -> "a little off from last week"
-            else -> "about the same as last week"
-        }
 }
 
 /** Deltas within this band read as "steady" rather than better/worse. */
@@ -178,7 +155,7 @@ data class CoachingSummary(
     val rightNotePct: Int?,
     /** Share of attempts detected as a steady/clean note (0..100). */
     val steadyPct: Int?,
-    val insight: String?,
+    val insight: Insight?,
     /** Present only for the Sustain exercise; null for cents-based exercises. */
     val sustain: SustainSummary? = null,
 )
@@ -186,35 +163,45 @@ data class CoachingSummary(
 /** A position must be at least this far off-center before its bias is the headline. */
 const val INSIGHT_BIAS_MIN = 15f
 
+/** The single "watch this" observation, as data — the UI layer words it (and localizes it). */
+sealed interface Insight {
+    /** A position leans flat/sharp — coach one aim adjustment, in pitch terms. */
+    data class PositionBias(
+        val mode: String,
+        val positionShortLabel: String,
+        val direction: BiasDirection,
+    ) : Insight
+
+    /** Week-over-week tightening worth celebrating. */
+    data object Tightening : Insight
+
+    /** The most secure position, named as an anchor. */
+    data class Anchor(val mode: String, val positionShortLabel: String) : Insight
+}
+
 /**
- * The single "watch this" coaching line, in plain language. Ordered so the most actionable thing
- * wins: 1) the biggest systematic bias (a concrete fix — reach back / ease forward), 2) otherwise
- * celebrate a tightening trend, 3) otherwise name the most secure spot as an anchor. Mode is named
- * because arco and pizz genuinely differ (arco 1st can run flat while pizz 1st is centered).
- * Returns null when there's nothing confident to say yet.
+ * Picks the single coaching insight. Ordered so the most actionable thing wins: 1) the biggest
+ * systematic bias (a concrete fix), 2) otherwise celebrate a tightening trend, 3) otherwise name
+ * the most secure spot as an anchor. Mode is named because arco and pizz genuinely differ (arco
+ * 1st can run flat while pizz 1st is centered). Returns null when there's nothing confident yet.
  */
-fun selectInsight(positions: List<PositionMastery>, trend: WeekTrend?): String? {
+fun selectInsight(positions: List<PositionMastery>, trend: WeekTrend?): Insight? {
     val biased = positions
         .filter { abs(it.signedCents) >= INSIGHT_BIAS_MIN && it.scoredCount >= MIN_SCORED_FOR_VERDICT }
         .maxByOrNull { abs(it.signedCents) }
     if (biased != null) {
-        val where = "${biased.mode} ${biased.shortLabel}"
-        // Coach in pitch terms (higher/lower), not hand geometry — unambiguous for any student.
-        return if (biased.bias.direction == BiasDirection.FLAT)
-            "Your $where position lands a little flat — try aiming a touch higher."
-        else
-            "Your $where position lands a little sharp — try aiming a touch lower."
+        return Insight.PositionBias(biased.mode, biased.shortLabel, biased.bias.direction)
     }
 
     if (trend != null && trend.direction == TrendDirection.TIGHTER) {
-        return "You're getting more in tune than last week — keep it going!"
+        return Insight.Tightening
     }
 
     val anchor = positions
         .filter { it.scoredCount >= MIN_SCORED_FOR_VERDICT }
         .minByOrNull { it.avgAbsCents }
     if (anchor != null && anchor.band != MasteryBand.DEVELOPING) {
-        return "Your ${anchor.mode} ${anchor.shortLabel} position is your anchor — nicely in tune."
+        return Insight.Anchor(anchor.mode, anchor.shortLabel)
     }
     return null
 }

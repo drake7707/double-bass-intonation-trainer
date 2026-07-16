@@ -36,7 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.game.PromptSpec
 import be.drakarah.intonation.metrics.MasteryThresholds
 import be.drakarah.intonation.metrics.RoundCoachInput
-import be.drakarah.intonation.metrics.roundCoachLine
+import be.drakarah.intonation.metrics.roundCoachVerdict
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.ui.common.CentsRevealHeadline
 import be.drakarah.intonation.ui.common.DotInfo
@@ -44,6 +44,7 @@ import be.drakarah.intonation.ui.common.DriftBanner
 import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
+import be.drakarah.intonation.ui.common.sentence
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.common.RoundSummaryScaffold
@@ -326,7 +327,7 @@ private fun DoneContent(
         totalScore = state.totalScore,
         maxScore = state.maxScore,
         outcome = state.outcome,
-        coachLine = roundCoachLine(
+        coachLine = roundCoachVerdict(
             RoundCoachInput(
                 scoredCents = state.results.mapNotNull { it.shiftCents },
                 attemptCount = state.results.size,
@@ -335,7 +336,7 @@ private fun DoneContent(
                 thresholds = MasteryThresholds.SHIFT,
                 lastWeekAvgCents = state.outcome?.lastWeekAvgCents,
             )
-        ),
+        )?.sentence(),
         showTraceFeedback = state.traceActive && !state.traceFeedbackGiven,
         onTraceFeedback = onTraceFeedback,
         onPlayAgain = onPlayAgain,

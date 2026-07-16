@@ -34,10 +34,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.game.SustainFocus
-import be.drakarah.intonation.metrics.sustainRoundCoachLine
+import be.drakarah.intonation.metrics.sustainRoundCoachVerdict
 import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
+import be.drakarah.intonation.ui.common.sentence
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.common.RoundSummaryScaffold
@@ -343,10 +344,10 @@ private fun DoneContent(
         totalScore = state.totalScore,
         maxScore = state.maxScore,
         outcome = state.outcome,
-        coachLine = sustainRoundCoachLine(
+        coachLine = sustainRoundCoachVerdict(
             successfulHolds = state.results.count { it.result.success },
             attemptCount = state.results.size,
-        ),
+        )?.sentence(),
         showTraceFeedback = state.traceActive && !state.traceFeedbackGiven,
         onTraceFeedback = onTraceFeedback,
         onPlayAgain = onPlayAgain,

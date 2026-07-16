@@ -53,6 +53,7 @@ import be.drakarah.intonation.BuildConfig
 import be.drakarah.intonation.data.ImportMode
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.settings.AppSettings
+import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -186,11 +187,11 @@ fun SettingsScreen(
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
             Text("Settings", style = MaterialTheme.typography.headlineMedium)
 
-            SectionHeader("Display")
+            SectionHeader("Coaching")
             SettingBlock(
                 "Show technical details",
-                "Show the technical detail — exact cents, percentages and deviations — across the " +
-                    "app. Off keeps things in plain language for younger or newer players.",
+                "Show exact cents, percentages and measurements everywhere. Off keeps the app " +
+                    "in plain language.",
             ) {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -205,59 +206,10 @@ fun SettingsScreen(
                 }
             }
 
-            SectionHeader("Notation & tuning")
-            SettingBlock("Note names", "How notes are written throughout the app.") {
-                TwoChoice(
-                    left = "Do Ré Mi", leftSelected = settings.noteNameStyle == NoteNameStyle.SOLFEGE,
-                    right = "C D E",
-                    onLeft = { scope.launch { repo.setNoteNameStyle(NoteNameStyle.SOLFEGE) } },
-                    onRight = { scope.launch { repo.setNoteNameStyle(NoteNameStyle.LETTERS) } },
-                )
-            }
-
             SettingBlock(
-                "Mix sharps & flats",
-                "Show a black-key note sometimes as a sharp (La♯) and sometimes as the same " +
-                    "note spelled flat (Si♭), so you get familiar with both names of a position's " +
-                    "notes. Naturals never change. It's a note-naming aid, not an intonation one — " +
-                    "off keeps everything in sharps.",
-            ) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(if (settings.mixEnharmonics) "On" else "Off")
-                    Switch(
-                        checked = settings.mixEnharmonics,
-                        onCheckedChange = { scope.launch { repo.setMixEnharmonics(it) } },
-                    )
-                }
-            }
-
-            SettingBlock(
-                "Concert pitch (A4)",
-                "The reference your ensemble tunes to. 440 Hz is standard; some orchestras use 442.",
-            ) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconButton(onClick = { scope.launch { repo.setA4(settings.a4 - 1) } }) { Text("−") }
-                    Text(
-                        "${settings.a4.toInt()} Hz",
-                        style = MaterialTheme.typography.headlineSmall,
-                    )
-                    IconButton(onClick = { scope.launch { repo.setA4(settings.a4 + 1) } }) { Text("+") }
-                }
-            }
-
-            SectionHeader("Gameplay")
-            SettingBlock(
-                "Player level",
+                "Pace",
                 "How much time you get to read the prompt and find the note. Scoring is " +
-                    "equally strict at every level, and your bests carry over when you move up.",
+                    "equally fair at every pace, and your bests carry over when you move up.",
             ) {
                 Row(
                     Modifier
@@ -280,7 +232,7 @@ fun SettingsScreen(
                 )
             }
 
-            SettingBlock("Difficulty", "How forgiving the scoring is about cents off target.") {
+            SettingBlock("Difficulty", "How forgiving the scoring is when a note isn't perfectly in tune.") {
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     Difficulty.entries.forEachIndexed { i, d ->
                         SegmentedButton(
@@ -292,14 +244,16 @@ fun SettingsScreen(
                         }
                     }
                 }
-                Text(
-                    "Points reach zero at ±${settings.difficulty.zeroAtCents.toInt()} cents.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (LocalTechnicalDetails.current) {
+                    Text(
+                        "Points reach zero at ±${settings.difficulty.zeroAtCents.toInt()} cents.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
 
-            SettingBlock("Round length", "Notes per round. Scores only compare within the same length.") {
+            SettingBlock("Round length", "How many notes in one round. Scores only compare within the same length.") {
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     listOf(5, 10, 20).forEachIndexed { i, n ->
                         SegmentedButton(
@@ -308,6 +262,52 @@ fun SettingsScreen(
                             shape = SegmentedButtonDefaults.itemShape(i, 3),
                         ) { Text("$n") }
                     }
+                }
+            }
+
+            SectionHeader("Notes & tuning")
+            SettingBlock("Note names", "Whatever your teacher uses — notes are written this way everywhere.") {
+                TwoChoice(
+                    left = "Do Ré Mi", leftSelected = settings.noteNameStyle == NoteNameStyle.SOLFEGE,
+                    right = "C D E",
+                    onLeft = { scope.launch { repo.setNoteNameStyle(NoteNameStyle.SOLFEGE) } },
+                    onRight = { scope.launch { repo.setNoteNameStyle(NoteNameStyle.LETTERS) } },
+                )
+            }
+
+            SettingBlock(
+                "Mix sharps & flats",
+                "Sometimes show La♯ as Si♭ — the same note has two names, and this way you " +
+                    "learn both. Off keeps everything written as sharps.",
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(if (settings.mixEnharmonics) "On" else "Off")
+                    Switch(
+                        checked = settings.mixEnharmonics,
+                        onCheckedChange = { scope.launch { repo.setMixEnharmonics(it) } },
+                    )
+                }
+            }
+
+            SettingBlock(
+                "Concert pitch (A4)",
+                "The A your orchestra tunes to. Leave at 440 unless your teacher says otherwise.",
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = { scope.launch { repo.setA4(settings.a4 - 1) } }) { Text("−") }
+                    Text(
+                        "${settings.a4.toInt()} Hz",
+                        style = MaterialTheme.typography.headlineSmall,
+                    )
+                    IconButton(onClick = { scope.launch { repo.setA4(settings.a4 + 1) } }) { Text("+") }
                 }
             }
 
@@ -337,7 +337,7 @@ fun SettingsScreen(
                 )
             }
 
-            SectionHeader("Feedback")
+            SectionHeader("Sounds & warnings")
             SettingBlock("Sound feedback", "Chime when you land a note, buzz when you miss — so you can keep your eyes on the fingerboard.") {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -393,7 +393,7 @@ fun SettingsScreen(
                 }
             }
 
-            SettingBlock("Pitch drift warning", "Warns when everything you land is consistently sharp or flat — a sign to reset your inner reference instead of learning wrong pitches.") {
+            SettingBlock("Drift warning", "Warns when everything you play starts leaning sharp or flat, so you can reset your ear instead of practicing wrong notes.") {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -407,13 +407,40 @@ fun SettingsScreen(
                 }
             }
 
-            SectionHeader("Detection & calibration")
+            SectionHeader("Set-up")
             SettingBlock(
-                "Count right note, wrong octave as correct",
-                "If a note is detected the right pitch but a whole octave off, score your " +
-                    "intonation instead of a miss. Plucked low notes sometimes read an octave " +
-                    "high (a weak string fundamental the mic loses while its overtone rings on); " +
-                    "this keeps that detector quirk from counting against you.",
+                "Listening set-up",
+                "Room check measures your room's background noise (quick — run it when you " +
+                    "practice somewhere new). Full setup teaches the app how your bass sounds " +
+                    "on this phone (run it once, or with a new phone or a new bass).",
+            ) {
+                OutlinedButton(onClick = onOpenCalibrate, modifier = Modifier.fillMaxWidth()) {
+                    Text("Room check")
+                }
+                Spacer(Modifier.height(Spacing.FINE_SPACING))
+                OutlinedButton(onClick = onOpenWizard, modifier = Modifier.fillMaxWidth()) {
+                    Text("Full setup (new phone or new bass)")
+                }
+                if (LocalTechnicalDetails.current) {
+                    val gate = 100f - settings.micSensitivity
+                    Spacer(Modifier.height(Spacing.FINE_SPACING))
+                    Text(
+                        "Noise gate: sound below this level is ignored as room noise " +
+                            "(gate at level ${gate.toInt()} / 100 — Room check sets it automatically).",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Slider(
+                        value = gate,
+                        onValueChange = { scope.launch { repo.setMicSensitivity(100f - it) } },
+                        valueRange = 5f..80f,
+                    )
+                }
+            }
+            SettingBlock(
+                "Right note, wrong octave still counts",
+                "Low notes can fool the microphone by a whole octave. Keep this on so that " +
+                    "never costs you points — the app scores how in tune you were instead.",
             ) {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -425,29 +452,6 @@ fun SettingsScreen(
                         checked = settings.ignoreWrongOctave,
                         onCheckedChange = { scope.launch { repo.setIgnoreWrongOctave(it) } },
                     )
-                }
-            }
-            SettingBlock(
-                "Noise gate",
-                "Sound below this level is ignored as room noise. Calibrate measures your " +
-                    "room and your soft playing, and sets it automatically.",
-            ) {
-                val gate = 100f - settings.micSensitivity
-                Text(
-                    "gate at level ${gate.toInt()} / 100",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Slider(
-                    value = gate,
-                    onValueChange = { scope.launch { repo.setMicSensitivity(100f - it) } },
-                    valueRange = 5f..80f,
-                )
-                OutlinedButton(onClick = onOpenCalibrate, modifier = Modifier.fillMaxWidth()) {
-                    Text("Calibrate surroundings")
-                }
-                Spacer(Modifier.height(Spacing.FINE_SPACING))
-                OutlinedButton(onClick = onOpenWizard, modifier = Modifier.fillMaxWidth()) {
-                    Text("Full calibration (new phone or double bass)")
                 }
             }
 
@@ -473,12 +477,12 @@ fun SettingsScreen(
                 }
             }
 
-            SectionHeader("Debug")
+            SectionHeader("Help improve the app")
             SettingBlock(
-                "Record & trace games",
-                "Records the whole game — audio + detection + game events — so a real round " +
-                    "can be replayed offline to diagnose detection. Files appear in Recordings " +
-                    "tagged \"game-trace\"; share them for analysis. Leave off for normal play.",
+                "Record practice reports",
+                "Records your rounds — the sound and what the app heard — so that when " +
+                    "something seems wrong (a note not picked up, a weird score), you can email " +
+                    "the report to the developer and the app gets fixed. Leave off for normal play.",
             ) {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -496,7 +500,7 @@ fun SettingsScreen(
                         onClick = onOpenTraces,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("View traces")
+                        Text("View practice reports")
                     }
                 }
             }

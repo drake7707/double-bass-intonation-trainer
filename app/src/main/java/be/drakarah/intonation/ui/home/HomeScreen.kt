@@ -135,7 +135,7 @@ fun HomeScreen(
             ) {
                 Column {
                     Text(
-                        "Double bass\nintonation trainer",
+                        "Double Bass\nCoach",
                         style = MaterialTheme.typography.headlineMedium,
                     )
                     if (streak > 0) {

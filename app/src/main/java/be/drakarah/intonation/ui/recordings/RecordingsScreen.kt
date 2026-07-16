@@ -358,7 +358,7 @@ private fun emailRecording(context: android.content.Context, recording: Recordin
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "application/zip"
         putExtra(Intent.EXTRA_EMAIL, arrayOf(FEEDBACK_EMAIL))
-        putExtra(Intent.EXTRA_SUBJECT, "Intonation Trainer trace: ${recording.baseName}")
+        putExtra(Intent.EXTRA_SUBJECT, "Double Bass Coach practice report: ${recording.baseName}")
         putExtra(
             Intent.EXTRA_TEXT,
             "Attached: ${recording.baseName}.zip (audio + detection log).\n\nWhat happened:\n"
@@ -366,5 +366,5 @@ private fun emailRecording(context: android.content.Context, recording: Recordin
         putExtra(Intent.EXTRA_STREAM, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    context.startActivity(Intent.createChooser(intent, "Send trace to developer"))
+    context.startActivity(Intent.createChooser(intent, "Send report to developer"))
 }

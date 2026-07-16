@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Intonation Trainer</string>
+    <!-- Never shorten to "Bass Coach" — people read "bass" alone as bass guitar (user decision,
+         docs/UX_OVERHAUL_PLAN_2026-07-16.md §10.1). Launchers may ellipsize; that's accepted. -->
+    <string name="app_name">Double Bass Coach</string>
 </resources>

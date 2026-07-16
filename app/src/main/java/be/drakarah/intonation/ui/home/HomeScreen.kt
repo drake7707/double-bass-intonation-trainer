@@ -77,13 +77,13 @@ fun HomeScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
                     if (needsFullCalibration) Text(
-                        "• App not calibrated — pitch detection has not been tuned to this phone's microphone and your bass yet. Accuracy will be poor.",
+                        "• The app hasn't learned your bass yet — run the two-minute Full setup once, or scores won't mean much.",
                     )
                     if (needsTuneReminder) Text(
-                        "• No recent tune-up — an out-of-tune bass makes every score meaningless.",
+                        "• You haven't tuned in a while — an out-of-tune bass makes every score meaningless.",
                     )
                     if (needsCalibration) Text(
-                        "• Surroundings not calibrated — room noise might interfere with detection.",
+                        "• Your room hasn't been checked recently — background noise might get in the way.",
                     )
                 }
             },
@@ -92,7 +92,7 @@ fun HomeScreen(
                     if (needsFullCalibration) TextButton(onClick = {
                         pendingStart = null
                         onOpenSettings() // Wizard is linked from settings
-                    }) { Text("Run full calibration wizard") }
+                    }) { Text("Full setup first (2 minutes)") }
                     if (needsTuneReminder) TextButton(onClick = {
                         pendingStart = null
                         onOpenTuneUp()
@@ -100,7 +100,7 @@ fun HomeScreen(
                     if (needsCalibration) TextButton(onClick = {
                         pendingStart = null
                         onOpenCalibrate()
-                    }) { Text("Calibrate surroundings first") }
+                    }) { Text("Room check first") }
                     TextButton(onClick = {
                         viewModel.suppressReminders()
                         pendingStart = null
@@ -233,8 +233,8 @@ fun HomeScreen(
                 onClick = onOpenTuneUp,
             )
             ExerciseCard(
-                title = "Drone mode",
-                subtitle = "A steady reference pitch to tune against by ear.",
+                title = "Drone",
+                subtitle = "A steady tone to play along with by ear.",
                 enabled = true,
                 onClick = onOpenDrone,
             )
@@ -256,7 +256,7 @@ fun HomeScreen(
             }
             Column {
                 Text(
-                    "Positions to practice (each combination scores separately)",
+                    "Positions to practice (each combination has its own scores)",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -278,16 +278,16 @@ fun HomeScreen(
             ExerciseCard(
                 title = "Find the Note",
                 subtitle = best?.let { "Best: ${it.score} / ${it.maxScore}" }
-                    ?: "Land the note. First stable pitch counts.",
+                    ?: "Play the note you see — land it right the first time.",
                 enabled = true,
                 onClick = { gated { onStartNoteAccuracy(mode) } },
             )
             ExerciseCard(
                 title = "Long Notes",
                 subtitle = when {
-                    mode == "pizz" -> "Arco only — a plucked note dies before a hold means anything."
+                    mode == "pizz" -> "Bow only — a plucked note fades too fast to hold."
                     sustainBest != null -> "Best: ${sustainBest!!.score} / ${sustainBest!!.maxScore}"
-                    else -> "Hold it in tune. Don't let the ring reset."
+                    else -> "Hold one note steady and in tune."
                 },
                 enabled = mode == "arco",
                 onClick = { gated { onStartSustain(mode) } },
@@ -313,7 +313,7 @@ fun HomeScreen(
                 subtitle = when {
                     !canPlayChords -> "Select positions that can form a full chord."
                     chordsBest != null -> "Best: ${chordsBest!!.score} / ${chordsBest!!.maxScore}"
-                    else -> "Arpeggiate a triad — root, third, fifth, one note at a time."
+                    else -> "Play a chord one note at a time, bottom to top, in tune."
                 },
                 enabled = canPlayChords,
                 onClick = { gated { onStartChords(mode) } },
@@ -321,14 +321,14 @@ fun HomeScreen(
 
             SectionHeader("Tools")
             ExerciseCard(
-                title = "Calibrate surroundings",
-                subtitle = "Measure room noise and your soft playing so detection stays reliable.",
+                title = "Room check",
+                subtitle = "A quick listen to your room so your notes are picked up reliably.",
                 enabled = true,
                 onClick = onOpenCalibrate,
             )
             ExerciseCard(
                 title = "Pitch Analyzer",
-                subtitle = "See how the app hears your notes and explore your instrument's range.",
+                subtitle = "Check what the app hears — useful if notes aren't being picked up.",
                 enabled = true,
                 onClick = onOpenDebug,
             )

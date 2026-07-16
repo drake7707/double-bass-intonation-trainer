@@ -99,7 +99,7 @@ class CoachingTest {
     // --- Insight selection -----------------------------------------------------------------
 
     private fun pos(id: String, cents: Float, signed: Float, n: Int = 20, mode: String = "arco") =
-        PositionMastery(id, id, mode, cents, signed, n, note)
+        PositionMastery(id, mode, cents, signed, n, note)
 
     @Test fun insightPrefersBiggestActionableBias() {
         val positions = listOf(
@@ -107,7 +107,7 @@ class CoachingTest {
             pos("2nd", 18f, -8f),
         )
         val insight = selectInsight(positions, weekTrend(20f, 21f)) as Insight.PositionBias
-        assertEquals("1st", insight.positionShortLabel)
+        assertEquals("1st", insight.positionId)
         assertEquals(BiasDirection.FLAT, insight.direction)
         assertEquals("insight names the mode", "arco", insight.mode)
     }
@@ -121,7 +121,7 @@ class CoachingTest {
     @Test fun insightNamesAnchorWhenSteadyAndCentered() {
         val positions = listOf(pos("1st", 8f, -1f), pos("2nd", 20f, 2f))
         val insight = selectInsight(positions, weekTrend(15f, 15f)) as Insight.Anchor
-        assertEquals("1st", insight.positionShortLabel) // the most secure (lowest cents) position
+        assertEquals("1st", insight.positionId) // the most secure (lowest cents) position
     }
 
     @Test fun insightNullWhenNothingConfident() {

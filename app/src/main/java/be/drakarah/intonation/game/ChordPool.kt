@@ -2,7 +2,6 @@ package be.drakarah.intonation.game
 
 import be.drakarah.intonation.music.Accidental
 import be.drakarah.intonation.music.BassTuning
-import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.music.NoteSpec
 import kotlin.math.abs
 import kotlin.random.Random
@@ -18,46 +17,23 @@ enum class ChordQuality(val intervals: List<Int>) {
 /** How to place a chord tone that can be played more than one way — the same note lives on
  * several strings/positions, and often on an open string too. The player's preference, since it
  * trades musical realism against scored finger-position practice (open strings aren't scored). */
-enum class ChordFingering(val label: String, val blurb: String) {
+enum class ChordFingering {
     /** Whichever placement makes the closest hand shape to the root (open breaks ties) — how
      * you'd naturally finger the chord in a piece. */
-    NATURAL(
-        "Natural",
-        "Closest hand shape — how you'd play it in a piece; open strings where they fall.",
-    ),
+    NATURAL,
 
     /** Finger the note in a selected position whenever possible; use an open string only when it
      * can't be fingered there — maximises scored position practice. */
-    FINGERED(
-        "Prefer fingered",
-        "Finger notes in your positions for practice; open strings only when unavoidable.",
-    ),
+    FINGERED,
 
     /** Play the open string wherever a tone sits on one, even if it's also fingerable. */
-    OPEN(
-        "Prefer open",
-        "Use open strings wherever a tone sits on one (open strings aren't scored).",
-    ),
+    OPEN,
 }
 
-/** A chord's name in the player's note-name style: root pitch class + quality word. Sarah reads
- * fixed-do solfège, so solfège mode says "Ré Majeur / Ré mineur"; letters mode says "D major".
- * [rootSpelling] is the root's chosen enharmonic spelling (from [chordToneSpellings]) so a flat
- * chord reads "Si♭ Majeur", never "La♯ Majeur". */
-fun chordName(
-    root: NoteSpec,
-    quality: ChordQuality,
-    style: NoteNameStyle,
-    rootSpelling: Accidental = Accidental.SHARP,
-): String {
-    val word = when {
-        style == NoteNameStyle.SOLFEGE && quality == ChordQuality.MAJOR -> "Majeur"
-        style == NoteNameStyle.SOLFEGE -> "mineur"
-        quality == ChordQuality.MAJOR -> "major"
-        else -> "minor"
-    }
-    return "${root.pitchClassName(style, rootSpelling)} $word"
-}
+// A chord's display name (root pitch class + quality word, "Ré Majeur" / "D major") is built in
+// the UI layer — ui/common/Labels.kt chordDisplayName — so the quality word is translatable.
+// [chordToneSpellings] below supplies the root's enharmonic spelling so a flat chord reads
+// "Si♭ Majeur", never "La♯ Majeur".
 
 /** The pitch classes of the seven letters C D E F G A B (Do Ré Mi Fa Sol La Si). */
 private val LETTER_PC = intArrayOf(0, 2, 4, 5, 7, 9, 11)

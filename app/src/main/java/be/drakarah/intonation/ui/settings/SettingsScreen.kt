@@ -54,6 +54,8 @@ import be.drakarah.intonation.data.ImportMode
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.settings.AppSettings
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
+import be.drakarah.intonation.ui.common.displayBlurb
+import be.drakarah.intonation.ui.common.displayLabel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -221,7 +223,7 @@ fun SettingsScreen(
                         FilterChip(
                             selected = settings.playerLevel == level,
                             onClick = { scope.launch { repo.setPlayerLevel(level) } },
-                            label = { Text(level.label) },
+                            label = { Text(level.displayLabel) },
                         )
                     }
                 }
@@ -240,7 +242,7 @@ fun SettingsScreen(
                             onClick = { scope.launch { repo.setDifficulty(d) } },
                             shape = SegmentedButtonDefaults.itemShape(i, Difficulty.entries.size),
                         ) {
-                            Text(d.name.lowercase().replaceFirstChar { it.uppercase() })
+                            Text(d.displayLabel)
                         }
                     }
                 }
@@ -326,12 +328,12 @@ fun SettingsScreen(
                         FilterChip(
                             selected = settings.chordFingering == f,
                             onClick = { scope.launch { repo.setChordFingering(f) } },
-                            label = { Text(f.label) },
+                            label = { Text(f.displayLabel) },
                         )
                     }
                 }
                 Text(
-                    settings.chordFingering.blurb,
+                    settings.chordFingering.displayBlurb,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

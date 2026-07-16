@@ -74,10 +74,11 @@ class ChordSpellingTest {
     }
 
     @Test
-    fun chordNameUsesRootSpelling() {
-        // B♭ major reads "Si♭ Majeur", never "La♯ Majeur".
+    fun chordRootSpellingIsFlatForFlatChords() {
+        // B♭ major's root must render "Si♭", never "La♯" (the UI's chordDisplayName appends
+        // the localized quality word — the spelling choice itself is domain logic, tested here).
         val root = NoteSpec(60 + 10)
         val rootAcc = chordToneSpellings(root, ChordQuality.MAJOR)[0]
-        assertEquals("Si♭ Majeur", chordName(root, ChordQuality.MAJOR, NoteNameStyle.SOLFEGE, rootAcc))
+        assertEquals("Si♭", root.pitchClassName(NoteNameStyle.SOLFEGE, rootAcc))
     }
 }

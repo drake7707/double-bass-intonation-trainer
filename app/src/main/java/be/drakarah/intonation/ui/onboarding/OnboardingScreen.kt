@@ -42,6 +42,7 @@ import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.game.PlayerLevel
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.settings.AppSettings
+import be.drakarah.intonation.ui.common.displayLabel
 import be.drakarah.intonation.ui.theme.Spacing
 import kotlinx.coroutines.launch
 
@@ -129,7 +130,7 @@ fun OnboardingScreen(
             ) {
                 PlayerLevel.entries.forEach { level ->
                     ChoiceCard(
-                        title = level.label,
+                        title = level.displayLabel,
                         subtitle = "${level.promptTimeoutMs / 1000} seconds to find each note",
                         selected = settings.playerLevel == level,
                         onClick = { scope.launch { repo.setPlayerLevel(level) } },

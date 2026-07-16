@@ -50,10 +50,12 @@ fun Insight.sentence(): String = when (this) {
     is Insight.PositionBias -> stringResource(
         if (direction == BiasDirection.FLAT) R.string.coach_insight_bias_flat
         else R.string.coach_insight_bias_sharp,
-        mode, positionShortLabel,
+        modeLabel(mode), positionShortLabel(positionId),
     )
     Insight.Tightening -> stringResource(R.string.coach_insight_tightening)
-    is Insight.Anchor -> stringResource(R.string.coach_insight_anchor, mode, positionShortLabel)
+    is Insight.Anchor -> stringResource(
+        R.string.coach_insight_anchor, modeLabel(mode), positionShortLabel(positionId),
+    )
 }
 
 /** The round-summary coach line (metrics/RoundCoach.kt picks the verdict). */

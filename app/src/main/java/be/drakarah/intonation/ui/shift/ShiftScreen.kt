@@ -42,6 +42,7 @@ import be.drakarah.intonation.ui.common.CentsRevealHeadline
 import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.DriftBanner
 import be.drakarah.intonation.ui.common.GameCountIn
+import be.drakarah.intonation.ui.common.displayLabel
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.sentence
@@ -153,7 +154,7 @@ private fun NoteWithPlace(prompt: PromptSpec, style: NoteNameStyle, big: Boolean
     )
     // Position only — the player works out which string and where to put the finger.
     Text(
-        prompt.position.label,
+        prompt.position.displayLabel,
         style = if (big) MaterialTheme.typography.displaySmall else MaterialTheme.typography.headlineSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         fontWeight = FontWeight.Bold

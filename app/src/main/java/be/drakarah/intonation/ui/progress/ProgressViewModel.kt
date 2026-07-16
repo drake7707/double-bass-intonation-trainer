@@ -102,7 +102,6 @@ class ProgressViewModel(
             .map { (row, pos) ->
                 PositionMastery(
                     positionId = pos.id,
-                    shortLabel = pos.shortLabel,
                     mode = row.mode,
                     avgAbsCents = row.avgAbsCents,
                     signedCents = row.avgSignedCents,

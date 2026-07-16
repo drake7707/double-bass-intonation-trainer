@@ -74,15 +74,16 @@ fun PromptSpec.finger(): Int {
 }
 
 /** Shift-Trainer difficulty ladder (Sarah's design). Each level is its own scoring category.
- *  Labels describe WHAT the level is instead of Basic/Intermediate/Advanced, which collided with
- *  the pace setting's level words (glossary, docs/UX_OVERHAUL_PLAN_2026-07-16.md §4).
+ *  Display labels (ui/common/Labels.kt) describe WHAT the level is instead of
+ *  Basic/Intermediate/Advanced, which collided with the pace setting's level words (glossary,
+ *  docs/UX_OVERHAUL_PLAN_2026-07-16.md §4).
  *  - [BASIC]: same string, finger 1 ↔ 4 only — the classic outer-finger shift.
  *  - [INTERMEDIATE]: same string, any fingers — adds the 2nd finger and smaller shifts.
  *  - [ADVANCED]: across strings — a string crossing combined with the shift and landing. */
-enum class ShiftLevel(val id: String, val label: String, val shortLabel: String) {
-    BASIC("basic", "One string, fingers 1↔4", "1↔4"),
-    INTERMEDIATE("intermediate", "One string, any finger", "any finger"),
-    ADVANCED("advanced", "Across strings", "across strings");
+enum class ShiftLevel(val id: String) {
+    BASIC("basic"),
+    INTERMEDIATE("intermediate"),
+    ADVANCED("advanced");
 
     companion object {
         fun fromId(id: String?): ShiftLevel = entries.firstOrNull { it.id == id } ?: INTERMEDIATE

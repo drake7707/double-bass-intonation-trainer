@@ -112,7 +112,6 @@ fun weekTrend(thisWeekCents: Float?, lastWeekCents: Float?): WeekTrend? {
  * Plain data; the UI resolves colors and icons. */
 data class PositionMastery(
     val positionId: String,
-    val shortLabel: String,
     val mode: String,               // "arco" | "pizz"
     val avgAbsCents: Float,
     val signedCents: Float,
@@ -168,7 +167,7 @@ sealed interface Insight {
     /** A position leans flat/sharp — coach one aim adjustment, in pitch terms. */
     data class PositionBias(
         val mode: String,
-        val positionShortLabel: String,
+        val positionId: String,
         val direction: BiasDirection,
     ) : Insight
 
@@ -176,7 +175,7 @@ sealed interface Insight {
     data object Tightening : Insight
 
     /** The most secure position, named as an anchor. */
-    data class Anchor(val mode: String, val positionShortLabel: String) : Insight
+    data class Anchor(val mode: String, val positionId: String) : Insight
 }
 
 /**
@@ -190,7 +189,7 @@ fun selectInsight(positions: List<PositionMastery>, trend: WeekTrend?): Insight?
         .filter { abs(it.signedCents) >= INSIGHT_BIAS_MIN && it.scoredCount >= MIN_SCORED_FOR_VERDICT }
         .maxByOrNull { abs(it.signedCents) }
     if (biased != null) {
-        return Insight.PositionBias(biased.mode, biased.shortLabel, biased.bias.direction)
+        return Insight.PositionBias(biased.mode, biased.positionId, biased.bias.direction)
     }
 
     if (trend != null && trend.direction == TrendDirection.TIGHTER) {
@@ -201,7 +200,7 @@ fun selectInsight(positions: List<PositionMastery>, trend: WeekTrend?): Insight?
         .filter { it.scoredCount >= MIN_SCORED_FOR_VERDICT }
         .minByOrNull { it.avgAbsCents }
     if (anchor != null && anchor.band != MasteryBand.DEVELOPING) {
-        return Insight.Anchor(anchor.mode, anchor.shortLabel)
+        return Insight.Anchor(anchor.mode, anchor.positionId)
     }
     return null
 }

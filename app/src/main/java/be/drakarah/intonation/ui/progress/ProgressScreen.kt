@@ -67,6 +67,8 @@ import be.drakarah.intonation.ui.chords.EXERCISE_CHORDS
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.detailedLabel
 import be.drakarah.intonation.ui.common.label
+import be.drakarah.intonation.ui.common.modeLabel
+import be.drakarah.intonation.ui.common.positionShortLabel
 import be.drakarah.intonation.ui.common.sentence
 import be.drakarah.intonation.ui.noteaccuracy.EXERCISE_NOTE_ACCURACY
 import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
@@ -443,11 +445,11 @@ private fun MasteryByPosition(stats: List<PositionMastery>, expert: Boolean) {
                 ) {
                     Column(modifier = Modifier.width(48.dp)) {
                         Text(
-                            stat.shortLabel,
+                            positionShortLabel(stat.positionId),
                             style = MaterialTheme.typography.labelLarge,
                             color = if (enough) MaterialTheme.colorScheme.onSurface else muted,
                         )
-                        Text(stat.mode, style = MaterialTheme.typography.labelSmall, color = muted)
+                        Text(modeLabel(stat.mode), style = MaterialTheme.typography.labelSmall, color = muted)
                     }
                     Box(
                         Modifier

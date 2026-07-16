@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.game.SELECTABLE_POSITIONS
+import be.drakarah.intonation.ui.common.displayLabel
+import be.drakarah.intonation.ui.common.displayShortLabel
 import be.drakarah.intonation.ui.theme.Spacing
 
 @Composable
@@ -270,7 +272,7 @@ fun HomeScreen(
                         FilterChip(
                             selected = positions.contains(p),
                             onClick = { viewModel.togglePosition(p) },
-                            label = { Text(p.shortLabel) },
+                            label = { Text(p.displayShortLabel) },
                         )
                     }
                 }
@@ -298,11 +300,11 @@ fun HomeScreen(
             be.drakarah.intonation.game.ShiftLevel.entries.forEach { level ->
                 val levelBest by viewModel.shiftBests.getValue(level).collectAsStateWithLifecycle()
                 ExerciseCard(
-                    title = "Shifts — ${level.shortLabel}",
+                    title = "Shifts — ${level.displayShortLabel}",
                     subtitle = when {
                         !canShift -> "Select at least two positions to shift between."
                         levelBest != null -> "Best: ${levelBest!!.score} / ${levelBest!!.maxScore}"
-                        else -> level.label
+                        else -> level.displayLabel
                     },
                     enabled = canShift,
                     onClick = { gated { onStartShift(mode, level.id) } },

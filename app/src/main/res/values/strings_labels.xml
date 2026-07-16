@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Display names for domain enums/data (game/, music/). The domain exposes ids only;
+     ui/common/Labels.kt maps them here. Enum CONSTANT names are persisted in settings and
+     configKeys — translating these strings never touches stored data. -->
+<resources>
+
+    <!-- Pace (game/PlayerLevel.kt) — time pressure only, deliberately not skill words -->
+    <string name="pace_calm">Calm</string>
+    <string name="pace_steady">Steady</string>
+    <string name="pace_quick">Quick</string>
+    <string name="pace_swift">Swift</string>
+
+    <!-- Scoring difficulty (game/Scoring.kt) -->
+    <string name="difficulty_relaxed">Relaxed</string>
+    <string name="difficulty_standard">Standard</string>
+    <string name="difficulty_strict">Strict</string>
+
+    <!-- Shift levels (game/Positions.kt ShiftLevel) — say WHAT the level is -->
+    <string name="shift_level_basic">One string, fingers 1↔4</string>
+    <string name="shift_level_intermediate">One string, any finger</string>
+    <string name="shift_level_advanced">Across strings</string>
+    <string name="shift_level_basic_short">1↔4</string>
+    <string name="shift_level_intermediate_short">any finger</string>
+    <string name="shift_level_advanced_short">across strings</string>
+
+    <!-- Left-hand positions (game/Positions.kt) -->
+    <string name="position_open">Open string</string>
+    <!-- Lowercase in-prompt hint, shown where a fingered tone would show its position -->
+    <string name="position_open_short_hint">open string</string>
+    <string name="position_half">Half position</string>
+    <string name="position_first">First position</string>
+    <string name="position_second">Second position</string>
+    <string name="position_third">Third position</string>
+    <string name="position_fourth">Fourth position</string>
+    <string name="position_fifth">Fifth position</string>
+    <string name="position_open_short">0</string>
+    <string name="position_half_short">½</string>
+    <string name="position_first_short">1st</string>
+    <string name="position_second_short">2nd</string>
+    <string name="position_third_short">3rd</string>
+    <string name="position_fourth_short">4th</string>
+    <string name="position_fifth_short">5th</string>
+
+    <!-- Chord fingering preference (game/ChordPool.kt ChordFingering) -->
+    <string name="chord_fingering_natural">Natural</string>
+    <string name="chord_fingering_fingered">Prefer fingered</string>
+    <string name="chord_fingering_open">Prefer open</string>
+    <string name="chord_fingering_natural_blurb">Closest hand shape — how you\'d play it in a piece; open strings where they fall.</string>
+    <string name="chord_fingering_fingered_blurb">Finger notes in your positions for practice; open strings only when unavoidable.</string>
+    <string name="chord_fingering_open_blurb">Use open strings wherever a tone sits on one (open strings aren\'t scored).</string>
+
+    <!-- Chord quality word after the root ("Ré Majeur" / "D major"). Solfège chord names keep
+         the French-style capitalized "Majeur" in every language (Sarah reads fixed-do solfège);
+         the letters-mode words translate normally. -->
+    <string name="chord_quality_major_solfege">Majeur</string>
+    <string name="chord_quality_minor_solfege">mineur</string>
+    <string name="chord_quality_major_letters">major</string>
+    <string name="chord_quality_minor_letters">minor</string>
+    <!-- %1$s = root name, %2$s = quality word -->
+    <string name="chord_display_name">%1$s %2$s</string>
+
+    <!-- Playing modes are international (arco / pizz) and stay untranslated on purpose, but the
+         UI still goes through resources so a language could adjust casing if ever needed. -->
+    <string name="mode_arco">arco</string>
+    <string name="mode_pizz">pizz</string>
+
+</resources>

@@ -46,6 +46,7 @@ import be.drakarah.intonation.ui.common.DriftBanner
 import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
+import be.drakarah.intonation.ui.common.displayLabel
 import be.drakarah.intonation.ui.common.label
 import be.drakarah.intonation.ui.common.sentence
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
@@ -171,7 +172,7 @@ private fun ListeningPrompt(state: NoteAccuracyUiState) {
         )
         Spacer(Modifier.height(Spacing.FINE_SPACING))
         Text(
-            prompt.position.label,
+            prompt.position.displayLabel,
             style = MaterialTheme.typography.displaySmall, // Position is key at distance
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
@@ -305,7 +306,7 @@ private fun NoteAccuracySummary(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 OutlinedButton(onClick = onApplyLevel, modifier = Modifier.fillMaxWidth()) {
-                    Text("Switch to ${suggested.label} pace")
+                    Text("Switch to ${suggested.displayLabel} pace")
                 }
             }
         },

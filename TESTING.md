@@ -840,9 +840,12 @@ Home screen:
       It's game logic.
 
 
-
+- Expand the onboarding with choice questions, 1 per screen like a wizard, that asks the user common settings, like their preference for solfege vs letters, the number of rounds per game, if they are an expert (and of course explaining what each setting does), etc. This eases them into the correct settings without being overwhelmed with the increasingly growing settings screen. The last one should be the nudge to do a full calibration and why it's necessary. This is just basic set up on first run. Also add a note that the app is in beta tested limited phones and double basses and explain the functionality of being able to record traces and send them as feedback for the app to be tweaked.
 
       
+- [UI Issue] In shifting reveal screen the very small text with cents and some other info is completely unreadable from a distance while holding my bass. Check all the results screens of games and make sure everything is legible from 2 meters away, while also keeping the UI layout nice.
+
+
 
 
 OPEN FEEDBACK & IDEAS:
@@ -918,12 +921,18 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
       Just someone noticing something you hadn't.
 
 
-- [UI Issue] In shifting reveal screen the very small text with cents and some other info is completely unreadable from a distance while holding my bass. Check all the results screens of games and make sure everything is legible from 2 meters away, while also keeping the UI layout nice.
-
-
 - Are pizz and arco notes easily distinguisable? I accidently played pizz while i was on arco and the system should detect that and warn me. Now it happily processed pizz as arco with the pizz settings leading to issues with wrong notes and such.
 
 
-- Expand the onboarding with choice questions, 1 per screen like a wizard, that asks the user common settings, like their preference for solfege vs letters, the number of rounds per game, if they are an expert (and of course explaining what each setting does), etc. This eases them into the correct settings without being overwhelmed with the increasingly growing settings screen. The last one should be the nudge to do a full calibration and why it's necessary. This is just basic set up on first run. Also add a note that the app is in beta tested limited phones and double basses and explain the functionality of being able to record traces and send them as feedback for the app to be tweaked.
 
-- Add a github link to https://github.com/drake7707/double-bass-intonation-trainer in the about screen, this is the published source code required by the GPL license.
+
+- [MANDATORY REQUIREMENT] Add a github link to https://github.com/drake7707/double-bass-intonation-trainer in the about screen, this is the published source code required by the GPL license.
+
+
+
+- [BUG] The shift reveal screen "great shift" text is too long to read in the time the reveal is shown. I would just leave it to great shift and show what it means in the result after the game. If you attach an icon to it then it's immediately recognizeable.
+
+- [CONSISTENCY] A chart in the shift and chords results like in note accuracy 
+
+
+- Right now it's red for severely out of tune and yellow for lightly out of tune, what is the cents difference, maybe an orange should be another step in between red and yellow thresholds of cents

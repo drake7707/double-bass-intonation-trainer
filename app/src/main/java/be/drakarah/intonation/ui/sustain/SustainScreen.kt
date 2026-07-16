@@ -37,6 +37,7 @@ import be.drakarah.intonation.game.SustainFocus
 import be.drakarah.intonation.metrics.sustainRoundCoachVerdict
 import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.GameCountIn
+import be.drakarah.intonation.ui.common.displayLabel
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.sentence
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
@@ -156,7 +157,7 @@ private fun PlayContent(state: SustainUiState, phase: SustainPhase.Play) {
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    prompt.position.label,
+                    prompt.position.displayLabel,
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Bold,

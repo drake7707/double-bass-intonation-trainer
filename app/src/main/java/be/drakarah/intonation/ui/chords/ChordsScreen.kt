@@ -35,8 +35,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.stringResource
+import be.drakarah.intonation.R
 import be.drakarah.intonation.game.ChordSpec
-import be.drakarah.intonation.game.chordName
 import be.drakarah.intonation.game.isOpenString
 import be.drakarah.intonation.metrics.MasteryThresholds
 import be.drakarah.intonation.metrics.RoundCoachInput
@@ -44,6 +45,9 @@ import be.drakarah.intonation.metrics.roundCoachVerdict
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.DriftBanner
+import be.drakarah.intonation.ui.common.chordDisplayName
+import be.drakarah.intonation.ui.common.displayLabel
+import be.drakarah.intonation.ui.common.displayShortLabel
 import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
@@ -169,7 +173,8 @@ private fun ToneStrip(chord: ChordSpec, activeIndex: Int, noteStyle: NoteNameSty
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    if (tone.isOpenString) "open string" else tone.position.shortLabel,
+                    if (tone.isOpenString) stringResource(R.string.position_open_short_hint)
+                    else tone.position.displayShortLabel,
                     style = MaterialTheme.typography.titleMedium, // Bumped for distance
                     color = color,
                     maxLines = 1,
@@ -189,7 +194,7 @@ private fun PlayingContent(state: ChordsUiState, phase: ChordsPhase.Playing) {
     val tone = chord.tones.getOrNull(phase.toneIndex) ?: return
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            chordName(chord.root, chord.quality, state.noteStyle, chord.tones[0].spelling),
+            chordDisplayName(chord.root, chord.quality, state.noteStyle, chord.tones[0].spelling),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
         )
@@ -222,7 +227,8 @@ private fun PlayingContent(state: ChordsUiState, phase: ChordsPhase.Playing) {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
-                if (tone.isOpenString) "open string" else tone.position.label,
+                if (tone.isOpenString) stringResource(R.string.position_open_short_hint)
+                else tone.position.displayLabel,
                 style = MaterialTheme.typography.displaySmall, // Bumped
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -242,7 +248,7 @@ private fun PlayingContent(state: ChordsUiState, phase: ChordsPhase.Playing) {
 private fun RevealContent(state: ChordsUiState, result: ChordAttemptUi) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            chordName(result.chord.root, result.chord.quality, state.noteStyle, result.chord.tones[0].spelling),
+            chordDisplayName(result.chord.root, result.chord.quality, state.noteStyle, result.chord.tones[0].spelling),
             style = MaterialTheme.typography.displaySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Bold,

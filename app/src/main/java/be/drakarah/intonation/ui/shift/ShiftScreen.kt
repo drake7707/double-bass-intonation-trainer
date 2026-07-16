@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -28,11 +29,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.R
 import be.drakarah.intonation.game.PromptSpec
 import be.drakarah.intonation.metrics.MasteryThresholds
 import be.drakarah.intonation.metrics.RoundCoachInput
@@ -81,27 +84,27 @@ fun ShiftScreen(
                             result == null && i == state.promptIndex -> Triple(
                                 MaterialTheme.colorScheme.onSurfaceVariant,
                                 Icons.Default.PlayArrow,
-                                "Note ${i + 1}: next prompt"
+                                stringResource(R.string.game_dot_next, i + 1)
                             )
                             result == null -> Triple(
                                 MaterialTheme.colorScheme.surfaceVariant,
                                 null,
-                                "Note ${i + 1}: pending"
+                                stringResource(R.string.game_dot_pending, i + 1)
                             )
                             result.starCount == 3 -> Triple(
                                 ResultColors.excellent,
                                 Icons.Default.Check,
-                                "Note ${i + 1}: perfect"
+                                stringResource(R.string.game_dot_perfect, i + 1)
                             )
                             result.starCount >= 1 -> Triple(
                                 ResultColors.close,
                                 Icons.Default.HorizontalRule,
-                                "Note ${i + 1}: close"
+                                stringResource(R.string.game_dot_close, i + 1)
                             )
                             else -> Triple(
                                 ResultColors.off,
                                 Icons.Default.Clear,
-                                "Note ${i + 1}: missed"
+                                stringResource(R.string.game_dot_missed, i + 1)
                             )
                         }
                         DotInfo(color, desc, icon)
@@ -134,7 +137,7 @@ fun ShiftScreen(
                 Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 if (state.phase != ShiftPhase.Done) {
                     OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
-                        Text("Quit round")
+                        Text(stringResource(R.string.game_quit))
                     }
                 }
                 Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
@@ -175,7 +178,7 @@ private fun StartAndTarget(state: ShiftUiState, header: String, headerColor: Col
         NoteWithPlace(prompt.start, state.noteStyle, big = false)
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
         Text(
-            "then GO to",
+            stringResource(R.string.shift_then_go),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -187,7 +190,9 @@ private fun StartAndTarget(state: ShiftUiState, header: String, headerColor: Col
 private fun StartContent(state: ShiftUiState, wrongNote: Boolean) {
     StartAndTarget(
         state,
-        header = if (wrongNote) "that's not it — start on" else "Start on",
+        header = stringResource(
+            if (wrongNote) R.string.shift_wrong_start else R.string.shift_start_on
+        ),
         headerColor = if (wrongNote) ResultColors.close
                       else MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -197,7 +202,7 @@ private fun StartContent(state: ShiftUiState, wrongNote: Boolean) {
 private fun HoldContent(state: ShiftUiState) {
     StartAndTarget(
         state,
-        header = "hold…",
+        header = stringResource(R.string.shift_hold),
         headerColor = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
@@ -207,7 +212,7 @@ private fun GoContent(state: ShiftUiState) {
     val prompt = state.prompt ?: return
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            "GO —",
+            stringResource(R.string.shift_go),
             style = MaterialTheme.typography.displayMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
@@ -235,12 +240,12 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
         Spacer(Modifier.height(Spacing.ITEM_SPACING))
         when {
             result.timedOut -> Text(
-                "No note heard",
+                stringResource(R.string.game_no_note),
                 style = MaterialTheme.typography.displaySmall,
                 color = color,
             )
             result.wrongNote -> Text(
-                "wrong note?",
+                stringResource(R.string.game_wrong_note),
                 style = MaterialTheme.typography.displaySmall,
                 color = color,
             )
@@ -250,7 +255,7 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
                 CentsRevealHeadline(result.shiftCents ?: 0f, result.starCount, color)
                 if (LocalTechnicalDetails.current) {
                     Text(
-                        "shift distance",
+                        stringResource(R.string.shift_distance),
                         fontSize = TextSizes.REVEAL_LABEL,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -269,7 +274,7 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
                 )
                 Spacer(Modifier.width(4.dp))
                 Text(
-                    "confident shift",
+                    stringResource(R.string.shift_confident),
                     fontSize = TextSizes.REVEAL_LABEL,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -293,29 +298,50 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
 private fun ShiftBreakdown(result: ShiftAttemptUi) {
     val landing = result.landingCents ?: return
     val start = result.startCents
-    val shift = result.shiftCents
     if (LocalTechnicalDetails.current) {
         Spacer(Modifier.height(Spacing.FINE_SPACING))
+        val landedText = String.format(Locale.US, "%+.0f", landing)
         Text(
-            buildString {
-                if (start != null) append(String.format(Locale.US, "start %+.0f¢  ·  ", start))
-                append(String.format(Locale.US, "landed %+.0f¢", landing))
-            },
+            if (start != null) stringResource(
+                R.string.shift_breakdown_full,
+                String.format(Locale.US, "%+.0f", start),
+                landedText,
+            )
+            else stringResource(R.string.shift_breakdown_landed, landedText),
             fontSize = TextSizes.REVEAL_SUBTEXT,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
-    if (start != null && kotlin.math.abs(start) >= 15f &&
-        shift != null && kotlin.math.abs(shift) < kotlin.math.abs(landing) - 5f
-    ) {
-        Text(
-            "great shift — your starting note was ${if (start > 0) "sharp" else "flat"}",
-            fontSize = TextSizes.REVEAL_SUBTEXT,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.primary,
-        )
+    if (result.isGreatShiftBadStart) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.Default.ThumbUp,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(Modifier.width(4.dp))
+            Text(
+                stringResource(R.string.shift_great_shift),
+                fontSize = TextSizes.REVEAL_LABEL,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
 }
+
+/** The shift movement was the right size but an off starting note pushed the landing off.
+ * The reveal is too brief for a sentence (user feedback 2026-07-16), so it shows a two-word
+ * badge with the thumbs-up icon; the round summary repeats the icon with the explanation. */
+private val ShiftAttemptUi.isGreatShiftBadStart: Boolean
+    get() {
+        val landing = landingCents ?: return false
+        val start = startCents ?: return false
+        val shift = shiftCents ?: return false
+        return kotlin.math.abs(start) >= 15f &&
+            kotlin.math.abs(shift) < kotlin.math.abs(landing) - 5f
+    }
 
 @Composable
 private fun DoneContent(
@@ -342,6 +368,26 @@ private fun DoneContent(
         onTraceFeedback = onTraceFeedback,
         onPlayAgain = onPlayAgain,
         onExit = onExit,
+        breakdown = {
+            // Explains the two-word "great shift" badge seen on reveals, with the same icon.
+            if (state.results.any { it.isGreatShiftBadStart }) {
+                Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.ThumbUp,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.shift_great_shift_explainer),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
         outcomeExtras = { outcome ->
             val scoredCents = state.results.mapNotNull { it.landingCents }
             ImprovementLine(

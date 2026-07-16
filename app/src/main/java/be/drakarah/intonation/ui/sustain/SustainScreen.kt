@@ -28,11 +28,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.R
 import be.drakarah.intonation.game.SustainFocus
 import be.drakarah.intonation.metrics.sustainRoundCoachVerdict
 import be.drakarah.intonation.ui.common.DotInfo
@@ -75,27 +77,27 @@ fun SustainScreen(
                             result == null && i == state.promptIndex -> Triple(
                                 MaterialTheme.colorScheme.onSurfaceVariant,
                                 Icons.Default.PlayArrow,
-                                "Note ${i + 1}: next prompt"
+                                stringResource(R.string.game_dot_next, i + 1)
                             )
                             result == null -> Triple(
                                 MaterialTheme.colorScheme.surfaceVariant,
                                 null,
-                                "Note ${i + 1}: pending"
+                                stringResource(R.string.game_dot_pending, i + 1)
                             )
                             result.starCount == 3 -> Triple(
                                 ResultColors.excellent,
                                 Icons.Default.Check,
-                                "Note ${i + 1}: perfect"
+                                stringResource(R.string.game_dot_perfect, i + 1)
                             )
                             result.starCount >= 1 -> Triple(
                                 ResultColors.close,
                                 Icons.Default.HorizontalRule,
-                                "Note ${i + 1}: close"
+                                stringResource(R.string.game_dot_close, i + 1)
                             )
                             else -> Triple(
                                 ResultColors.off,
                                 Icons.Default.Clear,
-                                "Note ${i + 1}: missed"
+                                stringResource(R.string.game_dot_missed, i + 1)
                             )
                         }
                         DotInfo(color, desc, icon)
@@ -122,7 +124,7 @@ fun SustainScreen(
                 Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 if (state.phase != SustainPhase.Done) {
                     OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
-                        Text("Quit round")
+                        Text(stringResource(R.string.game_quit))
                     }
                 }
                 Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
@@ -138,7 +140,7 @@ private fun PlayContent(state: SustainUiState, phase: SustainPhase.Play) {
     val prompt = state.prompt ?: return
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            "Hold",
+            stringResource(R.string.sustain_hold),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -168,19 +170,26 @@ private fun PlayContent(state: SustainUiState, phase: SustainPhase.Play) {
         val hint = phase.offCents
         when {
             !phase.tracking -> Text(
-                "play and hold ${"%.0f".format(state.goalMs / 1000f)} s…",
+                stringResource(
+                    R.string.sustain_play_and_hold, "%.0f".format(state.goalMs / 1000f)
+                ),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Bold
             )
             hint != null -> Text(
-                if (hint > 0) "▼ too sharp" else "▲ too flat",
+                stringResource(
+                    if (hint > 0) R.string.sustain_too_sharp else R.string.sustain_too_flat
+                ),
                 style = MaterialTheme.typography.displaySmall,
                 color = ResultColors.close,
                 fontWeight = FontWeight.Bold,
             )
             else -> Text(
-                String.format(Locale.US, "%.1f s", phase.heldMs / 1000f),
+                stringResource(
+                    R.string.sustain_seconds_value,
+                    String.format(Locale.US, "%.1f", phase.heldMs / 1000f),
+                ),
                 fontSize = TextSizes.HOLD_TIME,
                 fontWeight = FontWeight.Bold,
                 color = ResultColors.excellent,
@@ -247,8 +256,11 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
         )
         Spacer(Modifier.height(Spacing.ITEM_SPACING))
         Text(
-            if (result.result.success) "held!" else
-                String.format(Locale.US, "best %.1f s", result.result.bestHeldMs / 1000f),
+            if (result.result.success) stringResource(R.string.sustain_held)
+            else stringResource(
+                R.string.sustain_best_time,
+                String.format(Locale.US, "%.1f", result.result.bestHeldMs / 1000f),
+            ),
             fontSize = TextSizes.HOLD_TIME,
             fontWeight = FontWeight.Bold,
             color = color,
@@ -264,9 +276,17 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
             val technical = LocalTechnicalDetails.current
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SustainMetric("In tune", accuracyLabel(result.result.medianCents, technical), result.focus != SustainFocus.INTONATION && result.focus != SustainFocus.BOTH)
+                SustainMetric(
+                    stringResource(R.string.sustain_metric_in_tune),
+                    accuracyLabel(result.result.medianCents, technical),
+                    result.focus != SustainFocus.INTONATION && result.focus != SustainFocus.BOTH,
+                )
                 Spacer(Modifier.width(Spacing.SECTION_BREAK))
-                SustainMetric("Steady", steadinessLabel(result.result.steadinessCents, technical), result.focus != SustainFocus.BOW_STEADINESS && result.focus != SustainFocus.BOTH)
+                SustainMetric(
+                    stringResource(R.string.sustain_metric_steady),
+                    steadinessLabel(result.result.steadinessCents, technical),
+                    result.focus != SustainFocus.BOW_STEADINESS && result.focus != SustainFocus.BOTH,
+                )
             }
         }
         Spacer(Modifier.height(Spacing.FINE_SPACING))
@@ -298,41 +318,48 @@ private fun SustainMetric(label: String, value: String, good: Boolean) {
 }
 
 /** Plain words by default; the cents figures appear with technical details on. */
+@Composable
 private fun accuracyLabel(medianCents: Float?, technical: Boolean): String {
     val c = medianCents ?: return "—"
     val a = kotlin.math.abs(c)
     return when {
-        a < 5f -> "spot on"
-        technical && c > 0f -> String.format(Locale.US, "%.0f¢ sharp", a)
-        technical -> String.format(Locale.US, "%.0f¢ flat", a)
-        c > 0f -> "a bit sharp"
-        else -> "a bit flat"
+        a < 5f -> stringResource(R.string.sustain_spot_on)
+        technical && c > 0f ->
+            stringResource(R.string.sustain_cents_sharp, String.format(Locale.US, "%.0f", a))
+        technical ->
+            stringResource(R.string.sustain_cents_flat, String.format(Locale.US, "%.0f", a))
+        c > 0f -> stringResource(R.string.coach_bias_sharp)
+        else -> stringResource(R.string.coach_bias_flat)
     }
 }
 
+@Composable
 private fun steadinessLabel(steadinessCents: Float?, technical: Boolean): String {
     val s = steadinessCents ?: return "—"
     return when {
-        s < 4f -> "rock steady"
-        technical && s < 8f -> String.format(Locale.US, "±%.0f¢", s)
-        technical -> String.format(Locale.US, "±%.0f¢ wobble", s)
-        s < 8f -> "a little wobbly"
-        else -> "wobbly"
+        s < 4f -> stringResource(R.string.sustain_rock_steady)
+        technical && s < 8f ->
+            stringResource(R.string.sustain_wobble_cents, String.format(Locale.US, "%.0f", s))
+        technical ->
+            stringResource(R.string.sustain_wobble_cents_word, String.format(Locale.US, "%.0f", s))
+        s < 8f -> stringResource(R.string.sustain_little_wobbly)
+        else -> stringResource(R.string.sustain_wobbly)
     }
 }
 
 /** One focused thing to work on, so the score isn't a bare number. */
-private fun coachingText(result: SustainAttemptUi): String = when (result.focus) {
-    SustainFocus.STEADY_AND_TRUE -> "Rock steady and in tune."
-    SustainFocus.INTONATION -> {
-        val c = result.result.medianCents ?: 0f
-        if (c > 0f) "Steady bow — but sitting sharp. Place the note a hair lower."
-        else "Steady bow — but sitting flat. Place the note a hair higher."
+@Composable
+private fun coachingText(result: SustainAttemptUi): String = stringResource(
+    when (result.focus) {
+        SustainFocus.STEADY_AND_TRUE -> R.string.sustain_focus_steady_true
+        SustainFocus.INTONATION ->
+            if ((result.result.medianCents ?: 0f) > 0f) R.string.sustain_focus_sitting_sharp
+            else R.string.sustain_focus_sitting_flat
+        SustainFocus.BOW_STEADINESS -> R.string.sustain_focus_bow
+        SustainFocus.BOTH -> R.string.sustain_focus_both
+        SustainFocus.HOLD_LONGER -> R.string.sustain_focus_hold_longer
     }
-    SustainFocus.BOW_STEADINESS -> "Good pitch — but the note wandered. Even out your bow speed."
-    SustainFocus.BOTH -> "Settle the pitch on a slow, even bow."
-    SustainFocus.HOLD_LONGER -> "Keep the note ringing longer — hold it steady the whole time."
-}
+)
 
 @Composable
 private fun DoneContent(

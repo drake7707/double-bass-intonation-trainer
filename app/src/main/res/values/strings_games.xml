@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The four game screens (ui/noteaccuracy, ui/sustain, ui/shift, ui/chords).
+     game_ = shared between games; note_/sustain_/shift_/chords_ = per game.
+     Everything shown mid-round obeys the distance-readability rule — keep translations short. -->
+<resources>
+
+    <!-- Shared across games -->
+    <string name="game_quit">Quit round</string>
+    <string name="game_listening">listening…</string>
+    <string name="game_no_note">No note heard</string>
+    <string name="game_wrong_note">wrong note?</string>
+    <string name="game_wrong_octave">right note,\nwrong octave</string>
+    <!-- Progress-dot accessibility descriptions; %1$d = note number -->
+    <string name="game_dot_next">Note %1$d: next prompt</string>
+    <string name="game_dot_pending">Note %1$d: pending</string>
+    <string name="game_dot_missed">Note %1$d: missed</string>
+    <string name="game_dot_perfect">Note %1$d: perfect</string>
+    <string name="game_dot_close">Note %1$d: close</string>
+
+    <!-- Find the Note -->
+    <string name="note_play">Play</string>
+    <!-- %1$s = average cents, pre-formatted ("12.4") -->
+    <string name="note_avg_technical">average %1$s cents off</string>
+    <!-- %1$s = mastery word (Locked in / Solid / Developing) -->
+    <string name="note_how_in_tune">How in tune: %1$s</string>
+    <string name="note_chart_caption">your notes — above the line is sharp, below is flat</string>
+    <string name="note_chart_caption_technical">cents off per note</string>
+    <!-- %1$d = stars earned, %2$d = stars possible -->
+    <string name="note_stars_line">%1$d of %2$d stars</string>
+    <string name="note_pace_faster">You found every note with time to spare — that\'s progress!</string>
+    <string name="note_pace_slower">Several prompts ran out of time — more breathing room keeps it fun.</string>
+    <!-- %1$s = pace name (Calm/Steady/Quick/Swift) -->
+    <string name="note_pace_switch">Switch to %1$s pace</string>
+
+    <!-- Long Notes -->
+    <string name="sustain_hold">Hold</string>
+    <!-- %1$s = goal seconds, pre-formatted ("6") -->
+    <string name="sustain_play_and_hold">play and hold %1$s s…</string>
+    <string name="sustain_too_sharp">▼ too sharp</string>
+    <string name="sustain_too_flat">▲ too flat</string>
+    <!-- %1$s = seconds, pre-formatted ("4.2") -->
+    <string name="sustain_seconds_value">%1$s s</string>
+    <string name="sustain_held">held!</string>
+    <string name="sustain_best_time">best %1$s s</string>
+    <string name="sustain_metric_in_tune">In tune</string>
+    <string name="sustain_metric_steady">Steady</string>
+    <string name="sustain_spot_on">spot on</string>
+    <!-- %1$s = cents, pre-formatted ("12") -->
+    <string name="sustain_cents_sharp">%1$s¢ sharp</string>
+    <string name="sustain_cents_flat">%1$s¢ flat</string>
+    <string name="sustain_rock_steady">rock steady</string>
+    <string name="sustain_wobble_cents">±%1$s¢</string>
+    <string name="sustain_wobble_cents_word">±%1$s¢ wobble</string>
+    <string name="sustain_little_wobbly">a little wobbly</string>
+    <string name="sustain_wobbly">wobbly</string>
+    <!-- Per-hold coaching line, by focus -->
+    <string name="sustain_focus_steady_true">Rock steady and in tune.</string>
+    <string name="sustain_focus_sitting_sharp">Steady bow — but sitting sharp. Place the note a hair lower.</string>
+    <string name="sustain_focus_sitting_flat">Steady bow — but sitting flat. Place the note a hair higher.</string>
+    <string name="sustain_focus_bow">Good pitch — but the note wandered. Even out your bow speed.</string>
+    <string name="sustain_focus_both">Settle the pitch on a slow, even bow.</string>
+    <string name="sustain_focus_hold_longer">Keep the note ringing longer — hold it steady the whole time.</string>
+
+    <!-- Shifts -->
+    <string name="shift_start_on">Start on</string>
+    <string name="shift_wrong_start">that\'s not it — start on</string>
+    <string name="shift_then_go">then GO to</string>
+    <string name="shift_hold">hold…</string>
+    <string name="shift_go">GO —</string>
+    <string name="shift_distance">shift distance</string>
+    <string name="shift_confident">confident shift</string>
+    <!-- %1$s / %2$s = signed cents, pre-formatted ("+12") -->
+    <string name="shift_breakdown_landed">landed %1$s¢</string>
+    <string name="shift_breakdown_full">start %1$s¢  ·  landed %2$s¢</string>
+    <!-- Reveal badge: the shift movement itself was right, the starting note pushed the landing
+         off. Kept to two words — the reveal is too brief for a sentence (user feedback
+         2026-07-16); the round summary carries the explanation, marked with the same icon. -->
+    <string name="shift_great_shift">great shift</string>
+    <string name="shift_great_shift_explainer">Great shift = the move was the right size — it was the starting note that was off. Settle the start before GO.</string>
+
+    <!-- Chords -->
+    <string name="chords_arpeggio">arpeggio — one note at a time</string>
+    <!-- %1$s = the root note name -->
+    <string name="chords_wrong_root">that\'s not it —\nstart on %1$s</string>
+    <string name="chords_play">play</string>
+    <string name="chords_tone_wrong">wrong?</string>
+    <string name="chords_tone_spot_on">spot on</string>
+    <string name="chords_tone_sharp">sharp</string>
+    <string name="chords_tone_flat">flat</string>
+
+</resources>

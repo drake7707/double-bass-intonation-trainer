@@ -87,27 +87,27 @@ fun ChordsScreen(
                             result == null && i == state.promptIndex -> Triple(
                                 MaterialTheme.colorScheme.onSurfaceVariant,
                                 Icons.Default.PlayArrow,
-                                "Note ${i + 1}: next prompt"
+                                stringResource(R.string.game_dot_next, i + 1)
                             )
                             result == null -> Triple(
                                 MaterialTheme.colorScheme.surfaceVariant,
                                 null,
-                                "Note ${i + 1}: pending"
+                                stringResource(R.string.game_dot_pending, i + 1)
                             )
                             result.weakestStars == 3 -> Triple(
                                 ResultColors.excellent,
                                 Icons.Default.Check,
-                                "Note ${i + 1}: perfect"
+                                stringResource(R.string.game_dot_perfect, i + 1)
                             )
                             result.weakestStars >= 1 -> Triple(
                                 ResultColors.close,
                                 Icons.Default.HorizontalRule,
-                                "Note ${i + 1}: close"
+                                stringResource(R.string.game_dot_close, i + 1)
                             )
                             else -> Triple(
                                 ResultColors.off,
                                 Icons.Default.Clear,
-                                "Note ${i + 1}: missed"
+                                stringResource(R.string.game_dot_missed, i + 1)
                             )
                         }
                         DotInfo(color, desc, icon)
@@ -138,7 +138,7 @@ fun ChordsScreen(
                 Spacer(Modifier.height(Spacing.FINE_SPACING))
                 if (state.phase != ChordsPhase.Done) {
                     OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
-                        Text("Quit round")
+                        Text(stringResource(R.string.game_quit))
                     }
                 }
                 Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
@@ -199,7 +199,7 @@ private fun PlayingContent(state: ChordsUiState, phase: ChordsPhase.Playing) {
             fontWeight = FontWeight.Bold,
         )
         Text(
-            "arpeggio — one note at a time",
+            stringResource(R.string.chords_arpeggio),
             style = MaterialTheme.typography.titleMedium, // Bumped
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -208,7 +208,10 @@ private fun PlayingContent(state: ChordsUiState, phase: ChordsPhase.Playing) {
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
         if (phase.wrongRoot) {
             Text(
-                "that's not it —\nstart on ${chord.tones[0].target.displayName(state.noteStyle, chord.tones[0].spelling)}",
+                stringResource(
+                    R.string.chords_wrong_root,
+                    chord.tones[0].target.displayName(state.noteStyle, chord.tones[0].spelling),
+                ),
                 style = MaterialTheme.typography.headlineSmall,
                 color = ResultColors.close,
                 fontWeight = FontWeight.Bold,
@@ -216,7 +219,7 @@ private fun PlayingContent(state: ChordsUiState, phase: ChordsPhase.Playing) {
             )
         } else {
             Text(
-                "play",
+                stringResource(R.string.chords_play),
                 style = MaterialTheme.typography.headlineSmall, // Bumped
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -236,7 +239,7 @@ private fun PlayingContent(state: ChordsUiState, phase: ChordsPhase.Playing) {
         }
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
         Text(
-            "listening…",
+            stringResource(R.string.game_listening),
             style = MaterialTheme.typography.headlineMedium, // Bumped
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.alpha(pulse),
@@ -286,9 +289,15 @@ private fun ToneResult(tone: ToneUi, noteStyle: NoteNameStyle) {
             overflow = TextOverflow.Ellipsis
         )
         when {
-            !tone.scored -> Text("open string", fontSize = TextSizes.REVEAL_SUBTEXT, color = color)
+            !tone.scored -> Text(
+                stringResource(R.string.position_open_short_hint),
+                fontSize = TextSizes.REVEAL_SUBTEXT, color = color,
+            )
             tone.timedOut -> Text("—", fontSize = TextSizes.REVEAL_LABEL, color = color)
-            tone.wrongNote -> Text("wrong?", fontSize = TextSizes.REVEAL_SUBTEXT, color = color)
+            tone.wrongNote -> Text(
+                stringResource(R.string.chords_tone_wrong),
+                fontSize = TextSizes.REVEAL_SUBTEXT, color = color,
+            )
             LocalTechnicalDetails.current -> Text(
                 String.format(Locale.US, "%+.0f", tone.cents),
                 fontSize = TextSizes.REVEAL_LABEL,
@@ -297,11 +306,13 @@ private fun ToneResult(tone: ToneUi, noteStyle: NoteNameStyle) {
                 overflow = TextOverflow.Ellipsis,
             )
             else -> Text(
-                when {
-                    tone.starCount == 3 -> "spot on"
-                    (tone.cents ?: 0f) > 0f -> "sharp"
-                    else -> "flat"
-                },
+                stringResource(
+                    when {
+                        tone.starCount == 3 -> R.string.chords_tone_spot_on
+                        (tone.cents ?: 0f) > 0f -> R.string.chords_tone_sharp
+                        else -> R.string.chords_tone_flat
+                    }
+                ),
                 fontSize = TextSizes.REVEAL_SUBTEXT,
                 color = color,
                 maxLines = 1,

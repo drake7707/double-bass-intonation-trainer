@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.R
 import be.drakarah.intonation.metrics.MasteryBand
 import be.drakarah.intonation.metrics.MasteryThresholds
 import be.drakarah.intonation.metrics.RoundCoachInput
@@ -84,27 +86,27 @@ fun NoteAccuracyScreen(
                             result == null && i == state.promptIndex -> Triple(
                                 MaterialTheme.colorScheme.onSurfaceVariant,
                                 Icons.Default.PlayArrow,
-                                "Note ${i + 1}: next prompt"
+                                stringResource(R.string.game_dot_next, i + 1)
                             )
                             result == null -> Triple(
                                 MaterialTheme.colorScheme.surfaceVariant,
                                 null,
-                                "Note ${i + 1}: pending"
+                                stringResource(R.string.game_dot_pending, i + 1)
                             )
                             result.timedOut || result.starCount == 0 -> Triple(
                                 ResultColors.off,
                                 Icons.Default.Clear,
-                                "Note ${i + 1}: missed"
+                                stringResource(R.string.game_dot_missed, i + 1)
                             )
                             result.starCount == 3 -> Triple(
                                 ResultColors.excellent,
                                 Icons.Default.Check,
-                                "Note ${i + 1}: perfect"
+                                stringResource(R.string.game_dot_perfect, i + 1)
                             )
                             else -> Triple(
                                 ResultColors.close,
                                 Icons.Default.HorizontalRule,
-                                "Note ${i + 1}: close"
+                                stringResource(R.string.game_dot_close, i + 1)
                             )
                         }
                         DotInfo(color, desc, icon)
@@ -138,7 +140,7 @@ fun NoteAccuracyScreen(
                 Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 if (state.phase != NoteAccuracyPhase.Done) {
                     OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
-                        Text("Quit round")
+                        Text(stringResource(R.string.game_quit))
                     }
                 }
                 Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
@@ -160,7 +162,7 @@ private fun ListeningPrompt(state: NoteAccuracyUiState) {
     val prompt = state.prompt ?: return
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            "Play",
+            stringResource(R.string.note_play),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -179,7 +181,7 @@ private fun ListeningPrompt(state: NoteAccuracyUiState) {
         )
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
         Text(
-            "listening…",
+            stringResource(R.string.game_listening),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -206,18 +208,18 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
         Spacer(Modifier.height(Spacing.ITEM_SPACING))
         when {
             result.timedOut -> Text(
-                "No note heard",
+                stringResource(R.string.game_no_note),
                 style = MaterialTheme.typography.displaySmall,
                 color = color,
             )
             result.wrongOctave -> Text(
-                "right note,\nwrong octave",
+                stringResource(R.string.game_wrong_octave),
                 style = MaterialTheme.typography.displaySmall,
                 color = color,
                 textAlign = TextAlign.Center,
             )
             result.wrongNote -> Text(
-                "wrong note?",
+                stringResource(R.string.game_wrong_note),
                 style = MaterialTheme.typography.displaySmall,
                 color = color,
             )
@@ -268,8 +270,10 @@ private fun NoteAccuracySummary(
             if (scored.isNotEmpty()) {
                 val band = MasteryBand.of(avgCents.toFloat(), MasteryThresholds.NOTE)
                 Text(
-                    if (technical) String.format(Locale.US, "average %.1f cents off", avgCents)
-                    else "How in tune: ${band.label}",
+                    if (technical) stringResource(
+                        R.string.note_avg_technical, String.format(Locale.US, "%.1f", avgCents)
+                    )
+                    else stringResource(R.string.note_how_in_tune, band.label),
                     fontSize = TextSizes.REVEAL_LABEL,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
@@ -280,8 +284,10 @@ private fun NoteAccuracySummary(
                 )
                 Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 Text(
-                    if (technical) "cents off per note"
-                    else "your notes — above the line is sharp, below is flat",
+                    stringResource(
+                        if (technical) R.string.note_chart_caption_technical
+                        else R.string.note_chart_caption
+                    ),
                     fontSize = TextSizes.REVEAL_SUBTEXT,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -290,7 +296,11 @@ private fun NoteAccuracySummary(
                 NoteAccuracyCentsChart(state.results)
             }
             Text(
-                "${state.results.sumOf { it.starCount }} of ${state.roundLength * 3} stars",
+                stringResource(
+                    R.string.note_stars_line,
+                    state.results.sumOf { it.starCount },
+                    state.roundLength * 3,
+                ),
                 fontSize = TextSizes.REVEAL_LABEL,
             )
         },
@@ -299,14 +309,15 @@ private fun NoteAccuracySummary(
                 val faster = suggested.ordinal > state.playerLevel.ordinal
                 Spacer(Modifier.height(Spacing.CARD_PADDING))
                 Text(
-                    if (faster) "You found every note with time to spare — that's progress!"
-                    else "Several prompts ran out of time — more breathing room keeps it fun.",
+                    stringResource(
+                        if (faster) R.string.note_pace_faster else R.string.note_pace_slower
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 OutlinedButton(onClick = onApplyLevel, modifier = Modifier.fillMaxWidth()) {
-                    Text("Switch to ${suggested.displayLabel} pace")
+                    Text(stringResource(R.string.note_pace_switch, suggested.displayLabel))
                 }
             }
         },

@@ -188,7 +188,7 @@ fun SettingsScreen(
 
             SectionHeader("Display")
             SettingBlock(
-                "Expert mode",
+                "Show technical details",
                 "Show the technical detail — exact cents, percentages and deviations — across the " +
                     "app. Off keeps things in plain language for younger or newer players.",
             ) {

@@ -216,7 +216,7 @@ fun HomeScreen(
                         when {
                             focusDisabled -> focusDisabledReason
                             focusBest != null ->
-                                "${focus.subtitle}  ·  PB ${focusBest!!.score}/${focusBest!!.maxScore}"
+                                "${focus.subtitle}  ·  Best ${focusBest!!.score}/${focusBest!!.maxScore}"
                             else -> focus.subtitle
                         },
                         style = MaterialTheme.typography.bodySmall,
@@ -276,14 +276,14 @@ fun HomeScreen(
                 }
             }
             ExerciseCard(
-                title = "Note Accuracy",
+                title = "Find the Note",
                 subtitle = best?.let { "Best: ${it.score} / ${it.maxScore}" }
                     ?: "Land the note. First stable pitch counts.",
                 enabled = true,
                 onClick = { gated { onStartNoteAccuracy(mode) } },
             )
             ExerciseCard(
-                title = "Sustain",
+                title = "Long Notes",
                 subtitle = when {
                     mode == "pizz" -> "Arco only — a plucked note dies before a hold means anything."
                     sustainBest != null -> "Best: ${sustainBest!!.score} / ${sustainBest!!.maxScore}"
@@ -298,7 +298,7 @@ fun HomeScreen(
             be.drakarah.intonation.game.ShiftLevel.entries.forEach { level ->
                 val levelBest by viewModel.shiftBests.getValue(level).collectAsStateWithLifecycle()
                 ExerciseCard(
-                    title = "Shift Trainer — ${level.shortLabel}",
+                    title = "Shifts — ${level.shortLabel}",
                     subtitle = when {
                         !canShift -> "Select at least two positions to shift between."
                         levelBest != null -> "Best: ${levelBest!!.score} / ${levelBest!!.maxScore}"

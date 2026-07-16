@@ -36,15 +36,15 @@ data class DailyFocus(
 )
 
 private val FOCUS_ROTATION = listOf(
-    DailyFocus("Note Accuracy · arco", "Land clean first notes with the bow.",
+    DailyFocus("Find the Note · arco", "Land clean first notes with the bow.",
         EXERCISE_NOTE_ACCURACY, "arco", null),
-    DailyFocus("Shift · one string", "Confident shifts along one string.",
+    DailyFocus("Shifts · one string", "Confident shifts along one string.",
         EXERCISE_SHIFT, "arco", ShiftLevel.INTERMEDIATE.id),
-    DailyFocus("Sustain · arco", "Steady bow, steady pitch.",
+    DailyFocus("Long Notes · arco", "Steady bow, steady pitch.",
         EXERCISE_SUSTAIN, "arco", null),
-    DailyFocus("Note Accuracy · pizz", "First landings, plucked.",
+    DailyFocus("Find the Note · pizz", "First landings, plucked.",
         EXERCISE_NOTE_ACCURACY, "pizz", null),
-    DailyFocus("Shift · across strings", "String crossings that land in tune.",
+    DailyFocus("Shifts · across strings", "String crossings that land in tune.",
         EXERCISE_SHIFT, "arco", ShiftLevel.ADVANCED.id),
     DailyFocus("Chords · arco", "Arpeggiate a triad, tone by tone.",
         EXERCISE_CHORDS, "arco", null),

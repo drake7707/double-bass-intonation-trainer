@@ -214,7 +214,7 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
         Spacer(Modifier.height(Spacing.ITEM_SPACING))
         when {
             result.timedOut -> Text(
-                "no note detected",
+                "No note heard",
                 style = MaterialTheme.typography.displaySmall,
                 color = color,
             )

@@ -245,7 +245,7 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
         Spacer(Modifier.height(Spacing.ITEM_SPACING))
         when {
             result.timedOut -> Text(
-                "no shift detected",
+                "No note heard",
                 style = MaterialTheme.typography.displaySmall,
                 color = color,
             )

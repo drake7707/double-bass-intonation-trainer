@@ -75,9 +75,9 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 private val exerciseTabs = listOf(
-    EXERCISE_NOTE_ACCURACY to "Accuracy",
-    EXERCISE_SUSTAIN to "Sustain",
-    EXERCISE_SHIFT to "Shift",
+    EXERCISE_NOTE_ACCURACY to "Find the Note",
+    EXERCISE_SUSTAIN to "Long Notes",
+    EXERCISE_SHIFT to "Shifts",
     EXERCISE_CHORDS to "Chords",
 )
 

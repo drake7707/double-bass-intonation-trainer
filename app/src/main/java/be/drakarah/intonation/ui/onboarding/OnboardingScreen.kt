@@ -34,11 +34,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import be.drakarah.intonation.IntonationApplication
+import be.drakarah.intonation.R
 import be.drakarah.intonation.game.PlayerLevel
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.settings.AppSettings
@@ -69,19 +71,17 @@ fun OnboardingScreen(
     if (showSkipWarning) {
         AlertDialog(
             onDismissRequest = { showSkipWarning = false },
-            title = { Text("Skip the set-up?") },
-            text = {
-                Text(
-                    "Without the two-minute set-up the app hasn't learned how your bass sounds, " +
-                        "and scores can be unreliable.\n\nYou can always run it later from " +
-                        "Settings → Full setup."
-                )
-            },
+            title = { Text(stringResource(R.string.wizard_skip_title)) },
+            text = { Text(stringResource(R.string.wizard_skip_body)) },
             confirmButton = {
-                TextButton(onClick = { showSkipWarning = false; onSkip() }) { Text("Skip anyway") }
+                TextButton(onClick = { showSkipWarning = false; onSkip() }) {
+                    Text(stringResource(R.string.wizard_skip_anyway))
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showSkipWarning = false }) { Text("Cancel") }
+                TextButton(onClick = { showSkipWarning = false }) {
+                    Text(stringResource(R.string.wizard_cancel))
+                }
             },
         )
     }
@@ -97,7 +97,7 @@ fun OnboardingScreen(
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
         if (step > 0) {
             Text(
-                "$step of $lastStep",
+                stringResource(R.string.wizard_step_counter, step, lastStep),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -107,99 +107,93 @@ fun OnboardingScreen(
         when (step) {
             0 -> WelcomeStep(onNext = { step = 1 })
             1 -> QuestionStep(
-                title = "How do you name your notes?",
-                explainer = "Whatever your teacher uses — every note in the app is written this way.",
+                title = stringResource(R.string.wizard_notes_title),
+                explainer = stringResource(R.string.wizard_notes_explainer),
             ) {
                 ChoiceCard(
-                    title = "Do Ré Mi",
-                    subtitle = "Sol · La · Si — solfège names",
+                    title = stringResource(R.string.wizard_notes_solfege_title),
+                    subtitle = stringResource(R.string.wizard_notes_solfege_sub),
                     selected = settings.noteNameStyle == NoteNameStyle.SOLFEGE,
                     onClick = { scope.launch { repo.setNoteNameStyle(NoteNameStyle.SOLFEGE) } },
                 )
                 ChoiceCard(
-                    title = "C D E",
-                    subtitle = "G · A · B — letter names",
+                    title = stringResource(R.string.wizard_notes_letters_title),
+                    subtitle = stringResource(R.string.wizard_notes_letters_sub),
                     selected = settings.noteNameStyle == NoteNameStyle.LETTERS,
                     onClick = { scope.launch { repo.setNoteNameStyle(NoteNameStyle.LETTERS) } },
                 )
             }
             2 -> QuestionStep(
-                title = "How much thinking time do you want?",
-                explainer = "Time to read the note and place your hand before the timer runs out. " +
-                    "Scoring is equally fair at every pace.",
+                title = stringResource(R.string.wizard_pace_title),
+                explainer = stringResource(R.string.wizard_pace_explainer),
             ) {
                 PlayerLevel.entries.forEach { level ->
                     ChoiceCard(
                         title = level.displayLabel,
-                        subtitle = "${level.promptTimeoutMs / 1000} seconds to find each note",
+                        subtitle = stringResource(
+                            R.string.wizard_pace_seconds, (level.promptTimeoutMs / 1000).toInt()
+                        ),
                         selected = settings.playerLevel == level,
                         onClick = { scope.launch { repo.setPlayerLevel(level) } },
                     )
                 }
             }
             3 -> QuestionStep(
-                title = "How long should one round be?",
-                explainer = "You can always change this in Settings.",
+                title = stringResource(R.string.wizard_length_title),
+                explainer = stringResource(R.string.wizard_length_explainer),
             ) {
                 ChoiceCard(
-                    title = "5 notes",
-                    subtitle = "Short — about a minute",
+                    title = stringResource(R.string.wizard_length_notes, 5),
+                    subtitle = stringResource(R.string.wizard_length_short_sub),
                     selected = settings.roundLength == 5,
                     onClick = { scope.launch { repo.setRoundLength(5) } },
                 )
                 ChoiceCard(
-                    title = "10 notes",
-                    subtitle = "The standard round",
+                    title = stringResource(R.string.wizard_length_notes, 10),
+                    subtitle = stringResource(R.string.wizard_length_standard_sub),
                     selected = settings.roundLength == 10,
                     onClick = { scope.launch { repo.setRoundLength(10) } },
                 )
                 ChoiceCard(
-                    title = "20 notes",
-                    subtitle = "A long practice round",
+                    title = stringResource(R.string.wizard_length_notes, 20),
+                    subtitle = stringResource(R.string.wizard_length_long_sub),
                     selected = settings.roundLength == 20,
                     onClick = { scope.launch { repo.setRoundLength(20) } },
                 )
             }
             4 -> QuestionStep(
-                title = "How should the app talk to you?",
-                explainer = "Both say the same thing — one in words, one in numbers.",
+                title = stringResource(R.string.wizard_style_title),
+                explainer = stringResource(R.string.wizard_style_explainer),
             ) {
                 ChoiceCard(
-                    title = "Plain language",
-                    subtitle = "\"Close — a bit sharp\"",
+                    title = stringResource(R.string.wizard_style_plain_title),
+                    subtitle = stringResource(R.string.wizard_style_plain_sub),
                     selected = !settings.expertMode,
                     onClick = { scope.launch { repo.setExpertMode(false) } },
                 )
                 ChoiceCard(
-                    title = "Show the numbers",
-                    subtitle = "\"+12.3 cents\" — for advanced players and the curious",
+                    title = stringResource(R.string.wizard_style_numbers_title),
+                    subtitle = stringResource(R.string.wizard_style_numbers_sub),
                     selected = settings.expertMode,
                     onClick = { scope.launch { repo.setExpertMode(true) } },
                 )
             }
             5 -> QuestionStep(
-                title = "One honest note",
+                title = stringResource(R.string.wizard_beta_title),
                 explainer = "",
             ) {
                 Text(
-                    "Double Bass Coach is new, and so far it has been tested on a small number " +
-                        "of phones and basses. It might not hear your setup perfectly yet.\n\n" +
-                        "If a note isn't picked up or a score seems wrong, you can record a " +
-                        "practice report and email it to the developer — that's exactly how the " +
-                        "app gets better. You'll find it under Settings → Help improve the app.",
+                    stringResource(R.string.wizard_beta_body),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                 )
             }
             lastStep -> QuestionStep(
-                title = "Last thing — let the app hear your bass",
+                title = stringResource(R.string.wizard_setup_title),
                 explainer = "",
             ) {
                 Text(
-                    "Every phone microphone hears a double bass differently. The set-up listens " +
-                        "to your room and a few notes you play, so your notes are scored " +
-                        "correctly. It takes about two minutes, once.\n\n" +
-                        "Everything you chose here can be changed later in Settings.",
+                    stringResource(R.string.wizard_setup_body),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                 )
@@ -210,21 +204,21 @@ fun OnboardingScreen(
 
         if (step in 1 until lastStep) {
             Button(onClick = { step += 1 }, modifier = Modifier.fillMaxWidth()) {
-                Text("Next", modifier = Modifier.padding(4.dp))
+                Text(stringResource(R.string.wizard_next), modifier = Modifier.padding(4.dp))
             }
         }
         if (step == lastStep) {
             Button(onClick = onStartCalibration, modifier = Modifier.fillMaxWidth()) {
-                Text("Set up now (2 minutes)", modifier = Modifier.padding(4.dp))
+                Text(stringResource(R.string.wizard_setup_now), modifier = Modifier.padding(4.dp))
             }
             Spacer(Modifier.height(Spacing.FINE_SPACING))
             OutlinedButton(
                 onClick = { showSkipWarning = true },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Later") }
+            ) { Text(stringResource(R.string.wizard_later)) }
         }
         if (step > 0) {
-            TextButton(onClick = { step -= 1 }) { Text("Back") }
+            TextButton(onClick = { step -= 1 }) { Text(stringResource(R.string.wizard_back)) }
         }
         Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
     }
@@ -240,22 +234,21 @@ private fun WelcomeStep(onNext: () -> Unit) {
     )
     Spacer(Modifier.height(Spacing.SECTION_BREAK))
     Text(
-        "Double Bass Coach",
+        stringResource(R.string.app_name),
         style = MaterialTheme.typography.headlineLarge,
         fontWeight = FontWeight.Bold,
         textAlign = TextAlign.Center,
     )
     Spacer(Modifier.height(Spacing.ITEM_SPACING))
     Text(
-        "Your coach for playing in tune — short games, real scores, and feedback that " +
-            "actually helps.\n\nA few quick questions to set things up for you.",
+        stringResource(R.string.wizard_welcome_body),
         style = MaterialTheme.typography.titleLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
     )
     Spacer(Modifier.height(Spacing.SECTION_BREAK * 1.5f))
     Button(onClick = onNext, modifier = Modifier.fillMaxWidth()) {
-        Text("Let's go", modifier = Modifier.padding(4.dp))
+        Text(stringResource(R.string.wizard_lets_go), modifier = Modifier.padding(4.dp))
     }
 }
 

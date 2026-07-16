@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- First-run wizard (ui/onboarding/). One question per screen; keep answers short and warm. -->
+<resources>
+
+    <!-- %1$d = current step, %2$d = last step -->
+    <string name="wizard_step_counter">%1$d of %2$d</string>
+
+    <string name="wizard_skip_title">Skip the set-up?</string>
+    <string name="wizard_skip_body">Without the two-minute set-up the app hasn\'t learned how your bass sounds, and scores can be unreliable.\n\nYou can always run it later from Settings → Full setup.</string>
+    <string name="wizard_skip_anyway">Skip anyway</string>
+    <string name="wizard_cancel">Cancel</string>
+
+    <string name="wizard_welcome_body">Your coach for playing in tune — short games, real scores, and feedback that actually helps.\n\nA few quick questions to set things up for you.</string>
+    <string name="wizard_lets_go">Let\'s go</string>
+    <string name="wizard_next">Next</string>
+    <string name="wizard_back">Back</string>
+    <string name="wizard_later">Later</string>
+    <string name="wizard_setup_now">Set up now (2 minutes)</string>
+
+    <!-- Q1: note names. The note names themselves (Do Ré Mi / C D E) are musical notation and
+         stay as they are in every language. -->
+    <string name="wizard_notes_title">How do you name your notes?</string>
+    <string name="wizard_notes_explainer">Whatever your teacher uses — every note in the app is written this way.</string>
+    <string name="wizard_notes_solfege_title">Do Ré Mi</string>
+    <string name="wizard_notes_solfege_sub">Sol · La · Si — solfège names</string>
+    <string name="wizard_notes_letters_title">C D E</string>
+    <string name="wizard_notes_letters_sub">G · A · B — letter names</string>
+
+    <!-- Q2: pace -->
+    <string name="wizard_pace_title">How much thinking time do you want?</string>
+    <string name="wizard_pace_explainer">Time to read the note and place your hand before the timer runs out. Scoring is equally fair at every pace.</string>
+    <!-- %1$d = seconds -->
+    <string name="wizard_pace_seconds">%1$d seconds to find each note</string>
+
+    <!-- Q3: round length -->
+    <string name="wizard_length_title">How long should one round be?</string>
+    <string name="wizard_length_explainer">You can always change this in Settings.</string>
+    <!-- %1$d = number of notes -->
+    <string name="wizard_length_notes">%1$d notes</string>
+    <string name="wizard_length_short_sub">Short — about a minute</string>
+    <string name="wizard_length_standard_sub">The standard round</string>
+    <string name="wizard_length_long_sub">A long practice round</string>
+
+    <!-- Q4: plain language vs numbers -->
+    <string name="wizard_style_title">How should the app talk to you?</string>
+    <string name="wizard_style_explainer">Both say the same thing — one in words, one in numbers.</string>
+    <string name="wizard_style_plain_title">Plain language</string>
+    <string name="wizard_style_plain_sub">\"Close — a bit sharp\"</string>
+    <string name="wizard_style_numbers_title">Show the numbers</string>
+    <string name="wizard_style_numbers_sub">\"+12.3 cents\" — for advanced players and the curious</string>
+
+    <!-- Beta note -->
+    <string name="wizard_beta_title">One honest note</string>
+    <string name="wizard_beta_body">Double Bass Coach is new, and so far it has been tested on a small number of phones and basses. It might not hear your setup perfectly yet.\n\nIf a note isn\'t picked up or a score seems wrong, you can record a practice report and email it to the developer — that\'s exactly how the app gets better. You\'ll find it under Settings → Help improve the app.</string>
+
+    <!-- Full-setup nudge -->
+    <string name="wizard_setup_title">Last thing — let the app hear your bass</string>
+    <string name="wizard_setup_body">Every phone microphone hears a double bass differently. The set-up listens to your room and a few notes you play, so your notes are scored correctly. It takes about two minutes, once.\n\nEverything you chose here can be changed later in Settings.</string>
+
+</resources>

@@ -26,28 +26,22 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** One-tap suggested session; rotates deterministically with the calendar day. */
+/** One-tap suggested session; rotates deterministically with the calendar day.
+ * Plain data — the title/subtitle for each rotation entry live in string resources,
+ * mapped in HomeScreen (focusTitle/focusSubtitle). */
 data class DailyFocus(
-    val title: String,
-    val subtitle: String,
     val exerciseType: String,
     val mode: String,
     val style: String?,
 )
 
 private val FOCUS_ROTATION = listOf(
-    DailyFocus("Find the Note · arco", "Land clean first notes with the bow.",
-        EXERCISE_NOTE_ACCURACY, "arco", null),
-    DailyFocus("Shifts · one string", "Confident shifts along one string.",
-        EXERCISE_SHIFT, "arco", ShiftLevel.INTERMEDIATE.id),
-    DailyFocus("Long Notes · arco", "Steady bow, steady pitch.",
-        EXERCISE_SUSTAIN, "arco", null),
-    DailyFocus("Find the Note · pizz", "First landings, plucked.",
-        EXERCISE_NOTE_ACCURACY, "pizz", null),
-    DailyFocus("Shifts · across strings", "String crossings that land in tune.",
-        EXERCISE_SHIFT, "arco", ShiftLevel.ADVANCED.id),
-    DailyFocus("Chords · arco", "Arpeggiate a triad, tone by tone.",
-        EXERCISE_CHORDS, "arco", null),
+    DailyFocus(EXERCISE_NOTE_ACCURACY, "arco", null),
+    DailyFocus(EXERCISE_SHIFT, "arco", ShiftLevel.INTERMEDIATE.id),
+    DailyFocus(EXERCISE_SUSTAIN, "arco", null),
+    DailyFocus(EXERCISE_NOTE_ACCURACY, "pizz", null),
+    DailyFocus(EXERCISE_SHIFT, "arco", ShiftLevel.ADVANCED.id),
+    DailyFocus(EXERCISE_CHORDS, "arco", null),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)

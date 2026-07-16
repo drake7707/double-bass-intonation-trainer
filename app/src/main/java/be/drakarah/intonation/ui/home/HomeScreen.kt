@@ -37,9 +37,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.R
 import be.drakarah.intonation.game.SELECTABLE_POSITIONS
 import be.drakarah.intonation.ui.common.displayLabel
 import be.drakarah.intonation.ui.common.displayShortLabel
@@ -75,18 +78,12 @@ fun HomeScreen(
     pendingStart?.let { start ->
         AlertDialog(
             onDismissRequest = { pendingStart = null },
-            title = { Text("Ready to play?") },
+            title = { Text(stringResource(R.string.home_gate_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
-                    if (needsFullCalibration) Text(
-                        "• The app hasn't learned your bass yet — run the two-minute Full setup once, or scores won't mean much.",
-                    )
-                    if (needsTuneReminder) Text(
-                        "• You haven't tuned in a while — an out-of-tune bass makes every score meaningless.",
-                    )
-                    if (needsCalibration) Text(
-                        "• Your room hasn't been checked recently — background noise might get in the way.",
-                    )
+                    if (needsFullCalibration) Text(stringResource(R.string.home_gate_full_setup))
+                    if (needsTuneReminder) Text(stringResource(R.string.home_gate_tune))
+                    if (needsCalibration) Text(stringResource(R.string.home_gate_room))
                 }
             },
             confirmButton = {
@@ -94,20 +91,20 @@ fun HomeScreen(
                     if (needsFullCalibration) TextButton(onClick = {
                         pendingStart = null
                         onOpenSettings() // Wizard is linked from settings
-                    }) { Text("Full setup first (2 minutes)") }
+                    }) { Text(stringResource(R.string.home_gate_full_setup_btn)) }
                     if (needsTuneReminder) TextButton(onClick = {
                         pendingStart = null
                         onOpenTuneUp()
-                    }) { Text("Tune up first") }
+                    }) { Text(stringResource(R.string.home_gate_tune_btn)) }
                     if (needsCalibration) TextButton(onClick = {
                         pendingStart = null
                         onOpenCalibrate()
-                    }) { Text("Room check first") }
+                    }) { Text(stringResource(R.string.home_gate_room_btn)) }
                     TextButton(onClick = {
                         viewModel.suppressReminders()
                         pendingStart = null
                         start()
-                    }) { Text("Start anyway") }
+                    }) { Text(stringResource(R.string.home_gate_start_anyway)) }
                 }
             },
         )
@@ -137,21 +134,22 @@ fun HomeScreen(
             ) {
                 Column {
                     Text(
-                        "Double Bass\nCoach",
+                        stringResource(R.string.home_title_two_line),
                         style = MaterialTheme.typography.headlineMedium,
                     )
                     if (streak > 0) {
+                        val streakText = pluralStringResource(R.plurals.home_streak, streak, streak)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING),
                         ) {
                             Icon(
                                 Icons.Filled.LocalFireDepartment,
-                                contentDescription = if (streak == 1) "1 day streak" else "$streak day streak",
+                                contentDescription = streakText,
                                 tint = MaterialTheme.colorScheme.primary,
                             )
                             Text(
-                                if (streak == 1) "1 day streak" else "$streak day streak",
+                                streakText,
                                 style = MaterialTheme.typography.titleMedium,
                             )
                         }
@@ -159,10 +157,10 @@ fun HomeScreen(
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING)) {
                     IconButton(onClick = onOpenProgress) {
-                        Icon(Icons.Filled.BarChart, contentDescription = "Progress")
+                        Icon(Icons.Filled.BarChart, contentDescription = stringResource(R.string.home_cd_progress))
                     }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                        Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.home_cd_settings))
                     }
                 }
             }
@@ -177,11 +175,13 @@ fun HomeScreen(
                 be.drakarah.intonation.ui.chords.EXERCISE_CHORDS -> !canPlayChords
                 else -> false
             }
-            val focusDisabledReason = when (focus.exerciseType) {
-                be.drakarah.intonation.ui.shift.EXERCISE_SHIFT ->
-                    "Select at least two positions below to shift between."
-                else -> "Select positions below that can form a full chord."
-            }
+            val focusDisabledReason = stringResource(
+                when (focus.exerciseType) {
+                    be.drakarah.intonation.ui.shift.EXERCISE_SHIFT ->
+                        R.string.home_focus_need_two_positions
+                    else -> R.string.home_focus_need_chord_positions
+                }
+            )
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -205,21 +205,25 @@ fun HomeScreen(
             ) {
                 Column(Modifier.padding(Spacing.CARD_PADDING)) {
                     Text(
-                        "Today's focus",
+                        stringResource(R.string.home_todays_focus),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                     Text(
-                        focus.title,
+                        focusTitle(focus),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                     Text(
                         when {
                             focusDisabled -> focusDisabledReason
-                            focusBest != null ->
-                                "${focus.subtitle}  ·  Best ${focusBest!!.score}/${focusBest!!.maxScore}"
-                            else -> focus.subtitle
+                            focusBest != null -> stringResource(
+                                R.string.home_focus_sub_with_best,
+                                focusSubtitle(focus),
+                                focusBest!!.score,
+                                focusBest!!.maxScore,
+                            )
+                            else -> focusSubtitle(focus)
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -227,21 +231,21 @@ fun HomeScreen(
                 }
             }
 
-            SectionHeader("Tuning & ear training")
+            SectionHeader(stringResource(R.string.home_section_tuning))
             ExerciseCard(
-                title = "Tune up",
-                subtitle = "Check your open strings before you play.",
+                title = stringResource(R.string.home_tune_up),
+                subtitle = stringResource(R.string.home_tune_up_sub),
                 enabled = true,
                 onClick = onOpenTuneUp,
             )
             ExerciseCard(
-                title = "Drone",
-                subtitle = "A steady tone to play along with by ear.",
+                title = stringResource(R.string.home_drone),
+                subtitle = stringResource(R.string.home_drone_sub),
                 enabled = true,
                 onClick = onOpenDrone,
             )
 
-            SectionHeader("Practice")
+            SectionHeader(stringResource(R.string.home_section_practice))
             // Arco/Pizz and positions only affect the scored games below — Tune up and
             // Drone ignore them — so they live under this header, not as a global control.
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -249,16 +253,16 @@ fun HomeScreen(
                     selected = mode == "arco",
                     onClick = { viewModel.setMode("arco") },
                     shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                ) { Text("Arco") }
+                ) { Text(stringResource(R.string.home_arco)) }
                 SegmentedButton(
                     selected = mode == "pizz",
                     onClick = { viewModel.setMode("pizz") },
                     shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                ) { Text("Pizz") }
+                ) { Text(stringResource(R.string.home_pizz)) }
             }
             Column {
                 Text(
-                    "Positions to practice (each combination has its own scores)",
+                    stringResource(R.string.home_positions_caption),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -278,18 +282,20 @@ fun HomeScreen(
                 }
             }
             ExerciseCard(
-                title = "Find the Note",
-                subtitle = best?.let { "Best: ${it.score} / ${it.maxScore}" }
-                    ?: "Play the note you see — land it right the first time.",
+                title = stringResource(R.string.home_find_note),
+                subtitle = best?.let { stringResource(R.string.home_best, it.score, it.maxScore) }
+                    ?: stringResource(R.string.home_find_note_sub),
                 enabled = true,
                 onClick = { gated { onStartNoteAccuracy(mode) } },
             )
             ExerciseCard(
-                title = "Long Notes",
+                title = stringResource(R.string.home_long_notes),
                 subtitle = when {
-                    mode == "pizz" -> "Bow only — a plucked note fades too fast to hold."
-                    sustainBest != null -> "Best: ${sustainBest!!.score} / ${sustainBest!!.maxScore}"
-                    else -> "Hold one note steady and in tune."
+                    mode == "pizz" -> stringResource(R.string.home_long_notes_pizz)
+                    sustainBest != null -> stringResource(
+                        R.string.home_best, sustainBest!!.score, sustainBest!!.maxScore
+                    )
+                    else -> stringResource(R.string.home_long_notes_sub)
                 },
                 enabled = mode == "arco",
                 onClick = { gated { onStartSustain(mode) } },
@@ -300,10 +306,12 @@ fun HomeScreen(
             be.drakarah.intonation.game.ShiftLevel.entries.forEach { level ->
                 val levelBest by viewModel.shiftBests.getValue(level).collectAsStateWithLifecycle()
                 ExerciseCard(
-                    title = "Shifts — ${level.displayShortLabel}",
+                    title = stringResource(R.string.home_shifts_title, level.displayShortLabel),
                     subtitle = when {
-                        !canShift -> "Select at least two positions to shift between."
-                        levelBest != null -> "Best: ${levelBest!!.score} / ${levelBest!!.maxScore}"
+                        !canShift -> stringResource(R.string.home_shifts_need_two)
+                        levelBest != null -> stringResource(
+                            R.string.home_best, levelBest!!.score, levelBest!!.maxScore
+                        )
                         else -> level.displayLabel
                     },
                     enabled = canShift,
@@ -311,26 +319,28 @@ fun HomeScreen(
                 )
             }
             ExerciseCard(
-                title = "Chords",
+                title = stringResource(R.string.home_chords),
                 subtitle = when {
-                    !canPlayChords -> "Select positions that can form a full chord."
-                    chordsBest != null -> "Best: ${chordsBest!!.score} / ${chordsBest!!.maxScore}"
-                    else -> "Play a chord one note at a time, bottom to top, in tune."
+                    !canPlayChords -> stringResource(R.string.home_chords_need_positions)
+                    chordsBest != null -> stringResource(
+                        R.string.home_best, chordsBest!!.score, chordsBest!!.maxScore
+                    )
+                    else -> stringResource(R.string.home_chords_sub)
                 },
                 enabled = canPlayChords,
                 onClick = { gated { onStartChords(mode) } },
             )
 
-            SectionHeader("Tools")
+            SectionHeader(stringResource(R.string.home_section_tools))
             ExerciseCard(
-                title = "Room check",
-                subtitle = "A quick listen to your room so your notes are picked up reliably.",
+                title = stringResource(R.string.home_room_check),
+                subtitle = stringResource(R.string.home_room_check_sub),
                 enabled = true,
                 onClick = onOpenCalibrate,
             )
             ExerciseCard(
-                title = "Pitch Analyzer",
-                subtitle = "Check what the app hears — useful if notes aren't being picked up.",
+                title = stringResource(R.string.home_pitch_analyzer),
+                subtitle = stringResource(R.string.home_pitch_analyzer_sub),
                 enabled = true,
                 onClick = onOpenDebug,
             )
@@ -338,6 +348,35 @@ fun HomeScreen(
         }
     }
 }
+
+/** Title/subtitle for a daily-focus rotation entry (HomeViewModel keeps only the data). */
+@Composable
+private fun focusTitle(focus: DailyFocus): String = stringResource(
+    when (focus.exerciseType) {
+        be.drakarah.intonation.ui.shift.EXERCISE_SHIFT ->
+            if (focus.style == be.drakarah.intonation.game.ShiftLevel.ADVANCED.id)
+                R.string.focus_shift_across_title
+            else R.string.focus_shift_one_string_title
+        be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN -> R.string.focus_sustain_title
+        be.drakarah.intonation.ui.chords.EXERCISE_CHORDS -> R.string.focus_chords_title
+        else -> if (focus.mode == "pizz") R.string.focus_note_pizz_title
+        else R.string.focus_note_arco_title
+    }
+)
+
+@Composable
+private fun focusSubtitle(focus: DailyFocus): String = stringResource(
+    when (focus.exerciseType) {
+        be.drakarah.intonation.ui.shift.EXERCISE_SHIFT ->
+            if (focus.style == be.drakarah.intonation.game.ShiftLevel.ADVANCED.id)
+                R.string.focus_shift_across_sub
+            else R.string.focus_shift_one_string_sub
+        be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN -> R.string.focus_sustain_sub
+        be.drakarah.intonation.ui.chords.EXERCISE_CHORDS -> R.string.focus_chords_sub
+        else -> if (focus.mode == "pizz") R.string.focus_note_pizz_sub
+        else R.string.focus_note_arco_sub
+    }
+)
 
 @Composable
 private fun SectionHeader(text: String) {

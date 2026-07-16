@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home screen (ui/home/). -->
+<resources>
+
+    <!-- The header keeps app_name's wording, split over two lines. Never "Bass Coach". -->
+    <string name="home_title_two_line">Double Bass\nCoach</string>
+
+    <plurals name="home_streak">
+        <item quantity="one">1 day streak</item>
+        <item quantity="other">%1$d day streak</item>
+    </plurals>
+
+    <string name="home_cd_progress">Progress</string>
+    <string name="home_cd_settings">Settings</string>
+
+    <!-- Pre-game "Ready to play?" gate -->
+    <string name="home_gate_title">Ready to play?</string>
+    <string name="home_gate_full_setup">• The app hasn\'t learned your bass yet — run the two-minute Full setup once, or scores won\'t mean much.</string>
+    <string name="home_gate_tune">• You haven\'t tuned in a while — an out-of-tune bass makes every score meaningless.</string>
+    <string name="home_gate_room">• Your room hasn\'t been checked recently — background noise might get in the way.</string>
+    <string name="home_gate_full_setup_btn">Full setup first (2 minutes)</string>
+    <string name="home_gate_tune_btn">Tune up first</string>
+    <string name="home_gate_room_btn">Room check first</string>
+    <string name="home_gate_start_anyway">Start anyway</string>
+
+    <!-- Today's focus card (rotation defined in HomeViewModel; arco/pizz stay untranslated) -->
+    <string name="home_todays_focus">Today\'s focus</string>
+    <string name="focus_note_arco_title">Find the Note · arco</string>
+    <string name="focus_note_arco_sub">Land clean first notes with the bow.</string>
+    <string name="focus_shift_one_string_title">Shifts · one string</string>
+    <string name="focus_shift_one_string_sub">Confident shifts along one string.</string>
+    <string name="focus_sustain_title">Long Notes · arco</string>
+    <string name="focus_sustain_sub">Steady bow, steady pitch.</string>
+    <string name="focus_note_pizz_title">Find the Note · pizz</string>
+    <string name="focus_note_pizz_sub">First landings, plucked.</string>
+    <string name="focus_shift_across_title">Shifts · across strings</string>
+    <string name="focus_shift_across_sub">String crossings that land in tune.</string>
+    <string name="focus_chords_title">Chords · arco</string>
+    <string name="focus_chords_sub">Arpeggiate a triad, tone by tone.</string>
+    <string name="home_focus_need_two_positions">Select at least two positions below to shift between.</string>
+    <string name="home_focus_need_chord_positions">Select positions below that can form a full chord.</string>
+    <!-- %1$s = focus subtitle, %2$d/%3$d = personal best score/max -->
+    <string name="home_focus_sub_with_best">%1$s  ·  Best %2$d/%3$d</string>
+
+    <!-- Section headers (rendered uppercase by the UI) -->
+    <string name="home_section_tuning">Tuning &amp; ear training</string>
+    <string name="home_section_practice">Practice</string>
+    <string name="home_section_tools">Tools</string>
+
+    <!-- Cards -->
+    <string name="home_tune_up">Tune up</string>
+    <string name="home_tune_up_sub">Check your open strings before you play.</string>
+    <string name="home_drone">Drone</string>
+    <string name="home_drone_sub">A steady tone to play along with by ear.</string>
+    <string name="home_arco">Arco</string>
+    <string name="home_pizz">Pizz</string>
+    <string name="home_positions_caption">Positions to practice (each combination has its own scores)</string>
+    <!-- %1$d = best score, %2$d = max -->
+    <string name="home_best">Best: %1$d / %2$d</string>
+    <string name="home_find_note">Find the Note</string>
+    <string name="home_find_note_sub">Play the note you see — land it right the first time.</string>
+    <string name="home_long_notes">Long Notes</string>
+    <string name="home_long_notes_sub">Hold one note steady and in tune.</string>
+    <string name="home_long_notes_pizz">Bow only — a plucked note fades too fast to hold.</string>
+    <!-- %1$s = shift level short label -->
+    <string name="home_shifts_title">Shifts — %1$s</string>
+    <string name="home_shifts_need_two">Select at least two positions to shift between.</string>
+    <string name="home_chords">Chords</string>
+    <string name="home_chords_sub">Play a chord one note at a time, bottom to top, in tune.</string>
+    <string name="home_chords_need_positions">Select positions that can form a full chord.</string>
+    <string name="home_room_check">Room check</string>
+    <string name="home_room_check_sub">A quick listen to your room so your notes are picked up reliably.</string>
+    <string name="home_pitch_analyzer">Pitch Analyzer</string>
+    <string name="home_pitch_analyzer_sub">Check what the app hears — useful if notes aren\'t being picked up.</string>
+
+</resources>

@@ -24,7 +24,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import be.drakarah.intonation.R
 import be.drakarah.intonation.ui.theme.Spacing
 
 /** Shown on a game's summary screen only when this round was traced (Settings → Debug →
@@ -38,7 +40,7 @@ fun TraceFeedbackPrompt(onSubmit: (rating: String, note: String) -> Unit) {
     var note by remember { mutableStateOf("") }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            "This round was recorded as a practice report — how did it go?",
+            stringResource(R.string.trace_prompt),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -55,7 +57,7 @@ fun TraceFeedbackPrompt(onSubmit: (rating: String, note: String) -> Unit) {
                         modifier = Modifier.size(ButtonDefaults.IconSize)
                     )
                     Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-                    Text("Went well")
+                    Text(stringResource(R.string.trace_went_well))
                 }
                 Spacer(Modifier.width(Spacing.FINE_SPACING))
                 OutlinedButton(
@@ -68,19 +70,19 @@ fun TraceFeedbackPrompt(onSubmit: (rating: String, note: String) -> Unit) {
                         modifier = Modifier.size(ButtonDefaults.IconSize)
                     )
                     Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-                    Text("Had issues")
+                    Text(stringResource(R.string.trace_had_issues))
                 }
             }
         } else {
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
-                label = { Text("What happened?") },
+                label = { Text(stringResource(R.string.trace_what_happened)) },
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(Spacing.FINE_SPACING))
             Button(onClick = { onSubmit("issues", note) }, modifier = Modifier.fillMaxWidth()) {
-                Text("Save note")
+                Text(stringResource(R.string.trace_save_note))
             }
         }
     }

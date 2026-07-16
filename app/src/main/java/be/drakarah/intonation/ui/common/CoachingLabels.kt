@@ -1,5 +1,8 @@
 package be.drakarah.intonation.ui.common
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import be.drakarah.intonation.R
 import be.drakarah.intonation.metrics.Bias
 import be.drakarah.intonation.metrics.BiasDirection
 import be.drakarah.intonation.metrics.Insight
@@ -10,67 +13,69 @@ import kotlin.math.roundToInt
 
 /**
  * All coaching prose in one place: the pure `metrics/` layer decides WHAT to say (enums, typed
- * insights); this file says it in words. Phase 5b of the UX overhaul moves these literals into
- * string resources for NL/FR — keeping them out of the domain is what makes that possible
- * without breaking `CoachingTest`/`RoundCoachTest`.
+ * insights); this file says it in words — via string resources (strings_common.xml), so every
+ * coaching line is translatable while `CoachingTest`/`RoundCoachTest` keep asserting enums.
  */
 
 val MasteryBand.label: String
-    get() = when (this) {
-        MasteryBand.LOCKED -> "Locked in"
-        MasteryBand.SOLID -> "Solid"
-        MasteryBand.DEVELOPING -> "Developing"
-    }
+    @Composable get() = stringResource(
+        when (this) {
+            MasteryBand.LOCKED -> R.string.coach_band_locked
+            MasteryBand.SOLID -> R.string.coach_band_solid
+            MasteryBand.DEVELOPING -> R.string.coach_band_developing
+        }
+    )
 
 /** Plain-language bias ("a bit flat"). The UI supplies the arrow icon. */
 val Bias.label: String
-    get() = when (direction) {
-        BiasDirection.CENTERED -> "centered"
-        BiasDirection.FLAT -> "a bit flat"
-        BiasDirection.SHARP -> "a bit sharp"
-    }
+    @Composable get() = stringResource(
+        when (direction) {
+            BiasDirection.CENTERED -> R.string.coach_bias_centered
+            BiasDirection.FLAT -> R.string.coach_bias_flat
+            BiasDirection.SHARP -> R.string.coach_bias_sharp
+        }
+    )
 
 /** Technical bias with the exact cents ("runs 22¢ flat"). */
 val Bias.detailedLabel: String
-    get() = when (direction) {
-        BiasDirection.CENTERED -> "centered"
-        BiasDirection.FLAT -> "runs ${cents.roundToInt()}¢ flat"
-        BiasDirection.SHARP -> "runs ${cents.roundToInt()}¢ sharp"
+    @Composable get() = when (direction) {
+        BiasDirection.CENTERED -> stringResource(R.string.coach_bias_centered)
+        BiasDirection.FLAT -> stringResource(R.string.coach_bias_flat_cents, cents.roundToInt())
+        BiasDirection.SHARP -> stringResource(R.string.coach_bias_sharp_cents, cents.roundToInt())
     }
 
 /** The Progress "watch this" line. Coaches in pitch terms, never hand geometry. */
+@Composable
 fun Insight.sentence(): String = when (this) {
-    is Insight.PositionBias ->
-        if (direction == BiasDirection.FLAT)
-            "Your $mode $positionShortLabel position lands a little flat — try aiming a touch higher."
-        else
-            "Your $mode $positionShortLabel position lands a little sharp — try aiming a touch lower."
-    Insight.Tightening -> "You're getting more in tune than last week — keep it going!"
-    is Insight.Anchor -> "Your $mode $positionShortLabel position is your anchor — nicely in tune."
+    is Insight.PositionBias -> stringResource(
+        if (direction == BiasDirection.FLAT) R.string.coach_insight_bias_flat
+        else R.string.coach_insight_bias_sharp,
+        mode, positionShortLabel,
+    )
+    Insight.Tightening -> stringResource(R.string.coach_insight_tightening)
+    is Insight.Anchor -> stringResource(R.string.coach_insight_anchor, mode, positionShortLabel)
 }
 
 /** The round-summary coach line (metrics/RoundCoach.kt picks the verdict). */
-fun RoundCoachVerdict.sentence(): String = when (this) {
-    RoundCoachVerdict.NOTHING_SCORED ->
-        "Tough round — no clean notes this time. Slow down and land them one at a time."
-    RoundCoachVerdict.LEAN_SHARP ->
-        "Good round — most notes leaned sharp. Try aiming a touch lower next time."
-    RoundCoachVerdict.LEAN_FLAT ->
-        "Good round — most notes leaned flat. Try aiming a touch higher next time."
-    RoundCoachVerdict.TIME_PRESSURE ->
-        "The notes you played were in tune — some just ran out of time. Take a breath before each one."
-    RoundCoachVerdict.LOCKED ->
-        "Locked in — your notes landed right in the center today."
-    RoundCoachVerdict.IMPROVED ->
-        "More in tune than last week — your practice is paying off."
-    RoundCoachVerdict.SOLID ->
-        "Solid round — your notes are sitting close to center."
-    RoundCoachVerdict.DEVELOPING ->
-        "Every round trains your ear a little — keep landing them."
-}
+@Composable
+fun RoundCoachVerdict.sentence(): String = stringResource(
+    when (this) {
+        RoundCoachVerdict.NOTHING_SCORED -> R.string.coach_round_nothing_scored
+        RoundCoachVerdict.LEAN_SHARP -> R.string.coach_round_lean_sharp
+        RoundCoachVerdict.LEAN_FLAT -> R.string.coach_round_lean_flat
+        RoundCoachVerdict.TIME_PRESSURE -> R.string.coach_round_time_pressure
+        RoundCoachVerdict.LOCKED -> R.string.coach_round_locked
+        RoundCoachVerdict.IMPROVED -> R.string.coach_round_improved
+        RoundCoachVerdict.SOLID -> R.string.coach_round_solid
+        RoundCoachVerdict.DEVELOPING -> R.string.coach_round_developing
+    }
+)
 
-fun SustainCoachVerdict.sentence(): String = when (this) {
-    SustainCoachVerdict.ALL_HELD -> "Every hold made it — lovely steady bowing."
-    SustainCoachVerdict.MOST_HELD -> "Good holding — a few notes slipped away early. Keep the bow moving evenly."
-    SustainCoachVerdict.FEW_HELD -> "Long notes are hard — slower, lighter bows help the note settle."
-}
+@Composable
+fun SustainCoachVerdict.sentence(): String = stringResource(
+    when (this) {
+        SustainCoachVerdict.ALL_HELD -> R.string.coach_sustain_all_held
+        SustainCoachVerdict.MOST_HELD -> R.string.coach_sustain_most_held
+        SustainCoachVerdict.FEW_HELD -> R.string.coach_sustain_few_held
+    }
+)

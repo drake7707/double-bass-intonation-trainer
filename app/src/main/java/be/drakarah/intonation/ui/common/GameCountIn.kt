@@ -5,8 +5,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import be.drakarah.intonation.R
 import be.drakarah.intonation.ui.theme.TextSizes
 
 /**
@@ -18,7 +20,7 @@ import be.drakarah.intonation.ui.theme.TextSizes
 fun GameCountIn(secsLeft: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            "Get ready",
+            stringResource(R.string.countin_get_ready),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -29,7 +31,7 @@ fun GameCountIn(secsLeft: Int) {
             color = MaterialTheme.colorScheme.primary,
         )
         Text(
-            "pick up your bass",
+            stringResource(R.string.countin_pick_up),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

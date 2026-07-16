@@ -20,8 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import be.drakarah.intonation.R
 
 /** Gate for microphone screens: requests RECORD_AUDIO, keeps the screen awake while shown,
  * and only renders [content] (with a signal that the mic is available) once granted. */
@@ -55,9 +57,14 @@ fun RequireMicPermission(content: @Composable () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("Intonation Trainer needs the microphone to hear your bass.")
+            Text(
+                stringResource(
+                    R.string.common_mic_rationale,
+                    stringResource(R.string.app_name),
+                )
+            )
             Button(onClick = { launcher.launch(Manifest.permission.RECORD_AUDIO) }) {
-                Text("Grant microphone access")
+                Text(stringResource(R.string.common_mic_grant))
             }
         }
     }

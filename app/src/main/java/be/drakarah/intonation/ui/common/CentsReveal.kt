@@ -6,8 +6,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import be.drakarah.intonation.R
 import be.drakarah.intonation.ui.theme.TextSizes
 import java.util.Locale
 
@@ -16,11 +18,14 @@ import java.util.Locale
  * act on; the exact cents appear only with technical details on). Direction language is pitch
  * ("sharp/flat"), never fingerboard geometry.
  */
-fun centsRevealWord(cents: Float, starCount: Int): String = when {
-    starCount == 3 -> "Spot on!"
-    starCount >= 1 -> if (cents > 0) "Close — a bit sharp" else "Close — a bit flat"
-    else -> if (cents > 0) "Too sharp" else "Too flat"
-}
+@Composable
+fun centsRevealWord(cents: Float, starCount: Int): String = stringResource(
+    when {
+        starCount == 3 -> R.string.reveal_spot_on
+        starCount >= 1 -> if (cents > 0) R.string.reveal_close_sharp else R.string.reveal_close_flat
+        else -> if (cents > 0) R.string.reveal_too_sharp else R.string.reveal_too_flat
+    }
+)
 
 /**
  * The reveal headline for a scored (right-note) attempt: big plain verdict, with the signed cents
@@ -39,7 +44,7 @@ fun CentsRevealHeadline(cents: Float, starCount: Int, color: Color) {
         )
         if (technical) {
             Text(
-                String.format(Locale.US, "%+.1f cents", cents),
+                stringResource(R.string.reveal_cents_value, String.format(Locale.US, "%+.1f", cents)),
                 fontSize = TextSizes.REVEAL_LABEL,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

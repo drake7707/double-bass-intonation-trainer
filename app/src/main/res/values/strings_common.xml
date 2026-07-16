@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared components + all coaching prose (ui/common/). One file per screen cluster; ids are
+     namespaced by component (coach_, reveal_, summary_, …). English is the base language;
+     values-nl / values-fr come in phase 6 after Sarah's copy review. -->
+<resources>
+
+    <!-- Coaching vocabulary (ui/common/CoachingLabels.kt — the domain picks enums, these say it) -->
+    <string name="coach_band_locked">Locked in</string>
+    <string name="coach_band_solid">Solid</string>
+    <string name="coach_band_developing">Developing</string>
+
+    <string name="coach_bias_centered">centered</string>
+    <string name="coach_bias_flat">a bit flat</string>
+    <string name="coach_bias_sharp">a bit sharp</string>
+    <!-- %1$d = rounded cents -->
+    <string name="coach_bias_flat_cents">runs %1$d¢ flat</string>
+    <string name="coach_bias_sharp_cents">runs %1$d¢ sharp</string>
+
+    <!-- Progress "watch this" line. %1$s = arco/pizz, %2$s = position short label ("1st") -->
+    <string name="coach_insight_bias_flat">Your %1$s %2$s position lands a little flat — try aiming a touch higher.</string>
+    <string name="coach_insight_bias_sharp">Your %1$s %2$s position lands a little sharp — try aiming a touch lower.</string>
+    <string name="coach_insight_tightening">You\'re getting more in tune than last week — keep it going!</string>
+    <string name="coach_insight_anchor">Your %1$s %2$s position is your anchor — nicely in tune.</string>
+
+    <!-- Round-summary coach line (metrics/RoundCoach.kt picks the verdict) -->
+    <string name="coach_round_nothing_scored">Tough round — no clean notes this time. Slow down and land them one at a time.</string>
+    <string name="coach_round_lean_sharp">Good round — most notes leaned sharp. Try aiming a touch lower next time.</string>
+    <string name="coach_round_lean_flat">Good round — most notes leaned flat. Try aiming a touch higher next time.</string>
+    <string name="coach_round_time_pressure">The notes you played were in tune — some just ran out of time. Take a breath before each one.</string>
+    <string name="coach_round_locked">Locked in — your notes landed right in the center today.</string>
+    <string name="coach_round_improved">More in tune than last week — your practice is paying off.</string>
+    <string name="coach_round_solid">Solid round — your notes are sitting close to center.</string>
+    <string name="coach_round_developing">Every round trains your ear a little — keep landing them.</string>
+
+    <string name="coach_sustain_all_held">Every hold made it — lovely steady bowing.</string>
+    <string name="coach_sustain_most_held">Good holding — a few notes slipped away early. Keep the bow moving evenly.</string>
+    <string name="coach_sustain_few_held">Long notes are hard — slower, lighter bows help the note settle.</string>
+
+    <!-- Reveal verdict for a scored note (ui/common/CentsReveal.kt) -->
+    <string name="reveal_spot_on">Spot on!</string>
+    <string name="reveal_close_sharp">Close — a bit sharp</string>
+    <string name="reveal_close_flat">Close — a bit flat</string>
+    <string name="reveal_too_sharp">Too sharp</string>
+    <string name="reveal_too_flat">Too flat</string>
+    <!-- %1$s = signed cents, pre-formatted ("+4.2") so translations can't break the number -->
+    <string name="reveal_cents_value">%1$s cents</string>
+
+    <!-- Drift warning during a round (ui/common/DriftBanner.kt); two lines, read from playing distance -->
+    <string name="drift_sharp">You\'re drifting sharp\naim a touch lower</string>
+    <string name="drift_flat">You\'re drifting flat\naim a touch higher</string>
+
+    <!-- Pre-round count-in (ui/common/GameCountIn.kt) -->
+    <string name="countin_get_ready">Get ready</string>
+    <string name="countin_pick_up">pick up your bass</string>
+
+    <!-- End-of-round summary shell (ui/common/RoundSummaryScaffold.kt) -->
+    <string name="summary_round_complete">Round complete</string>
+    <!-- Under the big score: "of 30" -->
+    <string name="summary_of_max">of %1$d</string>
+    <string name="summary_new_best_was">New personal best! (was %1$d)</string>
+    <string name="summary_first_round">First round on this setup — that\'s your best to beat.</string>
+    <!-- %1$d = personal best, %2$d = points short of it -->
+    <string name="summary_points_to_beat">Best: %1$d — %2$d points to beat</string>
+    <string name="summary_play_again">Let\'s go again</string>
+    <string name="summary_done">Done</string>
+
+    <!-- %1$s = achievement title (with its emoji prefix) -->
+    <string name="common_achievement_unlocked">%1$s unlocked!</string>
+
+    <!-- Round-vs-last-week line (ui/common/ImprovementLine.kt) -->
+    <!-- %1$s / %2$s = averages in cents, pre-formatted -->
+    <string name="improvement_technical">%1$s cents average — last week %2$s</string>
+    <string name="improvement_better">more in tune than last week</string>
+    <string name="improvement_worse">a little off from last week</string>
+    <string name="improvement_same">about the same as last week</string>
+    <string name="improvement_cd_improved">Improved</string>
+    <string name="improvement_cd_worse">Worse</string>
+
+    <!-- Trace-feedback prompt on traced rounds (ui/common/TraceFeedbackPrompt.kt) -->
+    <string name="trace_prompt">This round was recorded as a practice report — how did it go?</string>
+    <string name="trace_went_well">Went well</string>
+    <string name="trace_had_issues">Had issues</string>
+    <string name="trace_what_happened">What happened?</string>
+    <string name="trace_save_note">Save note</string>
+
+    <!-- Microphone gate (ui/common/RequireMicPermission.kt). %1$s = app name -->
+    <string name="common_mic_rationale">%1$s needs the microphone to hear your bass.</string>
+    <string name="common_mic_grant">Grant microphone access</string>
+
+</resources>

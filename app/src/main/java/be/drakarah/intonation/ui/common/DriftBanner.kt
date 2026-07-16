@@ -9,8 +9,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import be.drakarah.intonation.R
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
 
@@ -32,8 +34,7 @@ fun DriftBanner(driftCents: Float) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            if (driftCents > 0) "You're drifting sharp\naim a touch lower"
-            else "You're drifting flat\naim a touch higher",
+            stringResource(if (driftCents > 0) R.string.drift_sharp else R.string.drift_flat),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = ResultColors.close,

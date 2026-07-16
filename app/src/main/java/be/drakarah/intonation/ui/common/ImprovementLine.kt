@@ -14,7 +14,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import be.drakarah.intonation.R
 import be.drakarah.intonation.ui.theme.ResultColors
 import java.util.Locale
 
@@ -35,14 +37,14 @@ fun ImprovementLine(thisRoundAvgCents: Float?, lastWeekAvgCents: Float?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             when {
-                technical -> String.format(
-                    Locale.US,
-                    "%.1f cents average — last week %.1f",
-                    thisRoundAvgCents, lastWeekAvgCents
+                technical -> stringResource(
+                    R.string.improvement_technical,
+                    String.format(Locale.US, "%.1f", thisRoundAvgCents),
+                    String.format(Locale.US, "%.1f", lastWeekAvgCents),
                 )
-                improved -> "more in tune than last week"
-                worse -> "a little off from last week"
-                else -> "about the same as last week"
+                improved -> stringResource(R.string.improvement_better)
+                worse -> stringResource(R.string.improvement_worse)
+                else -> stringResource(R.string.improvement_same)
             },
             style = MaterialTheme.typography.titleMedium,
             color = if (improved) ResultColors.excellent
@@ -52,7 +54,9 @@ fun ImprovementLine(thisRoundAvgCents: Float?, lastWeekAvgCents: Float?) {
             Spacer(Modifier.width(4.dp))
             Icon(
                 imageVector = if (improved) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
-                contentDescription = if (improved) "Improved" else "Worse",
+                contentDescription = stringResource(
+                    if (improved) R.string.improvement_cd_improved else R.string.improvement_cd_worse
+                ),
                 modifier = Modifier.size(20.dp),
                 tint = if (improved) ResultColors.excellent else MaterialTheme.colorScheme.onSurfaceVariant
             )

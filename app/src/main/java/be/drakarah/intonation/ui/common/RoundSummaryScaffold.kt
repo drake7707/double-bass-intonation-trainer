@@ -12,8 +12,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import be.drakarah.intonation.R
 import be.drakarah.intonation.metrics.RoundOutcome
 import be.drakarah.intonation.ui.theme.Spacing
 import be.drakarah.intonation.ui.theme.TextSizes
@@ -43,7 +45,7 @@ fun RoundSummaryScaffold(
     footerExtras: @Composable ColumnScope.() -> Unit = {},
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Round complete", style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(R.string.summary_round_complete), style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(Spacing.CARD_PADDING))
         Text(
             "$totalScore",
@@ -52,7 +54,7 @@ fun RoundSummaryScaffold(
             color = MaterialTheme.colorScheme.primary,
         )
         Text(
-            "of $maxScore",
+            stringResource(R.string.summary_of_max, maxScore),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -69,17 +71,21 @@ fun RoundSummaryScaffold(
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             when {
                 o.isNewBest && o.previousBest != null -> Text(
-                    "New personal best! (was ${o.previousBest})",
+                    stringResource(R.string.summary_new_best_was, o.previousBest ?: 0),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 o.isNewBest -> Text(
-                    "First round on this setup — that's your best to beat.",
+                    stringResource(R.string.summary_first_round),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 else -> Text(
-                    "Best: ${o.previousBest} — ${(o.previousBest ?: 0) - totalScore} points to beat",
+                    stringResource(
+                        R.string.summary_points_to_beat,
+                        o.previousBest ?: 0,
+                        (o.previousBest ?: 0) - totalScore,
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -94,11 +100,11 @@ fun RoundSummaryScaffold(
         }
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
         Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) {
-            Text("Let's go again")
+            Text(stringResource(R.string.summary_play_again))
         }
         Spacer(Modifier.height(Spacing.FINE_SPACING))
         OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
-            Text("Done")
+            Text(stringResource(R.string.summary_done))
         }
     }
 }

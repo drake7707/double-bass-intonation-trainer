@@ -38,7 +38,7 @@ fun TraceFeedbackPrompt(onSubmit: (rating: String, note: String) -> Unit) {
     var note by remember { mutableStateOf("") }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            "Trace recorded — how did that round go?",
+            "This round was recorded as a practice report — how did it go?",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

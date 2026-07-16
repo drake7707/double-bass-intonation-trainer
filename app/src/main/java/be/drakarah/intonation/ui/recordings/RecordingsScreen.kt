@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.theme.Spacing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -197,7 +198,7 @@ fun RecordingsScreen(
         AlertDialog(
             onDismissRequest = { confirmDelete = null },
             title = { Text("Delete ${recording.baseName}?") },
-            text = { Text("Removes the audio and its detection log from the phone.") },
+            text = { Text("Removes this recording and its data from the phone.") },
             confirmButton = {
                 TextButton(onClick = {
                     if (playingBase == recording.baseName) stopPlayback()
@@ -219,9 +220,10 @@ fun RecordingsScreen(
             title = { Text("Send to developer?") },
             text = {
                 Text(
-                    "This zips ${recording.baseName} (the full microphone audio plus its detection " +
-                        "log) and opens your email app addressed to $FEEDBACK_EMAIL. It contains " +
-                        "everything the mic picked up while recording, not just your playing."
+                    "This packs ${recording.baseName} — the full microphone recording plus what " +
+                        "the app heard — and opens your email app addressed to $FEEDBACK_EMAIL. " +
+                        "It contains everything the microphone picked up while recording, " +
+                        "not just your playing."
                 )
             },
             confirmButton = {
@@ -244,10 +246,10 @@ fun RecordingsScreen(
                 .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
         ) {
             Spacer(Modifier.height(Spacing.SECTION_BREAK))
-            Text(if (onlyTraces) "Game traces" else "Recordings", style = MaterialTheme.typography.headlineMedium)
+            Text(if (onlyTraces) "Practice reports" else "Recordings", style = MaterialTheme.typography.headlineMedium)
             Text(
-                if (onlyTraces) "Full game or calibration traces for analysis."
-                else "Snippets and long captures. The envelope zips the audio plus its detection log to send.",
+                if (onlyTraces) "Recorded rounds. Tap the envelope to email one to the developer when something seemed wrong."
+                else "Clips saved from the Pitch Analyzer. Tap the envelope to email one to the developer.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -255,8 +257,8 @@ fun RecordingsScreen(
 
             if (recordings.isEmpty()) {
                 Text(
-                    if (onlyTraces) "No traces saved yet."
-                    else "Nothing recorded yet — use the buttons on the Pitch Analyzer screen.",
+                    if (onlyTraces) "No practice reports yet — play a round with recording on."
+                    else "Nothing recorded yet — use the save buttons on the Pitch Analyzer screen.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -287,12 +289,14 @@ fun RecordingsScreen(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
-                                configSummaries[recording.baseName]?.let { summary ->
-                                    Text(
-                                        summary,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
+                                if (LocalTechnicalDetails.current) {
+                                    configSummaries[recording.baseName]?.let { summary ->
+                                        Text(
+                                            summary,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
                                 }
                                 
                                 Row(

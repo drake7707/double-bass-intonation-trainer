@@ -1,5 +1,8 @@
 package be.drakarah.intonation.ui.about
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import be.drakarah.intonation.ui.theme.Spacing
 
+/** Published source code — the GPL requires this link to stay visible (user request, TESTING.md). */
+private const val SOURCE_URL = "https://github.com/drake7707/double-bass-intonation-trainer"
+
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
@@ -43,9 +49,9 @@ fun AboutScreen(onBack: () -> Unit) {
             Text("About", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(Spacing.FINE_SPACING))
             Text(
-                "Double bass intonation trainer — a deliberate-practice game, not a tuner. " +
-                    "It freezes the first stable pitch of every note so you train accurate " +
-                    "landings instead of correcting after the fact.",
+                "A practice coach for double bass — not a tuner. It listens for the first " +
+                    "note you land and scores that, so you learn to place the note right " +
+                    "instead of correcting it afterwards.",
                 style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(Modifier.height(Spacing.SECTION_BREAK))
@@ -58,6 +64,16 @@ fun AboutScreen(onBack: () -> Unit) {
                             "License v3.0 or later. You may use, study, share and modify it " +
                             "under the terms of that license.",
                         style = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(Modifier.height(Spacing.FINE_SPACING))
+                    Text("Source code", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        SOURCE_URL,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(SOURCE_URL)))
+                        },
                     )
                     Spacer(Modifier.height(Spacing.FINE_SPACING))
                     Text("Attribution", style = MaterialTheme.typography.titleMedium)

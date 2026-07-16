@@ -200,25 +200,11 @@ fun DebugPitchScreen(
                         Modifier.padding(Spacing.CARD_PADDING),
                         verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING),
                     ) {
-                        DiagnosticRow("raw", current?.frequencyHz?.let { hz ->
-                            String.format(Locale.US, "%.2f Hz", hz)
-                        } ?: "—")
-                        DiagnosticRow("smoothed", current?.smoothedHz?.takeIf { it > 0f }?.let {
-                            String.format(Locale.US, "%.2f Hz", it)
-                        } ?: "—")
-                        DiagnosticRow("accepted", current?.accepted?.toString() ?: "—")
-                        DiagnosticRow("noise", current?.noise?.let {
-                            String.format(Locale.US, "%.3f", it)
-                        } ?: "—")
-                        DiagnosticRow("harmonic energy", current?.harmonicEnergyRelative?.let {
-                            String.format(Locale.US, "%.2f", it)
-                        } ?: "—")
-                        Spacer(Modifier.height(Spacing.COMPONENT_SPACING))
                         val gate by viewModel.gateLevel.collectAsStateWithLifecycle()
                         val level = current?.energyLevel ?: 0f
                         Text(
-                            "level ${level.toInt()} / 100 · noise gate ${gate.toInt()}" +
-                                if (level < gate) "  (ignored as noise)" else "",
+                            "sound level ${level.toInt()} / 100" +
+                                if (level < gate) "  (too quiet — treated as background noise)" else "",
                             style = MaterialTheme.typography.labelSmall,
                             color = if (level < gate) MaterialTheme.colorScheme.onSurfaceVariant
                                     else ResultColors.excellent,
@@ -229,6 +215,34 @@ fun DebugPitchScreen(
                             color = if (level < gate) MaterialTheme.colorScheme.onSurfaceVariant
                                     else ResultColors.excellent,
                         )
+                        var showTech by remember { mutableStateOf(false) }
+                        TextButton(onClick = { showTech = !showTech }) {
+                            Text(if (showTech) "Hide technical details" else "Technical details")
+                        }
+                        if (showTech) {
+                            DiagnosticRow("raw", current?.frequencyHz?.let { hz ->
+                                String.format(Locale.US, "%.2f Hz", hz)
+                            } ?: "—")
+                            DiagnosticRow("smoothed", current?.smoothedHz?.takeIf { it > 0f }?.let {
+                                String.format(Locale.US, "%.2f Hz", it)
+                            } ?: "—")
+                            DiagnosticRow("accepted", current?.accepted?.toString() ?: "—")
+                            DiagnosticRow("noise", current?.noise?.let {
+                                String.format(Locale.US, "%.3f", it)
+                            } ?: "—")
+                            DiagnosticRow("harmonic energy", current?.harmonicEnergyRelative?.let {
+                                String.format(Locale.US, "%.2f", it)
+                            } ?: "—")
+                            DiagnosticRow("noise gate", "${gate.toInt()} / 100")
+                            with(viewModel.engineConfig) {
+                                Text(
+                                    "window $windowSize @ $sampleRate Hz, overlap $overlap, " +
+                                        "source $audioSource, sensitivity ${sensitivity.toInt()}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -286,21 +300,12 @@ fun DebugPitchScreen(
                     onClick = { sweepMode = true },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Note sweep")
-                }
-
-                with(viewModel.engineConfig) {
-                    Text(
-                        "window $windowSize @ $sampleRate Hz, overlap $overlap, " +
-                            "source $audioSource, sensitivity ${sensitivity.toInt()}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Text("Check every note")
                 }
 
                 val isLongCapture by viewModel.isLongCapture.collectAsStateWithLifecycle()
                 Button(onClick = viewModel::saveSnippet, modifier = Modifier.fillMaxWidth()) {
-                    Text("Save last 8 s (WAV + log)")
+                    Text("Save the last 8 seconds")
                 }
                 OutlinedButton(
                     onClick = {
@@ -317,8 +322,8 @@ fun DebugPitchScreen(
                     )
                     Spacer(Modifier.width(Spacing.FINE_SPACING))
                     Text(
-                        if (isLongCapture) "Stop & save long capture"
-                        else "Long capture (up to 2 min) — for test recordings",
+                        if (isLongCapture) "Stop and save recording"
+                        else "Record up to 2 minutes",
                     )
                 }
                 OutlinedButton(onClick = onOpenRecordings, modifier = Modifier.fillMaxWidth()) {

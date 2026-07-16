@@ -32,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.game.ACHIEVEMENTS
 import be.drakarah.intonation.game.AchievementDef
+import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.theme.Spacing
 
 @Composable
@@ -131,7 +132,8 @@ private fun AchievementCell(def: AchievementDef, isUnlocked: Boolean) {
             )
             Spacer(Modifier.height(Spacing.COMPONENT_SPACING))
             Text(
-                def.description,
+                if (LocalTechnicalDetails.current) def.technicalDescription ?: def.description
+                else def.description,
                 style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center,
                 maxLines = 3,

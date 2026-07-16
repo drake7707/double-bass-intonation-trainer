@@ -73,10 +73,11 @@
     <string name="shift_breakdown_landed">landed %1$s¢</string>
     <string name="shift_breakdown_full">start %1$s¢  ·  landed %2$s¢</string>
     <!-- Reveal badge: the shift movement itself was right, the starting note pushed the landing
-         off. Kept to two words — the reveal is too brief for a sentence (user feedback
-         2026-07-16); the round summary carries the explanation, marked with the same icon. -->
-    <string name="shift_great_shift">great shift</string>
-    <string name="shift_great_shift_explainer">Great shift = the move was the right size — it was the starting note that was off. Settle the start before GO.</string>
+         off. Kept short — the reveal is too brief for a sentence — and worded/colored as a
+         caution, not praise: the headline above it already praises the shift distance (user
+         feedback 2026-07-16, twice). The round summary explains it, marked with the same icon. -->
+    <string name="shift_check_start">check your start</string>
+    <string name="shift_check_start_explainer">Check your start = the shift was the right size — it was the starting note that pushed the landing off. Settle the start before GO.</string>
 
     <!-- Chords -->
     <string name="chords_arpeggio">arpeggio — one note at a time</string>

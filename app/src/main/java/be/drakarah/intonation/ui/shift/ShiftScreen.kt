@@ -15,9 +15,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -312,29 +312,31 @@ private fun ShiftBreakdown(result: ShiftAttemptUi) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
-    if (result.isGreatShiftBadStart) {
+    if (result.isStartPushedLandingOff) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                Icons.Default.ThumbUp,
+                Icons.Default.Flag,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.primary,
+                tint = ResultColors.close,
             )
             Spacer(Modifier.width(4.dp))
             Text(
-                stringResource(R.string.shift_great_shift),
+                stringResource(R.string.shift_check_start),
                 fontSize = TextSizes.REVEAL_LABEL,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                color = ResultColors.close,
             )
         }
     }
 }
 
 /** The shift movement was the right size but an off starting note pushed the landing off.
- * The reveal is too brief for a sentence (user feedback 2026-07-16), so it shows a two-word
- * badge with the thumbs-up icon; the round summary repeats the icon with the explanation. */
-private val ShiftAttemptUi.isGreatShiftBadStart: Boolean
+ * The reveal is too brief for a sentence, and praise-colored wording was counterintuitive when
+ * the real message is "the start was off" (user feedback 2026-07-16, both points) — so it's a
+ * short amber "check your start" badge; the round summary repeats the icon with the explanation.
+ * The reveal headline above it already praises the shift distance itself. */
+private val ShiftAttemptUi.isStartPushedLandingOff: Boolean
     get() {
         val landing = landingCents ?: return false
         val start = startCents ?: return false
@@ -369,19 +371,19 @@ private fun DoneContent(
         onPlayAgain = onPlayAgain,
         onExit = onExit,
         breakdown = {
-            // Explains the two-word "great shift" badge seen on reveals, with the same icon.
-            if (state.results.any { it.isGreatShiftBadStart }) {
+            // Explains the "check your start" badge seen on reveals, with the same icon.
+            if (state.results.any { it.isStartPushedLandingOff }) {
                 Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        Icons.Default.ThumbUp,
+                        Icons.Default.Flag,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = ResultColors.close,
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        stringResource(R.string.shift_great_shift_explainer),
+                        stringResource(R.string.shift_check_start_explainer),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

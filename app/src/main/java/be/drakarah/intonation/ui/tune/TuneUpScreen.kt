@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.music.BassTuning
+import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.common.rememberAppSettings
 import be.drakarah.intonation.ui.theme.ResultColors
@@ -139,23 +140,37 @@ fun TuneUpScreen(
                 Spacer(Modifier.height(Spacing.SECTION_BREAK))
 
                 val cents = state.cents
+                val technical = LocalTechnicalDetails.current
                 if (cents != null) {
                     val color = when {
                         abs(cents) <= 5f -> ResultColors.excellent
                         abs(cents) <= 15f -> ResultColors.close
                         else -> ResultColors.off
                     }
-                    Text(
-                        String.format(Locale.US, "%+.1f", cents),
-                        fontSize = TextSizes.SCORE_DISPLAY,
-                        fontWeight = FontWeight.Bold,
-                        color = color,
-                    )
-                    Text(
-                        "cents ${if (cents > 0) "sharp" else "flat"}",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = color,
-                    )
+                    if (technical) {
+                        Text(
+                            String.format(Locale.US, "%+.1f", cents),
+                            fontSize = TextSizes.SCORE_DISPLAY,
+                            fontWeight = FontWeight.Bold,
+                            color = color,
+                        )
+                        Text(
+                            "cents ${if (cents > 0) "sharp" else "flat"}",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = color,
+                        )
+                    } else {
+                        Text(
+                            when {
+                                abs(cents) <= 5f -> "in tune"
+                                abs(cents) <= 15f -> if (cents > 0) "a little sharp" else "a little flat"
+                                else -> if (cents > 0) "sharp" else "flat"
+                            },
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = color,
+                        )
+                    }
                     Spacer(Modifier.height(Spacing.ITEM_SPACING))
                     CentsNeedle(cents = cents)
                 } else {

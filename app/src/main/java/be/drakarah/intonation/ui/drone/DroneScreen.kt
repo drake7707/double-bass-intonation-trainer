@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -84,9 +85,10 @@ fun DroneScreen(
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
         Text("Drone", style = MaterialTheme.typography.headlineMedium)
         Text(
-            "Reference pitch for ear training — no scoring",
+            "A steady tone to play along with — listen and match it. Nothing is scored.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
         )
 
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
@@ -100,8 +102,9 @@ fun DroneScreen(
                     else MaterialTheme.colorScheme.onSurface,
         )
         Text(
-            "sounding at ${NoteSpec(state.soundingMidi).displayName(noteStyle)}" +
-                if (state.withFifth) " · with fifth" else "",
+            // Phone speakers can't play bass-register notes, so the tone sounds in a higher octave.
+            "you'll hear it as ${NoteSpec(state.soundingMidi).displayName(noteStyle)}" +
+                if (state.withFifth) " · with a fifth above" else "",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -147,7 +150,7 @@ fun DroneScreen(
         FilterChip(
             selected = state.withFifth,
             onClick = viewModel::toggleFifth,
-            label = { Text("Add fifth") },
+            label = { Text("Add a fifth — a second tone that makes tuning easier") },
         )
 
         Spacer(Modifier.height(Spacing.SECTION_BREAK))

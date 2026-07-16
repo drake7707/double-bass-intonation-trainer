@@ -28,16 +28,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -73,7 +76,7 @@ fun WizardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Full calibration") },
+                title = { Text("Full setup") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -98,8 +101,8 @@ fun WizardScreen(
                 when (val s = state) {
                     is WizardState.Intro -> {
                         Text(
-                            "Sets up pitch detection for this phone. First a quiet moment to measure " +
-                                    "the room, then two phases: BOWED, then PIZZ (plucked). " +
+                            "The app listens to a few notes to learn how your bass sounds on this " +
+                                    "phone. First a quiet moment, then bowed notes, then plucked. " +
                                     "Takes about two minutes.",
                             style = MaterialTheme.typography.headlineSmall,
                             textAlign = TextAlign.Center
@@ -266,7 +269,7 @@ fun WizardScreen(
                         )
                         Spacer(Modifier.height(Spacing.ITEM_SPACING))
                         Text(
-                            "Calibration failed",
+                            "Setup couldn't finish",
                             style = MaterialTheme.typography.headlineMedium,
                             color = ResultColors.off,
                             fontWeight = FontWeight.Bold
@@ -303,147 +306,109 @@ private fun SummaryContent(
     onBack: () -> Unit,
 ) {
     val r = s.result
+    var showDetails by remember { mutableStateOf(false) }
+    val roomOk = r.verdict != SeparationVerdict.OVERLAP
+    val allNotesOk = r.noteChecks.all { it.second } &&
+        r.pizzChecks.all { it.second == CalibrationAnalysis.PizzCheckStatus.OK }
+
+    // Friendly verdict first: one sentence + a simple heard/had-trouble list. The measurement
+    // numbers live in the "Technical details" expander below — available to anyone curious, and
+    // the thing to screenshot when sending feedback.
+    Text(
+        when {
+            !roomOk -> "The room was too noisy to finish."
+            allNotesOk -> "All set — every note was heard correctly."
+            else -> "Almost there — a few notes gave the app trouble."
+        },
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center,
+        color = when {
+            !roomOk -> ResultColors.off
+            allNotesOk -> ResultColors.excellent
+            else -> ResultColors.close
+        },
+    )
+    Spacer(Modifier.height(Spacing.ITEM_SPACING))
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.CARD_PADDING), verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Microphone", style = MaterialTheme.typography.bodyLarge)
-                Text(r.sourceLabel, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Room", style = MaterialTheme.typography.bodyLarge)
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        when (r.verdict) {
-                            SeparationVerdict.GOOD -> Icons.Default.CheckCircle
-                            SeparationVerdict.TIGHT -> Icons.Default.Warning
-                            SeparationVerdict.OVERLAP -> Icons.Default.Close
-                        },
-                        contentDescription = null,
-                        tint = when (r.verdict) {
-                            SeparationVerdict.GOOD -> ResultColors.excellent
-                            SeparationVerdict.TIGHT -> ResultColors.close
-                            SeparationVerdict.OVERLAP -> ResultColors.off
-                        },
-                        modifier = Modifier.size(24.dp),
-                    )
-                    Text(
-                        when (r.verdict) {
-                            SeparationVerdict.GOOD -> "clear of noise"
-                            SeparationVerdict.TIGHT -> "tight — soft notes may drop"
-                            SeparationVerdict.OVERLAP -> "too noisy to set a gate"
-                        },
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = when (r.verdict) {
-                            SeparationVerdict.GOOD -> ResultColors.excellent
-                            SeparationVerdict.TIGHT -> ResultColors.close
-                            SeparationVerdict.OVERLAP -> ResultColors.off
-                        },
-                    )
-                }
-            }
             r.noteChecks.forEach { (midi, ok) ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(NoteSpec(midi).displayName(noteStyle),
-                        style = MaterialTheme.typography.bodyLarge)
-                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            if (ok) Icons.Default.CheckCircle else Icons.Default.Warning,
-                            contentDescription = null,
-                            tint = if (ok) ResultColors.excellent else ResultColors.close,
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Text(
-                            if (ok) "detected" else "unreliable",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = if (ok) ResultColors.excellent else ResultColors.close,
-                        )
-                    }
-                }
-            }
-            if (r.pizzChecks.isNotEmpty()) {
-                Spacer(Modifier.height(Spacing.FINE_SPACING))
-                Text(
-                    if (r.pizzSettleMs > 0)
-                        "Pizz (plucked) — octave-settle ${r.pizzSettleMs} ms"
-                    else "Pizz (plucked) — no octave drift, no settle needed",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                SummaryCheckRow(
+                    name = "${NoteSpec(midi).displayName(noteStyle)} (bowed)",
+                    label = if (ok) "heard clearly" else "hard to hear",
+                    icon = if (ok) Icons.Default.CheckCircle else Icons.Default.Warning,
+                    tint = if (ok) ResultColors.excellent else ResultColors.close,
                 )
-                r.pizzChecks.forEach { (midi, status) ->
-                    val (label, icon, tint) = when (status) {
-                        CalibrationAnalysis.PizzCheckStatus.OK ->
-                            Triple("correct octave", Icons.Default.CheckCircle, ResultColors.excellent)
-                        CalibrationAnalysis.PizzCheckStatus.OCTAVE_DRIFT ->
-                            Triple("octave drift", Icons.Default.Warning, ResultColors.close)
-                        CalibrationAnalysis.PizzCheckStatus.NOT_DETECTED ->
-                            Triple("not detected", Icons.Default.Close, ResultColors.off)
-                        CalibrationAnalysis.PizzCheckStatus.OFF_PITCH ->
-                            Triple("off pitch", Icons.Default.Warning, ResultColors.close)
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("${NoteSpec(midi).displayName(noteStyle)} pizz",
-                            style = MaterialTheme.typography.bodyLarge)
-                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                icon,
-                                contentDescription = null,
-                                tint = tint,
-                                modifier = Modifier.size(24.dp),
-                            )
-                            Text(
-                                label,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = tint,
-                            )
-                        }
-                    }
-                }
             }
-            if (r.pizzChecks.isNotEmpty()) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Pizz lock timing", style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        "wait ${r.pizzAttackSkipMs} ms, hold ${r.pizzStabilityWindowMs} ms",
-                        style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold,
-                    )
+            r.pizzChecks.forEach { (midi, status) ->
+                val (label, icon, tint) = when (status) {
+                    CalibrationAnalysis.PizzCheckStatus.OK ->
+                        Triple("heard clearly", Icons.Default.CheckCircle, ResultColors.excellent)
+                    CalibrationAnalysis.PizzCheckStatus.OCTAVE_DRIFT ->
+                        Triple("wrong octave at first", Icons.Default.Warning, ResultColors.close)
+                    CalibrationAnalysis.PizzCheckStatus.NOT_DETECTED ->
+                        Triple("not heard", Icons.Default.Close, ResultColors.off)
+                    CalibrationAnalysis.PizzCheckStatus.OFF_PITCH ->
+                        Triple("off pitch", Icons.Default.Warning, ResultColors.close)
                 }
+                SummaryCheckRow(
+                    name = "${NoteSpec(midi).displayName(noteStyle)} (plucked)",
+                    label = label, icon = icon, tint = tint,
+                )
             }
             if (r.pizzUnreliable) {
                 Text(
-                    "Plucked notes still occasionally read an octave high on this phone. They'll mostly correct themselves, but if you see it in games, save a pizz snippet from the Pitch debug screen.",
+                    "Plucked notes can sometimes show the wrong octave on this phone. The app corrects most of them — if you notice it during games, send a practice report so it can be tuned.",
                     style = MaterialTheme.typography.bodySmall,
                     color = ResultColors.close,
-                    maxLines = 5,
-                    overflow = TextOverflow.Ellipsis
                 )
             }
             if (r.pizzTimingUnreliable) {
                 Text(
-                    "Plucked notes settle slowly on this phone — the lock waits as long as it can, but a pizz note scored a touch sharp can still slip through. It's saved as the best fit measured.",
+                    "Plucked notes take a moment to settle on this phone, so a pluck may occasionally score a touch sharp. The best measured fit was saved.",
                     style = MaterialTheme.typography.bodySmall,
                     color = ResultColors.close,
-                    maxLines = 5,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            if (r.thresholdsAdjusted) {
-                Text(
-                    "Octave handling was adjusted for this phone's microphone.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             if (r.highNoteUnreliable) {
                 Text(
-                    "High notes may occasionally read an octave low on this phone. If you see that in games, save a snippet from the Pitch debug screen.",
+                    "Very high notes may occasionally read too low on this phone. If you notice it during games, send a practice report.",
                     style = MaterialTheme.typography.bodySmall,
                     color = ResultColors.close,
-                    maxLines = 5,
-                    overflow = TextOverflow.Ellipsis
                 )
+            }
+        }
+    }
+
+    Spacer(Modifier.height(Spacing.FINE_SPACING))
+    TextButton(onClick = { showDetails = !showDetails }, modifier = Modifier.fillMaxWidth()) {
+        Text(if (showDetails) "Hide technical details" else "Technical details")
+    }
+    if (showDetails) {
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(Spacing.CARD_PADDING), verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
+                DetailRow("Microphone", r.sourceLabel)
+                DetailRow(
+                    "Room", when (r.verdict) {
+                        SeparationVerdict.GOOD -> "clear of noise"
+                        SeparationVerdict.TIGHT -> "tight — soft notes may drop"
+                        SeparationVerdict.OVERLAP -> "too noisy to set a gate"
+                    }
+                )
+                if (r.pizzChecks.isNotEmpty()) {
+                    DetailRow(
+                        "Pizz octave-settle",
+                        if (r.pizzSettleMs > 0) "${r.pizzSettleMs} ms" else "not needed",
+                    )
+                    DetailRow("Pizz lock timing", "wait ${r.pizzAttackSkipMs} ms, hold ${r.pizzStabilityWindowMs} ms")
+                }
+                if (r.thresholdsAdjusted) {
+                    Text(
+                        "Octave handling was adjusted for this phone's microphone.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
@@ -470,11 +435,37 @@ private fun SummaryContent(
     } else {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
             Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) {
-                Text("Save calibration", fontSize = 24.sp, modifier = Modifier.padding(8.dp))
+                Text("Save", fontSize = 24.sp, modifier = Modifier.padding(8.dp))
             }
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text("Discard")
             }
         }
+    }
+}
+
+/** One "note — verdict" row of the friendly summary list. */
+@Composable
+private fun SummaryCheckRow(
+    name: String,
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    tint: androidx.compose.ui.graphics.Color,
+) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(name, style = MaterialTheme.typography.bodyLarge)
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
+            Text(label, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = tint)
+        }
+    }
+}
+
+/** One label/value row of the technical-details expander. */
+@Composable
+private fun DetailRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
     }
 }

@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.calibration.SeparationVerdict
+import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
@@ -62,7 +63,7 @@ fun CalibrateScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Calibrate surroundings") },
+                    title = { Text("Room check") },
                     navigationIcon = {
                         IconButton(onClick = onDone) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -85,20 +86,20 @@ fun CalibrateScreen(
                 when (val s = state) {
                     CalibrateState.Idle -> {
                         Text(
-                            "Verifying your room's noise floor against your softest playing to ensure reliable pitch detection.",
+                            "A quick check that the app can hear your softest playing over the sounds of your room. Takes under a minute.",
                             style = MaterialTheme.typography.headlineSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
                         )
                         Spacer(Modifier.height(largeGap))
                         Text(
-                            "Step 1: Room noise",
+                            "Step 1: Stay quiet",
                             style = MaterialTheme.typography.headlineMedium,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "Don't play. Leave the room sounding as it normally does.",
+                            "Don't play. Let the app listen to the room as it normally sounds.",
                             style = MaterialTheme.typography.titleLarge,
                             textAlign = TextAlign.Center,
                         )
@@ -111,7 +112,7 @@ fun CalibrateScreen(
 
                     is CalibrateState.MeasuringNoise -> {
                         MeasurementLoadingState(
-                            label = "Step 1: room noise",
+                            label = "Step 1: stay quiet",
                             status = "listening…",
                             progress = s.progress,
                             icon = Icons.Default.Mic
@@ -216,12 +217,13 @@ private fun ResultContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING)
     ) {
+        val technical = LocalTechnicalDetails.current
         Text(
-            "Calibration Results",
+            "Results",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        
+
         Card(Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(Spacing.CARD_PADDING),
@@ -229,9 +231,9 @@ private fun ResultContent(
                 verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING)
             ) {
                 val (verdictLabel, verdictIcon, verdictColor) = when (s.verdict) {
-                    SeparationVerdict.GOOD -> Triple("Clear separation", Icons.Default.CheckCircle, ResultColors.excellent)
-                    SeparationVerdict.TIGHT -> Triple("Tight separation", Icons.Default.Warning, ResultColors.close)
-                    SeparationVerdict.OVERLAP -> Triple("No separation", Icons.Default.Close, ResultColors.off)
+                    SeparationVerdict.GOOD -> Triple("Your room is nice and quiet", Icons.Default.CheckCircle, ResultColors.excellent)
+                    SeparationVerdict.TIGHT -> Triple("Workable, but a bit loud", Icons.Default.Warning, ResultColors.close)
+                    SeparationVerdict.OVERLAP -> Triple("Too noisy", Icons.Default.Close, ResultColors.off)
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -249,29 +251,31 @@ private fun ResultContent(
                         color = verdictColor,
                     )
                 }
-                
-                Text(
-                    String.format(
-                        Locale.US,
-                        "noise up to %.0f · soft playing from %.0f",
-                        s.noiseCeil, s.playingFloor,
-                    ),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                )
 
                 val explanation = when (s.verdict) {
-                    SeparationVerdict.GOOD -> String.format(Locale.US, "Gate set to %.0f — room noise is successfully ignored.", s.recommendedGate)
-                    SeparationVerdict.TIGHT -> String.format(Locale.US, "Gate set to %.0f, but room noise is high — very quiet notes may be missed.", s.recommendedGate)
-                    SeparationVerdict.OVERLAP -> "Your soft playing can't be told apart from the room's noise. Please practice somewhere quieter."
+                    SeparationVerdict.GOOD -> "The app can easily tell your playing from the room. You're all set."
+                    SeparationVerdict.TIGHT -> "Very soft notes might not register here. A quieter room works even better."
+                    SeparationVerdict.OVERLAP -> "The app can't tell your soft playing apart from the room's background noise. Try a quieter room."
                 }
-                
+
                 Text(
                     explanation,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                if (technical) {
+                    Text(
+                        buildString {
+                            append(String.format(Locale.US, "noise up to %.0f · soft playing from %.0f", s.noiseCeil, s.playingFloor))
+                            s.recommendedGate?.let { append(String.format(Locale.US, " · gate %.0f", it)) }
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
         
@@ -286,7 +290,7 @@ private fun ResultContent(
             }
             s.recommendedGate != null -> {
                 Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) {
-                    Text("Use this gate", fontSize = 24.sp, modifier = Modifier.padding(8.dp))
+                    Text("Save", fontSize = 24.sp, modifier = Modifier.padding(8.dp))
                 }
                 OutlinedButton(onClick = viewModel::reset, modifier = Modifier.fillMaxWidth()) {
                     Text("Measure again")

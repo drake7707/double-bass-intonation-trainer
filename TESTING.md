@@ -884,3 +884,5 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 
 
 - Expand the onboarding with choice questions, 1 per screen like a wizard, that asks the user common settings, like their preference for solfege vs letters, the number of rounds per game, if they are an expert (and of course explaining what each setting does), etc. This eases them into the correct settings without being overwhelmed with the increasingly growing settings screen. The last one should be the nudge to do a full calibration and why it's necessary. This is just basic set up on first run. Also add a note that the app is in beta tested limited phones and double basses and explain the functionality of being able to record traces and send them as feedback for the app to be tweaked.
+
+- Add a github link to https://github.com/drake7707/double-bass-intonation-trainer in the about screen, this is the published source code required by the GPL license.

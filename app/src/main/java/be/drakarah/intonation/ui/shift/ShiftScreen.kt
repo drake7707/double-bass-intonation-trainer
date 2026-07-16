@@ -39,6 +39,7 @@ import be.drakarah.intonation.game.PromptSpec
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.DotInfo
+import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
@@ -132,7 +133,7 @@ fun ShiftScreen(
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     when (val phase = state.phase) {
-                        is ShiftPhase.CountIn -> CountIn(phase.secsLeft)
+                        is ShiftPhase.CountIn -> GameCountIn(phase.secsLeft)
                         is ShiftPhase.Start -> StartContent(state, phase.wrongNote)
                         ShiftPhase.Hold -> HoldContent(state)
                         ShiftPhase.Go -> GoContent(state)
@@ -323,28 +324,6 @@ private fun ShiftBreakdown(result: ShiftAttemptUi) {
             fontSize = TextSizes.REVEAL_SUBTEXT,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.primary,
-        )
-    }
-}
-
-@Composable
-private fun CountIn(secsLeft: Int) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            "Get ready",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            "$secsLeft",
-            fontSize = TextSizes.COUNTDOWN_NUMBER,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            "pick up your bass",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

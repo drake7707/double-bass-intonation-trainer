@@ -40,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.DotInfo
+import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
@@ -133,7 +134,7 @@ fun NoteAccuracyScreen(
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     when (val phase = state.phase) {
-                        is NoteAccuracyPhase.CountIn -> CountIn(phase.secsLeft)
+                        is NoteAccuracyPhase.CountIn -> GameCountIn(phase.secsLeft)
                         NoteAccuracyPhase.Listening -> ListeningPrompt(state)
                         is NoteAccuracyPhase.Reveal -> RevealResult(phase.result, state.noteStyle)
                         NoteAccuracyPhase.Done -> NoteAccuracySummary(
@@ -157,28 +158,6 @@ fun NoteAccuracyScreen(
 }
 
 
-
-@Composable
-private fun CountIn(secsLeft: Int) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            "Get ready",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            "$secsLeft",
-            fontSize = TextSizes.COUNTDOWN_NUMBER,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            "pick up your bass",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
 
 @Composable
 private fun ListeningPrompt(state: NoteAccuracyUiState) {

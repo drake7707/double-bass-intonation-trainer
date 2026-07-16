@@ -37,6 +37,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.game.SustainFocus
 import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.DotInfo
+import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.common.StarRating
@@ -108,7 +109,7 @@ fun SustainScreen(
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     when (val phase = state.phase) {
-                        is SustainPhase.CountIn -> CountIn(phase.secsLeft)
+                        is SustainPhase.CountIn -> GameCountIn(phase.secsLeft)
                         is SustainPhase.Play -> PlayContent(state, phase)
                         is SustainPhase.Reveal -> RevealContent(state, phase.result)
                         SustainPhase.Done -> DoneContent(
@@ -225,29 +226,6 @@ private fun InTuneBar(cents: Float?, inTune: Boolean) {
                 Spacer(Modifier.weight((1f - frac).coerceIn(0.001f, 0.999f)))
             }
         }
-    }
-}
-
-@Composable
-private fun CountIn(secsLeft: Int) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            "Get ready",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            "$secsLeft",
-            fontSize = TextSizes.COUNTDOWN_NUMBER,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            "pick up your bass",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
     }
 }
 

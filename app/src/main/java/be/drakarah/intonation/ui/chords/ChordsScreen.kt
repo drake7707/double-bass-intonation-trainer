@@ -43,6 +43,7 @@ import be.drakarah.intonation.game.isOpenString
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.DotInfo
+import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
@@ -136,7 +137,7 @@ fun ChordsScreen(
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     when (val phase = state.phase) {
-                        is ChordsPhase.CountIn -> CountIn(phase.secsLeft)
+                        is ChordsPhase.CountIn -> GameCountIn(phase.secsLeft)
                         is ChordsPhase.Playing -> PlayingContent(state, phase)
                         is ChordsPhase.Reveal -> RevealContent(state, phase.result)
                         ChordsPhase.Done -> DoneContent(
@@ -308,28 +309,6 @@ private fun ToneResult(tone: ToneUi, noteStyle: NoteNameStyle) {
             starCount = if (tone.scored) tone.starCount else 3,
             color = color,
             starSize = 24.dp
-        )
-    }
-}
-
-@Composable
-private fun CountIn(secsLeft: Int) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            "Get ready",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            "$secsLeft",
-            fontSize = TextSizes.COUNTDOWN_NUMBER,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            "pick up your bass",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

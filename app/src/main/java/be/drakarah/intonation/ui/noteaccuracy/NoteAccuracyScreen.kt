@@ -19,7 +19,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -38,14 +37,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
+import be.drakarah.intonation.ui.common.RoundSummaryScaffold
 import be.drakarah.intonation.ui.common.StarRating
-import be.drakarah.intonation.ui.common.TraceFeedbackPrompt
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
 import be.drakarah.intonation.ui.theme.TextSizes
@@ -259,93 +257,58 @@ private fun NoteAccuracySummary(
 ) {
     val scored = state.results.filter { it.cents != null && !it.wrongNote }
     val avgCents = scored.mapNotNull { it.cents }.map { kotlin.math.abs(it) }.average()
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Round complete", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(Spacing.CARD_PADDING))
-        Text(
-            "${state.totalScore}",
-            fontSize = TextSizes.SCORE_DISPLAY,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            "of ${state.maxScore}",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(Spacing.ITEM_SPACING))
-        if (scored.isNotEmpty()) {
-            Text(
-                String.format(Locale.US, "average %.1f cents off", avgCents),
-                fontSize = TextSizes.REVEAL_LABEL,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-            )
-            ImprovementLine(
-                thisRoundAvgCents = avgCents.toFloat(),
-                lastWeekAvgCents = state.outcome?.lastWeekAvgCents,
-            )
+    RoundSummaryScaffold(
+        totalScore = state.totalScore,
+        maxScore = state.maxScore,
+        outcome = state.outcome,
+        showTraceFeedback = state.traceActive && !state.traceFeedbackGiven,
+        onTraceFeedback = onTraceFeedback,
+        onPlayAgain = onPlayAgain,
+        onExit = onExit,
+        breakdown = {
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
-            Text(
-                "cents off per note",
-                fontSize = TextSizes.REVEAL_SUBTEXT,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(4.dp))
-            NoteAccuracyCentsChart(state.results)
-        }
-        Text(
-            "${state.results.sumOf { it.starCount }} of ${state.roundLength * 3} stars",
-            fontSize = TextSizes.REVEAL_LABEL,
-        )
-        state.outcome?.let { outcome ->
-            Spacer(Modifier.height(Spacing.ITEM_SPACING))
-            when {
-                outcome.isNewBest && outcome.previousBest != null -> Text(
-                    "New personal best! (was ${outcome.previousBest})",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
+            if (scored.isNotEmpty()) {
+                Text(
+                    String.format(Locale.US, "average %.1f cents off", avgCents),
+                    fontSize = TextSizes.REVEAL_LABEL,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
                 )
-                outcome.isNewBest -> Text(
-                    "First round on this setup — that's your best to beat.",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                ImprovementLine(
+                    thisRoundAvgCents = avgCents.toFloat(),
+                    lastWeekAvgCents = state.outcome?.lastWeekAvgCents,
                 )
-                else -> Text(
-                    "Best: ${outcome.previousBest} — ${outcome.previousBest!! - state.totalScore} points to beat",
-                    style = MaterialTheme.typography.titleMedium,
+                Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                Text(
+                    "cents off per note",
+                    fontSize = TextSizes.REVEAL_SUBTEXT,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                Spacer(Modifier.height(4.dp))
+                NoteAccuracyCentsChart(state.results)
             }
-            AchievementUnlocks(outcome.newAchievements)
-        }
-        state.suggestedLevel?.let { suggested ->
-            val faster = suggested.ordinal > state.playerLevel.ordinal
-            Spacer(Modifier.height(Spacing.CARD_PADDING))
             Text(
-                if (faster) "You found every note with time to spare — that's progress!"
-                else "Several prompts ran out of time — more breathing room keeps it fun.",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                "${state.results.sumOf { it.starCount }} of ${state.roundLength * 3} stars",
+                fontSize = TextSizes.REVEAL_LABEL,
             )
-            OutlinedButton(onClick = onApplyLevel, modifier = Modifier.fillMaxWidth()) {
-                Text("Switch to ${suggested.label} pace")
+        },
+        footerExtras = {
+            state.suggestedLevel?.let { suggested ->
+                val faster = suggested.ordinal > state.playerLevel.ordinal
+                Spacer(Modifier.height(Spacing.CARD_PADDING))
+                Text(
+                    if (faster) "You found every note with time to spare — that's progress!"
+                    else "Several prompts ran out of time — more breathing room keeps it fun.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedButton(onClick = onApplyLevel, modifier = Modifier.fillMaxWidth()) {
+                    Text("Switch to ${suggested.label} pace")
+                }
             }
-        }
-        if (state.traceActive && !state.traceFeedbackGiven) {
-            Spacer(Modifier.height(Spacing.SECTION_BREAK))
-            TraceFeedbackPrompt(onSubmit = onTraceFeedback)
-        }
-        Spacer(Modifier.height(Spacing.SECTION_BREAK))
-        Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) {
-            Text("Let's go again")
-        }
-        Spacer(Modifier.height(Spacing.FINE_SPACING))
-        OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
-            Text("Done")
-        }
-    }
+        },
+    )
 }
 
 /**

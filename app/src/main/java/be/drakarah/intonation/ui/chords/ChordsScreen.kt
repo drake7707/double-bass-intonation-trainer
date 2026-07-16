@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -41,14 +40,13 @@ import be.drakarah.intonation.game.ChordSpec
 import be.drakarah.intonation.game.chordName
 import be.drakarah.intonation.game.isOpenString
 import be.drakarah.intonation.music.NoteNameStyle
-import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
+import be.drakarah.intonation.ui.common.RoundSummaryScaffold
 import be.drakarah.intonation.ui.common.StarRating
-import be.drakarah.intonation.ui.common.TraceFeedbackPrompt
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
 import be.drakarah.intonation.ui.theme.TextSizes
@@ -320,39 +318,15 @@ private fun DoneContent(
     onPlayAgain: () -> Unit,
     onTraceFeedback: (String, String) -> Unit,
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Round complete", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(Spacing.CARD_PADDING))
-        Text(
-            "${state.totalScore}",
-            fontSize = TextSizes.SCORE_DISPLAY,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            "of ${state.maxScore}",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        state.outcome?.let { outcome ->
-            Spacer(Modifier.height(Spacing.ITEM_SPACING))
-            when {
-                outcome.isNewBest && outcome.previousBest != null -> Text(
-                    "New personal best! (was ${outcome.previousBest})",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                outcome.isNewBest -> Text(
-                    "First round on this setup — that's your best to beat.",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                else -> Text(
-                    "Best: ${outcome.previousBest}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+    RoundSummaryScaffold(
+        totalScore = state.totalScore,
+        maxScore = state.maxScore,
+        outcome = state.outcome,
+        showTraceFeedback = state.traceActive && !state.traceFeedbackGiven,
+        onTraceFeedback = onTraceFeedback,
+        onPlayAgain = onPlayAgain,
+        onExit = onExit,
+        outcomeExtras = { outcome ->
             val scoredCents = state.results.flatMap { it.tones }
                 .filter { it.scored && !it.wrongNote }.mapNotNull { it.cents }
             ImprovementLine(
@@ -360,19 +334,6 @@ private fun DoneContent(
                     ?.map { kotlin.math.abs(it) }?.average()?.toFloat(),
                 lastWeekAvgCents = outcome.lastWeekAvgCents,
             )
-            AchievementUnlocks(outcome.newAchievements)
-        }
-        if (state.traceActive && !state.traceFeedbackGiven) {
-            Spacer(Modifier.height(Spacing.SECTION_BREAK))
-            TraceFeedbackPrompt(onSubmit = onTraceFeedback)
-        }
-        Spacer(Modifier.height(Spacing.SECTION_BREAK))
-        Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) {
-            Text("Let's go again")
-        }
-        Spacer(Modifier.height(Spacing.FINE_SPACING))
-        OutlinedButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {
-            Text("Done")
-        }
-    }
+        },
+    )
 }

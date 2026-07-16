@@ -46,6 +46,7 @@ import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
+import be.drakarah.intonation.ui.common.StarRating
 import be.drakarah.intonation.ui.common.TraceFeedbackPrompt
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
@@ -303,7 +304,11 @@ private fun ToneResult(tone: ToneUi, noteStyle: NoteNameStyle) {
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        Text(starsText(if (tone.scored) tone.starCount else 3), fontSize = TextSizes.REVEAL_SUBTEXT, color = color)
+        StarRating(
+            starCount = if (tone.scored) tone.starCount else 3,
+            color = color,
+            starSize = 24.dp
+        )
     }
 }
 
@@ -391,8 +396,4 @@ private fun DoneContent(
             Text("Done")
         }
     }
-}
-
-private fun starsText(count: Int): String = when (count) {
-    3 -> "★★★"; 2 -> "★★☆"; 1 -> "★☆☆"; else -> "☆☆☆"
 }

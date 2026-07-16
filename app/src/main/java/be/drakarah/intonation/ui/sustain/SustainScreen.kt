@@ -39,6 +39,7 @@ import be.drakarah.intonation.ui.common.AchievementUnlocks
 import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
+import be.drakarah.intonation.ui.common.StarRating
 import be.drakarah.intonation.ui.common.TraceFeedbackPrompt
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
@@ -272,13 +273,7 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
             fontWeight = FontWeight.Bold,
             color = color,
         )
-        Text(
-            when (result.starCount) {
-                3 -> "★★★"; 2 -> "★★☆"; 1 -> "★☆☆"; else -> "☆☆☆"
-            },
-            fontSize = TextSizes.SCORE_STARS,
-            color = color,
-        )
+        StarRating(starCount = result.starCount, color = color)
         Text(
             "+${result.score}",
             fontSize = TextSizes.SCORE_DISPLAY,
@@ -342,7 +337,7 @@ private fun steadinessLabel(steadinessCents: Float?): String {
 
 /** One focused thing to work on, so the score isn't a bare number. */
 private fun coachingText(result: SustainAttemptUi): String = when (result.focus) {
-    SustainFocus.STEADY_AND_TRUE -> "Rock steady and in tune. 🎯"
+    SustainFocus.STEADY_AND_TRUE -> "Rock steady and in tune."
     SustainFocus.INTONATION -> {
         val c = result.result.medianCents ?: 0f
         if (c > 0f) "Steady bow — but sitting sharp. Place the note a hair lower."

@@ -43,6 +43,7 @@ import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.ImprovementLine
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
+import be.drakarah.intonation.ui.common.StarRating
 import be.drakarah.intonation.ui.common.TraceFeedbackPrompt
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
@@ -259,11 +260,7 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
             )
         }
         Spacer(Modifier.height(Spacing.ITEM_SPACING))
-        Text(
-            starsText(result.starCount),
-            fontSize = TextSizes.SCORE_STARS,
-            color = color,
-        )
+        StarRating(starCount = result.starCount, color = color)
         Text(
             "+${result.score}",
             fontSize = TextSizes.SCORE_DISPLAY,
@@ -440,11 +437,4 @@ private fun NoteAccuracyCentsChart(results: List<AttemptUi>) {
             }
         }
     }
-}
-
-private fun starsText(count: Int): String = when (count) {
-    3 -> "★★★"
-    2 -> "★★☆"
-    1 -> "★☆☆"
-    else -> "☆☆☆"
 }

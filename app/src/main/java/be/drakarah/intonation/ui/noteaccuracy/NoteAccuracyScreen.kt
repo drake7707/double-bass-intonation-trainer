@@ -6,7 +6,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -37,9 +36,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.metrics.MasteryBand
+import be.drakarah.intonation.metrics.MasteryThresholds
+import be.drakarah.intonation.ui.common.CentsRevealHeadline
 import be.drakarah.intonation.ui.common.DotInfo
+import be.drakarah.intonation.ui.common.DriftBanner
 import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.ImprovementLine
+import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.common.RoundSummaryScaffold
@@ -110,24 +114,7 @@ fun NoteAccuracyScreen(
                 )
                 state.driftCents?.let { drift ->
                     Spacer(Modifier.height(Spacing.ITEM_SPACING))
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .background(
-                                ResultColors.close.copy(alpha = 0.25f),
-                                MaterialTheme.shapes.medium,
-                            )
-                            .padding(vertical = Spacing.ITEM_SPACING, horizontal = Spacing.CARD_PADDING),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            if (drift > 0) "TRENDING SHARP\ncome down" else "TRENDING FLAT\ncome up",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = ResultColors.close,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                    DriftBanner(drift)
                 }
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -229,12 +216,7 @@ private fun RevealResult(result: AttemptUi, noteStyle: be.drakarah.intonation.mu
                 style = MaterialTheme.typography.displaySmall,
                 color = color,
             )
-            else -> Text(
-                String.format(Locale.US, "%+.1f cents", result.cents),
-                fontSize = TextSizes.SCORE_CENTS,
-                fontWeight = FontWeight.Bold,
-                color = color,
-            )
+            else -> CentsRevealHeadline(result.cents ?: 0f, result.starCount, color)
         }
         Spacer(Modifier.height(Spacing.ITEM_SPACING))
         StarRating(starCount = result.starCount, color = color)
@@ -266,10 +248,13 @@ private fun NoteAccuracySummary(
         onPlayAgain = onPlayAgain,
         onExit = onExit,
         breakdown = {
+            val technical = LocalTechnicalDetails.current
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             if (scored.isNotEmpty()) {
+                val band = MasteryBand.of(avgCents.toFloat(), MasteryThresholds.NOTE)
                 Text(
-                    String.format(Locale.US, "average %.1f cents off", avgCents),
+                    if (technical) String.format(Locale.US, "average %.1f cents off", avgCents)
+                    else "How in tune: ${band.label}",
                     fontSize = TextSizes.REVEAL_LABEL,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
@@ -280,9 +265,11 @@ private fun NoteAccuracySummary(
                 )
                 Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 Text(
-                    "cents off per note",
+                    if (technical) "cents off per note"
+                    else "your notes — above the line is sharp, below is flat",
                     fontSize = TextSizes.REVEAL_SUBTEXT,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(4.dp))
                 NoteAccuracyCentsChart(state.results)

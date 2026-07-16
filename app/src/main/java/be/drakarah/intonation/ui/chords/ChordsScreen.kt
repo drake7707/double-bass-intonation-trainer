@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,8 +40,10 @@ import be.drakarah.intonation.game.chordName
 import be.drakarah.intonation.game.isOpenString
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.ui.common.DotInfo
+import be.drakarah.intonation.ui.common.DriftBanner
 import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.ImprovementLine
+import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.common.RoundSummaryScaffold
@@ -113,24 +114,7 @@ fun ChordsScreen(
                 )
                 state.driftCents?.let { drift ->
                     Spacer(Modifier.height(Spacing.ITEM_SPACING))
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .background(
-                                ResultColors.close.copy(alpha = 0.25f),
-                                MaterialTheme.shapes.medium,
-                            )
-                            .padding(vertical = Spacing.ITEM_SPACING, horizontal = Spacing.CARD_PADDING),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            if (drift > 0) "TRENDING SHARP\ncome down" else "TRENDING FLAT\ncome up",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = ResultColors.close,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                    DriftBanner(drift)
                 }
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -181,7 +165,7 @@ private fun ToneStrip(chord: ChordSpec, activeIndex: Int, noteStyle: NoteNameSty
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    if (tone.isOpenString) "open" else tone.position.shortLabel,
+                    if (tone.isOpenString) "open string" else tone.position.shortLabel,
                     style = MaterialTheme.typography.titleMedium, // Bumped for distance
                     color = color,
                     maxLines = 1,
@@ -292,15 +276,25 @@ private fun ToneResult(tone: ToneUi, noteStyle: NoteNameStyle) {
             overflow = TextOverflow.Ellipsis
         )
         when {
-            !tone.scored -> Text("open", fontSize = TextSizes.REVEAL_SUBTEXT, color = color)
+            !tone.scored -> Text("open string", fontSize = TextSizes.REVEAL_SUBTEXT, color = color)
             tone.timedOut -> Text("—", fontSize = TextSizes.REVEAL_LABEL, color = color)
             tone.wrongNote -> Text("wrong?", fontSize = TextSizes.REVEAL_SUBTEXT, color = color)
-            else -> Text(
+            LocalTechnicalDetails.current -> Text(
                 String.format(Locale.US, "%+.0f", tone.cents),
                 fontSize = TextSizes.REVEAL_LABEL,
                 color = color,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+            )
+            else -> Text(
+                when {
+                    tone.starCount == 3 -> "spot on"
+                    (tone.cents ?: 0f) > 0f -> "sharp"
+                    else -> "flat"
+                },
+                fontSize = TextSizes.REVEAL_SUBTEXT,
+                color = color,
+                maxLines = 1,
             )
         }
         StarRating(

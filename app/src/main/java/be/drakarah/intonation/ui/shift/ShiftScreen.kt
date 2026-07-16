@@ -1,6 +1,5 @@
 package be.drakarah.intonation.ui.shift
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,9 +35,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.game.PromptSpec
 import be.drakarah.intonation.music.NoteNameStyle
+import be.drakarah.intonation.ui.common.CentsRevealHeadline
 import be.drakarah.intonation.ui.common.DotInfo
+import be.drakarah.intonation.ui.common.DriftBanner
 import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.ImprovementLine
+import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.common.RoundSummaryScaffold
@@ -109,24 +111,7 @@ fun ShiftScreen(
                 )
                 state.driftCents?.let { drift ->
                     Spacer(Modifier.height(Spacing.ITEM_SPACING))
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .background(
-                                ResultColors.close.copy(alpha = 0.25f),
-                                MaterialTheme.shapes.medium,
-                            )
-                            .padding(vertical = Spacing.ITEM_SPACING, horizontal = Spacing.CARD_PADDING),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            if (drift > 0) "TRENDING SHARP\ncome down" else "TRENDING FLAT\ncome up",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = ResultColors.close,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                    DriftBanner(drift)
                 }
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -255,19 +240,17 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
                 color = color,
             )
             else -> {
-                // Headline the shift-distance error (the skill); decompose start vs landing below.
-                Text(
-                    String.format(Locale.US, "%+.1f cents", result.shiftCents ?: 0f),
-                    fontSize = TextSizes.SCORE_CENTS,
-                    fontWeight = FontWeight.Bold,
-                    color = color,
-                )
-                Text(
-                    "shift distance",
-                    fontSize = TextSizes.REVEAL_LABEL,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                // Headline the shift itself (the skill), words first; start-vs-landing numbers
+                // appear with technical details on.
+                CentsRevealHeadline(result.shiftCents ?: 0f, result.starCount, color)
+                if (LocalTechnicalDetails.current) {
+                    Text(
+                        "shift distance",
+                        fontSize = TextSizes.REVEAL_LABEL,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 ShiftBreakdown(result)
             }
         }
@@ -298,27 +281,30 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
     }
 }
 
-/** Start vs landing breakdown, plus a "great shift — bad start" coaching line when the start
- * error (not the shift itself) is what pushed the landing off (Sarah's request). */
+/** Start vs landing breakdown (numbers only with technical details on), plus a "great shift —
+ * bad start" coaching line for everyone when the start error (not the shift itself) is what
+ * pushed the landing off (Sarah's request). */
 @Composable
 private fun ShiftBreakdown(result: ShiftAttemptUi) {
     val landing = result.landingCents ?: return
     val start = result.startCents
     val shift = result.shiftCents
-    Spacer(Modifier.height(Spacing.FINE_SPACING))
-    Text(
-        buildString {
-            if (start != null) append(String.format(Locale.US, "start %+.0f¢  ·  ", start))
-            append(String.format(Locale.US, "landed %+.0f¢", landing))
-        },
-        fontSize = TextSizes.REVEAL_SUBTEXT,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    if (LocalTechnicalDetails.current) {
+        Spacer(Modifier.height(Spacing.FINE_SPACING))
+        Text(
+            buildString {
+                if (start != null) append(String.format(Locale.US, "start %+.0f¢  ·  ", start))
+                append(String.format(Locale.US, "landed %+.0f¢", landing))
+            },
+            fontSize = TextSizes.REVEAL_SUBTEXT,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
     if (start != null && kotlin.math.abs(start) >= 15f &&
         shift != null && kotlin.math.abs(shift) < kotlin.math.abs(landing) - 5f
     ) {
         Text(
-            "great shift — your start was ${if (start > 0) "sharp" else "flat"}",
+            "great shift — your starting note was ${if (start > 0) "sharp" else "flat"}",
             fontSize = TextSizes.REVEAL_SUBTEXT,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.primary,

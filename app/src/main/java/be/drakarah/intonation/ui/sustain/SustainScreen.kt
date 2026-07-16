@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.game.SustainFocus
 import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.GameCountIn
+import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.common.RoundSummaryScaffold
@@ -255,13 +256,14 @@ private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
             fontSize = TextSizes.SCORE_DISPLAY,
             fontWeight = FontWeight.Bold
         )
-        // The two metrics, broken apart so the number means something, then one coaching line.
+        // The two metrics, broken apart so the verdict means something, then one coaching line.
         if (result.result.success) {
+            val technical = LocalTechnicalDetails.current
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SustainMetric("In tune", accuracyLabel(result.result.medianCents), result.focus != SustainFocus.INTONATION && result.focus != SustainFocus.BOTH)
+                SustainMetric("In tune", accuracyLabel(result.result.medianCents, technical), result.focus != SustainFocus.INTONATION && result.focus != SustainFocus.BOTH)
                 Spacer(Modifier.width(Spacing.SECTION_BREAK))
-                SustainMetric("Steady", steadinessLabel(result.result.steadinessCents), result.focus != SustainFocus.BOW_STEADINESS && result.focus != SustainFocus.BOTH)
+                SustainMetric("Steady", steadinessLabel(result.result.steadinessCents, technical), result.focus != SustainFocus.BOW_STEADINESS && result.focus != SustainFocus.BOTH)
             }
         }
         Spacer(Modifier.height(Spacing.FINE_SPACING))
@@ -292,22 +294,27 @@ private fun SustainMetric(label: String, value: String, good: Boolean) {
     }
 }
 
-private fun accuracyLabel(medianCents: Float?): String {
+/** Plain words by default; the cents figures appear with technical details on. */
+private fun accuracyLabel(medianCents: Float?, technical: Boolean): String {
     val c = medianCents ?: return "—"
     val a = kotlin.math.abs(c)
     return when {
         a < 5f -> "spot on"
-        c > 0f -> String.format(Locale.US, "%.0f¢ sharp", a)
-        else -> String.format(Locale.US, "%.0f¢ flat", a)
+        technical && c > 0f -> String.format(Locale.US, "%.0f¢ sharp", a)
+        technical -> String.format(Locale.US, "%.0f¢ flat", a)
+        c > 0f -> "a bit sharp"
+        else -> "a bit flat"
     }
 }
 
-private fun steadinessLabel(steadinessCents: Float?): String {
+private fun steadinessLabel(steadinessCents: Float?, technical: Boolean): String {
     val s = steadinessCents ?: return "—"
     return when {
         s < 4f -> "rock steady"
-        s < 8f -> String.format(Locale.US, "±%.0f¢", s)
-        else -> String.format(Locale.US, "±%.0f¢ wobble", s)
+        technical && s < 8f -> String.format(Locale.US, "±%.0f¢", s)
+        technical -> String.format(Locale.US, "±%.0f¢ wobble", s)
+        s < 8f -> "a little wobbly"
+        else -> "wobbly"
     }
 }
 

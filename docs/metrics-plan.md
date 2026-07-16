@@ -358,6 +358,11 @@ stay optional and unbuilt (shift-glide detail in `extrasJson`; scoring Drone/Tun
 
 - **Coaching engine** — this plan only *feeds* it; the rollup schema is designed so it can read
   windows cheaply. Add a `CoachingRepository` over `daily_stats` later.
+  - *Started 2026-07-16:* the Progress-screen redesign proved out the read surface — windowed
+    rollup reads (`DailyStatsDao.windowAgg` / per-position accuracy split by mode) feed a pure
+    `metrics/Coaching.kt` (mastery bands, sharp/flat bias, week trend, one coaching insight),
+    gated by a minimum sample size. Thresholds are provisional. A dedicated `CoachingRepository`
+    can still consolidate these reads when the wider coaching feature lands.
 - **Finer rollup dimensions** (per-note `daily_note_stats`, shift-direction) — add when coaching
   needs them; raw attempts + `epochDay` index make backfilling a new rollup a one-pass job, not a
   redesign.

@@ -5,6 +5,34 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-16 Progress screen redesigned to coach, not grade (your feedback batch)
+Full rework of the Progress screen, driven by your live feedback while I watched on the emulator/phone
+with your imported data. **Verified on-screen against your real data (emulator + Pixel); still worth a
+sanity pass on the phone after you play more.**
+
+- **Fixed the demotivating "0% avg accuracy" bug.** The screen read raw `sessions.avgAbsCents`
+  (wrong-note-polluted on old rounds) for the recent-average while the position bars read the clean
+  SCORED-only rollup. Two polluted rounds dragged the mean to 50¢ → "0%". Everything now reads the
+  rollup (SCORED-only). The old linear "50¢ = 0%" scale is gone.
+- **Cents → plain mastery words.** Positions now read **Locked in / Solid / Developing** with a tiered
+  bar, not a punishing percentage. 25¢ reads "Solid", not "49%".
+- **Per-exercise thresholds** — Shift/Chords are looser than static Note Accuracy (a shift lands wider),
+  so your shifts stopped reading uniformly red. **Provisional — tune to taste.**
+- **Split by arco/pizz** — each position shows both modes, so your arco-1st flat bias is visible
+  instead of being averaged away by dead-on pizz.
+- **Minimum sample size before any verdict** (`MIN_SCORED_FOR_VERDICT = 12`, > one round). Below it a
+  position bar is **greyed** ("keep playing"): data shown, no conclusion drawn. The weekly verdict and
+  the coaching tip are gated the same way. **Provisional — is 12 the right floor?**
+- **"This week" coaching card** replaces the session-history list: plain-language activity, in-tune read,
+  week-over-week trend, right-note %, and one actionable tip (in pitch terms — "aim a touch higher/lower",
+  not fingerboard geometry).
+- **Sustain tab** shows bow control (hold time / steadiness / bow changes), not meaningless "avg deviation".
+- **Expert mode** (Settings → Display, off by default): flips the whole Progress screen to raw cents /
+  percentages / exact deviations. Full-app sweep still TODO.
+
+Sanity checks on the phone: Accuracy no longer shows 0%; the arco-1st flat tip appears; a barely-played
+position is greyed; Sustain shows hold time; Expert mode toggles cents on/off.
+
 ### 2026-07-15 evening Shift traces truncated + false "wrong notes" — root-caused from your live round (your report)
 Three fixes, all from the shift-trace investigation (you played rounds live while I watched logcat):
 
@@ -853,3 +881,6 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 
 
 - Are pizz and arco notes easily distinguisable? I accidently played pizz while i was on arco and the system should detect that and warn me. Now it happily processed pizz as arco with the pizz settings leading to issues with wrong notes and such.
+
+
+- Expand the onboarding with choice questions, 1 per screen like a wizard, that asks the user common settings, like their preference for solfege vs letters, the number of rounds per game, if they are an expert (and of course explaining what each setting does), etc. This eases them into the correct settings without being overwhelmed with the increasingly growing settings screen. The last one should be the nudge to do a full calibration and why it's necessary. This is just basic set up on first run. Also add a note that the app is in beta tested limited phones and double basses and explain the functionality of being able to record traces and send them as feedback for the app to be tweaked.

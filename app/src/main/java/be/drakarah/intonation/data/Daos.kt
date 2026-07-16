@@ -34,6 +34,14 @@ interface SessionDao {
             "AND epochDay >= :fromDay AND epochDay < :untilDay"
     )
     suspend fun avgAbsCentsByDayRange(exerciseType: String, fromDay: Int, untilDay: Int): Float?
+
+    /** Honest completed-round count in a day window. The rollup's `sessionCount` double-counts
+     * rounds that touch several positions, so round counts come from `sessions` (indexed). */
+    @Query(
+        "SELECT COUNT(*) FROM sessions WHERE exerciseType = :exerciseType AND completed = 1 " +
+            "AND epochDay >= :fromDay AND epochDay < :untilDay"
+    )
+    fun roundsInWindow(exerciseType: String, fromDay: Int, untilDay: Int): Flow<Int>
 }
 
 @Dao
@@ -96,19 +104,51 @@ interface DailyStatsDao {
     @Query("SELECT DISTINCT epochDay FROM daily_stats")
     suspend fun practiceEpochDays(): List<Int>
 
-    /** Per-position accuracy over SCORED attempts, from the rollup. */
+    /** Per-position, per-mode accuracy over SCORED attempts, from the rollup. Split by mode because
+     * arco and pizz genuinely differ (arco can run flat where pizz is centered). Carries the signed
+     * sum (sharp/flat bias) and sum-of-squares (consistency) alongside the absolute sum. */
     @Query(
-        "SELECT exerciseType, positionId, SUM(sumAbsCents) AS sumAbsCents, " +
+        "SELECT exerciseType, positionId, mode, SUM(sumAbsCents) AS sumAbsCents, " +
+            "SUM(sumSignedCents) AS sumSignedCents, SUM(sumSqAbsCents) AS sumSqAbsCents, " +
             "SUM(scoredCount) AS scoredCount FROM daily_stats " +
-            "WHERE exerciseType = :exerciseType AND scoredCount > 0 GROUP BY positionId"
+            "WHERE exerciseType = :exerciseType AND scoredCount > 0 GROUP BY positionId, mode"
     )
     fun positionAccuracy(exerciseType: String): Flow<List<PositionAccuracyAgg>>
+
+    /** One row of rollup sums for a day window — backs the coaching summary. Uses the
+     * `(exerciseType, epochDay)` index. */
+    @Query(
+        "SELECT COALESCE(SUM(attemptCount),0) AS attemptCount, " +
+            "COALESCE(SUM(scoredCount),0) AS scoredCount, " +
+            "COALESCE(SUM(cleanCount),0) AS cleanCount, " +
+            "COALESCE(SUM(sumAbsCents),0) AS sumAbsCents, " +
+            "COALESCE(SUM(sumHeldMs),0) AS sumHeldMs, " +
+            "COALESCE(SUM(sumResets),0) AS sumResets, " +
+            "COALESCE(SUM(sumSteadiness),0) AS sumSteadiness " +
+            "FROM daily_stats WHERE exerciseType = :exerciseType " +
+            "AND epochDay >= :fromDay AND epochDay < :untilDay"
+    )
+    fun windowAgg(exerciseType: String, fromDay: Int, untilDay: Int): Flow<WindowAgg>
 }
 
-/** Rollup aggregation row backing position accuracy. */
+/** Rollup aggregation row backing position accuracy (one per position × mode). */
 data class PositionAccuracyAgg(
     val exerciseType: String,
     val positionId: String,
+    val mode: String,
     val sumAbsCents: Double,
+    val sumSignedCents: Double,
+    val sumSqAbsCents: Double,
     val scoredCount: Int,
+)
+
+/** Rollup sums over a day window (SCORED-only for cents; all attempts for counts). */
+data class WindowAgg(
+    val attemptCount: Int,
+    val scoredCount: Int,
+    val cleanCount: Int,
+    val sumAbsCents: Double,
+    val sumHeldMs: Long,
+    val sumResets: Int,
+    val sumSteadiness: Double,
 )

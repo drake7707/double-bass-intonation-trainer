@@ -21,28 +21,41 @@ class SessionRepository(private val db: IntonationDatabase) {
     fun recentSessions(limit: Int = 50): Flow<List<SessionEntity>> =
         db.sessionDao().recentSessions(limit)
 
-    /** Per-position accuracy from the rollup (SCORED attempts only). */
+    /** Per-position accuracy from the rollup (SCORED attempts only), with sharp/flat bias. */
     fun positionAccuracy(exerciseType: String): Flow<List<PositionAccuracyRow>> =
         db.dailyStatsDao().positionAccuracy(exerciseType).map { rows ->
             rows.filter { it.positionId.isNotEmpty() && it.scoredCount > 0 }
                 .map {
                     PositionAccuracyRow(
                         positionId = it.positionId,
+                        mode = it.mode,
                         avgAbsCents = (it.sumAbsCents / it.scoredCount).toFloat(),
+                        avgSignedCents = (it.sumSignedCents / it.scoredCount).toFloat(),
                         attemptCount = it.scoredCount,
                     )
                 }
         }
+
+    /** Rollup sums for one exercise over `[fromDay, untilDay)` — backs the coaching summary. */
+    fun windowAgg(exerciseType: String, fromDay: Int, untilDay: Int): Flow<WindowAgg> =
+        db.dailyStatsDao().windowAgg(exerciseType, fromDay, untilDay)
+
+    /** Completed rounds of one exercise in `[fromDay, untilDay)`. */
+    fun roundsInWindow(exerciseType: String, fromDay: Int, untilDay: Int): Flow<Int> =
+        db.sessionDao().roundsInWindow(exerciseType, fromDay, untilDay)
 
     /** Consecutive practice days ending today (or yesterday). Reads distinct days from the rollup. */
     suspend fun practiceStreakDays(today: Int = todayEpochDay()): Int =
         practiceStreak(db.dailyStatsDao().practiceEpochDays().toSet(), today)
 }
 
-/** One row of the per-position accuracy aggregation (public UI shape, unchanged). */
+/** One row of the per-position accuracy aggregation (public UI shape), per position × mode. */
 data class PositionAccuracyRow(
     val positionId: String,
+    val mode: String,
     val avgAbsCents: Float,
+    /** Signed mean (+ sharp, − flat) over SCORED attempts — the bias signal. */
+    val avgSignedCents: Float,
     val attemptCount: Int,
 )
 

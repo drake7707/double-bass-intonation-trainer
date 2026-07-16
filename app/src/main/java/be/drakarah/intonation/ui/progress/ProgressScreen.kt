@@ -2,7 +2,6 @@ package be.drakarah.intonation.ui.progress
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,12 +16,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingFlat
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,33 +41,37 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import be.drakarah.intonation.data.SessionEntity
 import be.drakarah.intonation.game.ACHIEVEMENTS
-import be.drakarah.intonation.game.positionsFromConfigKey
+import be.drakarah.intonation.metrics.Bias
+import be.drakarah.intonation.metrics.BiasDirection
+import be.drakarah.intonation.metrics.CoachingSummary
+import be.drakarah.intonation.metrics.MIN_SCORED_FOR_VERDICT
+import be.drakarah.intonation.metrics.MasteryBand
+import be.drakarah.intonation.metrics.PositionMastery
+import be.drakarah.intonation.metrics.SustainSummary
+import be.drakarah.intonation.metrics.TrendDirection
+import be.drakarah.intonation.metrics.WeekTrend
 import be.drakarah.intonation.ui.chords.EXERCISE_CHORDS
 import be.drakarah.intonation.ui.noteaccuracy.EXERCISE_NOTE_ACCURACY
 import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private val exerciseTabs = listOf(
     EXERCISE_NOTE_ACCURACY to "Accuracy",
@@ -72,10 +80,14 @@ private val exerciseTabs = listOf(
     EXERCISE_CHORDS to "Chords",
 )
 
-/** Converts an average absolute cents deviation to an intonation accuracy percentage.
- * 0 ¢ → 100 %; 50 ¢ → 0 %. */
-private fun centsToAccuracy(cents: Float): Float =
-    (1f - (cents / 50f).coerceIn(0f, 1f)) * 100f
+/** Color for a mastery band. Kept here (UI layer) — the `metrics/` domain stays free of Compose. */
+private fun bandColor(band: MasteryBand): Color = when (band) {
+    MasteryBand.LOCKED -> ResultColors.excellent
+    MasteryBand.SOLID -> ResultColors.close
+    MasteryBand.DEVELOPING -> ResultColors.off
+}
+
+private fun cents(value: Float): String = "${value.roundToInt()}¢"
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -86,7 +98,7 @@ fun ProgressScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val unlocked by viewModel.unlockedAchievements.collectAsStateWithLifecycle()
-    var showCents by rememberSaveable { mutableStateOf(false) }
+    val expert by viewModel.expertMode.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -135,71 +147,29 @@ fun ProgressScreen(
             }
             Spacer(Modifier.height(Spacing.SECTION_BREAK))
 
-            if (state.sessions.isEmpty()) {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                            MaterialTheme.shapes.medium
-                        )
-                        .padding(Spacing.CARD_PADDING),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)
-                ) {
-                    Icon(
-                        Icons.Outlined.PlayCircleOutline,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        "No rounds yet",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        "Play a game to see your progress here.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
+            if (!state.hasData) {
+                EmptyState()
+                Spacer(Modifier.weight(1f))
             } else {
-                ScoreChart(percents = state.scorePercents)
-                Spacer(Modifier.height(Spacing.ITEM_SPACING))
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
                 ) {
-                    StatBlock("rounds", "${state.sessions.size}")
-                    StatBlock("best", state.bestPercent?.let {
-                        String.format(Locale.US, "%.0f%%", it)
-                    } ?: "—")
-                    StatBlock(
-                        if (showCents) "avg deviation (last 10)" else "avg accuracy (last 10)",
-                        state.recentAvgCents?.let {
-                            if (showCents) String.format(Locale.US, "%.1f ¢", it)
-                            else String.format(Locale.US, "%.0f%%", centsToAccuracy(it))
-                        } ?: "—",
-                        onClick = { showCents = !showCents },
-                    )
-                }
-                Spacer(Modifier.height(Spacing.SECTION_BREAK))
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
-                ) {
-                    if (state.positionBreakdown.isNotEmpty()) {
-                        item { PositionBreakdown(state.positionBreakdown, showCents) }
-                    }
-                    items(state.sessions.asReversed()) { session ->
-                        SessionRow(session, showCents)
+                    ScoreChart(percents = state.scorePercents)
+                    Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                    StatTrio(state)
+                    Spacer(Modifier.height(Spacing.SECTION_BREAK))
+                    state.summary?.let { CoachingSummaryCard(it, state.isSustain, expert) }
+                    Spacer(Modifier.height(Spacing.SECTION_BREAK))
+                    if (state.isSustain) {
+                        state.summary?.sustain?.let { SustainMetrics(it) }
+                    } else if (state.positionMastery.isNotEmpty()) {
+                        MasteryByPosition(state.positionMastery, expert)
                     }
                 }
             }
 
-            if (state.sessions.isEmpty()) Spacer(Modifier.weight(1f))
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text("Done")
@@ -210,12 +180,76 @@ fun ProgressScreen(
 }
 
 @Composable
-private fun StatBlock(label: String, value: String, onClick: (() -> Unit)? = null) {
+private fun EmptyState() {
     Column(
+        Modifier
+            .fillMaxWidth()
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                MaterialTheme.shapes.medium
+            )
+            .padding(Spacing.CARD_PADDING),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
+        verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)
     ) {
-        Text(value, style = MaterialTheme.typography.titleLarge)
+        Icon(
+            Icons.Outlined.PlayCircleOutline,
+            contentDescription = null,
+            modifier = Modifier.size(48.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            "No rounds yet",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            "Play a game to see your progress here.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+/** rounds · best · streak — motivating headline numbers, no punishing percentage. */
+@Composable
+private fun StatTrio(state: ProgressUiState) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        StatBlock("rounds", "${state.totalRounds}")
+        StatBlock("best", state.bestPercent?.let { String.format(Locale.US, "%.0f%%", it) } ?: "—")
+        StatBlock(
+            "day streak",
+            if (state.streakDays > 0) "${state.streakDays}" else "—",
+            leadingIcon = if (state.streakDays > 0) Icons.Filled.LocalFireDepartment else null,
+            iconTint = ResultColors.close,
+        )
+    }
+}
+
+@Composable
+private fun StatBlock(
+    label: String,
+    value: String,
+    leadingIcon: ImageVector? = null,
+    iconTint: Color = MaterialTheme.colorScheme.onSurface,
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (leadingIcon != null) {
+                Icon(
+                    leadingIcon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(2.dp))
+            }
+            Text(value, style = MaterialTheme.typography.titleLarge)
+        }
         Text(
             label,
             style = MaterialTheme.typography.labelSmall,
@@ -263,119 +297,239 @@ private fun ScoreChart(percents: List<Float>) {
     }
 }
 
-/** Color scale shared by the history rows and the position breakdown. */
-private fun centsColor(cents: Float): Color = when {
-    cents <= 8f -> ResultColors.excellent
-    cents <= 18f -> ResultColors.close
-    else -> ResultColors.off
-}
-
-/** A small rounded label naming a practiced position (e.g. "1st"). */
+/** The "teacher's notebook": this-week activity, intonation trend, cleanliness, and one coaching cue. */
 @Composable
-private fun PositionPill(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-    )
-}
+private fun CoachingSummaryCard(summary: CoachingSummary, isSustain: Boolean, expert: Boolean) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(Spacing.CARD_PADDING),
+            verticalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING),
+        ) {
+            Text("This week", style = MaterialTheme.typography.titleMedium)
 
-/** Average intonation per position across all rounds — how familiar the player is with each.
- * Lower cents is better, so a fuller/greener bar means a more secure position. */
-@Composable
-private fun PositionBreakdown(stats: List<PositionStat>, showCents: Boolean) {
-    // 30 cents ≈ "empty" bar; anything at or beyond reads as unfamiliar.
-    val worstCents = 30f
-    Column {
-        Text("Accuracy by position", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(Spacing.FINE_SPACING))
-        stats.forEach { stat ->
-            val fraction = (1f - (stat.avgAbsCents.coerceIn(0f, worstCents) / worstCents))
-                .coerceIn(0.04f, 1f)
-            val color = centsColor(stat.avgAbsCents)
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
-            ) {
-                Text(
-                    stat.position.shortLabel,
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.width(28.dp),
-                )
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .height(14.dp)
-                        .clip(RoundedCornerShape(7.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                ) {
-                    Box(
-                        Modifier
-                            .fillMaxHeight()
-                            .fillMaxWidth(fraction)
-                            .clip(RoundedCornerShape(7.dp))
-                            .background(color),
-                    )
-                }
-                Text(
-                    if (showCents) String.format(Locale.US, "%.1f ¢", stat.avgAbsCents)
-                    else String.format(Locale.US, "%.0f%%", centsToAccuracy(stat.avgAbsCents)),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = color,
-                    textAlign = TextAlign.End,
-                    modifier = Modifier.width(52.dp),
-                )
-            }
+            if (expert) ExpertSummary(summary, isSustain) else PlainSummary(summary, isSustain)
+
+            summary.insight?.let { InsightLine(it) }
         }
-        Spacer(Modifier.height(Spacing.FINE_SPACING))
+    }
+}
+
+/** Beginner default: warm, plain-language coaching for a young student — full sentences, no jargon.
+ * Streak lives in the top stat trio, so it isn't repeated here. */
+@Composable
+private fun PlainSummary(summary: CoachingSummary, isSustain: Boolean) {
+    val times = if (summary.roundsThisWeek == 1) "time" else "times"
+    SummaryLine("You practiced ${summary.roundsThisWeek} $times this week.")
+    if (isSustain) {
+        SummaryLine("Try to hold each note long and steady — your bow control is below.")
+    } else {
+        if (summary.weekBand != null) {
+            SummaryLine(intonationSentence(summary.weekBand))
+            summary.trend?.let { TrendLine(it) }
+        } else {
+            SummaryLine("Play a few more rounds this week to see how in tune you're playing.")
+        }
+        summary.rightNotePct?.let { SummaryLine("You found the right note $it% of the time.") }
+    }
+}
+
+/** Expert mode: the terse, numeric nitty-gritty. */
+@Composable
+private fun ExpertSummary(summary: CoachingSummary, isSustain: Boolean) {
+    SummaryLine("${summary.roundsThisWeek} rounds")
+    if (!isSustain) {
+        if (summary.trend == null && summary.rightNotePct == null) {
+            SummaryLine("Not enough scored notes this week for a verdict (need ${MIN_SCORED_FOR_VERDICT}+).")
+        }
+        summary.trend?.let { t ->
+            val line = if (t.hasComparison)
+                "Intonation ${cents(t.thisWeekCents)} (last wk ${cents(t.lastWeekCents!!)}, " +
+                    "${abs(t.deltaCents).roundToInt()}¢ ${if (t.direction == TrendDirection.LOOSER) "looser" else "tighter"})"
+            else
+                "Intonation ${cents(t.thisWeekCents)} this week"
+            SummaryLine(line)
+        }
+        val quality = buildList {
+            summary.rightNotePct?.let { add("$it% notes landed") }
+            summary.steadyPct?.let { add("$it% clean") }
+        }
+        if (quality.isNotEmpty()) SummaryLine(quality.joinToString(" · "))
+    } else {
+        summary.steadyPct?.let { SummaryLine("$it% clean") }
     }
 }
 
 @Composable
-private fun SessionRow(session: SessionEntity, showCents: Boolean) {
-    val date = Instant.ofEpochMilli(session.startedAt).atZone(ZoneId.systemDefault())
-    val positions = positionsFromConfigKey(session.configKey)
-    Card(Modifier.fillMaxWidth()) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(Spacing.CARD_PADDING),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column {
-                Text(
-                    "${session.totalScore} / ${session.maxScore}",
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    date.format(DateTimeFormatter.ofPattern("EEE d MMM, HH:mm")) +
-                        " · ${session.mode}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (positions.isNotEmpty()) {
-                    Spacer(Modifier.height(Spacing.COMPONENT_SPACING))
-                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING)) {
-                        positions.forEach { PositionPill(it.shortLabel) }
+private fun SummaryLine(text: String) {
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+}
+
+/** Friendly, colour-neutral encouragement about how in tune the week was. Colour lives in the
+ * per-position bars below, so this sentence never reads harsh. */
+private fun intonationSentence(band: MasteryBand): String = when (band) {
+    MasteryBand.LOCKED -> "Your notes are landing right in tune — amazing work!"
+    MasteryBand.SOLID -> "Your notes are landing nicely in tune."
+    MasteryBand.DEVELOPING -> "Your notes are getting closer to in tune — keep practising!"
+}
+
+@Composable
+private fun TrendLine(trend: WeekTrend) {
+    val (icon, tint, phrase) = when {
+        !trend.hasComparison -> Triple(
+            null, MaterialTheme.colorScheme.onSurfaceVariant,
+            "Keep playing to see how you improve each week.",
+        )
+        trend.direction == TrendDirection.TIGHTER -> Triple(
+            Icons.AutoMirrored.Filled.TrendingUp, ResultColors.excellent,
+            "That's more in tune than last week!",
+        )
+        trend.direction == TrendDirection.LOOSER -> Triple(
+            Icons.AutoMirrored.Filled.TrendingDown, ResultColors.off,
+            "A little off from last week — you'll get it back.",
+        )
+        else -> Triple(
+            Icons.AutoMirrored.Filled.TrendingFlat, MaterialTheme.colorScheme.onSurfaceVariant,
+            "About the same as last week.",
+        )
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (icon != null) Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+        Text(phrase, style = MaterialTheme.typography.bodyMedium, color = tint)
+    }
+}
+
+@Composable
+private fun InsightLine(text: String) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = Spacing.COMPONENT_SPACING),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING),
+    ) {
+        Icon(
+            Icons.Outlined.Lightbulb,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp),
+        )
+        Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+/** Per-position mastery: a musical word + a tiered bar, plus a bias cue. In expert mode the exact
+ * cents and sample count are shown too. */
+@Composable
+private fun MasteryByPosition(stats: List<PositionMastery>, expert: Boolean) {
+    Column {
+        Text("Accuracy by position", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(Spacing.FINE_SPACING))
+        val muted = MaterialTheme.colorScheme.onSurfaceVariant
+        stats.forEach { stat ->
+            val enough = stat.hasEnoughData
+            // Below the sample threshold the bar is greyed and the conclusions (word + bias) are
+            // hidden — it shows there's data, but not enough to draw a verdict from yet.
+            val barColor = if (enough) bandColor(stat.band) else muted.copy(alpha = 0.4f)
+            Column(Modifier.padding(vertical = 6.dp)) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
+                ) {
+                    Column(modifier = Modifier.width(48.dp)) {
+                        Text(
+                            stat.shortLabel,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = if (enough) MaterialTheme.colorScheme.onSurface else muted,
+                        )
+                        Text(stat.mode, style = MaterialTheme.typography.labelSmall, color = muted)
+                    }
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .height(14.dp)
+                            .clip(RoundedCornerShape(7.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                    ) {
+                        Box(
+                            Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(stat.fraction)
+                                .clip(RoundedCornerShape(7.dp))
+                                .background(barColor),
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End, modifier = Modifier.width(88.dp)) {
+                        if (enough) {
+                            Text(
+                                stat.band.label,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = bandColor(stat.band),
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            if (expert) {
+                                Text(
+                                    "${cents(stat.avgAbsCents)} · ${stat.scoredCount}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = muted,
+                                )
+                            }
+                        } else {
+                            Text(
+                                if (expert) "${cents(stat.avgAbsCents)} · ${stat.scoredCount}" else "keep playing",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = muted,
+                                textAlign = TextAlign.End,
+                            )
+                        }
                     }
                 }
-            }
-            session.avgAbsCents?.let {
-                Text(
-                    if (showCents) String.format(Locale.US, "%.1f ¢", it)
-                    else String.format(Locale.US, "%.0f%%", centsToAccuracy(it)),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = centsColor(it),
-                )
+                if (enough) BiasCue(stat.bias, expert)
             }
         }
+    }
+}
+
+@Composable
+private fun BiasCue(bias: Bias, expert: Boolean) {
+    if (bias.direction == BiasDirection.CENTERED) return
+    val icon = if (bias.direction == BiasDirection.FLAT) Icons.AutoMirrored.Filled.TrendingDown else Icons.AutoMirrored.Filled.TrendingUp
+    Row(
+        Modifier.padding(start = 60.dp, top = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+        Text(
+            if (expert) bias.detailedLabel else bias.label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** Sustain has no scored intonation — show what it actually measures: held tone. */
+@Composable
+private fun SustainMetrics(sustain: SustainSummary) {
+    Column {
+        Text("Bow control", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(Spacing.FINE_SPACING))
+        MetricRow("Average hold", String.format(Locale.US, "%.1f s", sustain.avgHeldMs / 1000f))
+        sustain.avgSteadinessCents?.let { MetricRow("Steadiness", cents(it)) }
+        sustain.avgResets?.let { MetricRow("Bow changes / note", String.format(Locale.US, "%.1f", it)) }
+    }
+}
+
+@Composable
+private fun MetricRow(label: String, value: String) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.titleMedium)
     }
 }

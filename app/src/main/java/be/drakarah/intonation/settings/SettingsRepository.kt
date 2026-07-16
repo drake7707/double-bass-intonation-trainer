@@ -100,6 +100,10 @@ data class AppSettings(
     val traceGames: Boolean = false,
     /** Whether the user has seen the welcome onboarding. */
     val onboardingCompleted: Boolean = false,
+    /** Expert mode: show the technical nitty-gritty (raw cents, percentages, exact deviations)
+     * throughout the app instead of beginner-friendly plain language. Off by default — the default
+     * audience is a young student who doesn't read "cents"; professionals turn this on. */
+    val expertMode: Boolean = false,
 )
 
 /** The one place where saved calibration turns into a runnable detection config. [pizz] selects
@@ -182,6 +186,7 @@ class SettingsRepository(private val context: Context) {
         val droneFifth = booleanPreferencesKey("droneFifth")
         val traceGames = booleanPreferencesKey("traceGames")
         val onboardingCompleted = booleanPreferencesKey("onboardingCompleted")
+        val expertMode = booleanPreferencesKey("expertMode")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -231,6 +236,7 @@ class SettingsRepository(private val context: Context) {
             droneFifth = prefs[Keys.droneFifth] ?: false,
             traceGames = prefs[Keys.traceGames] ?: false,
             onboardingCompleted = prefs[Keys.onboardingCompleted] ?: false,
+            expertMode = prefs[Keys.expertMode] ?: false,
         )
     }
 
@@ -352,5 +358,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setTraceGames(enabled: Boolean) {
         context.dataStore.edit { it[Keys.traceGames] = enabled }
+    }
+
+    suspend fun setExpertMode(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.expertMode] = enabled }
     }
 }

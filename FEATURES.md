@@ -167,20 +167,25 @@ its own scoring category** — scores are only ever compared between identical s
 
 ## Progress
 
-- **Progress page**: per-exercise score chart (percent per round, colored dots), stats
-  (rounds played, best, average cents of the last 10 rounds), an achievements summary card
-  (recent badges + unlocked count, tap for the full gallery), and a session history list.
-  Each history row shows the **positions practiced** in that round.
+- **Progress page** — built to coach, not to grade. Per-exercise it shows: the score-trend
+  chart (percent per round, colored dots); a headline trio of **rounds played · best · day
+  streak** (no punishing percentage); a **"This week" coaching card**; and an **accuracy-by-
+  position** breakdown. An achievements count (top-right) opens the full gallery.
+- **"This week" coaching card** — a friendly, plain-language read on how the week went:
+  how many times you practiced, how in tune you're playing (in words), whether that's better
+  than last week, how often you found the right note, and **one actionable tip** ("Your arco
+  1st position lands a little flat — try aiming a touch higher"). It only draws a conclusion
+  once there's enough data — a single game never becomes a verdict.
+- **Accuracy by position** — for each position, split by **arco and pizz** (they differ), a
+  plain mastery word (**Locked in / Solid / Developing**) and a bar that fills as you tighten.
+  What counts as "Solid" is looser for shifts than for static notes, since a shift lands wider.
+  A position you've barely played shows a **greyed bar** ("keep playing") — the data is there
+  but there isn't enough of it to judge yet. Sustain shows **bow control** (hold time,
+  steadiness, bow changes) instead of cents, since it isn't a note-finding exercise.
+- Intonation is measured in **plain language by default**; turn on **Expert mode** (Settings →
+  Display) to see the raw cents, percentages and exact deviations everywhere.
 - **Achievements gallery**: a dedicated grid page (its own screen, reached from Progress)
   showing every badge, unlocked-first, with an unlock-progress bar; locked ones show 🔒.
-- **Accuracy by position**: a breakdown of your average intonation (cents) in each
-  position across all your rounds — a fuller/greener bar means a more secure position, so
-  you can see at a glance which positions still feel unfamiliar. (Per exercise tab; Sustain
-  now contributes too, using the held-pitch accuracy. Fills in from rounds played after each
-  exercise started recording cents.)
-- **Improvement over points**: round summaries compare this round's average error against
-  your previous week ("14.8 cents — last week 18.6 ⬇"), because improving matters more
-  than the raw score.
 - Every attempt is stored locally (Room) with a rich set of coaching signals: target, signed
   cents error, **reaction time, time-to-stable and shift landing time**, capture quality, a
   musical **outcome** (scored / wrong-note / wrong-octave / timeout — so genuine mistakes are
@@ -194,6 +199,9 @@ its own scoring category** — scores are only ever compared between identical s
 
 ## Settings
 
+- **Expert mode (off by default)** — off keeps the app in plain, beginner-friendly language
+  (mastery words, full sentences); on shows the technical detail (exact cents, percentages,
+  deviations). Currently applied to the Progress screen; a full-app sweep is planned.
 - **Note names: solfège (Do Ré Mi — default) or letters (C D E)**, applied everywhere.
   Accidentals use the proper musical glyphs ♯ / ♭ (not the ASCII "#").
 - **Mix sharps & flats (off by default)** — a note-naming aid: in the single-note games

@@ -186,6 +186,25 @@ fun SettingsScreen(
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
             Text("Settings", style = MaterialTheme.typography.headlineMedium)
 
+            SectionHeader("Display")
+            SettingBlock(
+                "Expert mode",
+                "Show the technical detail — exact cents, percentages and deviations — across the " +
+                    "app. Off keeps things in plain language for younger or newer players.",
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(if (settings.expertMode) "On" else "Off")
+                    Switch(
+                        checked = settings.expertMode,
+                        onCheckedChange = { scope.launch { repo.setExpertMode(it) } },
+                    )
+                }
+            }
+
             SectionHeader("Notation & tuning")
             SettingBlock("Note names", "How notes are written throughout the app.") {
                 TwoChoice(

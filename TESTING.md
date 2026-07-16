@@ -5,6 +5,47 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-16 Pace setting: new names + PROVISIONALLY tightened timeouts (your feedback)
+"Player level" is now **Pace** (it only ever controlled time), with pace words instead of skill
+words — you said "Lightning with several seconds doesn't feel lightning" and that the old times
+were too lenient (you sat comfortably on Advanced/Expert after one year). New ladder, provisional:
+
+| Pace (was) | Find-the-note time (was) | Shift GO window (was) | Long Notes cap (was) |
+|---|---|---|---|
+| Calm (Beginner) | 15 s (20) | 7 s (8) | 35 s (40) |
+| Steady (Intermediate) | 10 s (13) | 5 s (6) | 28 s (30) |
+| Quick (Advanced) | 6 s (8) | 3.5 s (4) | 18 s (20) |
+| Swift (Expert) | 4 s (5) | 2.5 s (3) | 13 s (15) |
+
+Verify on the bass: does **Quick** now feel like where you actually sit, with **Swift** a real
+stretch goal? Is **Calm** still generous enough for a first-year student reading solfège? The
+round-summary pace suggestions still work off your real reaction times, so they'll nudge
+whatever we get wrong. Saved settings keep working (only labels + times changed, not stored ids).
+
+### 2026-07-16 UX overhaul (branch `ux-overhaul`) — coaching language, new names, onboarding wizard
+The full plan is `docs/UX_OVERHAUL_PLAN_2026-07-16.md`; every change below needs an on-phone pass:
+
+- **Games renamed**: Find the Note / Long Notes / Shifts (1↔4 · any finger · across strings) / Chords.
+  Home, Progress tabs and achievements all agree. Scores/bests unaffected (ids unchanged) — check
+  your PBs still show.
+- **Plain language by default, numbers behind Settings → "Show technical details"** (the old Expert
+  mode, now honored app-wide): game reveals say "Close — a bit sharp" (cents when technical), the
+  drift banner says "You're drifting sharp — aim a touch lower", Tune up shows words + needle,
+  round summaries say "How in tune: Solid". **Check reveals are still readable from 2 m.**
+- **One coach line on every round summary** (praise + at most one tip, e.g. "most notes leaned
+  sharp — try aiming a touch lower"). Tone check: does it feel like a coach or like a fortune cookie?
+- **Room check** (was Calibrate surroundings) and **Full setup** (was Full calibration): friendly
+  verdicts, DSP numbers in a "Technical details" expander (still screenshot-able for feedback).
+- **Settings regrouped**: Coaching / Notes & tuning / Sounds & warnings / Set-up / Help improve the
+  app / Your data. Trace recording is now "Record practice reports" and framed as beta feedback.
+- **New first-run wizard** (one question per screen: note names, pace, round length, plain-vs-
+  numbers, beta note, Full-setup nudge). **Needs a cleared-data install to test** — verify choices
+  stick, Back works, skip still triggers the pre-game gate later.
+- **App renamed "Double Bass Coach"** (launcher label, home header, report email subject).
+- **About** now links the published source on GitHub (GPL requirement you asked for).
+- Pitch Analyzer: friendlier framing, raw pipeline numbers behind an in-screen expander — check
+  you can still diagnose with it (sound-level bar + heard-note + Check every note are all still there).
+
 ### 2026-07-16 Progress screen redesigned to coach, not grade (your feedback batch)
 Full rework of the Progress screen, driven by your live feedback while I watched on the emulator/phone
 with your imported data. **Verified on-screen against your real data (emulator + Pixel); still worth a

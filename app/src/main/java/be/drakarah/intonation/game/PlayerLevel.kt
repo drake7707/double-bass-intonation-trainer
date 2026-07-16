@@ -27,10 +27,16 @@ enum class PlayerLevel(
      * detection wizard: reading speed is the player, detection is the mic. */
     val minReadMs: Long,
 ) {
-    BEGINNER("Beginner", 20_000, 1.6f, 8_000, 40_000, minReadMs = 1_000),
-    INTERMEDIATE("Intermediate", 13_000, 1.3f, 6_000, 30_000, minReadMs = 800),
-    ADVANCED("Advanced", 8_000, 1.0f, 4_000, 20_000, minReadMs = 600),
-    EXPERT("Expert", 5_000, 0.85f, 3_000, 15_000, minReadMs = 450);
+    // Pace words (Calm/Steady/Quick/Swift) instead of skill words — the setting only controls
+    // time, and Beginner/Intermediate/Advanced collided with the Shift level ladder (plan §4).
+    // Timeouts PROVISIONALLY tightened 2026-07-16: Sarah (one year in) sat comfortably on the
+    // old Advanced/Expert times, so the whole ladder was compressed at the top. Enum constant
+    // names are persisted in settings — never rename them. Awaiting her play-verification
+    // (TESTING.md) before these numbers are final.
+    BEGINNER("Calm", 15_000, 1.6f, 7_000, 35_000, minReadMs = 1_000),
+    INTERMEDIATE("Steady", 10_000, 1.3f, 5_000, 28_000, minReadMs = 800),
+    ADVANCED("Quick", 6_000, 1.0f, 3_500, 18_000, minReadMs = 600),
+    EXPERT("Swift", 4_000, 0.85f, 2_500, 13_000, minReadMs = 450);
 
     fun revealMs(baseMs: Long): Long = (baseMs * revealFactor).toLong()
 }

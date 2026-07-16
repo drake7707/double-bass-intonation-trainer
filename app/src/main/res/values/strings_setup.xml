@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tune up (tune_), Drone (drone_), Room check (room_), Full setup (setup_).
+     Measurement/playing screens follow the distance-readability rule — keep translations short. -->
+<resources>
+
+    <!-- Tune up (ui/tune/) -->
+    <string name="tune_play_each">Play each open string</string>
+    <!-- %1$s = string name; accessibility description of the green check -->
+    <string name="tune_cd_in_tune">%1$s in tune</string>
+    <string name="tune_cents_sharp">cents sharp</string>
+    <string name="tune_cents_flat">cents flat</string>
+    <string name="tune_in_tune">in tune</string>
+    <string name="tune_little_sharp">a little sharp</string>
+    <string name="tune_little_flat">a little flat</string>
+    <string name="tune_sharp">sharp</string>
+    <string name="tune_flat">flat</string>
+    <string name="tune_play_prompt">play an open string</string>
+    <string name="tune_all_done">All strings in tune — go play!</string>
+    <string name="tune_skip">Skip</string>
+    <string name="tune_cd_needle">Tuning needle</string>
+
+    <!-- Drone (ui/drone/) -->
+    <string name="drone_sub">A steady tone to play along with — listen and match it. Nothing is scored.</string>
+    <!-- %1$s = the note it actually sounds as (phone speakers can't play bass register) -->
+    <string name="drone_sounding">you\'ll hear it as %1$s</string>
+    <string name="drone_sounding_fifth">you\'ll hear it as %1$s · with a fifth above</string>
+    <string name="drone_playing">Playing</string>
+    <string name="drone_stopped">Stopped</string>
+    <string name="drone_play">Play</string>
+    <string name="drone_stop">Stop</string>
+    <string name="drone_fifth_chip">Add a fifth — a second tone that makes tuning easier</string>
+    <string name="drone_open_strings">Open strings</string>
+    <string name="drone_any_note">Any note</string>
+    <string name="drone_volume">Volume</string>
+
+    <!-- Room check (ui/calibrate/CalibrateScreen.kt) -->
+    <string name="room_intro">A quick check that the app can hear your softest playing over the sounds of your room. Takes under a minute.</string>
+    <string name="room_step1_title">Step 1: Stay quiet</string>
+    <string name="room_step1_body">Don\'t play. Let the app listen to the room as it normally sounds.</string>
+    <string name="room_step1_label">Step 1: stay quiet</string>
+    <string name="room_transition_title">Get ready to play SOFTLY</string>
+    <string name="room_transition_sub">Next: soft bowing or gentle plucks</string>
+    <string name="room_step2_label">Step 2: soft playing</string>
+    <string name="room_play_softly">play softly…</string>
+    <string name="room_results">Results</string>
+    <string name="room_verdict_good">Your room is nice and quiet</string>
+    <string name="room_verdict_tight">Workable, but a bit loud</string>
+    <string name="room_verdict_overlap">Too noisy</string>
+    <string name="room_explain_good">The app can easily tell your playing from the room. You\'re all set.</string>
+    <string name="room_explain_tight">Very soft notes might not register here. A quieter room works even better.</string>
+    <string name="room_explain_overlap">The app can\'t tell your soft playing apart from the room\'s background noise. Try a quieter room.</string>
+    <!-- %1$s = noise ceiling, %2$s = playing floor, %3$s = gate (pre-formatted levels) -->
+    <string name="room_tech_line_no_gate">noise up to %1$s · soft playing from %2$s</string>
+    <string name="room_tech_line_gate">noise up to %1$s · soft playing from %2$s · gate %3$s</string>
+    <string name="room_saved">Saved.</string>
+    <string name="room_save">Save</string>
+    <string name="room_measure_again">Measure again</string>
+    <string name="room_try_again">Try again (quieter room)</string>
+
+    <!-- Full setup (ui/calibrate/WizardScreen.kt) -->
+    <string name="setup_title">Full setup</string>
+    <string name="setup_intro_1">The app listens to a few notes to learn how your bass sounds on this phone. First a quiet moment, then bowed notes, then plucked. Takes about two minutes.</string>
+    <string name="setup_intro_2">Have your bass ready and tuned. Each note starts recording automatically after a short countdown, so you never have to put the bass down.</string>
+    <string name="setup_start">Start</string>
+    <string name="setup_keep_quiet">Keep quiet…</string>
+    <string name="setup_measuring_room">Measuring the room background.</string>
+    <string name="setup_retry">Didn\'t catch that — let\'s try again.</string>
+    <!-- Stage names shown above the prompted note -->
+    <string name="setup_stage_lowest">Lowest string</string>
+    <string name="setup_stage_open">Open strings</string>
+    <string name="setup_stage_high">High note</string>
+    <string name="setup_stage_pizz_check">Pizz check</string>
+    <string name="setup_stage_pizz_stopped">Pizz stopped</string>
+    <!-- How to play the prompted note; the action word is part of the string -->
+    <string name="setup_hint_open_bows">BOW — open string, long bows</string>
+    <string name="setup_hint_high">BOW — Sol string, 2nd position</string>
+    <string name="setup_hint_pizz_open">PLUCK — pluck it a few times — let the other strings keep ringing</string>
+    <string name="setup_hint_pizz_stopped">PLUCK — finger the note, pluck once and let it ring</string>
+    <!-- %1$d = seconds -->
+    <string name="setup_get_ready">Get ready… %1$d</string>
+    <string name="setup_start_now">Start now</string>
+    <string name="setup_pluck_ring">Pluck &amp; let it ring…</string>
+    <string name="setup_keep_bowing">Keep bowing…</string>
+    <!-- %1$s = note name -->
+    <string name="setup_hearing">hearing %1$s</string>
+    <string name="setup_pizz_transition_title">Now it\'s time for pizz</string>
+    <string name="setup_pizz_transition_sub">Put your bow away and get ready</string>
+    <string name="setup_analyzing">Analyzing…</string>
+    <string name="setup_failed_title">Setup couldn\'t finish</string>
+    <string name="setup_fail_signal">The recordings didn\'t contain enough playable signal. Try again closer to the phone, in a quieter room.</string>
+    <string name="setup_fail_core">An open string didn\'t detect reliably this time. Nothing was changed — run it again (longer, steadier bows) so the settings are based on clean takes.</string>
+    <string name="setup_close">Close</string>
+    <string name="setup_sum_noisy">The room was too noisy to finish.</string>
+    <string name="setup_sum_all">All set — every note was heard correctly.</string>
+    <string name="setup_sum_some">Almost there — a few notes gave the app trouble.</string>
+    <!-- %1$s = note name -->
+    <string name="setup_note_bowed">%1$s (bowed)</string>
+    <string name="setup_note_plucked">%1$s (plucked)</string>
+    <string name="setup_heard">heard clearly</string>
+    <string name="setup_hard">hard to hear</string>
+    <string name="setup_wrong_octave_first">wrong octave at first</string>
+    <string name="setup_not_heard">not heard</string>
+    <string name="setup_off_pitch">off pitch</string>
+    <string name="setup_warn_pizz_octave">Plucked notes can sometimes show the wrong octave on this phone. The app corrects most of them — if you notice it during games, send a practice report so it can be tuned.</string>
+    <string name="setup_warn_pizz_timing">Plucked notes take a moment to settle on this phone, so a pluck may occasionally score a touch sharp. The best measured fit was saved.</string>
+    <string name="setup_warn_high">Very high notes may occasionally read too low on this phone. If you notice it during games, send a practice report.</string>
+    <string name="setup_details_show">Technical details</string>
+    <string name="setup_details_hide">Hide technical details</string>
+    <string name="setup_detail_mic">Microphone</string>
+    <string name="setup_detail_room">Room</string>
+    <string name="setup_room_clear">clear of noise</string>
+    <string name="setup_room_tight">tight — soft notes may drop</string>
+    <string name="setup_room_overlap">too noisy to set a gate</string>
+    <string name="setup_detail_settle">Pizz octave-settle</string>
+    <!-- %1$d = milliseconds -->
+    <string name="setup_ms">%1$d ms</string>
+    <string name="setup_not_needed">not needed</string>
+    <string name="setup_detail_lock">Pizz lock timing</string>
+    <!-- %1$d / %2$d = milliseconds -->
+    <string name="setup_lock_value">wait %1$d ms, hold %2$d ms</string>
+    <string name="setup_thresholds_adjusted">Octave handling was adjusted for this phone\'s microphone.</string>
+    <string name="setup_noisy_nothing_saved">The room was too noisy to finish — nothing was saved. Try again somewhere quieter.</string>
+    <string name="setup_saved">Saved — all games now use these settings.</string>
+    <string name="setup_save">Save</string>
+    <string name="setup_discard">Discard</string>
+
+</resources>

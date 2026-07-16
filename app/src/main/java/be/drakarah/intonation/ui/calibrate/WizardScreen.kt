@@ -39,12 +39,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.R
 import be.drakarah.intonation.calibration.CalibrationAnalysis
 import be.drakarah.intonation.calibration.SeparationVerdict
 import be.drakarah.intonation.music.NoteSpec
@@ -76,10 +78,13 @@ fun WizardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Full setup") },
+                title = { Text(stringResource(R.string.setup_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.common_cd_back),
+                        )
                     }
                 }
             )
@@ -101,31 +106,35 @@ fun WizardScreen(
                 when (val s = state) {
                     is WizardState.Intro -> {
                         Text(
-                            "The app listens to a few notes to learn how your bass sounds on this " +
-                                    "phone. First a quiet moment, then bowed notes, then plucked. " +
-                                    "Takes about two minutes.",
+                            stringResource(R.string.setup_intro_1),
                             style = MaterialTheme.typography.headlineSmall,
                             textAlign = TextAlign.Center
                         )
                         Spacer(Modifier.height(largeGap))
                         Text(
-                            "Have your bass ready and tuned. Each note starts recording automatically " +
-                                    "after a short countdown, so you never have to put the bass down.",
+                            stringResource(R.string.setup_intro_2),
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                         Spacer(Modifier.height(largeGap))
                         Button(onClick = viewModel::begin, modifier = Modifier.fillMaxWidth()) {
-                            Text("Start", fontSize = 24.sp, modifier = Modifier.padding(8.dp))
+                            Text(
+                                stringResource(R.string.setup_start),
+                                fontSize = 24.sp, modifier = Modifier.padding(8.dp),
+                            )
                         }
                     }
 
                     is WizardState.Quiet -> {
-                        Text("Keep quiet…", style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
+                        Text(
+                            stringResource(R.string.setup_keep_quiet),
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
                         Spacer(Modifier.height(largeGap))
                         Text(
-                            "Measuring the room background.",
+                            stringResource(R.string.setup_measuring_room),
                             style = MaterialTheme.typography.headlineSmall,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -140,12 +149,12 @@ fun WizardScreen(
                     }
 
                     is WizardState.AwaitPlay -> {
-                        Text(s.stage, style = MaterialTheme.typography.headlineMedium,
+                        Text(s.stage.displayLabel(), style = MaterialTheme.typography.headlineMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        
+
                         if (s.retry) {
                             Text(
-                                "Didn't catch that — let's try again.",
+                                stringResource(R.string.setup_retry),
                                 style = MaterialTheme.typography.headlineSmall,
                                 color = ResultColors.close,
                                 textAlign = TextAlign.Center,
@@ -163,25 +172,25 @@ fun WizardScreen(
                         )
                         
                         Text(
-                            (if (s.prompt.pizz) "PLUCK — " else "BOW — ") + s.prompt.stringHint,
+                            s.prompt.stringHint.instruction(),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )
-                        
+
                         Spacer(Modifier.height(largeGap))
-                        
+
                         Text(
-                            "Get ready… ${s.secsLeft}",
+                            stringResource(R.string.setup_get_ready, s.secsLeft),
                             style = MaterialTheme.typography.displayLarge,
                             color = ResultColors.excellent,
                             fontWeight = FontWeight.Bold,
                         )
-                        
+
                         Spacer(Modifier.height(Spacing.ITEM_SPACING))
-                        
+
                         OutlinedButton(onClick = viewModel::startTake, modifier = Modifier.fillMaxWidth()) {
-                            Text("Start now")
+                            Text(stringResource(R.string.setup_start_now))
                         }
                     }
 
@@ -193,7 +202,10 @@ fun WizardScreen(
                             color = ResultColors.excellent,
                         )
                         Text(
-                            if (s.prompt.pizz) "Pluck & let it ring…" else "Keep bowing…",
+                            stringResource(
+                                if (s.prompt.pizz) R.string.setup_pluck_ring
+                                else R.string.setup_keep_bowing
+                            ),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
@@ -211,8 +223,12 @@ fun WizardScreen(
                         Spacer(Modifier.height(largeGap))
                         
                         Text(
-                            s.heardHz?.let { "hearing ${nearestNote(it.toDouble()).displayName(noteStyle)}" }
-                                ?: "listening…",
+                            s.heardHz?.let {
+                                stringResource(
+                                    R.string.setup_hearing,
+                                    nearestNote(it.toDouble()).displayName(noteStyle),
+                                )
+                            } ?: stringResource(R.string.game_listening),
                             style = MaterialTheme.typography.displayMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Bold
@@ -221,14 +237,14 @@ fun WizardScreen(
 
                     is WizardState.PizzTransition -> {
                         Text(
-                            "Now it's time for pizz",
+                            stringResource(R.string.setup_pizz_transition_title),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )
                         Spacer(Modifier.height(Spacing.ITEM_SPACING))
                         Text(
-                            "Put your bow away and get ready",
+                            stringResource(R.string.setup_pizz_transition_sub),
                             style = MaterialTheme.typography.headlineLarge,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -250,7 +266,11 @@ fun WizardScreen(
                             modifier = Modifier.size(100.dp)
                         )
                         Spacer(Modifier.height(Spacing.ITEM_SPACING))
-                        Text("Analyzing…", style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
+                        Text(
+                            stringResource(R.string.setup_analyzing),
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
                         Spacer(Modifier.height(largeGap))
                         LinearProgressIndicator(
                             modifier = Modifier.fillMaxWidth().height(20.dp),
@@ -269,20 +289,28 @@ fun WizardScreen(
                         )
                         Spacer(Modifier.height(Spacing.ITEM_SPACING))
                         Text(
-                            "Setup couldn't finish",
+                            stringResource(R.string.setup_failed_title),
                             style = MaterialTheme.typography.headlineMedium,
                             color = ResultColors.off,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(Modifier.height(Spacing.ITEM_SPACING))
                         Text(
-                            s.reason,
+                            stringResource(
+                                when (s.reason) {
+                                    WizardFailReason.NOT_ENOUGH_SIGNAL -> R.string.setup_fail_signal
+                                    WizardFailReason.CORE_STRING_FAILED -> R.string.setup_fail_core
+                                }
+                            ),
                             style = MaterialTheme.typography.titleLarge,
                             textAlign = TextAlign.Center
                         )
                         Spacer(Modifier.height(largeGap))
                         Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                            Text("Close", fontSize = 24.sp, modifier = Modifier.padding(8.dp))
+                            Text(
+                                stringResource(R.string.setup_close),
+                                fontSize = 24.sp, modifier = Modifier.padding(8.dp),
+                            )
                         }
                     }
                 }
@@ -290,7 +318,7 @@ fun WizardScreen(
                 if (state !is WizardState.Summary && state !is WizardState.Failed && state !is WizardState.PizzTransition) {
                     Spacer(Modifier.height(largeGap))
                     OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.wizard_cancel))
                     }
                 }
             }
@@ -315,11 +343,13 @@ private fun SummaryContent(
     // numbers live in the "Technical details" expander below — available to anyone curious, and
     // the thing to screenshot when sending feedback.
     Text(
-        when {
-            !roomOk -> "The room was too noisy to finish."
-            allNotesOk -> "All set — every note was heard correctly."
-            else -> "Almost there — a few notes gave the app trouble."
-        },
+        stringResource(
+            when {
+                !roomOk -> R.string.setup_sum_noisy
+                allNotesOk -> R.string.setup_sum_all
+                else -> R.string.setup_sum_some
+            }
+        ),
         style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold,
         textAlign = TextAlign.Center,
@@ -334,45 +364,49 @@ private fun SummaryContent(
         Column(Modifier.padding(Spacing.CARD_PADDING), verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
             r.noteChecks.forEach { (midi, ok) ->
                 SummaryCheckRow(
-                    name = "${NoteSpec(midi).displayName(noteStyle)} (bowed)",
-                    label = if (ok) "heard clearly" else "hard to hear",
+                    name = stringResource(
+                        R.string.setup_note_bowed, NoteSpec(midi).displayName(noteStyle)
+                    ),
+                    label = stringResource(if (ok) R.string.setup_heard else R.string.setup_hard),
                     icon = if (ok) Icons.Default.CheckCircle else Icons.Default.Warning,
                     tint = if (ok) ResultColors.excellent else ResultColors.close,
                 )
             }
             r.pizzChecks.forEach { (midi, status) ->
-                val (label, icon, tint) = when (status) {
+                val (labelRes, icon, tint) = when (status) {
                     CalibrationAnalysis.PizzCheckStatus.OK ->
-                        Triple("heard clearly", Icons.Default.CheckCircle, ResultColors.excellent)
+                        Triple(R.string.setup_heard, Icons.Default.CheckCircle, ResultColors.excellent)
                     CalibrationAnalysis.PizzCheckStatus.OCTAVE_DRIFT ->
-                        Triple("wrong octave at first", Icons.Default.Warning, ResultColors.close)
+                        Triple(R.string.setup_wrong_octave_first, Icons.Default.Warning, ResultColors.close)
                     CalibrationAnalysis.PizzCheckStatus.NOT_DETECTED ->
-                        Triple("not heard", Icons.Default.Close, ResultColors.off)
+                        Triple(R.string.setup_not_heard, Icons.Default.Close, ResultColors.off)
                     CalibrationAnalysis.PizzCheckStatus.OFF_PITCH ->
-                        Triple("off pitch", Icons.Default.Warning, ResultColors.close)
+                        Triple(R.string.setup_off_pitch, Icons.Default.Warning, ResultColors.close)
                 }
                 SummaryCheckRow(
-                    name = "${NoteSpec(midi).displayName(noteStyle)} (plucked)",
-                    label = label, icon = icon, tint = tint,
+                    name = stringResource(
+                        R.string.setup_note_plucked, NoteSpec(midi).displayName(noteStyle)
+                    ),
+                    label = stringResource(labelRes), icon = icon, tint = tint,
                 )
             }
             if (r.pizzUnreliable) {
                 Text(
-                    "Plucked notes can sometimes show the wrong octave on this phone. The app corrects most of them — if you notice it during games, send a practice report so it can be tuned.",
+                    stringResource(R.string.setup_warn_pizz_octave),
                     style = MaterialTheme.typography.bodySmall,
                     color = ResultColors.close,
                 )
             }
             if (r.pizzTimingUnreliable) {
                 Text(
-                    "Plucked notes take a moment to settle on this phone, so a pluck may occasionally score a touch sharp. The best measured fit was saved.",
+                    stringResource(R.string.setup_warn_pizz_timing),
                     style = MaterialTheme.typography.bodySmall,
                     color = ResultColors.close,
                 )
             }
             if (r.highNoteUnreliable) {
                 Text(
-                    "Very high notes may occasionally read too low on this phone. If you notice it during games, send a practice report.",
+                    stringResource(R.string.setup_warn_high),
                     style = MaterialTheme.typography.bodySmall,
                     color = ResultColors.close,
                 )
@@ -382,29 +416,43 @@ private fun SummaryContent(
 
     Spacer(Modifier.height(Spacing.FINE_SPACING))
     TextButton(onClick = { showDetails = !showDetails }, modifier = Modifier.fillMaxWidth()) {
-        Text(if (showDetails) "Hide technical details" else "Technical details")
+        Text(
+            stringResource(
+                if (showDetails) R.string.setup_details_hide else R.string.setup_details_show
+            )
+        )
     }
     if (showDetails) {
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(Spacing.CARD_PADDING), verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
-                DetailRow("Microphone", r.sourceLabel)
+                DetailRow(stringResource(R.string.setup_detail_mic), r.sourceLabel)
                 DetailRow(
-                    "Room", when (r.verdict) {
-                        SeparationVerdict.GOOD -> "clear of noise"
-                        SeparationVerdict.TIGHT -> "tight — soft notes may drop"
-                        SeparationVerdict.OVERLAP -> "too noisy to set a gate"
-                    }
+                    stringResource(R.string.setup_detail_room),
+                    stringResource(
+                        when (r.verdict) {
+                            SeparationVerdict.GOOD -> R.string.setup_room_clear
+                            SeparationVerdict.TIGHT -> R.string.setup_room_tight
+                            SeparationVerdict.OVERLAP -> R.string.setup_room_overlap
+                        }
+                    )
                 )
                 if (r.pizzChecks.isNotEmpty()) {
                     DetailRow(
-                        "Pizz octave-settle",
-                        if (r.pizzSettleMs > 0) "${r.pizzSettleMs} ms" else "not needed",
+                        stringResource(R.string.setup_detail_settle),
+                        if (r.pizzSettleMs > 0) stringResource(R.string.setup_ms, r.pizzSettleMs)
+                        else stringResource(R.string.setup_not_needed),
                     )
-                    DetailRow("Pizz lock timing", "wait ${r.pizzAttackSkipMs} ms, hold ${r.pizzStabilityWindowMs} ms")
+                    DetailRow(
+                        stringResource(R.string.setup_detail_lock),
+                        stringResource(
+                            R.string.setup_lock_value,
+                            r.pizzAttackSkipMs, r.pizzStabilityWindowMs,
+                        ),
+                    )
                 }
                 if (r.thresholdsAdjusted) {
                     Text(
-                        "Octave handling was adjusted for this phone's microphone.",
+                        stringResource(R.string.setup_thresholds_adjusted),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -417,32 +465,69 @@ private fun SummaryContent(
     
     if (r.gate == null) {
         Text(
-            "The room was too noisy to finish — nothing was saved. Try again somewhere quieter.",
+            stringResource(R.string.setup_noisy_nothing_saved),
             style = MaterialTheme.typography.bodyLarge,
             color = ResultColors.off,
             textAlign = TextAlign.Center
         )
-        Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Close") }
+        Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.setup_close))
+        }
     } else if (s.saved) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.CheckCircle, contentDescription = null, tint = ResultColors.excellent)
                 Spacer(Modifier.width(Spacing.FINE_SPACING))
-                Text("Saved — all games now use these settings.", color = ResultColors.excellent, style = MaterialTheme.typography.titleLarge)
+                Text(
+                    stringResource(R.string.setup_saved),
+                    color = ResultColors.excellent,
+                    style = MaterialTheme.typography.titleLarge,
+                )
             }
-            Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Done", fontSize = 24.sp, modifier = Modifier.padding(8.dp)) }
+            Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    stringResource(R.string.summary_done),
+                    fontSize = 24.sp, modifier = Modifier.padding(8.dp),
+                )
+            }
         }
     } else {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
             Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) {
-                Text("Save", fontSize = 24.sp, modifier = Modifier.padding(8.dp))
+                Text(
+                    stringResource(R.string.setup_save),
+                    fontSize = 24.sp, modifier = Modifier.padding(8.dp),
+                )
             }
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text("Discard")
+                Text(stringResource(R.string.setup_discard))
             }
         }
     }
 }
+
+/** Stage name shown above the prompted note. */
+@Composable
+private fun WizardStage.displayLabel(): String = stringResource(
+    when (this) {
+        WizardStage.LOWEST_STRING -> R.string.setup_stage_lowest
+        WizardStage.OPEN_STRINGS -> R.string.setup_stage_open
+        WizardStage.HIGH_NOTE -> R.string.setup_stage_high
+        WizardStage.PIZZ_CHECK -> R.string.setup_stage_pizz_check
+        WizardStage.PIZZ_STOPPED -> R.string.setup_stage_pizz_stopped
+    }
+)
+
+/** Full "how to play it" line, action word included (BOW — / PLUCK —). */
+@Composable
+private fun StringHintKind.instruction(): String = stringResource(
+    when (this) {
+        StringHintKind.OPEN_LONG_BOWS -> R.string.setup_hint_open_bows
+        StringHintKind.SOL_2ND_POSITION -> R.string.setup_hint_high
+        StringHintKind.PIZZ_OPEN_RINGING -> R.string.setup_hint_pizz_open
+        StringHintKind.PIZZ_STOPPED_RING -> R.string.setup_hint_pizz_stopped
+    }
+)
 
 /** One "note — verdict" row of the friendly summary list. */
 @Composable

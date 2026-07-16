@@ -87,4 +87,7 @@
     <string name="common_mic_rationale">%1$s needs the microphone to hear your bass.</string>
     <string name="common_mic_grant">Grant microphone access</string>
 
+    <!-- Top-bar back arrow accessibility description -->
+    <string name="common_cd_back">Back</string>
+
 </resources>

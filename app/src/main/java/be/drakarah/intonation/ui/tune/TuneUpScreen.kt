@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.R
 import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.RequireMicPermission
@@ -66,10 +68,13 @@ fun TuneUpScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Tune up") },
+                    title = { Text(stringResource(R.string.home_tune_up)) },
                     navigationIcon = {
                         IconButton(onClick = onDone) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.common_cd_back),
+                            )
                         }
                     }
                 )
@@ -85,7 +90,7 @@ fun TuneUpScreen(
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    "Play each open string",
+                    stringResource(R.string.tune_play_each),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -126,7 +131,10 @@ fun TuneUpScreen(
                                     if (done) {
                                         Icon(
                                             Icons.Default.CheckCircle,
-                                            contentDescription = string.displayName(noteStyle) + " in tune",
+                                            contentDescription = stringResource(
+                                                R.string.tune_cd_in_tune,
+                                                string.displayName(noteStyle),
+                                            ),
                                             tint = ResultColors.excellent,
                                             modifier = Modifier.fillMaxHeight(),
                                         )
@@ -155,17 +163,23 @@ fun TuneUpScreen(
                             color = color,
                         )
                         Text(
-                            "cents ${if (cents > 0) "sharp" else "flat"}",
+                            stringResource(
+                                if (cents > 0) R.string.tune_cents_sharp else R.string.tune_cents_flat
+                            ),
                             style = MaterialTheme.typography.headlineSmall,
                             color = color,
                         )
                     } else {
                         Text(
-                            when {
-                                abs(cents) <= 5f -> "in tune"
-                                abs(cents) <= 15f -> if (cents > 0) "a little sharp" else "a little flat"
-                                else -> if (cents > 0) "sharp" else "flat"
-                            },
+                            stringResource(
+                                when {
+                                    abs(cents) <= 5f -> R.string.tune_in_tune
+                                    abs(cents) <= 15f ->
+                                        if (cents > 0) R.string.tune_little_sharp
+                                        else R.string.tune_little_flat
+                                    else -> if (cents > 0) R.string.tune_sharp else R.string.tune_flat
+                                }
+                            ),
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold,
                             color = color,
@@ -180,7 +194,7 @@ fun TuneUpScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        "play an open string",
+                        stringResource(R.string.tune_play_prompt),
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -189,7 +203,7 @@ fun TuneUpScreen(
                 Spacer(Modifier.height(Spacing.SECTION_BREAK))
                 if (state.allInTune) {
                     Text(
-                        "All strings in tune — go play!",
+                        stringResource(R.string.tune_all_done),
                         style = MaterialTheme.typography.headlineMedium,
                         color = ResultColors.excellent,
                         fontWeight = FontWeight.Bold,
@@ -198,7 +212,12 @@ fun TuneUpScreen(
                     Spacer(Modifier.height(Spacing.ITEM_SPACING))
                 }
                 Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
-                    Text(if (state.allInTune) "Done" else "Skip", fontSize = 20.sp, modifier = Modifier.padding(4.dp))
+                    Text(
+                        stringResource(
+                            if (state.allInTune) R.string.summary_done else R.string.tune_skip
+                        ),
+                        fontSize = 20.sp, modifier = Modifier.padding(4.dp),
+                    )
                 }
             }
         }
@@ -215,11 +234,12 @@ private fun CentsNeedle(cents: Float) {
         abs(cents) <= 15f -> ResultColors.close
         else -> ResultColors.off
     }
+    val needleDescription = stringResource(R.string.tune_cd_needle)
     Canvas(
         Modifier
             .fillMaxWidth()
             .height(64.dp)
-            .semantics { contentDescription = "Tuning needle" }
+            .semantics { contentDescription = needleDescription }
     ) {
         val cx = size.width / 2f
         val scale = size.width / 100f // 100 cents full width

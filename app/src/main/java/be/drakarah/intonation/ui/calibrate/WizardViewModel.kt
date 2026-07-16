@@ -41,11 +41,20 @@ private class Take(
 /** A mic source the wizard tries; label is generic on purpose (no device specifics). */
 data class SourceCandidate(val id: Int, val label: String)
 
+/** Wizard flow stages, in order. The UI maps these to display names (strings_setup.xml). */
+enum class WizardStage { LOWEST_STRING, OPEN_STRINGS, HIGH_NOTE, PIZZ_CHECK, PIZZ_STOPPED }
+
+/** How to play the prompted note; the UI maps to a full instruction line incl. BOW/PLUCK. */
+enum class StringHintKind { OPEN_LONG_BOWS, SOL_2ND_POSITION, PIZZ_OPEN_RINGING, PIZZ_STOPPED_RING }
+
+/** Why the wizard could not finish; the UI maps to the explanation text. */
+enum class WizardFailReason { NOT_ENOUGH_SIGNAL, CORE_STRING_FAILED }
+
 /** What the wizard asks the user to play next. Midi is resolved to display text by the UI
  * with the user's note-name style. */
 data class PlayPrompt(
     val midi: Int,
-    val stringHint: String,
+    val stringHint: StringHintKind,
     /** e.g. "2 of 3" for the source stage repeats. */
     val repeatHint: String? = null,
     /** This prompt is played pizzicato (plucked) rather than bowed. */
@@ -59,14 +68,14 @@ sealed interface WizardState {
      * (so she never has to put the bass down to tap a button); [retry] set when the last attempt
      * had too little signal. */
     data class AwaitPlay(
-        val prompt: PlayPrompt, val stage: String, val retry: Boolean, val secsLeft: Int,
+        val prompt: PlayPrompt, val stage: WizardStage, val retry: Boolean, val secsLeft: Int,
     ) : WizardState
     data class Recording(val prompt: PlayPrompt, val progress: Float, val heardHz: Float?) : WizardState
     /** 5-second countdown to switch from arco to pizz phase. */
     data class PizzTransition(val secsLeft: Int) : WizardState
     data object Analyzing : WizardState
     data class Summary(val result: WizardResult, val saved: Boolean) : WizardState
-    data class Failed(val reason: String) : WizardState
+    data class Failed(val reason: WizardFailReason) : WizardState
 }
 
 data class WizardResult(
@@ -166,10 +175,10 @@ class WizardViewModel(
             awaitPlay(
                 PlayPrompt(
                     midi = OPEN_MI,
-                    stringHint = "open string, long bows",
+                    stringHint = StringHintKind.OPEN_LONG_BOWS,
                     repeatHint = if (sources.size > 1) "take $index of ${sources.size}" else null,
                 ),
-                stage = "Lowest string",
+                stage = WizardStage.LOWEST_STRING,
                 retry = retry,
             )
             return
@@ -177,16 +186,16 @@ class WizardViewModel(
         val nextString = OPEN_STRING_MIDIS.firstOrNull { it !in stringTakes }
         if (nextString != null) {
             awaitPlay(
-                PlayPrompt(midi = nextString, stringHint = "open string, long bows"),
-                stage = "Open strings",
+                PlayPrompt(midi = nextString, stringHint = StringHintKind.OPEN_LONG_BOWS),
+                stage = WizardStage.OPEN_STRINGS,
                 retry = retry,
             )
             return
         }
         if (highTake == null) {
             awaitPlay(
-                PlayPrompt(midi = HIGH_NOTE, stringHint = "Sol string, 2nd position"),
-                stage = "High note",
+                PlayPrompt(midi = HIGH_NOTE, stringHint = StringHintKind.SOL_2ND_POSITION),
+                stage = WizardStage.HIGH_NOTE,
                 retry = retry,
             )
             return
@@ -205,10 +214,10 @@ class WizardViewModel(
                     // exactly what pushes a low note to read an octave high, so we want it present
                     // while we measure (her 2026-07-13 finding: a lone first pluck reads clean,
                     // the octave only appears once the other strings are resonating).
-                    stringHint = "pluck it a few times — let the other strings keep ringing",
+                    stringHint = StringHintKind.PIZZ_OPEN_RINGING,
                     pizz = true,
                 ),
-                stage = "Pizz check",
+                stage = WizardStage.PIZZ_CHECK,
                 retry = retry,
             )
             return
@@ -220,10 +229,10 @@ class WizardViewModel(
                     midi = nextStopped,
                     // A fingered pluck, held to ring, so the capture-timing profile sees a real
                     // stopped-note attack (finger damping changes how the pluck settles).
-                    stringHint = "finger the note, pluck once and let it ring",
+                    stringHint = StringHintKind.PIZZ_STOPPED_RING,
                     pizz = true,
                 ),
-                stage = "Pizz stopped",
+                stage = WizardStage.PIZZ_STOPPED,
                 retry = retry,
             )
             return
@@ -246,7 +255,7 @@ class WizardViewModel(
     /** Show the play prompt and start the auto-start countdown so she never has to put the bass
      * down: recording begins on its own when the count reaches zero (she can also tap to start
      * now). */
-    private fun awaitPlay(prompt: PlayPrompt, stage: String, retry: Boolean) {
+    private fun awaitPlay(prompt: PlayPrompt, stage: WizardStage, retry: Boolean) {
         _state.value = WizardState.AwaitPlay(prompt, stage, retry, secsLeft = AUTO_START_SEC)
         countdownJob?.cancel()
         countdownJob = viewModelScope.launch {
@@ -265,7 +274,7 @@ class WizardViewModel(
         countdownJob = null
         if (job != null) return
         job = viewModelScope.launch {
-            val sourceId = if (await.stage == "Lowest string") {
+            val sourceId = if (await.stage == WizardStage.LOWEST_STRING) {
                 sources.first { it.id !in sourceTakes }.id
             } else chosenSourceIdSoFar()
             val expectedHz = NoteSpec(await.prompt.midi).frequency(a4).toFloat()
@@ -279,14 +288,14 @@ class WizardViewModel(
                 return@launch
             }
             when (await.stage) {
-                "Lowest string" -> {
+                WizardStage.LOWEST_STRING -> {
                     sourceTakes[sourceId] = take
                     if (sources.all { it.id in sourceTakes }) pickSource()
                 }
-                "Open strings" -> stringTakes[await.prompt.midi] = take
-                "Pizz check" -> pizzTakes[await.prompt.midi] = take
-                "Pizz stopped" -> pizzStoppedTakes[await.prompt.midi] = take
-                else -> highTake = take
+                WizardStage.OPEN_STRINGS -> stringTakes[await.prompt.midi] = take
+                WizardStage.PIZZ_CHECK -> pizzTakes[await.prompt.midi] = take
+                WizardStage.PIZZ_STOPPED -> pizzStoppedTakes[await.prompt.midi] = take
+                WizardStage.HIGH_NOTE -> highTake = take
             }
             promptNextTake()
         }
@@ -359,10 +368,7 @@ class WizardViewModel(
             val result = withContext(Dispatchers.Default) { computeResult() }
             saveCalibrationTrace()
             if (result == null) {
-                _state.value = WizardState.Failed(
-                    "The recordings didn't contain enough playable signal. " +
-                        "Try again closer to the phone, in a quieter room."
-                )
+                _state.value = WizardState.Failed(WizardFailReason.NOT_ENOUGH_SIGNAL)
             } else {
                 _state.value = WizardState.Summary(result, saved = false)
             }
@@ -595,10 +601,7 @@ class WizardViewModel(
         // (The high note is allowed to be unreliable; it's surfaced separately.)
         val coreFailed = summary.result.noteChecks.any { (midi, ok) -> !ok && midi in CORE_OPEN_MIDIS }
         if (coreFailed) {
-            _state.value = WizardState.Failed(
-                "An open string didn't detect reliably this time. Nothing was changed — " +
-                    "run it again (longer, steadier bows) so the settings are based on clean takes."
-            )
+            _state.value = WizardState.Failed(WizardFailReason.CORE_STRING_FAILED)
             return
         }
         viewModelScope.launch {

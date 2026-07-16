@@ -34,12 +34,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.R
 import be.drakarah.intonation.calibration.SeparationVerdict
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.RequireMicPermission
@@ -63,10 +65,13 @@ fun CalibrateScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Room check") },
+                    title = { Text(stringResource(R.string.home_room_check)) },
                     navigationIcon = {
                         IconButton(onClick = onDone) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.common_cd_back),
+                            )
                         }
                     },
                 )
@@ -86,20 +91,20 @@ fun CalibrateScreen(
                 when (val s = state) {
                     CalibrateState.Idle -> {
                         Text(
-                            "A quick check that the app can hear your softest playing over the sounds of your room. Takes under a minute.",
+                            stringResource(R.string.room_intro),
                             style = MaterialTheme.typography.headlineSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
                         )
                         Spacer(Modifier.height(largeGap))
                         Text(
-                            "Step 1: Stay quiet",
+                            stringResource(R.string.room_step1_title),
                             style = MaterialTheme.typography.headlineMedium,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "Don't play. Let the app listen to the room as it normally sounds.",
+                            stringResource(R.string.room_step1_body),
                             style = MaterialTheme.typography.titleLarge,
                             textAlign = TextAlign.Center,
                         )
@@ -107,13 +112,18 @@ fun CalibrateScreen(
                         Button(
                             onClick = viewModel::startNoisePhase,
                             modifier = Modifier.fillMaxWidth(),
-                        ) { Text("Start", fontSize = 24.sp, modifier = Modifier.padding(8.dp)) }
+                        ) {
+                            Text(
+                                stringResource(R.string.setup_start),
+                                fontSize = 24.sp, modifier = Modifier.padding(8.dp),
+                            )
+                        }
                     }
 
                     is CalibrateState.MeasuringNoise -> {
                         MeasurementLoadingState(
-                            label = "Step 1: stay quiet",
-                            status = "listening…",
+                            label = stringResource(R.string.room_step1_label),
+                            status = stringResource(R.string.game_listening),
                             progress = s.progress,
                             icon = Icons.Default.Mic
                         )
@@ -121,14 +131,14 @@ fun CalibrateScreen(
 
                     is CalibrateState.Transition -> {
                         Text(
-                            "Get ready to play SOFTLY",
+                            stringResource(R.string.room_transition_title),
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )
                         Spacer(Modifier.height(Spacing.ITEM_SPACING))
                         Text(
-                            "Next: soft bowing or gentle plucks",
+                            stringResource(R.string.room_transition_sub),
                             style = MaterialTheme.typography.headlineMedium,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -144,8 +154,8 @@ fun CalibrateScreen(
 
                     is CalibrateState.MeasuringPlaying -> {
                         MeasurementLoadingState(
-                            label = "Step 2: soft playing",
-                            status = "play softly…",
+                            label = stringResource(R.string.room_step2_label),
+                            status = stringResource(R.string.room_play_softly),
                             progress = s.progress,
                             icon = Icons.Default.MusicNote
                         )
@@ -159,7 +169,7 @@ fun CalibrateScreen(
                     state !is CalibrateState.MeasuringPlaying && state !is CalibrateState.Transition) {
                     Spacer(Modifier.height(largeGap))
                     OutlinedButton(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.wizard_cancel))
                     }
                 }
             }
@@ -219,7 +229,7 @@ private fun ResultContent(
     ) {
         val technical = LocalTechnicalDetails.current
         Text(
-            "Results",
+            stringResource(R.string.room_results),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -231,9 +241,18 @@ private fun ResultContent(
                 verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING)
             ) {
                 val (verdictLabel, verdictIcon, verdictColor) = when (s.verdict) {
-                    SeparationVerdict.GOOD -> Triple("Your room is nice and quiet", Icons.Default.CheckCircle, ResultColors.excellent)
-                    SeparationVerdict.TIGHT -> Triple("Workable, but a bit loud", Icons.Default.Warning, ResultColors.close)
-                    SeparationVerdict.OVERLAP -> Triple("Too noisy", Icons.Default.Close, ResultColors.off)
+                    SeparationVerdict.GOOD -> Triple(
+                        stringResource(R.string.room_verdict_good),
+                        Icons.Default.CheckCircle, ResultColors.excellent,
+                    )
+                    SeparationVerdict.TIGHT -> Triple(
+                        stringResource(R.string.room_verdict_tight),
+                        Icons.Default.Warning, ResultColors.close,
+                    )
+                    SeparationVerdict.OVERLAP -> Triple(
+                        stringResource(R.string.room_verdict_overlap),
+                        Icons.Default.Close, ResultColors.off,
+                    )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -252,11 +271,13 @@ private fun ResultContent(
                     )
                 }
 
-                val explanation = when (s.verdict) {
-                    SeparationVerdict.GOOD -> "The app can easily tell your playing from the room. You're all set."
-                    SeparationVerdict.TIGHT -> "Very soft notes might not register here. A quieter room works even better."
-                    SeparationVerdict.OVERLAP -> "The app can't tell your soft playing apart from the room's background noise. Try a quieter room."
-                }
+                val explanation = stringResource(
+                    when (s.verdict) {
+                        SeparationVerdict.GOOD -> R.string.room_explain_good
+                        SeparationVerdict.TIGHT -> R.string.room_explain_tight
+                        SeparationVerdict.OVERLAP -> R.string.room_explain_overlap
+                    }
+                )
 
                 Text(
                     explanation,
@@ -266,11 +287,15 @@ private fun ResultContent(
                 )
 
                 if (technical) {
+                    val noise = String.format(Locale.US, "%.0f", s.noiseCeil)
+                    val floor = String.format(Locale.US, "%.0f", s.playingFloor)
                     Text(
-                        buildString {
-                            append(String.format(Locale.US, "noise up to %.0f · soft playing from %.0f", s.noiseCeil, s.playingFloor))
-                            s.recommendedGate?.let { append(String.format(Locale.US, " · gate %.0f", it)) }
-                        },
+                        s.recommendedGate?.let { gate ->
+                            stringResource(
+                                R.string.room_tech_line_gate,
+                                noise, floor, String.format(Locale.US, "%.0f", gate),
+                            )
+                        } ?: stringResource(R.string.room_tech_line_no_gate, noise, floor),
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -284,21 +309,34 @@ private fun ResultContent(
         when {
             s.saved -> {
                 Icon(Icons.Default.CheckCircle, contentDescription = null, tint = ResultColors.excellent, modifier = Modifier.size(64.dp))
-                Text("Saved.", color = ResultColors.excellent, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    stringResource(R.string.room_saved),
+                    color = ResultColors.excellent,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                )
                 Spacer(Modifier.height(Spacing.ITEM_SPACING))
-                Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) { Text("Done", fontSize = 24.sp, modifier = Modifier.padding(8.dp)) }
+                Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        stringResource(R.string.summary_done),
+                        fontSize = 24.sp, modifier = Modifier.padding(8.dp),
+                    )
+                }
             }
             s.recommendedGate != null -> {
                 Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) {
-                    Text("Save", fontSize = 24.sp, modifier = Modifier.padding(8.dp))
+                    Text(
+                        stringResource(R.string.room_save),
+                        fontSize = 24.sp, modifier = Modifier.padding(8.dp),
+                    )
                 }
                 OutlinedButton(onClick = viewModel::reset, modifier = Modifier.fillMaxWidth()) {
-                    Text("Measure again")
+                    Text(stringResource(R.string.room_measure_again))
                 }
             }
             else -> {
                 OutlinedButton(onClick = viewModel::reset, modifier = Modifier.fillMaxWidth()) {
-                    Text("Try again (quieter room)")
+                    Text(stringResource(R.string.room_try_again))
                 }
             }
         }

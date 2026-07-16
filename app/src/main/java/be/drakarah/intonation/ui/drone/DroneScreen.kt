@@ -31,6 +31,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.R
 import be.drakarah.intonation.music.NoteSpec
 import be.drakarah.intonation.ui.common.rememberAppSettings
 import be.drakarah.intonation.ui.theme.ResultColors
@@ -83,9 +85,9 @@ fun DroneScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
-        Text("Drone", style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(R.string.home_drone), style = MaterialTheme.typography.headlineMedium)
         Text(
-            "A steady tone to play along with — listen and match it. Nothing is scored.",
+            stringResource(R.string.drone_sub),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -103,8 +105,10 @@ fun DroneScreen(
         )
         Text(
             // Phone speakers can't play bass-register notes, so the tone sounds in a higher octave.
-            "you'll hear it as ${NoteSpec(state.soundingMidi).displayName(noteStyle)}" +
-                if (state.withFifth) " · with a fifth above" else "",
+            stringResource(
+                if (state.withFifth) R.string.drone_sounding_fifth else R.string.drone_sounding,
+                NoteSpec(state.soundingMidi).displayName(noteStyle),
+            ),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -115,14 +119,17 @@ fun DroneScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)
         ) {
+            val playingLabel = stringResource(
+                if (state.isPlaying) R.string.drone_playing else R.string.drone_stopped
+            )
             Icon(
                 if (state.isPlaying) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
-                contentDescription = if (state.isPlaying) "Playing" else "Stopped",
+                contentDescription = playingLabel,
                 tint = if (state.isPlaying) ResultColors.excellent else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp)
             )
             Text(
-                if (state.isPlaying) "Playing" else "Stopped",
+                playingLabel,
                 style = MaterialTheme.typography.titleMedium,
                 color = if (state.isPlaying) ResultColors.excellent else MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -137,12 +144,15 @@ fun DroneScreen(
                 ButtonDefaults.buttonColors(containerColor = ResultColors.off)
             else ButtonDefaults.buttonColors(),
         ) {
+            val playStopLabel = stringResource(
+                if (state.isPlaying) R.string.drone_stop else R.string.drone_play
+            )
             Icon(
                 if (state.isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
-                contentDescription = if (state.isPlaying) "Stop" else "Play",
+                contentDescription = playStopLabel,
             )
             Spacer(Modifier.width(Spacing.ITEM_HORIZONTAL))
-            Text(if (state.isPlaying) "Stop" else "Play")
+            Text(playStopLabel)
         }
 
         Spacer(Modifier.height(Spacing.ITEM_SPACING))
@@ -150,13 +160,13 @@ fun DroneScreen(
         FilterChip(
             selected = state.withFifth,
             onClick = viewModel::toggleFifth,
-            label = { Text("Add a fifth — a second tone that makes tuning easier") },
+            label = { Text(stringResource(R.string.drone_fifth_chip)) },
         )
 
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
 
         Text(
-            "Open strings",
+            stringResource(R.string.drone_open_strings),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth(),
@@ -177,7 +187,7 @@ fun DroneScreen(
         Spacer(Modifier.height(Spacing.ITEM_SPACING))
 
         Text(
-            "Any note",
+            stringResource(R.string.drone_any_note),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth(),
@@ -205,7 +215,7 @@ fun DroneScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Volume",
+                stringResource(R.string.drone_volume),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -222,7 +232,9 @@ fun DroneScreen(
         )
 
         Spacer(Modifier.height(Spacing.SECTION_BREAK))
-        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
+        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.settings_back))
+        }
         Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
     }
 }

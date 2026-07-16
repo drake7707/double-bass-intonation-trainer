@@ -64,6 +64,9 @@ data class ShiftAttemptUi(
     val timedOut: Boolean,
     val wrongNote: Boolean,
     val fastBonus: Boolean,
+    val energyLevel: Float? = null,
+    val captureWobbleCents: Float? = null,
+    val retryCount: Int = 0,
 )
 
 sealed interface ShiftPhase {
@@ -291,6 +294,9 @@ class ShiftViewModel(
             timedOut = r.timedOut,
             wrongNote = wrongNote,
             fastBonus = !r.timedOut && (r.landingTimeMs ?: Long.MAX_VALUE) < 1200 && score > 0,
+            energyLevel = r.energyLevel,
+            captureWobbleCents = r.captureWobbleCents,
+            retryCount = r.retryCount,
         )
         // Drift tracks the absolute landing (what a listener hears), not the interval.
         val drift = if (driftWarningEnabled)
@@ -356,6 +362,9 @@ class ShiftViewModel(
                     stars = r.starCount,
                     quality = if (r.timedOut) AttemptQuality.TIMEOUT else AttemptQuality.CLEAN,
                     timedOut = r.timedOut,
+                    energyLevel = r.energyLevel,
+                    retryCount = r.retryCount,
+                    captureWobbleCents = r.captureWobbleCents,
                 )
             }
             val round = RoundRecord(

@@ -34,6 +34,14 @@ data class ShiftResult(
      * slightly-off start (Sarah's "start 20¢ off, land 20¢ off = good shift, bad start"). 0 = the
      * start was never confirmed (e.g. a timeout). */
     val confirmedStartHz: Float = 0f,
+    /** Landing capture's median energy (0..100) — null when nothing froze. */
+    val energyLevel: Float? = null,
+    /** Landing capture's frozen-window cents spread — null when nothing froze. See
+     * [CapturedPitch.captureWobbleCents]; not persisted for pizz (decay makes it a detection
+     * artifact, not a steadiness signal — Sarah's call). */
+    val captureWobbleCents: Float? = null,
+    /** Landing artifacts discarded before the real landing froze ("took N tries"). */
+    val retryCount: Int = 0,
 )
 
 sealed interface ShiftState {
@@ -212,6 +220,9 @@ class ShiftCapture(
                         quality = s.result.quality,
                         timedOut = false,
                         confirmedStartHz = confirmedStartHz,
+                        energyLevel = s.result.energyLevel,
+                        captureWobbleCents = s.result.captureWobbleCents,
+                        retryCount = landingReArms,
                     )
                 )
             }

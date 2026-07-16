@@ -16,7 +16,13 @@ class RoundRecorder(
     private val store: MetricsStore,
     private val zone: ZoneId = ZoneId.systemDefault(),
 ) {
-    suspend fun record(round: RoundRecord): RoundOutcome = store.inTransaction {
+    suspend fun record(rawRound: RoundRecord): RoundOutcome = store.inTransaction {
+        // Pizz decay makes the frozen-window cents spread a detection artifact (attack settling,
+        // not sustained pitch), not a real steadiness signal the way it is for a sustained arco
+        // tone — Sarah's call. Strip it here, once, rather than in every exercise ViewModel.
+        val round = if (rawRound.mode == "pizz")
+            rawRound.copy(attempts = rawRound.attempts.map { it.copy(captureWobbleCents = null) })
+        else rawRound
         val epochDay = epochDayOf(round.startedAt, zone)
         val sessionId = store.insertRound(round, round.avgAbsCents, epochDay)
 

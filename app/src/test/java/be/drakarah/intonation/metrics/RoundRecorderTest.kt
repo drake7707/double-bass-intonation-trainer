@@ -35,16 +35,20 @@ class RoundRecorderTest {
 
     private val ctx = RoundContext(a4Hz = 440f, micSensitivity = 55, difficulty = "STANDARD", roundLength = 3)
 
-    private fun attempt(cents: Float, wrongNote: Boolean = false, wrongOctave: Boolean = false, timedOut: Boolean = false) =
+    private fun attempt(
+        cents: Float, wrongNote: Boolean = false, wrongOctave: Boolean = false, timedOut: Boolean = false,
+        captureWobbleCents: Float? = null,
+    ) =
         AttemptRecord(
             promptIndex = 0, targetMidi = 40, targetFreqHz = 82f, positionId = "1st",
             centsError = cents, score = if (timedOut) 0 else 90, stars = if (timedOut) 0 else 3,
             quality = if (timedOut) AttemptQuality.TIMEOUT else AttemptQuality.CLEAN,
             wrongNote = wrongNote, wrongOctave = wrongOctave, timedOut = timedOut,
+            captureWobbleCents = captureWobbleCents,
         )
 
-    private fun round(score: Int, attempts: List<AttemptRecord>) = RoundRecord(
-        exerciseType = "NOTE_ACCURACY", mode = "arco", configKey = "cfg",
+    private fun round(score: Int, attempts: List<AttemptRecord>, mode: String = "arco") = RoundRecord(
+        exerciseType = "NOTE_ACCURACY", mode = mode, configKey = "cfg",
         startedAt = 1_700_000_000_000L, endedAt = 1_700_000_050_000L,
         totalScore = score, maxScore = 300, context = ctx, attempts = attempts,
     )
@@ -79,5 +83,16 @@ class RoundRecorderTest {
         // Both rounds folded into the same bucket.
         assertEquals(2, store.daily.values.single().scoredCount)
         assertEquals(2, store.daily.values.single().sessionCount)
+    }
+
+    @Test fun stripsCaptureWobbleForPizzButKeepsItForArco() = runTest {
+        val store = FakeStore()
+        val recorder = RoundRecorder(store)
+
+        recorder.record(round(90, listOf(attempt(5f, captureWobbleCents = 8f)), mode = "arco"))
+        assertEquals(8f, store.rounds.single().attempts.single().captureWobbleCents)
+
+        recorder.record(round(90, listOf(attempt(5f, captureWobbleCents = 8f)), mode = "pizz"))
+        assertNull(store.rounds[1].attempts.single().captureWobbleCents)
     }
 }

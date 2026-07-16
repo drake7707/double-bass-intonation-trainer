@@ -58,6 +58,9 @@ data class ToneUi(
     val timedOut: Boolean,
     val wrongNote: Boolean,
     val scored: Boolean,
+    val energyLevel: Float? = null,
+    val captureWobbleCents: Float? = null,
+    val retryCount: Int = 0,
 )
 
 /** One arpeggio attempt: the chord and its tones' results. */
@@ -261,6 +264,9 @@ class ChordsViewModel(
                 timedOut = tr.timedOut,
                 wrongNote = wrongNote,
                 scored = scored,
+                energyLevel = tr.energyLevel,
+                captureWobbleCents = tr.captureWobbleCents,
+                retryCount = tr.retryCount,
             )
         }
         val attempt = ChordAttemptUi(chord, tones)
@@ -334,6 +340,9 @@ class ChordsViewModel(
                         quality = if (tone.timedOut) AttemptQuality.TIMEOUT else AttemptQuality.CLEAN,
                         wrongNote = tone.wrongNote,
                         timedOut = tone.timedOut,
+                        energyLevel = tone.energyLevel,
+                        retryCount = tone.retryCount,
+                        captureWobbleCents = tone.captureWobbleCents,
                     )
                 }
             }

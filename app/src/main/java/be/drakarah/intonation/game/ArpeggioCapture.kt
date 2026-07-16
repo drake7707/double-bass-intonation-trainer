@@ -11,6 +11,13 @@ data class ToneResult(
     val frequencyHz: Float?,
     val quality: CaptureQuality?,
     val timedOut: Boolean,
+    /** Frozen tone's median energy (0..100) — null when nothing froze. */
+    val energyLevel: Float? = null,
+    /** Frozen tone's frozen-window cents spread — null when nothing froze. Not persisted for
+     * pizz (decay makes it a detection artifact, not a steadiness signal — Sarah's call). */
+    val captureWobbleCents: Float? = null,
+    /** Artifacts discarded before this tone froze ("took N tries"). */
+    val retryCount: Int = 0,
 )
 
 sealed interface ArpeggioState {
@@ -109,7 +116,7 @@ class ArpeggioCapture(
                 syncCapturingState()
             } else {
                 // Kept freezing artifacts — record no note for this tone and move on.
-                acceptTone(ToneResult(null, null, timedOut = true))
+                acceptTone(ToneResult(null, null, timedOut = true, retryCount = reArmsThisTone))
             }
             return
         }
@@ -122,7 +129,14 @@ class ArpeggioCapture(
             return
         }
         previousToneHz = frozen.frequencyHz
-        acceptTone(ToneResult(frozen.frequencyHz, frozen.quality, timedOut = false))
+        acceptTone(
+            ToneResult(
+                frozen.frequencyHz, frozen.quality, timedOut = false,
+                energyLevel = frozen.energyLevel,
+                captureWobbleCents = frozen.captureWobbleCents,
+                retryCount = reArmsThisTone,
+            )
+        )
     }
 
     /** No onset within the tone's window: record it and every remaining tone as timed out. */

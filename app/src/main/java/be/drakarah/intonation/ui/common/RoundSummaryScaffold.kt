@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import be.drakarah.intonation.metrics.RoundOutcome
 import be.drakarah.intonation.ui.theme.Spacing
 import be.drakarah.intonation.ui.theme.TextSizes
@@ -35,6 +36,8 @@ fun RoundSummaryScaffold(
     onTraceFeedback: (String, String) -> Unit,
     onPlayAgain: () -> Unit,
     onExit: () -> Unit,
+    /** The one coach observation for this round (see metrics/RoundCoach.kt); null hides it. */
+    coachLine: String? = null,
     breakdown: @Composable ColumnScope.() -> Unit = {},
     outcomeExtras: @Composable ColumnScope.(RoundOutcome) -> Unit = {},
     footerExtras: @Composable ColumnScope.() -> Unit = {},
@@ -53,6 +56,14 @@ fun RoundSummaryScaffold(
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        coachLine?.let {
+            Spacer(Modifier.height(Spacing.ITEM_SPACING))
+            Text(
+                it,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+            )
+        }
         breakdown()
         outcome?.let { o ->
             Spacer(Modifier.height(Spacing.ITEM_SPACING))

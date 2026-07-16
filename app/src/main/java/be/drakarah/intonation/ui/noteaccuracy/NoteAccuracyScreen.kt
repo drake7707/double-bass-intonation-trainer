@@ -38,6 +38,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.metrics.MasteryBand
 import be.drakarah.intonation.metrics.MasteryThresholds
+import be.drakarah.intonation.metrics.RoundCoachInput
+import be.drakarah.intonation.metrics.roundCoachLine
 import be.drakarah.intonation.ui.common.CentsRevealHeadline
 import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.DriftBanner
@@ -243,6 +245,16 @@ private fun NoteAccuracySummary(
         totalScore = state.totalScore,
         maxScore = state.maxScore,
         outcome = state.outcome,
+        coachLine = roundCoachLine(
+            RoundCoachInput(
+                scoredCents = scored.mapNotNull { it.cents },
+                attemptCount = state.results.size,
+                timeoutCount = state.results.count { it.timedOut },
+                wrongNoteCount = state.results.count { it.wrongNote },
+                thresholds = MasteryThresholds.NOTE,
+                lastWeekAvgCents = state.outcome?.lastWeekAvgCents,
+            )
+        ),
         showTraceFeedback = state.traceActive && !state.traceFeedbackGiven,
         onTraceFeedback = onTraceFeedback,
         onPlayAgain = onPlayAgain,

@@ -38,6 +38,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.game.ChordSpec
 import be.drakarah.intonation.game.chordName
 import be.drakarah.intonation.game.isOpenString
+import be.drakarah.intonation.metrics.MasteryThresholds
+import be.drakarah.intonation.metrics.RoundCoachInput
+import be.drakarah.intonation.metrics.roundCoachLine
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.DriftBanner
@@ -312,10 +315,21 @@ private fun DoneContent(
     onPlayAgain: () -> Unit,
     onTraceFeedback: (String, String) -> Unit,
 ) {
+    val scoredTones = state.results.flatMap { it.tones }.filter { it.scored }
     RoundSummaryScaffold(
         totalScore = state.totalScore,
         maxScore = state.maxScore,
         outcome = state.outcome,
+        coachLine = roundCoachLine(
+            RoundCoachInput(
+                scoredCents = scoredTones.filter { !it.wrongNote }.mapNotNull { it.cents },
+                attemptCount = scoredTones.size,
+                timeoutCount = scoredTones.count { it.timedOut },
+                wrongNoteCount = scoredTones.count { it.wrongNote },
+                thresholds = MasteryThresholds.CHORDS,
+                lastWeekAvgCents = state.outcome?.lastWeekAvgCents,
+            )
+        ),
         showTraceFeedback = state.traceActive && !state.traceFeedbackGiven,
         onTraceFeedback = onTraceFeedback,
         onPlayAgain = onPlayAgain,

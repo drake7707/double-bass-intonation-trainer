@@ -1,6 +1,17 @@
-# Double Bass Intonation Trainer — Features
+# Double Bass Coach — Features
 
-A gamified intonation trainer for double bass on Android (Kotlin + Jetpack Compose, GPLv3).
+> **2026-07-16, branch `ux-overhaul` (pending Sarah's on-phone review):** the app was renamed
+> **Double Bass Coach** and rewritten in coaching language — games are now **Find the Note /
+> Long Notes / Shifts / Chords**, "Expert mode" is **"Show technical details"** (honored
+> app-wide: cents/Hz appear only when it's on), "Player level" is **Pace** (Calm/Steady/Quick/
+> Swift, timeouts tightened), "Calibrate surroundings" is **Room check**, the "Full calibration
+> wizard" is **Full setup** (friendly summary + technical expander), game traces are **practice
+> reports** under Settings → "Help improve the app", every round summary ends with **one coach
+> line**, and first-run is a 7-step question wizard. Full spec: `docs/UX_OVERHAUL_PLAN_2026-07-16.md`.
+> This document still uses some pre-overhaul names below; it gets its full rewrite after the
+> copy review (translation string-freeze), together with the NL/FR extraction.
+
+A gamified intonation coach for double bass on Android (Kotlin + Jetpack Compose, GPLv3).
 **It is deliberately not a tuner**: during exercises there is no live pitch needle. The app
 detects the note onset, waits for the pitch to stabilize, freezes the *first stable pitch*,
 and scores that — so it trains accurate first landings and ear-first playing instead of

@@ -1,7 +1,11 @@
 # UX Overhaul Plan — Coaching identity, plain language, i18n, onboarding
 
 **Date:** 2026-07-16
-**Status:** PLAN — approved direction from Sarah (Q&A recorded in §2), implementation not started.
+**Status:** IN PROGRESS on branch `ux-overhaul` — phases 1–4 + 5a and the pace tightening are
+implemented (one commit per todo, all tests green). **Paused at the string freeze on purpose:**
+phase 5b (resource extraction) and 6 (NL/FR) start only after Sarah's on-phone pass + English
+copy review (TESTING.md "2026-07-16 UX overhaul" Pending block), so translation happens exactly
+once. FEATURES.md carries a banner until its post-freeze rewrite.
 **Goal:** Play Store launch readiness for a wide, young, non-technical, Dutch/French/English-speaking audience
 (promotion at Sarah's music academy). Frictionless at first contact, no dumbing down for those who
 want depth.
@@ -410,7 +414,79 @@ Phases 1–2 are a natural first PR; 4 and 5 can proceed in parallel after the f
    → **Resolution:** coach lines always pair acknowledgment with (at most) one actionable point;
    praise states *what* was good ("your shifts landed clean today"), never generic cheerleading.
 
-## 11. Execution notes (Sarah, 2026-07-16)
+## 11. EXECUTION STATUS (updated 2026-07-16, written to survive conversation compaction)
+
+Branch **`ux-overhaul`** (off `main`@`dc89ae5`). One commit per todo. `:app`+`:dsp` unit tests and
+`assembleDebug` all green at `6cbddd8` (+ the uncommitted FEATURES/plan doc updates that follow it).
+
+### Done (commit → content)
+- `0764a66` housekeeping (.gitignore, gradle daemon pin, TESTING note re GitHub link in About)
+- `118a2dc` this plan + `docs/UI_STRING_AUDIT_2026-07-16.md` + `docs/UI_STRUCTURE_REPORT_2026-07-16.md`
+- `edbd75c` **1a** `ui/common/TechnicalDetails.kt`: `LocalTechnicalDetails` CompositionLocal =
+  `settings.expertMode`, provided in `AppNav` (NavHost extracted to `AppNavGraph`); Progress reads it
+- `5f802be` **1b** shared `ui/common/GameCountIn.kt` (replaced 4 private copies)
+- `30a194e` **1c** shared `ui/common/RoundSummaryScaffold.kt` (slots: breakdown / outcomeExtras /
+  footerExtras / coachLine); all 4 games migrated; Best-line unified with "N points to beat"
+- `45ed140` **2a** canonical names: **Find the Note / Long Notes / Shifts / Chords** everywhere
+  (Home, Progress tabs, focus rotation); ShiftLevel labels "One string, fingers 1↔4"/"any finger"/
+  "Across strings" (shortLabels "1↔4"/"any finger"/"across strings"); "Show technical details"
+  (was Expert mode); Best not PB; "No note heard" unified. **configKey/exercise ids untouched.**
+- `9e711bd` **2b** words-first reveals: `ui/common/CentsReveal.kt` (Spot on! / Close — a bit
+  sharp / Too flat + cents only when technical), `ui/common/DriftBanner.kt` ("You're drifting
+  sharp — aim a touch lower"), ImprovementLine words-first (±2¢ steady band), Sustain labels
+  plain, Chords tone words, Shift breakdown numbers gated (its "great shift — your starting note
+  was sharp" line stays for all), summary "How in tune: <band>"
+- `983f5a7` **2c** Tune up words + needle (number technical-gated); Drone "you'll hear it as X"
+- `c90ada8` **2d** Room check (verdicts "Your room is nice and quiet"/"Workable, but a bit loud"/
+  "Too noisy"; numbers technical-gated; Save button) + Full setup (friendly one-liner + heard-
+  clearly list; full DSP report in an in-screen "Technical details" expander; warnings point at
+  practice reports)
+- `3c7664b` **2e** Settings sections: Coaching / Notes & tuning / Sounds & warnings / Set-up /
+  Help improve the app / Your data; noise-gate slider technical-gated; trace toggle = "Record
+  practice reports"
+- `7dc200b` **2f** Home: coach gate dialog ("the app hasn't learned your bass yet"), goal
+  subtitles, Room check card, Pitch Analyzer subtitle (stays on Home for beta — her decision)
+- `01308f1` **2g** Achievements plain (+ optional `technicalDescription` field, gated in gallery);
+  About: coach intro + **GitHub source link** (`drake7707/double-bass-intonation-trainer`, GPL);
+  Recordings = "Practice reports"; Pitch Analyzer: level bar in words, DSP rows + engine config in
+  expander, buttons renamed
+- `6d65159` **2h** `metrics/RoundCoach.kt` + `RoundCoachTest`: one coach line per round summary
+  (priority: nothing-scored steadier > median lean tip > time-pressure > locked/improved/solid >
+  encourage; sustain = hold-based)
+- `9ac9f77` **3** app = **Double Bass Coach** (strings.xml + comment "never shorten", Home header,
+  report email subject); `docs/play-store/listing-en.md` (title/short/full EN drafts)
+- `3507386` **4** onboarding = 7-step wizard in `OnboardingScreen.kt` (welcome → note names →
+  pace → round length → plain-vs-numbers → beta note → Full-setup nudge; answers persist on tap;
+  skip warning kept; `AppNav` signature unchanged)
+- `e46c825` **Pace**: labels Calm/Steady/Quick/Swift; timeouts PROVISIONALLY tightened
+  20/13/8/5 → **15/10/6/4 s** (shift GO 7/5/3.5/2.5 s, sustain cap 35/28/18/13 s); enum constant
+  names unchanged (persisted); TESTING.md table added
+- `6cbddd8` **5a** prose out of domain: MasteryBand/Bias lose labels, WeekTrend.phrase deleted
+  (was unused), `selectInsight` returns typed `Insight` (PositionBias/Tightening/Anchor),
+  RoundCoach returns verdict enums; ALL coaching wording now in **`ui/common/CoachingLabels.kt`**
+  (the one file 5b turns into resources); tests assert enums
+
+### Deliberately NOT done yet — gated on Sarah
+**STRING FREEZE GATE:** phases **5b** (extract ~350 strings to `strings.xml`, plurals,
+`localeConfig`, pseudolocale check; enum label fields like PlayerLevel/ShiftLevel/ChordFingering/
+Achievements/Position can become `@StringRes` ints — R constants keep domain tests pure) and
+**6** (values-nl + values-fr drafts; she reviews NL, her teacher FR) run ONLY after:
+1. her on-phone pass of the TESTING.md "2026-07-16 UX overhaul" + "Pace" Pending blocks
+   (`app\build\outputs\apk\debug\app-debug.apk` is built and ready to install), and
+2. her review of the English copy (grep-able: CoachingLabels.kt + the screens touched above).
+Also post-freeze: full FEATURES.md rewrite (currently carries a banner), listing-en NL/FR,
+phase 7 Play collateral. Solfège spelling decision: keep "Ré" accent in all languages (noted §5B).
+
+### Notes for whoever continues
+- Every commit compiled + unit-tested before landing; `:dsp` untouched the whole branch.
+- `RoundSummaryScaffold.coachLine` takes a String — games call
+  `roundCoachVerdict(...)?.sentence()` with per-game `MasteryThresholds`.
+- The onboarding wizard writes settings immediately; `onboardingCompleted` semantics unchanged
+  (wizard completion or skip; also force-set by full calibration).
+- Sustain internals still use SUSTAIN/"Sustain" identifiers in code comments/ids — display-only
+  rename, intentional.
+
+## 12. Execution notes (Sarah, 2026-07-16)
 
 - **Distance readability rule** (now principle #7 in §3): anything used while holding the bass —
   games except results, calibration wizard except results — stays large, legible from distance,

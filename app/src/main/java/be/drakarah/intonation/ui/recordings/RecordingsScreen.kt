@@ -38,9 +38,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import be.drakarah.intonation.R
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.theme.Spacing
 import kotlinx.coroutines.Dispatchers
@@ -197,8 +199,8 @@ fun RecordingsScreen(
     confirmDelete?.let { recording ->
         AlertDialog(
             onDismissRequest = { confirmDelete = null },
-            title = { Text("Delete ${recording.baseName}?") },
-            text = { Text("Removes this recording and its data from the phone.") },
+            title = { Text(stringResource(R.string.rec_delete_title, recording.baseName)) },
+            text = { Text(stringResource(R.string.rec_delete_body)) },
             confirmButton = {
                 TextButton(onClick = {
                     if (playingBase == recording.baseName) stopPlayback()
@@ -206,10 +208,12 @@ fun RecordingsScreen(
                     recording.log?.delete()
                     confirmDelete = null
                     refresh++
-                }) { Text("Delete") }
+                }) { Text(stringResource(R.string.rec_delete_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDelete = null }) { Text("Cancel") }
+                TextButton(onClick = { confirmDelete = null }) {
+                    Text(stringResource(R.string.wizard_cancel))
+                }
             },
         )
     }
@@ -217,23 +221,18 @@ fun RecordingsScreen(
     confirmEmail?.let { recording ->
         AlertDialog(
             onDismissRequest = { confirmEmail = null },
-            title = { Text("Send to developer?") },
-            text = {
-                Text(
-                    "This packs ${recording.baseName} — the full microphone recording plus what " +
-                        "the app heard — and opens your email app addressed to $FEEDBACK_EMAIL. " +
-                        "It contains everything the microphone picked up while recording, " +
-                        "not just your playing."
-                )
-            },
+            title = { Text(stringResource(R.string.rec_send_title)) },
+            text = { Text(stringResource(R.string.rec_send_body, recording.baseName, FEEDBACK_EMAIL)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmEmail = null
                     emailRecording(context, recording)
-                }) { Text("Send") }
+                }) { Text(stringResource(R.string.rec_send_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmEmail = null }) { Text("Cancel") }
+                TextButton(onClick = { confirmEmail = null }) {
+                    Text(stringResource(R.string.wizard_cancel))
+                }
             },
         )
     }
@@ -246,10 +245,12 @@ fun RecordingsScreen(
                 .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
         ) {
             Spacer(Modifier.height(Spacing.SECTION_BREAK))
-            Text(if (onlyTraces) "Practice reports" else "Recordings", style = MaterialTheme.typography.headlineMedium)
             Text(
-                if (onlyTraces) "Recorded rounds. Tap the envelope to email one to the developer when something seemed wrong."
-                else "Clips saved from the Pitch Analyzer. Tap the envelope to email one to the developer.",
+                stringResource(if (onlyTraces) R.string.rec_title_reports else R.string.rec_title_recordings),
+                style = MaterialTheme.typography.headlineMedium,
+            )
+            Text(
+                stringResource(if (onlyTraces) R.string.rec_sub_reports else R.string.rec_sub_recordings),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -257,8 +258,7 @@ fun RecordingsScreen(
 
             if (recordings.isEmpty()) {
                 Text(
-                    if (onlyTraces) "No practice reports yet — play a round with recording on."
-                    else "Nothing recorded yet — use the save buttons on the Pitch Analyzer screen.",
+                    stringResource(if (onlyTraces) R.string.rec_empty_reports else R.string.rec_empty_recordings),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -278,13 +278,13 @@ fun RecordingsScreen(
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    String.format(
-                                        Locale.US, "%s · %d s · %.1f MB",
+                                    stringResource(
+                                        R.string.rec_meta,
                                         Instant.ofEpochMilli(recording.wav.lastModified())
                                             .atZone(ZoneId.systemDefault())
                                             .format(DateTimeFormatter.ofPattern("EEE d MMM, HH:mm")),
                                         recording.seconds,
-                                        recording.sizeMb,
+                                        String.format(Locale.US, "%.1f", recording.sizeMb),
                                     ),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -308,17 +308,19 @@ fun RecordingsScreen(
                                     IconButton(onClick = { togglePlay(recording) }) {
                                         Icon(
                                             if (isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow,
-                                            contentDescription = if (isPlaying) "Stop" else "Play",
+                                            contentDescription = stringResource(
+                                                if (isPlaying) R.string.rec_cd_stop else R.string.rec_cd_play
+                                            ),
                                             tint = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                     IconButton(onClick = { confirmEmail = recording }) {
-                                        Icon(Icons.Default.Email, contentDescription = "Send to developer")
+                                        Icon(Icons.Default.Email, contentDescription = stringResource(R.string.rec_cd_send))
                                     }
                                     IconButton(onClick = { confirmDelete = recording }) {
                                         Icon(
-                                            Icons.Default.Delete, 
-                                            contentDescription = "Delete", 
+                                            Icons.Default.Delete,
+                                            contentDescription = stringResource(R.string.rec_cd_delete),
                                             tint = MaterialTheme.colorScheme.error
                                         )
                                     }
@@ -331,7 +333,7 @@ fun RecordingsScreen(
 
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text("Back")
+                Text(stringResource(R.string.rec_back))
             }
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
@@ -355,6 +357,8 @@ private fun zipRecording(context: android.content.Context, recording: Recording)
 private fun emailRecording(context: android.content.Context, recording: Recording) {
     val zipFile = zipRecording(context, recording)
     val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", zipFile)
+    // Email subject/body are a fixed English template — the developer (Sarah) reads the reports;
+    // only the visible dialog and chooser text around sending are localized (plan §B.6).
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "application/zip"
         putExtra(Intent.EXTRA_EMAIL, arrayOf(FEEDBACK_EMAIL))
@@ -366,5 +370,7 @@ private fun emailRecording(context: android.content.Context, recording: Recordin
         putExtra(Intent.EXTRA_STREAM, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    context.startActivity(Intent.createChooser(intent, "Send report to developer"))
+    context.startActivity(
+        Intent.createChooser(intent, context.getString(R.string.rec_share_chooser))
+    )
 }

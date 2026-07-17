@@ -66,8 +66,11 @@ class DebugViewModel(
     private val _captureMode = MutableStateFlow("arco")
     val captureMode: StateFlow<String> = _captureMode.asStateFlow()
 
-    private val _captureState = MutableStateFlow("arming")
-    val captureStateLabel: StateFlow<String> = _captureState.asStateFlow()
+    /** The live game-capture machine's phase, as data — the UI words it (and localizes it). */
+    enum class CaptureUiState { ARMING, AWAIT_QUIET, LISTENING, CAPTURING }
+
+    private val _captureState = MutableStateFlow(CaptureUiState.ARMING)
+    val captureState: StateFlow<CaptureUiState> = _captureState.asStateFlow()
 
     private val _lastFreeze = MutableStateFlow<FreezeInfo?>(null)
     val lastFreeze: StateFlow<FreezeInfo?> = _lastFreeze.asStateFlow()
@@ -146,9 +149,9 @@ class DebugViewModel(
                         rearmCapture(skipQuiet = false)
                     }
                     CaptureState.TimedOut -> rearmCapture(skipQuiet = false)
-                    CaptureState.AwaitQuiet -> _captureState.value = "waiting for quiet"
-                    CaptureState.Listening -> _captureState.value = "armed — listening"
-                    CaptureState.Capturing -> _captureState.value = "capturing…"
+                    CaptureState.AwaitQuiet -> _captureState.value = CaptureUiState.AWAIT_QUIET
+                    CaptureState.Listening -> _captureState.value = CaptureUiState.LISTENING
+                    CaptureState.Capturing -> _captureState.value = CaptureUiState.CAPTURING
                 }
 
                 if (sample.accepted && sample.smoothedHz > 0f) {

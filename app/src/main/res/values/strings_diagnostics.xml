@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- About (about_), Practice reports / Recordings (rec_), Pitch Analyzer (debug_).
+     The Pitch Analyzer is a beta diagnostics tool (stays on Home during beta, Sarah's call).
+     Its raw diagnostic-row keys (raw/smoothed/accepted/noise/…) and the engine-config line stay
+     English on purpose — they mirror the JSONL/log vocabulary a report is read against
+     (plan §B.6). The chrome, buttons and status words around them are localized. -->
+<resources>
+
+    <!-- About -->
+    <string name="about_title">About</string>
+    <string name="about_intro">A practice coach for double bass — not a tuner. It listens for the first note you land and scores that, so you learn to place the note right instead of correcting it afterwards.</string>
+    <string name="about_license_title">License</string>
+    <string name="about_license_body">This app is free software, licensed under the GNU General Public License v3.0 or later. You may use, study, share and modify it under the terms of that license.</string>
+    <string name="about_source_title">Source code</string>
+    <string name="about_attribution_title">Attribution</string>
+    <string name="about_attribution_body">Pitch detection adapted from Tuner, © Michael Moessner, GPL-3.0-or-later.\nhttps://codeberg.org/thetwom/Tuner</string>
+    <string name="about_show_license">Show full license text</string>
+    <string name="about_hide_license">Hide license text</string>
+    <string name="about_back">Back</string>
+
+    <!-- Practice reports / Recordings -->
+    <string name="rec_title_reports">Practice reports</string>
+    <string name="rec_title_recordings">Recordings</string>
+    <string name="rec_sub_reports">Recorded rounds. Tap the envelope to email one to the developer when something seemed wrong.</string>
+    <string name="rec_sub_recordings">Clips saved from the Pitch Analyzer. Tap the envelope to email one to the developer.</string>
+    <string name="rec_empty_reports">No practice reports yet — play a round with recording on.</string>
+    <string name="rec_empty_recordings">Nothing recorded yet — use the save buttons on the Pitch Analyzer screen.</string>
+    <!-- %1$s = date, %2$d = seconds, %3$s = size in MB (pre-formatted) -->
+    <string name="rec_meta">%1$s · %2$d s · %3$s MB</string>
+    <string name="rec_cd_play">Play</string>
+    <string name="rec_cd_stop">Stop</string>
+    <string name="rec_cd_send">Send to developer</string>
+    <string name="rec_cd_delete">Delete</string>
+    <string name="rec_back">Back</string>
+    <!-- %1$s = recording name -->
+    <string name="rec_delete_title">Delete %1$s?</string>
+    <string name="rec_delete_body">Removes this recording and its data from the phone.</string>
+    <string name="rec_delete_confirm">Delete</string>
+    <string name="rec_send_title">Send to developer?</string>
+    <!-- %1$s = recording name, %2$s = developer email -->
+    <string name="rec_send_body">This packs %1$s — the full microphone recording plus what the app heard — and opens your email app addressed to %2$s. It contains everything the microphone picked up while recording, not just your playing.</string>
+    <string name="rec_send_confirm">Send</string>
+    <string name="rec_share_chooser">Send report to developer</string>
+
+    <!-- Pitch Analyzer chrome -->
+    <string name="debug_title">Pitch Analyzer</string>
+    <string name="debug_permission_required">Microphone permission is required.</string>
+    <string name="debug_grant_permission">Grant permission</string>
+    <string name="debug_listening">listening…</string>
+    <!-- %1$s = signed cents, pre-formatted ("+4.2") -->
+    <string name="debug_cents_value">%1$s cents</string>
+    <!-- %1$d = level 0..100 -->
+    <string name="debug_sound_level">sound level %1$d / 100</string>
+    <string name="debug_too_quiet">  (too quiet — treated as background noise)</string>
+    <string name="debug_game_capture_prefix">game capture: </string>
+    <!-- Live capture-machine phase (DebugViewModel.CaptureUiState) -->
+    <string name="debug_state_arming">arming</string>
+    <string name="debug_state_await_quiet">waiting for quiet</string>
+    <string name="debug_state_listening">armed — listening</string>
+    <string name="debug_state_capturing">capturing…</string>
+    <string name="debug_cd_capture_stable">Capture stable</string>
+    <string name="debug_no_capture">no stable note captured yet</string>
+    <string name="debug_check_every_note">Check every note</string>
+    <string name="debug_save_8s">Save the last 8 seconds</string>
+    <string name="debug_cd_stop_long">Stop long capture</string>
+    <string name="debug_cd_start_long">Start long capture</string>
+    <string name="debug_stop_and_save">Stop and save recording</string>
+    <string name="debug_record_2min">Record up to 2 minutes</string>
+    <string name="debug_manage_recordings">Manage recordings</string>
+    <string name="debug_back">Back</string>
+    <string name="debug_cd_switch_mode">Switch arco / pizz</string>
+
+    <!-- Note sweep -->
+    <string name="debug_sweep_title">Note sweep</string>
+    <!-- %1$d = captured, %2$d = total -->
+    <string name="debug_sweep_count">%1$d / %2$d</string>
+    <string name="debug_sweep_ready">notes game-ready</string>
+    <string name="debug_sweep_wait">Wait for quiet</string>
+    <string name="debug_sweep_capturing">Capturing…</string>
+    <string name="debug_sweep_play">Play a note</string>
+    <string name="debug_sweep_save">Save last 8 s (WAV + log)</string>
+    <string name="debug_sweep_reset">Reset</string>
+    <string name="debug_sweep_exit">Exit sweep</string>
+
+</resources>

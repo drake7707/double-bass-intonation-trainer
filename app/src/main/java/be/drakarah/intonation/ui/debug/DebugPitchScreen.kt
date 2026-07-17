@@ -56,12 +56,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.R
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.music.NoteSpec
 import be.drakarah.intonation.music.centsBetween
@@ -99,7 +101,7 @@ fun DebugPitchScreen(
     val displayHz by viewModel.displayHz.collectAsStateWithLifecycle()
     val snippetMessage by viewModel.snippetMessage.collectAsStateWithLifecycle()
     val captureMode by viewModel.captureMode.collectAsStateWithLifecycle()
-    val captureLabel by viewModel.captureStateLabel.collectAsStateWithLifecycle()
+    val captureState by viewModel.captureState.collectAsStateWithLifecycle()
     val freeze by viewModel.lastFreeze.collectAsStateWithLifecycle()
     val sweep by viewModel.sweep.collectAsStateWithLifecycle()
     val noteStyle = rememberAppSettings().noteNameStyle
@@ -127,7 +129,7 @@ fun DebugPitchScreen(
                 sweep = sweep,
                 noteStyle = noteStyle,
                 captureMode = captureMode,
-                captureLabel = captureLabel,
+                captureState = captureState,
                 freeze = freeze,
                 onToggleMode = {
                     viewModel.setCaptureMode(if (captureMode == "arco") "pizz" else "arco")
@@ -150,12 +152,12 @@ fun DebugPitchScreen(
             verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
         ) {
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
-            Text("Pitch Analyzer", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(R.string.debug_title), style = MaterialTheme.typography.headlineMedium)
 
             if (!hasPermission) {
-                Text("Microphone permission is required.")
+                Text(stringResource(R.string.debug_permission_required))
                 Button(onClick = { permissionLauncher.launch(Manifest.permission.RECORD_AUDIO) }) {
-                    Text("Grant permission")
+                    Text(stringResource(R.string.debug_grant_permission))
                 }
             } else {
                 val current = sample
@@ -175,7 +177,7 @@ fun DebugPitchScreen(
                         color = color,
                     )
                     Text(
-                        String.format(Locale.US, "%+.1f cents", cents),
+                        stringResource(R.string.debug_cents_value, String.format(Locale.US, "%+.1f", cents)),
                         fontSize = TextSizes.SCORE_CENTS,
                         fontWeight = FontWeight.Bold,
                         color = color,
@@ -188,7 +190,7 @@ fun DebugPitchScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        "listening…",
+                        stringResource(R.string.debug_listening),
                         fontSize = TextSizes.SCORE_CENTS,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -203,8 +205,8 @@ fun DebugPitchScreen(
                         val gate by viewModel.gateLevel.collectAsStateWithLifecycle()
                         val level = current?.energyLevel ?: 0f
                         Text(
-                            "sound level ${level.toInt()} / 100" +
-                                if (level < gate) "  (too quiet — treated as background noise)" else "",
+                            stringResource(R.string.debug_sound_level, level.toInt()) +
+                                if (level < gate) stringResource(R.string.debug_too_quiet) else "",
                             style = MaterialTheme.typography.labelSmall,
                             color = if (level < gate) MaterialTheme.colorScheme.onSurfaceVariant
                                     else ResultColors.excellent,
@@ -217,7 +219,9 @@ fun DebugPitchScreen(
                         )
                         var showTech by remember { mutableStateOf(false) }
                         TextButton(onClick = { showTech = !showTech }) {
-                            Text(if (showTech) "Hide technical details" else "Technical details")
+                            Text(stringResource(
+                                if (showTech) R.string.setup_details_hide else R.string.setup_details_show
+                            ))
                         }
                         if (showTech) {
                             DiagnosticRow("raw", current?.frequencyHz?.let { hz ->
@@ -253,7 +257,10 @@ fun DebugPitchScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text("game capture: $captureLabel", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                stringResource(R.string.debug_game_capture_prefix) + captureStateLabel(captureState),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
                             ModeToggle(captureMode, big = false) {
                                 viewModel.setCaptureMode(if (captureMode == "arco") "pizz" else "arco")
                             }
@@ -264,7 +271,7 @@ fun DebugPitchScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     Icons.Filled.CheckCircle,
-                                    contentDescription = "Capture stable",
+                                    contentDescription = stringResource(R.string.debug_cd_capture_stable),
                                     tint = ResultColors.excellent,
                                     modifier = Modifier.size(28.dp),
                                 )
@@ -289,7 +296,7 @@ fun DebugPitchScreen(
                                 fontFamily = FontFamily.Monospace,
                             )
                         } ?: Text(
-                            "no stable note captured yet",
+                            stringResource(R.string.debug_no_capture),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -300,12 +307,12 @@ fun DebugPitchScreen(
                     onClick = { sweepMode = true },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Check every note")
+                    Text(stringResource(R.string.debug_check_every_note))
                 }
 
                 val isLongCapture by viewModel.isLongCapture.collectAsStateWithLifecycle()
                 Button(onClick = viewModel::saveSnippet, modifier = Modifier.fillMaxWidth()) {
-                    Text("Save the last 8 seconds")
+                    Text(stringResource(R.string.debug_save_8s))
                 }
                 OutlinedButton(
                     onClick = {
@@ -316,24 +323,25 @@ fun DebugPitchScreen(
                 ) {
                     Icon(
                         if (isLongCapture) Icons.Filled.Stop else Icons.Filled.FiberManualRecord,
-                        contentDescription = if (isLongCapture) "Stop long capture" else "Start long capture",
+                        contentDescription = stringResource(
+                            if (isLongCapture) R.string.debug_cd_stop_long else R.string.debug_cd_start_long
+                        ),
                         tint = if (isLongCapture) MaterialTheme.colorScheme.primary else ResultColors.off,
                         modifier = Modifier.size(18.dp),
                     )
                     Spacer(Modifier.width(Spacing.FINE_SPACING))
-                    Text(
-                        if (isLongCapture) "Stop and save recording"
-                        else "Record up to 2 minutes",
-                    )
+                    Text(stringResource(
+                        if (isLongCapture) R.string.debug_stop_and_save else R.string.debug_record_2min
+                    ))
                 }
                 OutlinedButton(onClick = onOpenRecordings, modifier = Modifier.fillMaxWidth()) {
-                    Text("Manage recordings")
+                    Text(stringResource(R.string.debug_manage_recordings))
                 }
             }
 
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text("Back")
+                Text(stringResource(R.string.debug_back))
             }
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
@@ -359,7 +367,7 @@ private fun ModeToggle(mode: String, big: Boolean, onToggle: () -> Unit) {
     ) {
         Icon(
             Icons.Filled.SwapHoriz,
-            contentDescription = "Switch arco / pizz",
+            contentDescription = stringResource(R.string.debug_cd_switch_mode),
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(if (big) 32.dp else 24.dp),
         )
@@ -412,12 +420,23 @@ private fun SweepGrid(
     }
 }
 
+/** Small "game capture: …" phase label (Pitch Analyzer card + logic-free display). */
+@Composable
+private fun captureStateLabel(state: DebugViewModel.CaptureUiState): String = stringResource(
+    when (state) {
+        DebugViewModel.CaptureUiState.ARMING -> R.string.debug_state_arming
+        DebugViewModel.CaptureUiState.AWAIT_QUIET -> R.string.debug_state_await_quiet
+        DebugViewModel.CaptureUiState.LISTENING -> R.string.debug_state_listening
+        DebugViewModel.CaptureUiState.CAPTURING -> R.string.debug_state_capturing
+    }
+)
+
 @Composable
 private fun SweepView(
     sweep: Map<Int, DebugViewModel.FreezeInfo>,
     noteStyle: NoteNameStyle,
     captureMode: String,
-    captureLabel: String,
+    captureState: DebugViewModel.CaptureUiState,
     freeze: DebugViewModel.FreezeInfo?,
     onToggleMode: () -> Unit,
     onSaveSnippet: () -> Unit,
@@ -441,7 +460,7 @@ private fun SweepView(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Note sweep", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(R.string.debug_sweep_title), style = MaterialTheme.typography.headlineMedium)
             ModeToggle(captureMode, big = true, onToggle = onToggleMode)
         }
 
@@ -451,13 +470,13 @@ private fun SweepView(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                "${sweep.size} / $total",
+                stringResource(R.string.debug_sweep_count, sweep.size, total),
                 style = MaterialTheme.typography.displayLarge,
                 color = if (allDone) ResultColors.excellent
                         else MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                "notes game-ready",
+                stringResource(R.string.debug_sweep_ready),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -468,18 +487,20 @@ private fun SweepView(
             )
         }
 
-        val waiting = captureLabel == "waiting for quiet"
-        val capturing = captureLabel == "capturing…"
+        val waiting = captureState == DebugViewModel.CaptureUiState.AWAIT_QUIET
+        val capturing = captureState == DebugViewModel.CaptureUiState.CAPTURING
         val bannerIcon = when {
             waiting -> Icons.Filled.HourglassEmpty
             capturing -> Icons.Filled.GraphicEq
             else -> Icons.Filled.MusicNote
         }
-        val bannerText = when {
-            waiting -> "Wait for quiet"
-            capturing -> "Capturing…"
-            else -> "Play a note"
-        }
+        val bannerText = stringResource(
+            when {
+                waiting -> R.string.debug_sweep_wait
+                capturing -> R.string.debug_sweep_capturing
+                else -> R.string.debug_sweep_play
+            }
+        )
         val bannerColor = if (waiting) ResultColors.close else ResultColors.excellent
         Card(
             Modifier.fillMaxWidth(),
@@ -514,7 +535,7 @@ private fun SweepView(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Filled.CheckCircle,
-                    contentDescription = "Capture stable",
+                    contentDescription = stringResource(R.string.debug_cd_capture_stable),
                     tint = ResultColors.excellent,
                     modifier = Modifier.size(48.dp),
                 )
@@ -533,11 +554,15 @@ private fun SweepView(
         SweepGrid(sweep, noteStyle, big = true)
 
         Button(onClick = onSaveSnippet, modifier = Modifier.fillMaxWidth()) {
-            Text("Save last 8 s (WAV + log)")
+            Text(stringResource(R.string.debug_sweep_save))
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING)) {
-            OutlinedButton(onClick = onReset, modifier = Modifier.weight(1f)) { Text("Reset") }
-            OutlinedButton(onClick = onExit, modifier = Modifier.weight(1f)) { Text("Exit sweep") }
+            OutlinedButton(onClick = onReset, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.debug_sweep_reset))
+            }
+            OutlinedButton(onClick = onExit, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.debug_sweep_exit))
+            }
         }
         Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
     }

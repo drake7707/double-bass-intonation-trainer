@@ -847,6 +847,9 @@ Home screen:
 
 
 
+- [MANDATORY REQUIREMENT] Add a github link to https://github.com/drake7707/double-bass-intonation-trainer in the about screen, this is the published source code required by the GPL license.
+
+
 
 OPEN FEEDBACK & IDEAS:
 --------------
@@ -926,13 +929,22 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 
 
 
-- [MANDATORY REQUIREMENT] Add a github link to https://github.com/drake7707/double-bass-intonation-trainer in the about screen, this is the published source code required by the GPL license.
-
-
-
 - [BUG] The shift reveal screen "great shift" text is too long to read in the time the reveal is shown. I would just leave it to great shift and show what it means in the result after the game. If you attach an icon to it then it's immediately recognizeable.
 
 - [CONSISTENCY] A chart in the shift and chords results like in note accuracy 
 
 
 - Right now it's red for severely out of tune and yellow for lightly out of tune, what is the cents difference, maybe an orange should be another step in between red and yellow thresholds of cents
+
+
+- Results screen need to be scrollable otherwise feedback can't be submitted
+
+- The font size is all over the place in the results screen.
+
+- I don't think I was solidly in tune with that one game, Solid felt wrong.
+
+- Wrong octave detection didn't trigger accidentally, those were my mistakes so that's really good
+
+- More in tune than last week but afaik I didn't even play anything last week Arco note accuracy games. The app doesn't even exist a week iirc.
+
+- Maybe have short vertical dividers between the sections to make it clearer in result page, it's kind of a wall of text.

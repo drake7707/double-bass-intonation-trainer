@@ -21,6 +21,17 @@ class SessionRepository(private val db: IntonationDatabase) {
     fun recentSessions(limit: Int = 50): Flow<List<SessionEntity>> =
         db.sessionDao().recentSessions(limit)
 
+    /** One completed session with its attempts in prompt order — backs the history detail. */
+    suspend fun sessionWithAttempts(id: Long): Pair<SessionEntity, List<AttemptEntity>>? {
+        val session = db.sessionDao().sessionById(id) ?: return null
+        return session to db.sessionDao().attemptsForSession(id)
+    }
+
+    /** Mean |cents| over completed rounds of [exerciseType]+[mode] in `[fromDay, untilDay)` —
+     * the same query the live trend uses, for recomputing a historical round's trend line. */
+    suspend fun avgAbsCentsInWindow(exerciseType: String, mode: String, fromDay: Int, untilDay: Int): Float? =
+        db.sessionDao().avgAbsCentsByDayRange(exerciseType, mode, fromDay, untilDay)
+
     /** Per-position accuracy from the rollup (SCORED attempts only), with sharp/flat bias. */
     fun positionAccuracy(exerciseType: String): Flow<List<PositionAccuracyRow>> =
         db.dailyStatsDao().positionAccuracy(exerciseType).map { rows ->

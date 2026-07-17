@@ -13,16 +13,14 @@ import be.drakarah.intonation.game.positionById
 import be.drakarah.intonation.metrics.CoachingSummary
 import be.drakarah.intonation.metrics.MIN_SCORED_FOR_VERDICT
 import be.drakarah.intonation.metrics.MasteryBand
-import be.drakarah.intonation.metrics.MasteryThresholds
 import be.drakarah.intonation.metrics.PositionMastery
+import be.drakarah.intonation.metrics.masteryThresholdsFor
 import be.drakarah.intonation.metrics.SustainSummary
 import be.drakarah.intonation.metrics.practiceStreak
 import be.drakarah.intonation.metrics.selectInsight
 import be.drakarah.intonation.metrics.todayEpochDay
 import be.drakarah.intonation.metrics.weekTrend
-import be.drakarah.intonation.ui.chords.EXERCISE_CHORDS
 import be.drakarah.intonation.ui.noteaccuracy.EXERCISE_NOTE_ACCURACY
-import be.drakarah.intonation.ui.shift.EXERCISE_SHIFT
 import be.drakarah.intonation.ui.sustain.EXERCISE_SUSTAIN
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -163,13 +161,6 @@ class ProgressViewModel(
             }
         }
     }
-}
-
-/** Mastery bands are stricter for static notes than for shifts (which land far wider). */
-private fun masteryThresholdsFor(exerciseType: String): MasteryThresholds = when (exerciseType) {
-    EXERCISE_SHIFT -> MasteryThresholds.SHIFT
-    EXERCISE_CHORDS -> MasteryThresholds.CHORDS
-    else -> MasteryThresholds.NOTE
 }
 
 /** Mean |cents| over the window's SCORED attempts, or null if none. */

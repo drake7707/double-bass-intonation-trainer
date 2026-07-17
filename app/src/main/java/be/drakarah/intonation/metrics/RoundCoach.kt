@@ -21,8 +21,6 @@ data class RoundCoachInput(
     val wrongNoteCount: Int,
     /** The exercise's mastery bands (NOTE / SHIFT / CHORDS). */
     val thresholds: MasteryThresholds,
-    /** Average |cents| over the previous week, when there's history. */
-    val lastWeekAvgCents: Float? = null,
 )
 
 enum class RoundCoachVerdict {
@@ -40,9 +38,6 @@ enum class RoundCoachVerdict {
 
     /** Locked-in round — celebrate by name. */
     LOCKED,
-
-    /** Measurably more in tune than last week. */
-    IMPROVED,
 
     /** Solid round, close to center. */
     SOLID,
@@ -80,11 +75,11 @@ fun roundCoachVerdict(input: RoundCoachInput): RoundCoachVerdict? {
         return RoundCoachVerdict.TIME_PRESSURE
     }
 
-    val improved = input.lastWeekAvgCents?.let { it - avgAbs > 2f } == true
-    return when {
-        band == MasteryBand.LOCKED -> RoundCoachVerdict.LOCKED
-        improved -> RoundCoachVerdict.IMPROVED
-        band == MasteryBand.SOLID -> RoundCoachVerdict.SOLID
+    // Week-over-week improvement is no longer a coach verdict: the summary's single trend line
+    // (ImprovementLine, fed by RoundTrend) owns that comparison — one render path, not two.
+    return when (band) {
+        MasteryBand.LOCKED -> RoundCoachVerdict.LOCKED
+        MasteryBand.SOLID -> RoundCoachVerdict.SOLID
         else -> RoundCoachVerdict.DEVELOPING
     }
 }

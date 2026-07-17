@@ -93,9 +93,10 @@ data class RoundOutcome(
     val previousBest: Int?,
     val isNewBest: Boolean,
     val newAchievements: List<AchievementDef> = emptyList(),
-    /** Average |cents| across this exercise's rounds of the preceding week — the
-     * "practice → improvement" comparison. Null without enough history. */
-    val lastWeekAvgCents: Float? = null,
+    /** Average |cents| across this exercise+mode's rounds of the *true previous* 7-day block
+     * (`previousBlockWindow`) — the "practice → improvement" comparison. Null without history
+     * there, and the summary's trend line stays silent. */
+    val previousBlockAvgCents: Float? = null,
 )
 
 /** Local epoch-day of a ms timestamp. Must match the SQL in `MIGRATION_3_4`

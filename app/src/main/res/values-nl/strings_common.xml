@@ -23,7 +23,6 @@
     <string name="coach_round_lean_flat">Goede ronde — de meeste noten waren iets te laag. Mik volgende keer een tikje hoger.</string>
     <string name="coach_round_time_pressure">De noten die je speelde waren zuiver — voor sommige noten was de tijd op. Adem even in voor elke noot.</string>
     <string name="coach_round_locked">Spot-on — je noten zitten vandaag precies in het midden.</string>
-    <string name="coach_round_improved">Zuiverder dan vorige week — je oefening werpt vruchten af.</string>
     <string name="coach_round_solid">Sterke ronde — je noten zitten dicht bij het midden.</string>
     <string name="coach_round_developing">Elke ronde traint je gehoor een beetje — blijf oefenen.</string>
 
@@ -34,9 +33,20 @@
     <string name="reveal_spot_on">Precies goed!</string>
     <string name="reveal_close_sharp">Bijna — een tikje te hoog</string>
     <string name="reveal_close_flat">Bijna — een tikje te laag</string>
+    <string name="reveal_quite_sharp">Behoorlijk te hoog</string>
+    <string name="reveal_quite_flat">Behoorlijk te laag</string>
     <string name="reveal_too_sharp">Te hoog</string>
     <string name="reveal_too_flat">Te laag</string>
     <string name="reveal_cents_value">%1$s cent</string>
+
+    <!-- Kleurenlegende bij de resultatengrafiek (concept — Sarah/leraar nog nakijken) -->
+    <string name="accuracy_legend_title">Wat de kleuren betekenen</string>
+    <string name="accuracy_legend_spot_on">precies goed</string>
+    <string name="accuracy_legend_close">een tikje ernaast</string>
+    <string name="accuracy_legend_almost">behoorlijk ernaast</string>
+    <string name="accuracy_legend_miss">ernaast of gemist</string>
+    <string name="accuracy_legend_range_within">%1$s · ≤%2$d¢</string>
+    <string name="accuracy_legend_range_over">%1$s · &gt;%2$d¢</string>
 
     <string name="drift_sharp">Je gaat steeds iets te hoog spelen\nmik een tikje lager</string>
     <string name="drift_flat">Je gaat steeds iets te laag spelen\nmik een tikje hoger</string>
@@ -58,8 +68,6 @@
     <string name="improvement_better">zuiverder dan vorige week</string>
     <string name="improvement_worse">iets minder zuiver dan vorige week</string>
     <string name="improvement_same">ongeveer gelijk aan vorige week</string>
-    <string name="improvement_cd_improved">Beter</string>
-    <string name="improvement_cd_worse">Minder</string>
 
     <string name="trace_prompt">Deze ronde is opgenomen als oefenrapport — hoe ging het?</string>
     <string name="trace_went_well">Ging goed</string>

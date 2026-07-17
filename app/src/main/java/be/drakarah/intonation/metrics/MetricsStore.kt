@@ -26,8 +26,9 @@ interface MetricsStore {
     suspend fun attemptsOn(epochDay: Int): Int
     suspend fun practiceEpochDays(): Set<Int>
 
-    /** Mean |cents| over completed rounds of [exerciseType] in [fromMs, untilMs). */
-    suspend fun averageAbsCentsBetween(exerciseType: String, fromMs: Long, untilMs: Long): Float?
+    /** Mean |cents| over completed rounds of [exerciseType] + [mode] in epoch-days
+     * `[fromDay, untilDay)` — backs the round summary's trend line. */
+    suspend fun averageAbsCentsForDays(exerciseType: String, mode: String, fromDay: Int, untilDay: Int): Float?
 }
 
 /** Domain mirror of a personal-best row. */

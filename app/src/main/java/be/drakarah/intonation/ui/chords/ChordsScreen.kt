@@ -14,11 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.HorizontalRule
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -39,23 +34,19 @@ import androidx.compose.ui.res.stringResource
 import be.drakarah.intonation.R
 import be.drakarah.intonation.game.ChordSpec
 import be.drakarah.intonation.game.isOpenString
-import be.drakarah.intonation.metrics.MasteryThresholds
-import be.drakarah.intonation.metrics.RoundCoachInput
-import be.drakarah.intonation.metrics.roundCoachVerdict
 import be.drakarah.intonation.music.NoteNameStyle
-import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.DriftBanner
 import be.drakarah.intonation.ui.common.chordDisplayName
 import be.drakarah.intonation.ui.common.displayLabel
 import be.drakarah.intonation.ui.common.displayShortLabel
 import be.drakarah.intonation.ui.common.GameCountIn
-import be.drakarah.intonation.ui.common.ImprovementLine
+import be.drakarah.intonation.ui.common.LiveSummaryActions
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
-import be.drakarah.intonation.ui.common.sentence
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.common.RoundSummaryScaffold
 import be.drakarah.intonation.ui.common.StarRating
+import be.drakarah.intonation.ui.common.scoreDot
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
 import be.drakarah.intonation.ui.theme.TextSizes
@@ -83,43 +74,18 @@ fun ChordsScreen(
                 ProgressDotsCommon(
                     dots = List(state.roundLength) { i ->
                         val result = state.results.getOrNull(i)
-                        val (color, icon, desc) = when {
-                            result == null && i == state.promptIndex -> Triple(
-                                MaterialTheme.colorScheme.onSurfaceVariant,
-                                Icons.Default.PlayArrow,
-                                stringResource(R.string.game_dot_next, i + 1)
-                            )
-                            result == null -> Triple(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                null,
-                                stringResource(R.string.game_dot_pending, i + 1)
-                            )
-                            result.weakestStars == 3 -> Triple(
-                                ResultColors.excellent,
-                                Icons.Default.Check,
-                                stringResource(R.string.game_dot_perfect, i + 1)
-                            )
-                            result.weakestStars >= 1 -> Triple(
-                                ResultColors.close,
-                                Icons.Default.HorizontalRule,
-                                stringResource(R.string.game_dot_close, i + 1)
-                            )
-                            else -> Triple(
-                                ResultColors.off,
-                                Icons.Default.Clear,
-                                stringResource(R.string.game_dot_missed, i + 1)
-                            )
-                        }
-                        DotInfo(color, desc, icon)
+                        scoreDot(index = i, stars = result?.weakestStars, isNext = i == state.promptIndex)
                     }
                 )
-                Spacer(Modifier.height(Spacing.ITEM_SPACING))
-                Text(
-                    "${state.totalScore} / ${state.maxScore}",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Bold
-                )
+                if (state.phase != ChordsPhase.Done) {
+                    Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                    Text(
+                        "${state.totalScore} / ${state.maxScore}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 state.driftCents?.let { drift ->
                     Spacer(Modifier.height(Spacing.ITEM_SPACING))
                     DriftBanner(drift)
@@ -275,9 +241,7 @@ private fun ToneResult(tone: ToneUi, noteStyle: NoteNameStyle) {
     val color = when {
         !tone.scored -> MaterialTheme.colorScheme.onSurfaceVariant
         tone.timedOut || tone.wrongNote -> ResultColors.off
-        tone.starCount == 3 -> ResultColors.excellent
-        tone.starCount >= 1 -> ResultColors.close
-        else -> ResultColors.off
+        else -> ResultColors.forStars(tone.starCount)
     }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
@@ -333,33 +297,15 @@ private fun DoneContent(
     onPlayAgain: () -> Unit,
     onTraceFeedback: (String, String) -> Unit,
 ) {
-    val scoredTones = state.results.flatMap { it.tones }.filter { it.scored }
+    val summary = state.summary ?: return
     RoundSummaryScaffold(
-        totalScore = state.totalScore,
-        maxScore = state.maxScore,
-        outcome = state.outcome,
-        coachLine = roundCoachVerdict(
-            RoundCoachInput(
-                scoredCents = scoredTones.filter { !it.wrongNote }.mapNotNull { it.cents },
-                attemptCount = scoredTones.size,
-                timeoutCount = scoredTones.count { it.timedOut },
-                wrongNoteCount = scoredTones.count { it.wrongNote },
-                thresholds = MasteryThresholds.CHORDS,
-                lastWeekAvgCents = state.outcome?.lastWeekAvgCents,
-            )
-        )?.sentence(),
-        showTraceFeedback = state.traceActive && !state.traceFeedbackGiven,
-        onTraceFeedback = onTraceFeedback,
-        onPlayAgain = onPlayAgain,
+        data = summary,
         onExit = onExit,
-        outcomeExtras = { outcome ->
-            val scoredCents = state.results.flatMap { it.tones }
-                .filter { it.scored && !it.wrongNote }.mapNotNull { it.cents }
-            ImprovementLine(
-                thisRoundAvgCents = scoredCents.takeIf { it.isNotEmpty() }
-                    ?.map { kotlin.math.abs(it) }?.average()?.toFloat(),
-                lastWeekAvgCents = outcome.lastWeekAvgCents,
-            )
-        },
+        live = LiveSummaryActions(
+            outcome = state.outcome,
+            showTraceFeedback = state.traceActive && !state.traceFeedbackGiven,
+            onTraceFeedback = onTraceFeedback,
+            onPlayAgain = onPlayAgain,
+        ),
     )
 }

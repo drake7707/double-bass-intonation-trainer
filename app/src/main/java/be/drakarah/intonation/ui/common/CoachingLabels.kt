@@ -67,7 +67,6 @@ fun RoundCoachVerdict.sentence(): String = stringResource(
         RoundCoachVerdict.LEAN_FLAT -> R.string.coach_round_lean_flat
         RoundCoachVerdict.TIME_PRESSURE -> R.string.coach_round_time_pressure
         RoundCoachVerdict.LOCKED -> R.string.coach_round_locked
-        RoundCoachVerdict.IMPROVED -> R.string.coach_round_improved
         RoundCoachVerdict.SOLID -> R.string.coach_round_solid
         RoundCoachVerdict.DEVELOPING -> R.string.coach_round_developing
     }

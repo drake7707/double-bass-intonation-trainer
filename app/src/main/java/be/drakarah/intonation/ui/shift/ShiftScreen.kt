@@ -13,11 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.HorizontalRule
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -37,22 +33,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.R
 import be.drakarah.intonation.game.PromptSpec
-import be.drakarah.intonation.metrics.MasteryThresholds
-import be.drakarah.intonation.metrics.RoundCoachInput
-import be.drakarah.intonation.metrics.roundCoachVerdict
+import be.drakarah.intonation.metrics.shiftStartPushedLandingOff
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.ui.common.CentsRevealHeadline
-import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.DriftBanner
 import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.displayLabel
-import be.drakarah.intonation.ui.common.ImprovementLine
+import be.drakarah.intonation.ui.common.LiveSummaryActions
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
-import be.drakarah.intonation.ui.common.sentence
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.common.RoundSummaryScaffold
 import be.drakarah.intonation.ui.common.StarRating
+import be.drakarah.intonation.ui.common.scoreDot
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
 import be.drakarah.intonation.ui.theme.TextSizes
@@ -80,43 +73,23 @@ fun ShiftScreen(
                 ProgressDotsCommon(
                     dots = List(state.roundLength) { i ->
                         val result = state.results.getOrNull(i)
-                        val (color, icon, desc) = when {
-                            result == null && i == state.promptIndex -> Triple(
-                                MaterialTheme.colorScheme.onSurfaceVariant,
-                                Icons.Default.PlayArrow,
-                                stringResource(R.string.game_dot_next, i + 1)
-                            )
-                            result == null -> Triple(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                null,
-                                stringResource(R.string.game_dot_pending, i + 1)
-                            )
-                            result.starCount == 3 -> Triple(
-                                ResultColors.excellent,
-                                Icons.Default.Check,
-                                stringResource(R.string.game_dot_perfect, i + 1)
-                            )
-                            result.starCount >= 1 -> Triple(
-                                ResultColors.close,
-                                Icons.Default.HorizontalRule,
-                                stringResource(R.string.game_dot_close, i + 1)
-                            )
-                            else -> Triple(
-                                ResultColors.off,
-                                Icons.Default.Clear,
-                                stringResource(R.string.game_dot_missed, i + 1)
-                            )
-                        }
-                        DotInfo(color, desc, icon)
+                        scoreDot(
+                            index = i,
+                            stars = result?.starCount,
+                            missed = result?.let { it.timedOut || it.wrongNote } ?: false,
+                            isNext = i == state.promptIndex,
+                        )
                     }
                 )
-                Spacer(Modifier.height(Spacing.ITEM_SPACING))
-                Text(
-                    "${state.totalScore} / ${state.maxScore}",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Bold
-                )
+                if (state.phase != ShiftPhase.Done) {
+                    Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                    Text(
+                        "${state.totalScore} / ${state.maxScore}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 state.driftCents?.let { drift ->
                     Spacer(Modifier.height(Spacing.ITEM_SPACING))
                     DriftBanner(drift)
@@ -223,12 +196,8 @@ private fun GoContent(state: ShiftUiState) {
 
 @Composable
 private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
-    val color = when {
-        result.timedOut || result.wrongNote -> ResultColors.off
-        result.starCount == 3 -> ResultColors.excellent
-        result.starCount >= 1 -> ResultColors.close
-        else -> ResultColors.off
-    }
+    val color = if (result.timedOut || result.wrongNote) ResultColors.off
+    else ResultColors.forStars(result.starCount)
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             "${result.prompt.start.target.displayName(state.noteStyle, result.prompt.start.spelling)} → " +
@@ -337,13 +306,7 @@ private fun ShiftBreakdown(result: ShiftAttemptUi) {
  * short amber "check your start" badge; the round summary repeats the icon with the explanation.
  * The reveal headline above it already praises the shift distance itself. */
 private val ShiftAttemptUi.isStartPushedLandingOff: Boolean
-    get() {
-        val landing = landingCents ?: return false
-        val start = startCents ?: return false
-        val shift = shiftCents ?: return false
-        return kotlin.math.abs(start) >= 15f &&
-            kotlin.math.abs(shift) < kotlin.math.abs(landing) - 5f
-    }
+    get() = shiftStartPushedLandingOff(startCents, shiftCents, landingCents)
 
 @Composable
 private fun DoneContent(
@@ -352,51 +315,15 @@ private fun DoneContent(
     onPlayAgain: () -> Unit,
     onTraceFeedback: (String, String) -> Unit,
 ) {
+    val summary = state.summary ?: return
     RoundSummaryScaffold(
-        totalScore = state.totalScore,
-        maxScore = state.maxScore,
-        outcome = state.outcome,
-        coachLine = roundCoachVerdict(
-            RoundCoachInput(
-                scoredCents = state.results.mapNotNull { it.shiftCents },
-                attemptCount = state.results.size,
-                timeoutCount = state.results.count { it.timedOut },
-                wrongNoteCount = state.results.count { it.wrongNote },
-                thresholds = MasteryThresholds.SHIFT,
-                lastWeekAvgCents = state.outcome?.lastWeekAvgCents,
-            )
-        )?.sentence(),
-        showTraceFeedback = state.traceActive && !state.traceFeedbackGiven,
-        onTraceFeedback = onTraceFeedback,
-        onPlayAgain = onPlayAgain,
+        data = summary,
         onExit = onExit,
-        breakdown = {
-            // Explains the "check your start" badge seen on reveals, with the same icon.
-            if (state.results.any { it.isStartPushedLandingOff }) {
-                Spacer(Modifier.height(Spacing.ITEM_SPACING))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.Flag,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = ResultColors.close,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        stringResource(R.string.shift_check_start_explainer),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        },
-        outcomeExtras = { outcome ->
-            val scoredCents = state.results.mapNotNull { it.landingCents }
-            ImprovementLine(
-                thisRoundAvgCents = scoredCents.takeIf { it.isNotEmpty() }
-                    ?.map { kotlin.math.abs(it) }?.average()?.toFloat(),
-                lastWeekAvgCents = outcome.lastWeekAvgCents,
-            )
-        },
+        live = LiveSummaryActions(
+            outcome = state.outcome,
+            showTraceFeedback = state.traceActive && !state.traceFeedbackGiven,
+            onTraceFeedback = onTraceFeedback,
+            onPlayAgain = onPlayAgain,
+        ),
     )
 }

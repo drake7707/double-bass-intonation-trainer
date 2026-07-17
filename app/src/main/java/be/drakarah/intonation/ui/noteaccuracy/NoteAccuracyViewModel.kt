@@ -17,6 +17,8 @@ import be.drakarah.intonation.metrics.RoundContext
 import be.drakarah.intonation.metrics.RoundOutcome
 import be.drakarah.intonation.metrics.RoundRecord
 import be.drakarah.intonation.metrics.RoundRecorder
+import be.drakarah.intonation.metrics.RoundSummaryData
+import be.drakarah.intonation.metrics.buildRoundSummary
 import be.drakarah.intonation.settings.toRoundContext
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
@@ -93,6 +95,9 @@ data class NoteAccuracyUiState(
     val driftCents: Float? = null,
     /** Set once the finished round is persisted; drives the beat-your-best banner. */
     val outcome: RoundOutcome? = null,
+    /** The data-driven summary for the Done screen (built at round end, trend filled in after
+     * persist). Same model History replays, so the summary has one render path. */
+    val summary: RoundSummaryData? = null,
     val playerLevel: be.drakarah.intonation.game.PlayerLevel =
         be.drakarah.intonation.game.PlayerLevel.BEGINNER,
     /** Level the summary offers to switch to (from this round's reaction times), if any. */
@@ -316,8 +321,11 @@ class NoteAccuracyViewModel(
         val state = _uiState.value
         val next = state.promptIndex + 1
         if (next >= state.roundLength) {
-            _uiState.value = state.copy(phase = NoteAccuracyPhase.Done)
-            persistRound(state)
+            // Build the round + its summary synchronously so the Done screen has content the moment
+            // the phase flips; the trend is filled in once persistRound's record() returns.
+            val round = buildRound(state)
+            _uiState.value = state.copy(phase = NoteAccuracyPhase.Done, summary = buildRoundSummary(round))
+            persistRound(round, state)
             // Round over: stop the capture loop (and the mic) so recording doesn't continue through
             // the summary + feedback screen. persistRound runs on viewModelScope, not listenJob, so
             // its trace.save() completes after this cancels the listen loop.
@@ -340,50 +348,53 @@ class NoteAccuracyViewModel(
         start()
     }
 
-    private fun persistRound(state: NoteAccuracyUiState) {
-        viewModelScope.launch {
-            val now = System.currentTimeMillis()
-            val attempts = state.results.mapIndexed { i, r ->
-                AttemptRecord(
-                    promptIndex = i,
-                    targetMidi = r.target.midi,
-                    targetFreqHz = r.target.frequency(a4).toFloat(),
-                    stringMidi = prompts.getOrNull(i)?.string?.midi,
-                    positionId = prompts.getOrNull(i)?.position?.id,
-                    playedFreqHz = r.playedHz,
-                    centsError = r.cents,
-                    reactionTimeMs = r.reactionTimeMs,
-                    timeToStableMs = r.timeToStableMs,
-                    score = r.score,
-                    stars = r.starCount,
-                    quality = when {
-                        r.timedOut -> AttemptQuality.TIMEOUT
-                        r.quality == CaptureQuality.SHAKY -> AttemptQuality.SHAKY
-                        else -> AttemptQuality.CLEAN
-                    },
-                    wrongNote = r.wrongNote,
-                    wrongOctave = r.wrongOctave,
-                    timedOut = r.timedOut,
-                    energyLevel = r.energyLevel,
-                    retryCount = r.retryCount,
-                    captureWobbleCents = r.captureWobbleCents,
-                )
-            }
-            val round = RoundRecord(
-                exerciseType = EXERCISE_NOTE_ACCURACY,
-                mode = mode,
-                configKey = currentConfigKey(),
-                startedAt = startedAtWallClock,
-                endedAt = now,
-                totalScore = state.totalScore,
-                maxScore = state.maxScore,
-                context = roundContext,
-                attempts = attempts,
+    private fun buildRound(state: NoteAccuracyUiState): RoundRecord {
+        val attempts = state.results.mapIndexed { i, r ->
+            AttemptRecord(
+                promptIndex = i,
+                targetMidi = r.target.midi,
+                targetFreqHz = r.target.frequency(a4).toFloat(),
+                stringMidi = prompts.getOrNull(i)?.string?.midi,
+                positionId = prompts.getOrNull(i)?.position?.id,
+                playedFreqHz = r.playedHz,
+                centsError = r.cents,
+                reactionTimeMs = r.reactionTimeMs,
+                timeToStableMs = r.timeToStableMs,
+                score = r.score,
+                stars = r.starCount,
+                quality = when {
+                    r.timedOut -> AttemptQuality.TIMEOUT
+                    r.quality == CaptureQuality.SHAKY -> AttemptQuality.SHAKY
+                    else -> AttemptQuality.CLEAN
+                },
+                wrongNote = r.wrongNote,
+                wrongOctave = r.wrongOctave,
+                timedOut = r.timedOut,
+                energyLevel = r.energyLevel,
+                retryCount = r.retryCount,
+                captureWobbleCents = r.captureWobbleCents,
             )
+        }
+        return RoundRecord(
+            exerciseType = EXERCISE_NOTE_ACCURACY,
+            mode = mode,
+            configKey = currentConfigKey(),
+            startedAt = startedAtWallClock,
+            endedAt = System.currentTimeMillis(),
+            totalScore = state.totalScore,
+            maxScore = state.maxScore,
+            context = roundContext,
+            attempts = attempts,
+        )
+    }
+
+    private fun persistRound(round: RoundRecord, state: NoteAccuracyUiState) {
+        viewModelScope.launch {
             trace?.save()
             val outcome = roundRecorder.record(round)
             _uiState.value = _uiState.value.copy(
                 outcome = outcome,
+                summary = _uiState.value.summary?.withTrend(outcome.previousBlockAvgCents),
                 suggestedLevel = be.drakarah.intonation.game.LevelAdvisor.suggest(
                     current = state.playerLevel,
                     reactionTimesMs = state.results.map {

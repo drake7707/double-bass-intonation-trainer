@@ -11,8 +11,7 @@ class RoundCoachTest {
         attempts: Int = 10,
         timeouts: Int = 0,
         wrong: Int = 0,
-        lastWeek: Float? = null,
-    ) = RoundCoachInput(cents, attempts, timeouts, wrong, MasteryThresholds.NOTE, lastWeek)
+    ) = RoundCoachInput(cents, attempts, timeouts, wrong, MasteryThresholds.NOTE)
 
     @Test
     fun `empty round says nothing`() {
@@ -74,10 +73,12 @@ class RoundCoachTest {
     }
 
     @Test
-    fun `improvement over last week is celebrated when not locked`() {
+    fun `solid round with history is still solid — the trend line, not the coach, owns improvement`() {
+        // Pre-2026-07-17 this read IMPROVED via a second week-comparison path that could
+        // contradict the trend line; the coach now only speaks to this round.
         assertEquals(
-            RoundCoachVerdict.IMPROVED,
-            roundCoachVerdict(input(listOf(12f, -14f, 13f, -11f), lastWeek = 25f)),
+            RoundCoachVerdict.SOLID,
+            roundCoachVerdict(input(listOf(12f, -14f, 13f, -11f))),
         )
     }
 

@@ -20,9 +20,11 @@ import java.util.Locale
  */
 @Composable
 fun centsRevealWord(cents: Float, starCount: Int): String = stringResource(
-    when {
-        starCount == 3 -> R.string.reveal_spot_on
-        starCount >= 1 -> if (cents > 0) R.string.reveal_close_sharp else R.string.reveal_close_flat
+    // Four steps that mirror the four-colour accuracy scale (ResultColors.forStars).
+    when (starCount) {
+        3 -> R.string.reveal_spot_on
+        2 -> if (cents > 0) R.string.reveal_close_sharp else R.string.reveal_close_flat
+        1 -> if (cents > 0) R.string.reveal_quite_sharp else R.string.reveal_quite_flat
         else -> if (cents > 0) R.string.reveal_too_sharp else R.string.reveal_too_flat
     }
 )

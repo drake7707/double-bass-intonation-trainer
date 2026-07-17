@@ -1,16 +1,13 @@
 package be.drakarah.intonation.data
 
 import androidx.room.withTransaction
-import be.drakarah.intonation.metrics.AttemptRecord
 import be.drakarah.intonation.metrics.DailyStats
 import be.drakarah.intonation.metrics.DailyStatsKey
 import be.drakarah.intonation.metrics.MetricsStore
 import be.drakarah.intonation.metrics.PersonalBest
-import be.drakarah.intonation.metrics.RoundContext
 import be.drakarah.intonation.metrics.RoundRecord
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import be.drakarah.intonation.metrics.epochDayOf
 
 /** `data`-layer implementation of the metrics persistence port. The only place that maps the pure
  * domain types to/from Room entities; keeps [RoundRecorder] free of Room. */
@@ -68,37 +65,9 @@ class RoomMetricsStore(private val db: IntonationDatabase) : MetricsStore {
 
     override suspend fun practiceEpochDays(): Set<Int> = db.dailyStatsDao().practiceEpochDays().toSet()
 
-    override suspend fun averageAbsCentsBetween(exerciseType: String, fromMs: Long, untilMs: Long): Float? =
-        db.sessionDao().avgAbsCentsByDayRange(exerciseType, epochDayOf(fromMs), epochDayOf(untilMs))
+    override suspend fun averageAbsCentsForDays(exerciseType: String, mode: String, fromDay: Int, untilDay: Int): Float? =
+        db.sessionDao().avgAbsCentsByDayRange(exerciseType, mode, fromDay, untilDay)
 }
-
-private fun AttemptRecord.toEntity(sessionId: Long, round: RoundRecord, epochDay: Int) = AttemptEntity(
-    sessionId = sessionId,
-    promptIndex = promptIndex,
-    timestamp = round.startedAt,
-    exerciseType = round.exerciseType,
-    targetMidi = targetMidi,
-    targetFreqHz = targetFreqHz,
-    startMidi = startMidi,
-    stringMidi = stringMidi,
-    positionId = positionId,
-    playedFreqHz = playedFreqHz,
-    centsError = centsError,
-    reactionTimeMs = reactionTimeMs,
-    timeToStableMs = timeToStableMs,
-    score = score,
-    stars = stars,
-    quality = quality.name,
-    epochDay = epochDay,
-    outcome = outcome.name,
-    energyLevel = energyLevel,
-    retryCount = retryCount,
-    sustainHeldMs = sustainHeldMs,
-    sustainResets = sustainResets,
-    steadinessCents = steadinessCents,
-    captureWobbleCents = captureWobbleCents,
-    extrasJson = extrasJson,
-)
 
 private fun DailyStatsEntity.toDomain() = DailyStats(
     key = DailyStatsKey(epochDay, exerciseType, mode, positionId),

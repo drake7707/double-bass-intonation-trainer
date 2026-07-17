@@ -20,11 +20,17 @@ fun scoreAttempt(centsError: Float, difficulty: Difficulty): Int {
     return score.roundToInt().coerceIn(0, MAX_ATTEMPT_SCORE)
 }
 
+/** Star-boundary cents (also the four-colour accuracy scale shown in the legend): ≤5¢ = 3★
+ * (green), ≤15¢ = 2★ (yellow), ≤30¢ = 1★ (orange), beyond = 0★ (red). */
+const val STAR_PERFECT_CENTS = 5f
+const val STAR_CLOSE_CENTS = 15f
+const val STAR_ALMOST_CENTS = 30f
+
 /** Star rating is difficulty-independent so it stays comparable across settings. */
 fun stars(centsError: Float): Int = when {
-    abs(centsError) <= 5f -> 3
-    abs(centsError) <= 15f -> 2
-    abs(centsError) <= 30f -> 1
+    abs(centsError) <= STAR_PERFECT_CENTS -> 3
+    abs(centsError) <= STAR_CLOSE_CENTS -> 2
+    abs(centsError) <= STAR_ALMOST_CENTS -> 1
     else -> 0
 }
 

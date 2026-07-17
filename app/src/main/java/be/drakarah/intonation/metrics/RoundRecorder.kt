@@ -62,16 +62,20 @@ class RoundRecorder(
         val fresh = evaluateAchievements(facts, store.unlockedAchievements())
         if (fresh.isNotEmpty()) store.insertAchievements(fresh.map { it.id }, round.endedAt)
 
-        val weekMs = 7L * 24 * 60 * 60 * 1000
-        val lastWeekAvg = store.averageAbsCentsBetween(
-            round.exerciseType, round.startedAt - weekMs, round.startedAt
+        // The trend comparison: the true previous 7-day block (never days from the current week —
+        // "more in tune than last week" must not fire two days after install), same exercise AND
+        // mode (arco and pizz genuinely differ). Anchored to the round's own startedAt so a
+        // history replay recomputes the exact same value.
+        val (fromDay, untilDay) = previousBlockWindow(round.startedAt, zone)
+        val previousBlockAvg = store.averageAbsCentsForDays(
+            round.exerciseType, round.mode, fromDay, untilDay
         )
 
         RoundOutcome(
             previousBest = previous?.score,
             isNewBest = isNewBest,
             newAchievements = fresh,
-            lastWeekAvgCents = lastWeekAvg,
+            previousBlockAvgCents = previousBlockAvg,
         )
     }
 }

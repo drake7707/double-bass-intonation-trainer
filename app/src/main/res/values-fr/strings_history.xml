@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Historique des manches (brouillon — à relire par Sarah/prof) -->
+<resources>
+    <string name="history_title">Historique</string>
+    <string name="history_cd_open">Historique des manches</string>
+    <string name="history_empty">Aucune manche jouée pour l\'instant — termine une manche et elle apparaîtra ici.</string>
+    <string name="history_not_found">Cette manche n\'est plus disponible.</string>
+    <string name="history_row_score">%1$d / %2$d</string>
+    <string name="history_detail_title">%1$s · %2$s</string>
+</resources>

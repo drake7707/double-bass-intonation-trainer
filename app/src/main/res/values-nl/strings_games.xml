@@ -16,8 +16,7 @@
     <string name="note_play">Speel</string>
     <string name="note_avg_technical">gemiddeld %1$s cent ernaast</string>
     <string name="note_how_in_tune">Hoe zuiver: %1$s</string>
-    <string name="note_chart_caption">je noten — boven de lijn is te hoog, eronder te laag</string>
-    <string name="note_chart_caption_technical">cent ernaast per noot</string>
+    <string name="note_how_in_tune_scope">op basis van de %1$d van %2$d noten die je raakte</string>
     <string name="note_stars_line">%1$d van %2$d sterren</string>
     <string name="note_pace_faster">Je vond elke noot met tijd over — dat is vooruitgang!</string>
     <string name="note_pace_slower">Meerdere noten raakten op tijd — wat meer ademruimte houdt het leuk.</string>

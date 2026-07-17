@@ -16,6 +16,8 @@ import be.drakarah.intonation.metrics.RoundContext
 import be.drakarah.intonation.metrics.RoundOutcome
 import be.drakarah.intonation.metrics.RoundRecord
 import be.drakarah.intonation.metrics.RoundRecorder
+import be.drakarah.intonation.metrics.RoundSummaryData
+import be.drakarah.intonation.metrics.buildRoundSummary
 import be.drakarah.intonation.settings.toRoundContext
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
@@ -96,6 +98,8 @@ data class ChordsUiState(
     val noteStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
     val driftCents: Float? = null,
     val outcome: RoundOutcome? = null,
+    /** Data-driven Done-screen summary (built at round end; trend filled in after persist). */
+    val summary: RoundSummaryData? = null,
     val ready: Boolean = false,
     /** True when this round is being recorded to a [be.drakarah.intonation.audio.GameTrace] —
      * drives the summary's "how did that go" prompt (her idea, see TESTING.md). */
@@ -306,8 +310,9 @@ class ChordsViewModel(
         val state = _uiState.value
         val next = state.promptIndex + 1
         if (next >= state.roundLength) {
-            _uiState.value = state.copy(phase = ChordsPhase.Done)
-            persistRound(state)
+            val round = buildRound(state)
+            _uiState.value = state.copy(phase = ChordsPhase.Done, summary = buildRoundSummary(round))
+            persistRound(round)
             // Round over: stop the capture loop (and the mic) so recording doesn't continue through
             // the summary + feedback screen. persistRound runs on viewModelScope, not listenJob, so
             // its trace.save() completes after this cancels the listen loop.
@@ -320,46 +325,51 @@ class ChordsViewModel(
         }
     }
 
-    private fun persistRound(state: ChordsUiState) {
-        viewModelScope.launch {
-            val now = System.currentTimeMillis()
-            // Only scored (fingered) tones become attempts; open strings are played but not scored.
-            val attempts = state.results.flatMapIndexed { chordIndex, chord ->
-                chord.tones.filter { it.scored }.map { tone ->
-                    AttemptRecord(
-                        promptIndex = chordIndex,      // all tones of a chord share the chord index
-                        targetMidi = tone.prompt.target.midi,
-                        targetFreqHz = tone.prompt.target.frequency(a4).toFloat(),
-                        startMidi = chord.chord.root.midi, // the chord's root groups its tones
-                        stringMidi = tone.prompt.string.midi,
-                        positionId = tone.prompt.position.id,
-                        playedFreqHz = tone.playedHz,
-                        centsError = tone.cents,
-                        score = tone.score,
-                        stars = tone.starCount,
-                        quality = if (tone.timedOut) AttemptQuality.TIMEOUT else AttemptQuality.CLEAN,
-                        wrongNote = tone.wrongNote,
-                        timedOut = tone.timedOut,
-                        energyLevel = tone.energyLevel,
-                        retryCount = tone.retryCount,
-                        captureWobbleCents = tone.captureWobbleCents,
-                    )
-                }
+    private fun buildRound(state: ChordsUiState): RoundRecord {
+        // Only scored (fingered) tones become attempts; open strings are played but not scored.
+        val attempts = state.results.flatMapIndexed { chordIndex, chord ->
+            chord.tones.filter { it.scored }.map { tone ->
+                AttemptRecord(
+                    promptIndex = chordIndex,      // all tones of a chord share the chord index
+                    targetMidi = tone.prompt.target.midi,
+                    targetFreqHz = tone.prompt.target.frequency(a4).toFloat(),
+                    startMidi = chord.chord.root.midi, // the chord's root groups its tones
+                    stringMidi = tone.prompt.string.midi,
+                    positionId = tone.prompt.position.id,
+                    playedFreqHz = tone.playedHz,
+                    centsError = tone.cents,
+                    score = tone.score,
+                    stars = tone.starCount,
+                    quality = if (tone.timedOut) AttemptQuality.TIMEOUT else AttemptQuality.CLEAN,
+                    wrongNote = tone.wrongNote,
+                    timedOut = tone.timedOut,
+                    energyLevel = tone.energyLevel,
+                    retryCount = tone.retryCount,
+                    captureWobbleCents = tone.captureWobbleCents,
+                )
             }
-            val round = RoundRecord(
-                exerciseType = EXERCISE_CHORDS,
-                mode = mode,
-                configKey = configKey(EXERCISE_CHORDS, mode, difficulty, state.roundLength, positions),
-                startedAt = startedAtWallClock,
-                endedAt = now,
-                totalScore = state.totalScore,
-                maxScore = state.maxScore,
-                context = roundContext,
-                attempts = attempts,
-            )
+        }
+        return RoundRecord(
+            exerciseType = EXERCISE_CHORDS,
+            mode = mode,
+            configKey = configKey(EXERCISE_CHORDS, mode, difficulty, state.roundLength, positions),
+            startedAt = startedAtWallClock,
+            endedAt = System.currentTimeMillis(),
+            totalScore = state.totalScore,
+            maxScore = state.maxScore,
+            context = roundContext,
+            attempts = attempts,
+        )
+    }
+
+    private fun persistRound(round: RoundRecord) {
+        viewModelScope.launch {
             trace?.save()
             val outcome = roundRecorder.record(round)
-            _uiState.value = _uiState.value.copy(outcome = outcome)
+            _uiState.value = _uiState.value.copy(
+                outcome = outcome,
+                summary = _uiState.value.summary?.withTrend(outcome.previousBlockAvgCents),
+            )
         }
     }
 

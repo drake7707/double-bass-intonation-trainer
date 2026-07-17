@@ -16,8 +16,7 @@
     <string name="note_play">Joue</string>
     <string name="note_avg_technical">moyenne %1$s cents d\'écart</string>
     <string name="note_how_in_tune">Justesse : %1$s</string>
-    <string name="note_chart_caption">tes notes — au-dessus de la ligne c\'est trop haut, en dessous trop bas</string>
-    <string name="note_chart_caption_technical">cents d\'écart par note</string>
+    <string name="note_how_in_tune_scope">sur les %1$d des %2$d notes que tu as posées</string>
     <string name="note_stars_line">%1$d étoiles sur %2$d</string>
     <string name="note_pace_faster">Tu as trouvé chaque note avec du temps de reste — c\'est un progrès !</string>
     <string name="note_pace_slower">Plusieurs notes ont manqué de temps — un peu plus de marge garde le plaisir.</string>

@@ -23,7 +23,6 @@
     <string name="coach_round_lean_flat">Bonne manche — la plupart des notes penchaient trop bas. Vise un peu plus haut la prochaine fois.</string>
     <string name="coach_round_time_pressure">Les notes que tu as jouées étaient justes — certaines ont juste manqué de temps. Respire avant chaque note.</string>
     <string name="coach_round_locked">Bien ancré — tes notes sont tombées pile au centre aujourd\'hui.</string>
-    <string name="coach_round_improved">Plus juste que la semaine dernière — ton travail paie.</string>
     <string name="coach_round_solid">Manche solide — tes notes sont proches du centre.</string>
     <string name="coach_round_developing">Chaque manche entraîne un peu ton oreille — continue à les poser.</string>
 
@@ -34,9 +33,20 @@
     <string name="reveal_spot_on">Pile juste !</string>
     <string name="reveal_close_sharp">Presque — un peu trop haut</string>
     <string name="reveal_close_flat">Presque — un peu trop bas</string>
+    <string name="reveal_quite_sharp">Assez trop haut</string>
+    <string name="reveal_quite_flat">Assez trop bas</string>
     <string name="reveal_too_sharp">Trop haut</string>
     <string name="reveal_too_flat">Trop bas</string>
     <string name="reveal_cents_value">%1$s cents</string>
+
+    <!-- Légende des couleurs sous le graphique de résultats (brouillon — à relire par Sarah/prof) -->
+    <string name="accuracy_legend_title">Ce que signifient les couleurs</string>
+    <string name="accuracy_legend_spot_on">pile juste</string>
+    <string name="accuracy_legend_close">un peu à côté</string>
+    <string name="accuracy_legend_almost">assez à côté</string>
+    <string name="accuracy_legend_miss">à côté ou manqué</string>
+    <string name="accuracy_legend_range_within">%1$s · ≤%2$d¢</string>
+    <string name="accuracy_legend_range_over">%1$s · &gt;%2$d¢</string>
 
     <string name="drift_sharp">Tu dérives vers le haut\nvise un peu plus bas</string>
     <string name="drift_flat">Tu dérives vers le bas\nvise un peu plus haut</string>
@@ -58,8 +68,6 @@
     <string name="improvement_better">plus juste que la semaine dernière</string>
     <string name="improvement_worse">un peu moins bien que la semaine dernière</string>
     <string name="improvement_same">à peu près comme la semaine dernière</string>
-    <string name="improvement_cd_improved">Amélioré</string>
-    <string name="improvement_cd_worse">Moins bien</string>
 
     <string name="trace_prompt">Cette manche a été enregistrée comme rapport de pratique — comment ça s\'est passé ?</string>
     <string name="trace_went_well">Bien passé</string>

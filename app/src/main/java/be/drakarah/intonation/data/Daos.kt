@@ -27,13 +27,18 @@ interface SessionDao {
     @Query("SELECT * FROM sessions WHERE completed = 1 ORDER BY startedAt DESC LIMIT :limit")
     fun recentSessions(limit: Int): Flow<List<SessionEntity>>
 
-    /** Index-friendly (uses index_sessions_exerciseType_epochDay) day-range average |cents|. */
+    /** One session by id — backs the history detail screen. */
+    @Query("SELECT * FROM sessions WHERE id = :id")
+    suspend fun sessionById(id: Long): SessionEntity?
+
+    /** Index-friendly (uses index_sessions_exerciseType_epochDay) day-range average |cents|,
+     * split by mode because arco and pizz genuinely differ. Backs the summary trend line. */
     @Query(
         "SELECT AVG(avgAbsCents) FROM sessions WHERE exerciseType = :exerciseType " +
-            "AND completed = 1 AND avgAbsCents IS NOT NULL " +
+            "AND mode = :mode AND completed = 1 AND avgAbsCents IS NOT NULL " +
             "AND epochDay >= :fromDay AND epochDay < :untilDay"
     )
-    suspend fun avgAbsCentsByDayRange(exerciseType: String, fromDay: Int, untilDay: Int): Float?
+    suspend fun avgAbsCentsByDayRange(exerciseType: String, mode: String, fromDay: Int, untilDay: Int): Float?
 
     /** Honest completed-round count in a day window. The rollup's `sessionCount` double-counts
      * rounds that touch several positions, so round counts come from `sessions` (indexed). */

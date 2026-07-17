@@ -176,6 +176,37 @@ its own scoring category** — scores are only ever compared between identical s
   shows when the note you just played is itself off in the same direction — so it never
   contradicts the note in front of you.
 
+## Round results
+
+- **One shared results screen** across all four games (built from a single data model, so a live
+  round and a reopened past round render identically). Top to bottom: the big round score, the
+  **coach line** (one observation), **"How in tune: <word>"**, the per-attempt **cents chart** with
+  its colour legend, the **stars** earned, a **trend line**, then — for a just-finished round only —
+  your personal-best line, any achievements, and "Let's go again". It **scrolls**, so nothing (like
+  the practice-report box) can be pushed out of reach.
+- **One four-colour accuracy scale, everywhere** (progress dots, chart, reveals): **green ≤5¢ ·
+  yellow ≤15¢ · orange ≤30¢ · red beyond / missed** — the same boundaries as the star rating, so
+  colour and stars never disagree. A **legend** under the chart names each colour ("spot on / a bit
+  off / quite off / off or missed"); with Expert mode on it also shows the cent ranges. Reveal words
+  follow the same four steps ("Spot on / a bit sharp / quite sharp / too sharp").
+- **"How in tune" tells the truth about misses.** The word grades the notes you *landed*, but it's
+  **capped by how many you landed** — a half-missed round can't read "Solid" — and when any prompt
+  was missed a subline spells out "based on the N of M notes you landed".
+- **"More in tune than last week"** compares the genuinely previous 7-day block for the *same*
+  exercise and mode, and stays silent until there's a real week to compare against (no false
+  "improved" in your first days). It's words-and-colour, no arrow.
+- The **cents chart** (each attempt as a dot above/below the in-tune line) shows on Find the Note,
+  Shifts (landings) and Chords (tones); Long Notes is hold-based and shows its bow-control breakdown
+  instead.
+
+## History
+
+- **Round History** — Progress → the **history icon (top-right)** opens a list of every past round
+  (all games, arco and pizz, newest first) showing date, score and how-in-tune word. **Tap any
+  round to reopen its full results screen**, rebuilt from the stored attempts. History shows what you
+  *played* — score, chart, stars, verdict, trend — and deliberately omits the meta-game (no
+  personal-best line, achievement unlocks or "Let's go again").
+
 ## Progress
 
 - **Progress page** — built to coach, not to grade. Per-exercise it shows: the score-trend

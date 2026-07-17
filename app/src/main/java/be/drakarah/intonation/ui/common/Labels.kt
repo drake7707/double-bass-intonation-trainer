@@ -111,6 +111,17 @@ val ChordFingering.displayBlurb: String
 fun modeLabel(mode: String): String =
     stringResource(if (mode == "pizz") R.string.mode_pizz else R.string.mode_arco)
 
+/** Short exercise name for lists (History rows, Progress tabs). */
+@Composable
+fun exerciseLabel(exerciseType: String): String = stringResource(
+    when (exerciseType) {
+        be.drakarah.intonation.metrics.EXERCISE_TYPE_SUSTAIN -> R.string.home_long_notes
+        be.drakarah.intonation.metrics.EXERCISE_TYPE_SHIFT -> R.string.progress_tab_shifts
+        be.drakarah.intonation.metrics.EXERCISE_TYPE_CHORDS -> R.string.home_chords
+        else -> R.string.home_find_note
+    }
+)
+
 // --- Achievements -------------------------------------------------------------------------
 // Titles and descriptions are keyed by the achievement's stable id (never translate the id).
 // An explicit map — not resources.getIdentifier — so resource shrinking can't drop them.

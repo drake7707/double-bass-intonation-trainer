@@ -23,8 +23,9 @@
     <string name="note_avg_technical">average %1$s cents off</string>
     <!-- %1$s = mastery word (Locked in / Solid / Developing) -->
     <string name="note_how_in_tune">How in tune: %1$s</string>
-    <string name="note_chart_caption">your notes — above the line is sharp, below is flat</string>
-    <string name="note_chart_caption_technical">cents off per note</string>
+    <!-- Under "How in tune" when some prompts were missed, so the word isn't read as the whole
+         round. %1$d = notes landed, %2$d = notes played. -->
+    <string name="note_how_in_tune_scope">based on the %1$d of %2$d notes you landed</string>
     <!-- %1$d = stars earned, %2$d = stars possible -->
     <string name="note_stars_line">%1$d of %2$d stars</string>
     <string name="note_pace_faster">You found every note with time to spare — that\'s progress!</string>

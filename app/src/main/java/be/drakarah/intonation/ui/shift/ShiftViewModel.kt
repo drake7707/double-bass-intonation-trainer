@@ -16,6 +16,9 @@ import be.drakarah.intonation.metrics.RoundContext
 import be.drakarah.intonation.metrics.RoundOutcome
 import be.drakarah.intonation.metrics.RoundRecord
 import be.drakarah.intonation.metrics.RoundRecorder
+import be.drakarah.intonation.metrics.RoundSummaryData
+import be.drakarah.intonation.metrics.ShiftAttemptExtras
+import be.drakarah.intonation.metrics.buildRoundSummary
 import be.drakarah.intonation.settings.toRoundContext
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
@@ -92,6 +95,8 @@ data class ShiftUiState(
     val noteStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
     val driftCents: Float? = null,
     val outcome: RoundOutcome? = null,
+    /** Data-driven Done-screen summary (built at round end; trend filled in after persist). */
+    val summary: RoundSummaryData? = null,
     val ready: Boolean = false,
     /** True when this round is being recorded to a [be.drakarah.intonation.audio.GameTrace] —
      * drives the summary's "how did that go" prompt (her idea, see TESTING.md). */
@@ -331,8 +336,9 @@ class ShiftViewModel(
         val state = _uiState.value
         val next = state.promptIndex + 1
         if (next >= state.roundLength) {
-            _uiState.value = state.copy(phase = ShiftPhase.Done)
-            persistRound(state)
+            val round = buildRound(state)
+            _uiState.value = state.copy(phase = ShiftPhase.Done, summary = buildRoundSummary(round))
+            persistRound(round)
             // Round over: stop the capture loop (and with it the mic) so we don't keep recording
             // through the summary + "how did that go" feedback screen. persistRound runs on
             // viewModelScope, not listenJob, so its trace.save() completes after this cancels us.
@@ -345,42 +351,52 @@ class ShiftViewModel(
         }
     }
 
-    private fun persistRound(state: ShiftUiState) {
-        viewModelScope.launch {
-            val now = System.currentTimeMillis()
-            val attempts = state.results.mapIndexed { i, r ->
-                AttemptRecord(
-                    promptIndex = i,
-                    targetMidi = r.prompt.target.target.midi,
-                    targetFreqHz = r.prompt.target.target.frequency(a4).toFloat(),
-                    startMidi = r.prompt.start.target.midi,
-                    stringMidi = r.prompt.start.string.midi,
-                    positionId = r.prompt.target.position.id,
-                    centsError = r.landingCents,
-                    timeToStableMs = r.landingTimeMs,
-                    score = r.score,
-                    stars = r.starCount,
-                    quality = if (r.timedOut) AttemptQuality.TIMEOUT else AttemptQuality.CLEAN,
-                    timedOut = r.timedOut,
-                    energyLevel = r.energyLevel,
-                    retryCount = r.retryCount,
-                    captureWobbleCents = r.captureWobbleCents,
-                )
-            }
-            val round = RoundRecord(
-                exerciseType = EXERCISE_SHIFT,
-                mode = mode,
-                configKey = configKey(EXERCISE_SHIFT, mode, difficulty, state.roundLength, positions, variant = level.id),
-                startedAt = startedAtWallClock,
-                endedAt = now,
-                totalScore = state.totalScore,
-                maxScore = state.maxScore,
-                context = roundContext,
-                attempts = attempts,
+    private fun buildRound(state: ShiftUiState): RoundRecord {
+        val attempts = state.results.mapIndexed { i, r ->
+            AttemptRecord(
+                promptIndex = i,
+                targetMidi = r.prompt.target.target.midi,
+                targetFreqHz = r.prompt.target.target.frequency(a4).toFloat(),
+                startMidi = r.prompt.start.target.midi,
+                stringMidi = r.prompt.start.string.midi,
+                positionId = r.prompt.target.position.id,
+                centsError = r.landingCents,
+                timeToStableMs = r.landingTimeMs,
+                score = r.score,
+                stars = r.starCount,
+                quality = if (r.timedOut) AttemptQuality.TIMEOUT else AttemptQuality.CLEAN,
+                // Persist the wrong-note flag and the start/interval cents (centsError only carries
+                // the landing) so the History replay can recompute the shift coach line + the
+                // "check your start" flag — the landing alone can't.
+                wrongNote = r.wrongNote,
+                timedOut = r.timedOut,
+                energyLevel = r.energyLevel,
+                retryCount = r.retryCount,
+                captureWobbleCents = r.captureWobbleCents,
+                extrasJson = ShiftAttemptExtras(startCents = r.startCents, shiftCents = r.shiftCents).encode(),
             )
+        }
+        return RoundRecord(
+            exerciseType = EXERCISE_SHIFT,
+            mode = mode,
+            configKey = configKey(EXERCISE_SHIFT, mode, difficulty, state.roundLength, positions, variant = level.id),
+            startedAt = startedAtWallClock,
+            endedAt = System.currentTimeMillis(),
+            totalScore = state.totalScore,
+            maxScore = state.maxScore,
+            context = roundContext,
+            attempts = attempts,
+        )
+    }
+
+    private fun persistRound(round: RoundRecord) {
+        viewModelScope.launch {
             trace?.save()
             val outcome = roundRecorder.record(round)
-            _uiState.value = _uiState.value.copy(outcome = outcome)
+            _uiState.value = _uiState.value.copy(
+                outcome = outcome,
+                summary = _uiState.value.summary?.withTrend(outcome.previousBlockAvgCents),
+            )
         }
     }
 

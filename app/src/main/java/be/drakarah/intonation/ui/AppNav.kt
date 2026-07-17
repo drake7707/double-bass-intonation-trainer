@@ -7,6 +7,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import be.drakarah.intonation.ui.debug.DebugPitchScreen
 import be.drakarah.intonation.ui.drone.DroneScreen
+import be.drakarah.intonation.ui.history.HistoryDetailScreen
+import be.drakarah.intonation.ui.history.HistoryScreen
 import be.drakarah.intonation.ui.home.HomeScreen
 import be.drakarah.intonation.ui.noteaccuracy.NoteAccuracyScreen
 import be.drakarah.intonation.ui.about.AboutScreen
@@ -41,6 +43,8 @@ object Routes {
     const val TUNE = "tune"
     const val SETTINGS = "settings"
     const val PROGRESS = "progress"
+    const val HISTORY = "history"
+    const val HISTORY_DETAIL = "history/{sessionId}"
     const val ACHIEVEMENTS = "achievements"
     const val ABOUT = "about"
     const val RECORDINGS = "recordings?onlyTraces={onlyTraces}"
@@ -52,6 +56,7 @@ object Routes {
     const val SHIFT = "shift/{mode}/{level}"
     const val CHORDS = "chords/{mode}"
 
+    fun historyDetail(sessionId: Long) = "history/$sessionId"
     fun noteAccuracy(mode: String) = "noteaccuracy/$mode"
     fun sustain(mode: String) = "sustain/$mode"
     fun shift(mode: String, level: String) = "shift/$mode/$level"
@@ -153,7 +158,20 @@ private fun AppNavGraph(
             ProgressScreen(
                 onBack = { navController.popBackStack() },
                 onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) },
+                onOpenHistory = { navController.navigate(Routes.HISTORY) },
             )
+        }
+        composable(Routes.HISTORY) {
+            HistoryScreen(
+                onBack = { navController.popBackStack() },
+                onOpenRound = { sessionId -> navController.navigate(Routes.historyDetail(sessionId)) },
+            )
+        }
+        composable(
+            Routes.HISTORY_DETAIL,
+            arguments = listOf(navArgument("sessionId") { type = NavType.LongType }),
+        ) {
+            HistoryDetailScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.ACHIEVEMENTS) {
             AchievementsScreen(onBack = { navController.popBackStack() })

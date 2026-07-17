@@ -28,7 +28,6 @@
     <string name="coach_round_lean_flat">Good round — most notes leaned flat. Try aiming a touch higher next time.</string>
     <string name="coach_round_time_pressure">The notes you played were in tune — some just ran out of time. Take a breath before each one.</string>
     <string name="coach_round_locked">Locked in — your notes landed right in the center today.</string>
-    <string name="coach_round_improved">More in tune than last week — your practice is paying off.</string>
     <string name="coach_round_solid">Solid round — your notes are sitting close to center.</string>
     <string name="coach_round_developing">Every round trains your ear a little — keep landing them.</string>
 
@@ -36,14 +35,28 @@
     <string name="coach_sustain_most_held">Good holding — a few notes slipped away early. Keep the bow moving evenly.</string>
     <string name="coach_sustain_few_held">Long notes are hard — slower, lighter bows help the note settle.</string>
 
-    <!-- Reveal verdict for a scored note (ui/common/CentsReveal.kt) -->
+    <!-- Reveal verdict for a scored note (ui/common/CentsReveal.kt). Four steps that match the
+         four-colour accuracy scale: spot on (3★) / a bit off (2★) / quite off (1★) / too far (0★). -->
     <string name="reveal_spot_on">Spot on!</string>
     <string name="reveal_close_sharp">Close — a bit sharp</string>
     <string name="reveal_close_flat">Close — a bit flat</string>
+    <string name="reveal_quite_sharp">Quite sharp</string>
+    <string name="reveal_quite_flat">Quite flat</string>
     <string name="reveal_too_sharp">Too sharp</string>
     <string name="reveal_too_flat">Too flat</string>
     <!-- %1$s = signed cents, pre-formatted ("+4.2") so translations can't break the number -->
     <string name="reveal_cents_value">%1$s cents</string>
+
+    <!-- Accuracy colour legend under the summary chart (ui/common/AccuracyLegend.kt). Documents
+         the four-colour scale; expert mode appends the cent ranges. -->
+    <string name="accuracy_legend_title">What the colours mean</string>
+    <string name="accuracy_legend_spot_on">spot on</string>
+    <string name="accuracy_legend_close">a bit off</string>
+    <string name="accuracy_legend_almost">quite off</string>
+    <string name="accuracy_legend_miss">off or missed</string>
+    <!-- Expert-mode cent ranges. %1$s = the word above, %2$d = cents. -->
+    <string name="accuracy_legend_range_within">%1$s · ≤%2$d¢</string>
+    <string name="accuracy_legend_range_over">%1$s · &gt;%2$d¢</string>
 
     <!-- Drift warning during a round (ui/common/DriftBanner.kt); two lines, read from playing distance -->
     <string name="drift_sharp">You\'re drifting sharp\naim a touch lower</string>
@@ -67,14 +80,13 @@
     <!-- %1$s = achievement title (with its emoji prefix) -->
     <string name="common_achievement_unlocked">%1$s unlocked!</string>
 
-    <!-- Round-vs-last-week line (ui/common/ImprovementLine.kt) -->
+    <!-- Round-vs-previous-week line (ui/common/ImprovementLine.kt). One trend surface now: words
+         and colour, no arrow (a down-arrow for "fewer cents = better" read backwards — Sarah). -->
     <!-- %1$s / %2$s = averages in cents, pre-formatted -->
     <string name="improvement_technical">%1$s cents average — last week %2$s</string>
     <string name="improvement_better">more in tune than last week</string>
     <string name="improvement_worse">a little off from last week</string>
     <string name="improvement_same">about the same as last week</string>
-    <string name="improvement_cd_improved">Improved</string>
-    <string name="improvement_cd_worse">Worse</string>
 
     <!-- Trace-feedback prompt on traced rounds (ui/common/TraceFeedbackPrompt.kt) -->
     <string name="trace_prompt">This round was recorded as a practice report — how did it go?</string>

@@ -16,6 +16,8 @@ import be.drakarah.intonation.metrics.RoundContext
 import be.drakarah.intonation.metrics.RoundOutcome
 import be.drakarah.intonation.metrics.RoundRecord
 import be.drakarah.intonation.metrics.RoundRecorder
+import be.drakarah.intonation.metrics.RoundSummaryData
+import be.drakarah.intonation.metrics.buildRoundSummary
 import be.drakarah.intonation.settings.toRoundContext
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
@@ -82,6 +84,8 @@ data class SustainUiState(
     val noteStyle: NoteNameStyle = NoteNameStyle.SOLFEGE,
     val goalMs: Long = 5000,
     val outcome: RoundOutcome? = null,
+    /** Data-driven Done-screen summary (built at round end; trend filled in after persist). */
+    val summary: RoundSummaryData? = null,
     val ready: Boolean = false,
     /** True when this round is being recorded to a [be.drakarah.intonation.audio.GameTrace] —
      * drives the summary's "how did that go" prompt (her idea, see TESTING.md). */
@@ -256,8 +260,9 @@ class SustainViewModel(
         val state = _uiState.value
         val next = state.promptIndex + 1
         if (next >= state.roundLength) {
-            _uiState.value = state.copy(phase = SustainPhase.Done)
-            persistRound(state)
+            val round = buildRound(state)
+            _uiState.value = state.copy(phase = SustainPhase.Done, summary = buildRoundSummary(round))
+            persistRound(round)
             // Round over: stop the capture loop (and the mic) so recording doesn't continue through
             // the summary + feedback screen. persistRound runs on viewModelScope, not listenJob, so
             // its trace.save() completes after this cancels the listen loop.
@@ -272,40 +277,45 @@ class SustainViewModel(
         }
     }
 
-    private fun persistRound(state: SustainUiState) {
-        viewModelScope.launch {
-            val now = System.currentTimeMillis()
-            val attempts = state.results.mapIndexed { i, r ->
-                AttemptRecord(
-                    promptIndex = i,
-                    targetMidi = r.prompt.target.midi,
-                    targetFreqHz = r.prompt.target.frequency(a4).toFloat(),
-                    stringMidi = r.prompt.string.midi,
-                    positionId = r.prompt.position.id,
-                    centsError = r.result.medianCents,
-                    score = r.score,
-                    stars = r.starCount,
-                    quality = if (r.result.success) AttemptQuality.CLEAN else AttemptQuality.TIMEOUT,
-                    timedOut = !r.result.success,
-                    sustainHeldMs = r.result.bestHeldMs,
-                    sustainResets = r.result.resets,
-                    steadinessCents = r.result.steadinessCents,
-                )
-            }
-            val round = RoundRecord(
-                exerciseType = EXERCISE_SUSTAIN,
-                mode = mode,
-                configKey = configKey(EXERCISE_SUSTAIN, mode, difficulty, state.roundLength, positions),
-                startedAt = startedAtWallClock,
-                endedAt = now,
-                totalScore = state.totalScore,
-                maxScore = state.maxScore,
-                context = roundContext,
-                attempts = attempts,
+    private fun buildRound(state: SustainUiState): RoundRecord {
+        val attempts = state.results.mapIndexed { i, r ->
+            AttemptRecord(
+                promptIndex = i,
+                targetMidi = r.prompt.target.midi,
+                targetFreqHz = r.prompt.target.frequency(a4).toFloat(),
+                stringMidi = r.prompt.string.midi,
+                positionId = r.prompt.position.id,
+                centsError = r.result.medianCents,
+                score = r.score,
+                stars = r.starCount,
+                quality = if (r.result.success) AttemptQuality.CLEAN else AttemptQuality.TIMEOUT,
+                timedOut = !r.result.success,
+                sustainHeldMs = r.result.bestHeldMs,
+                sustainResets = r.result.resets,
+                steadinessCents = r.result.steadinessCents,
             )
+        }
+        return RoundRecord(
+            exerciseType = EXERCISE_SUSTAIN,
+            mode = mode,
+            configKey = configKey(EXERCISE_SUSTAIN, mode, difficulty, state.roundLength, positions),
+            startedAt = startedAtWallClock,
+            endedAt = System.currentTimeMillis(),
+            totalScore = state.totalScore,
+            maxScore = state.maxScore,
+            context = roundContext,
+            attempts = attempts,
+        )
+    }
+
+    private fun persistRound(round: RoundRecord) {
+        viewModelScope.launch {
             trace?.save()
             val outcome = roundRecorder.record(round)
-            _uiState.value = _uiState.value.copy(outcome = outcome)
+            _uiState.value = _uiState.value.copy(
+                outcome = outcome,
+                summary = _uiState.value.summary?.withTrend(outcome.previousBlockAvgCents),
+            )
         }
     }
 

@@ -5,6 +5,46 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-17 Results-screen overhaul + Round History (your feedback batch, branch `ux-overhaul`)
+The whole batch of results-screen feedback, diagnosed and fixed. Plan:
+`C:\Users\Drake7707\.claude\plans\snug-juggling-anchor.md`. Tests + lint green
+(`:app:testDebugUnitTest :dsp:testDebugUnitTest :app:assembleDebug :app:lintDebug`). To verify on
+the phone (any game unless noted; the results screen is now one shared, data-driven layout):
+
+- **Scrollable results** — the trace-feedback ("how did that go") box was unreachable. Turn on
+  Settings → *Record practice reports*, play a round, and confirm you can **scroll down to the
+  text box and submit**. (One fix covers all four games.)
+- **Score shown once** — the in-round "1712 / 2000" HUD is hidden on the Done screen; only the big
+  summary score remains. Check it doesn't double up.
+- **Trend line honesty** — "more in tune than last week" now compares the *true previous 7-day
+  block* (same exercise **and** mode), so it stays **silent** on a fresh exercise/mode and the
+  first week. Verify a brand-new arco note-accuracy setup shows **no** trend line. The confusing
+  ↓ arrow is gone (words + colour only). It renders once now, not twice.
+- **"How in tune" capped by hit rate** — a half-missed round can't read "Solid". When any prompt is
+  missed, a subline says **"based on the N of M notes you landed"** so the word's scope is explicit.
+  Provisional thresholds: <80% landed caps at Developing, <95% caps at Solid; "Locked in" needs a
+  clean sweep. **Play a deliberately sloppy round and sanity-check the word + subline.**
+- **Orange step + one colour scale** — accuracy is now 4 colours everywhere (dots, chart, reveals):
+  green ≤5¢ · yellow ≤15¢ · **orange ≤30¢ (new)** · red beyond/missed. A **legend under the chart**
+  documents it; in *Show technical details* the legend shows the cent ranges. Reveal words gained a
+  **"Quite sharp/flat"** step between "a bit" and "too". Check orange is distinguishable from yellow
+  on your phone.
+- **Chart on Shift + Chords** — the per-attempt cents chart (was Note-Accuracy-only) now shows on
+  Shift (landings) and Chords (tones). Sustain stays chartless (it's hold-based). Check the shift
+  landings / chord tones look right.
+- **Typography + dividers** — one deliberate size hierarchy (was "all over the place") and thin
+  dividers between the score / how-in-tune / meta sections. Check it no longer reads as a wall of text.
+- **Round History (new)** — Progress → **history icon (top-right)** → list of every past round
+  (arco/pizz, all games, newest first) → **tap to reopen its results screen**, rebuilt from the
+  database. This is also your tool to iterate on the results screen without replaying rounds. Verify
+  the reopened screen matches what you saw live (score, **per-attempt dots**, chart, stars, verdict,
+  trend). History omits the meta-game on purpose (no personal-best line / achievements / "Let's go
+  again"). **Old Shift rounds** (recorded before this) replay with the chart but **no coach line /
+  "check your start"** row — the shift interval wasn't stored back then; new shift rounds have it.
+- **Chart tidy-ups from your live look** (2026-07-17): the "above the line is sharp, below is flat"
+  caption is gone (obvious from the chart), the colour legend is a compact wrapping row (not a tall
+  stack), and there's a divider between the chart and the stars line.
+
 ### 2026-07-16 Pace setting: new names + PROVISIONALLY tightened timeouts (your feedback)
 "Player level" is now **Pace** (it only ever controlled time), with pace words instead of skill
 words — you said "Lightning with several seconds doesn't feel lightning" and that the old times
@@ -962,17 +1002,18 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 - [CONSISTENCY] A chart in the shift and chords results like in note accuracy 
 
 
-- Right now it's red for severely out of tune and yellow for lightly out of tune, what is the cents difference, maybe an orange should be another step in between red and yellow thresholds of cents
+- [BUG/FEATURE] Some issues with the result screen
+  * Right now it's red for severely out of tune and yellow for lightly out of tune, what is the cents difference, maybe an orange should be another step in between red and yellow thresholds of cents
+  * Results screen need to be scrollable otherwise feedback can't be submitted
+  * The font size is all over the place in the results screen.
+  * I don't think I was solidly in tune with that one game, Solid felt wrong.
+
+  * Wrong octave detection didn't trigger accidentally, those were my mistakes so that's really good
+
+  * More in tune than last week but afaik I didn't even play anything last week Arco note accuracy games. The app doesn't even exist a week iirc.
+  * Maybe have short vertical dividers between the sections to make it clearer in result page, it's kind of a wall of text.
 
 
-- Results screen need to be scrollable otherwise feedback can't be submitted
 
-- The font size is all over the place in the results screen.
 
-- I don't think I was solidly in tune with that one game, Solid felt wrong.
-
-- Wrong octave detection didn't trigger accidentally, those were my mistakes so that's really good
-
-- More in tune than last week but afaik I didn't even play anything last week Arco note accuracy games. The app doesn't even exist a week iirc.
-
-- Maybe have short vertical dividers between the sections to make it clearer in result page, it's kind of a wall of text.
+- [FEATURE] Rush mode: don't show reveal, just one note after the other as fast as possible, for people that find the current games too slow with the reveal, just the results at the end. Though i worry about harmonics and other strings still ringing without the delay of reveal that the previous note can decay. But i'm willing to try it if there's an implementation of it for the games, it really speeds up practice, now it often feels slow, which from a pedagogical standpoint is good, it allows people to digest and train their inner ear (at least i think so), but for more experienced users it will feel too slow and thus frustrating.

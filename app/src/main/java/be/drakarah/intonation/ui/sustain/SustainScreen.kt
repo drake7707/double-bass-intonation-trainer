@@ -13,11 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.HorizontalRule
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -36,16 +31,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.R
 import be.drakarah.intonation.game.SustainFocus
-import be.drakarah.intonation.metrics.sustainRoundCoachVerdict
-import be.drakarah.intonation.ui.common.DotInfo
 import be.drakarah.intonation.ui.common.GameCountIn
 import be.drakarah.intonation.ui.common.displayLabel
+import be.drakarah.intonation.ui.common.LiveSummaryActions
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
-import be.drakarah.intonation.ui.common.sentence
 import be.drakarah.intonation.ui.common.ProgressDotsCommon
 import be.drakarah.intonation.ui.common.RequireMicPermission
 import be.drakarah.intonation.ui.common.RoundSummaryScaffold
 import be.drakarah.intonation.ui.common.StarRating
+import be.drakarah.intonation.ui.common.scoreDot
 import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
 import be.drakarah.intonation.ui.theme.TextSizes
@@ -73,43 +67,18 @@ fun SustainScreen(
                 ProgressDotsCommon(
                     dots = List(state.roundLength) { i ->
                         val result = state.results.getOrNull(i)
-                        val (color, icon, desc) = when {
-                            result == null && i == state.promptIndex -> Triple(
-                                MaterialTheme.colorScheme.onSurfaceVariant,
-                                Icons.Default.PlayArrow,
-                                stringResource(R.string.game_dot_next, i + 1)
-                            )
-                            result == null -> Triple(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                null,
-                                stringResource(R.string.game_dot_pending, i + 1)
-                            )
-                            result.starCount == 3 -> Triple(
-                                ResultColors.excellent,
-                                Icons.Default.Check,
-                                stringResource(R.string.game_dot_perfect, i + 1)
-                            )
-                            result.starCount >= 1 -> Triple(
-                                ResultColors.close,
-                                Icons.Default.HorizontalRule,
-                                stringResource(R.string.game_dot_close, i + 1)
-                            )
-                            else -> Triple(
-                                ResultColors.off,
-                                Icons.Default.Clear,
-                                stringResource(R.string.game_dot_missed, i + 1)
-                            )
-                        }
-                        DotInfo(color, desc, icon)
+                        scoreDot(index = i, stars = result?.starCount, isNext = i == state.promptIndex)
                     }
                 )
-                Spacer(Modifier.height(Spacing.ITEM_SPACING))
-                Text(
-                    "${state.totalScore} / ${state.maxScore}",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Bold
-                )
+                if (state.phase != SustainPhase.Done) {
+                    Spacer(Modifier.height(Spacing.ITEM_SPACING))
+                    Text(
+                        "${state.totalScore} / ${state.maxScore}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     when (val phase = state.phase) {
@@ -242,11 +211,7 @@ private fun InTuneBar(cents: Float?, inTune: Boolean) {
 
 @Composable
 private fun RevealContent(state: SustainUiState, result: SustainAttemptUi) {
-    val color = when {
-        result.starCount == 3 -> ResultColors.excellent
-        result.starCount >= 1 -> ResultColors.close
-        else -> ResultColors.off
-    }
+    val color = ResultColors.forStars(result.starCount)
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             result.prompt.target.displayName(state.noteStyle, result.prompt.spelling),
@@ -368,17 +333,15 @@ private fun DoneContent(
     onPlayAgain: () -> Unit,
     onTraceFeedback: (String, String) -> Unit,
 ) {
+    val summary = state.summary ?: return
     RoundSummaryScaffold(
-        totalScore = state.totalScore,
-        maxScore = state.maxScore,
-        outcome = state.outcome,
-        coachLine = sustainRoundCoachVerdict(
-            successfulHolds = state.results.count { it.result.success },
-            attemptCount = state.results.size,
-        )?.sentence(),
-        showTraceFeedback = state.traceActive && !state.traceFeedbackGiven,
-        onTraceFeedback = onTraceFeedback,
-        onPlayAgain = onPlayAgain,
+        data = summary,
         onExit = onExit,
+        live = LiveSummaryActions(
+            outcome = state.outcome,
+            showTraceFeedback = state.traceActive && !state.traceFeedbackGiven,
+            onTraceFeedback = onTraceFeedback,
+            onPlayAgain = onPlayAgain,
+        ),
     )
 }

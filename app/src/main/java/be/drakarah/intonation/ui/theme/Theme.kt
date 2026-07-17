@@ -26,11 +26,26 @@ private val DarkColors = darkColorScheme(
     onError = Color(0xFF690005),
 )
 
-/** Semantic result colors used by the game screens (excellent / close / off). */
+/**
+ * The one accuracy colour scale, shared by every game (dots, chart, reveals) so the four steps
+ * mean the same thing everywhere. Keyed off the [be.drakarah.intonation.game.stars] count, so the
+ * colours and the star thresholds can never drift apart:
+ *   3★ (≤5¢) excellent · 2★ (≤15¢) close · 1★ (≤30¢) almost · 0★/missed off.
+ * The orange "almost" step (Sarah, 2026-07-17) splits the old too-wide yellow band.
+ */
 object ResultColors {
-    val excellent = Color(0xFF7BD88F)
-    val close = Color(0xFFE7C664)
-    val off = Color(0xFFE06C75)
+    val excellent = Color(0xFF7BD88F) // green
+    val close = Color(0xFFE7C664)     // yellow
+    val almost = Color(0xFFE39A3B)    // orange
+    val off = Color(0xFFE06C75)       // red
+
+    /** Colour for a star count (0..3). Missed attempts score 0 stars → [off]. */
+    fun forStars(stars: Int): Color = when (stars) {
+        3 -> excellent
+        2 -> close
+        1 -> almost
+        else -> off
+    }
 }
 
 @Composable

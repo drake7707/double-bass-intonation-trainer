@@ -28,7 +28,14 @@ private class FakeStore : MetricsStore {
     override suspend fun totalAttempts() = daily.values.sumOf { it.attemptCount }
     override suspend fun attemptsOn(epochDay: Int) = daily.values.filter { it.key.epochDay == epochDay }.sumOf { it.attemptCount }
     override suspend fun practiceEpochDays() = daily.keys.mapTo(mutableSetOf()) { it.epochDay }
-    override suspend fun averageAbsCentsBetween(exerciseType: String, fromMs: Long, untilMs: Long): Float? = null
+
+    /** Records the trend query so tests can assert its window + mode filter. */
+    var trendQuery: List<Any>? = null
+    var trendAnswer: Float? = null
+    override suspend fun averageAbsCentsForDays(exerciseType: String, mode: String, fromDay: Int, untilDay: Int): Float? {
+        trendQuery = listOf(exerciseType, mode, fromDay, untilDay)
+        return trendAnswer
+    }
 }
 
 class RoundRecorderTest {
@@ -83,6 +90,28 @@ class RoundRecorderTest {
         // Both rounds folded into the same bucket.
         assertEquals(2, store.daily.values.single().scoredCount)
         assertEquals(2, store.daily.values.single().sessionCount)
+    }
+
+    @Test fun trendQueryUsesTruePreviousBlockAndMode() = runTest {
+        val store = FakeStore()
+        store.trendAnswer = 21f
+        val zone = java.time.ZoneId.of("Europe/Brussels")
+        val startedAt = 1_700_000_000_000L
+        val outcome = RoundRecorder(store, zone).record(
+            round(90, listOf(attempt(5f)), mode = "pizz")
+        )
+
+        val day = epochDayOf(startedAt, zone)
+        // The genuinely-previous 7-day block [day-14, day-7) — never days from the current week —
+        // and filtered by mode, so pizz rounds never feed the arco comparison.
+        assertEquals(listOf("NOTE_ACCURACY", "pizz", day - 14, day - 7), store.trendQuery)
+        assertEquals(21f, outcome.previousBlockAvgCents)
+    }
+
+    @Test fun trendSilentWithoutPriorBlockData() = runTest {
+        val store = FakeStore() // trendAnswer stays null = no rows in the window
+        val outcome = RoundRecorder(store).record(round(90, listOf(attempt(5f))))
+        assertNull(outcome.previousBlockAvgCents)
     }
 
     @Test fun stripsCaptureWobbleForPizzButKeepsItForArco() = runTest {

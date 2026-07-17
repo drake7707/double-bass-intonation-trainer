@@ -345,8 +345,14 @@ gracefully (missing shift extras → no Shift-accuracy gauge, Pitch accuracy sti
    orange; red is only a miss/wrong note.**
 6. **One layout for both audiences; the toggle swaps units only** (cents ↔ words), never removes
    charts or controls (principle 8).
-7. **Score is labeled "Score"; the gauge block is labeled as the playing**; a single **"Next:"
-   coaching line** (from `RoundCoach`) sits above the buttons on every game.
+7. **Score is labeled "Score"; the gauge block is labeled as the playing**; a single coaching line
+   sits above the buttons on every game.
+8. **One consolidated coaching lightbulb** (styled like the Progress insight callout): a brief
+   "what went well" (only when a gauge is genuinely strong) + the one thing to watch, in one line.
+   It **absorbs** the shift "check your start" caution and the old coach sentence, so the summary
+   never stacks several text blocks below the chart. Analytical gauges + this one coaching line
+   coexist (the numbers justify the coaching; the coaching makes them actionable). Copy is
+   provisional — Sarah tunes the voice.
 
 **Still open (small — sensible defaults assumed unless Sarah says otherwise):**
 - **Chords second gauge** — default: show Pitch accuracy + a plain "tones landed X/Y" context line,

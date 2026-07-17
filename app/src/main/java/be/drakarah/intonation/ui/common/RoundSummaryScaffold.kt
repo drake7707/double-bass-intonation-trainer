@@ -1,5 +1,6 @@
 package be.drakarah.intonation.ui.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -7,12 +8,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,15 +26,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import be.drakarah.intonation.R
 import be.drakarah.intonation.metrics.GaugeKind
 import be.drakarah.intonation.metrics.RoundOutcome
 import be.drakarah.intonation.metrics.RoundSummaryData
-import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
 import be.drakarah.intonation.ui.theme.TextSizes
 
@@ -124,10 +124,11 @@ fun RoundSummaryScaffold(
             }
         }
 
-        // --- Coaching line (the anchor: one plain observation, above the buttons) ---
-        data.coachSentence()?.let {
+        // --- Coaching lightbulb (the anchor): one consolidated line — what went well + the one
+        // thing to watch, folding in the shift-start caution when relevant. ---
+        data.coachingCalloutText()?.let {
             SectionDivider()
-            Text(it, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
+            CoachingCallout(it)
         }
 
         // --- Buttons ---
@@ -145,10 +146,27 @@ fun RoundSummaryScaffold(
     }
 }
 
-/** The coach sentence for this round — pitch exercises' verdict or sustain's hold verdict. */
+/** The results coaching lightbulb — one consolidated line, styled like the Progress insight callout
+ * (Sarah 2026-07-17). Text comes from [coachingCalloutText]. */
 @Composable
-private fun RoundSummaryData.coachSentence(): String? =
-    verdict?.sentence() ?: sustainVerdict?.sentence()
+private fun CoachingCallout(text: String) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+            .padding(Spacing.ITEM_SPACING),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING),
+    ) {
+        Icon(
+            Icons.Outlined.Lightbulb,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp),
+        )
+        Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
 
 /** "Your playing": the labeled gauge bars, the week trend, and one per-metric chart under a metric
  * selector (redesign 2026-07-17). Same shape for every game — Sustain included (its gauges are Pitch
@@ -195,21 +213,8 @@ private fun ColumnScope.RoundSummaryBreakdown(data: RoundSummaryData) {
         MetricChart(chartable[pick])
     }
 
-    if (data.shiftStartFlagged == true) {
-        Spacer(Modifier.height(Spacing.ITEM_SPACING))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Default.Flag, contentDescription = null,
-                modifier = Modifier.size(20.dp), tint = ResultColors.almost,
-            )
-            Spacer(Modifier.width(Spacing.FINE_SPACING))
-            Text(
-                stringResource(R.string.shift_check_start_explainer),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+    // The shift "check your start" caution is no longer a separate row — it's folded into the one
+    // coaching lightbulb below (see coachingCalloutText).
 }
 
 @Composable

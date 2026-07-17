@@ -125,4 +125,13 @@
     <!-- Chart metric selector accessibility; %1$s = metric name -->
     <string name="gauge_chart_show">Show %1$s</string>
 
+    <!-- Results coaching callout (one consolidated lightbulb line: a brief "what went well" + the
+         one thing to watch). Praise names what was actually good (never generic). -->
+    <string name="results_praise_pitch">Bang in tune.</string>
+    <string name="results_praise_shift">Precise shifts.</string>
+    <string name="results_praise_steady">Rock-steady bow.</string>
+    <string name="results_praise_hold">You held every note.</string>
+    <!-- The shift-start caution, folded into the coaching line (short form of the old explainer). -->
+    <string name="results_watch_shift_start">Settle the starting note before you shift — that\'s what pushed the landings off.</string>
+
 </resources>

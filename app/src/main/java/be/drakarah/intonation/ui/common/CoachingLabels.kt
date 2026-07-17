@@ -5,9 +5,13 @@ import androidx.compose.ui.res.stringResource
 import be.drakarah.intonation.R
 import be.drakarah.intonation.metrics.Bias
 import be.drakarah.intonation.metrics.BiasDirection
+import be.drakarah.intonation.metrics.GaugeKind
+import be.drakarah.intonation.metrics.GaugeLevel
 import be.drakarah.intonation.metrics.Insight
 import be.drakarah.intonation.metrics.MasteryBand
 import be.drakarah.intonation.metrics.RoundCoachVerdict
+import be.drakarah.intonation.metrics.RoundGauge
+import be.drakarah.intonation.metrics.RoundSummaryData
 import be.drakarah.intonation.metrics.SustainCoachVerdict
 import kotlin.math.roundToInt
 
@@ -80,3 +84,47 @@ fun SustainCoachVerdict.sentence(): String = stringResource(
         SustainCoachVerdict.FEW_HELD -> R.string.coach_sustain_few_held
     }
 )
+
+/** A short "what went well" clause, only when a gauge is genuinely strong (GOOD). Names the skill,
+ * never generic praise (voice rule). Null otherwise. */
+@Composable
+fun RoundGauge.praise(): String? {
+    if (level != GaugeLevel.GOOD) return null
+    return stringResource(
+        when (kind) {
+            GaugeKind.PITCH_ACCURACY -> R.string.results_praise_pitch
+            GaugeKind.SHIFT_ACCURACY -> R.string.results_praise_shift
+            GaugeKind.STEADINESS -> R.string.results_praise_steady
+            GaugeKind.HOLD -> R.string.results_praise_hold
+        }
+    )
+}
+
+/**
+ * The single consolidated coaching line for the results lightbulb: one short "what went well" +
+ * the one thing to watch, in one breath — so the summary never stacks the coach sentence, the
+ * shift-start caution and the band word as separate blocks (Sarah 2026-07-17). Null when there's
+ * nothing confident to say (e.g. a legacy round with no verdict). The `metrics/` layer still owns
+ * the raw verdict/flag; this only *composes* the wording.
+ */
+@Composable
+fun RoundSummaryData.coachingCalloutText(): String? {
+    // Sustain's hold verdict already reads as one coaching sentence.
+    sustainVerdict?.let { return it.sentence() }
+
+    val highlight = gauges.firstOrNull { it.level == GaugeLevel.GOOD }?.praise()
+    val v = verdict
+    val watch: String? = when {
+        shiftStartFlagged == true -> stringResource(R.string.results_watch_shift_start)
+        v == RoundCoachVerdict.LEAN_SHARP || v == RoundCoachVerdict.LEAN_FLAT ||
+            v == RoundCoachVerdict.TIME_PRESSURE || v == RoundCoachVerdict.DEVELOPING -> v.sentence()
+        else -> null
+    }
+    // When there's no separate "watch", a praise-type verdict can stand as the whole line.
+    val lead = highlight ?: when (v) {
+        RoundCoachVerdict.LOCKED, RoundCoachVerdict.SOLID -> v.sentence()
+        else -> null
+    }
+    val parts = listOfNotNull(lead, watch)
+    return if (parts.isEmpty()) null else parts.joinToString(" ")
+}

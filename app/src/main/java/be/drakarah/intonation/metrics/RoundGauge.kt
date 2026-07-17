@@ -124,11 +124,16 @@ fun steadinessGauge(perAttemptWobbleCents: List<Float?>): RoundGauge =
 /** One sustain hold for the Hold gauge: how long it was held and whether it reached the goal. */
 data class HoldSample(val heldMs: Long?, val success: Boolean)
 
+/** Hold-chart y-axis, in seconds — **fixed** so the bars mean the same height across every round
+ * (goal time isn't persisted, so we reference a nominal goal). */
+const val HOLD_AXIS_MAX_SEC = 10f
+const val HOLD_GOAL_REF_SEC = 5f
+
 /**
  * Sustain only: how well notes were sustained. Band from the share of holds that reached the goal
- * (all → GOOD, at least half → OK, else DEVELOPING); chart plots each hold's seconds. Deliberately
- * needs no persisted goal time (not stored) — the band rides on `success` and the chart on held
- * seconds, so it replays identically from history.
+ * (all → GOOD, at least half → OK, else DEVELOPING); chart plots each hold's seconds on a fixed
+ * 0..[HOLD_AXIS_MAX_SEC] axis. Deliberately needs no persisted goal time — the band rides on
+ * `success` and the chart on held seconds, so it replays identically from history.
  */
 fun holdGauge(perAttempt: List<HoldSample>): RoundGauge {
     val attemptCount = perAttempt.size
@@ -140,13 +145,12 @@ fun holdGauge(perAttempt: List<HoldSample>): RoundGauge {
         else -> GaugeLevel.DEVELOPING
     }
     val heldSeconds = perAttempt.map { s -> s.heldMs?.let { it / 1000f } }
-    val maxSec = (heldSeconds.filterNotNull().maxOrNull() ?: 5f).coerceAtLeast(5f)
     val points = perAttempt.mapIndexed { i, s ->
         val sec = heldSeconds[i]
         val zone = when {
             sec == null || sec <= 0f -> GaugeZone.MISS
             s.success -> GaugeZone.GOOD
-            sec >= maxSec / 2f -> GaugeZone.OK
+            sec >= HOLD_GOAL_REF_SEC / 2f -> GaugeZone.OK
             else -> GaugeZone.DEVELOPING
         }
         GaugeChartPoint(sec, zone)
@@ -158,7 +162,10 @@ fun holdGauge(perAttempt: List<HoldSample>): RoundGauge {
         fraction = if (attemptCount == 0) 0f else successes.toFloat() / attemptCount,
         value = if (landed.isEmpty()) null else landed.average().toFloat(),
         points = points,
-        axis = GaugeAxis(symmetric = false, goodMax = maxSec, okMax = maxSec / 2f, max = maxSec, higherIsBetter = true),
+        axis = GaugeAxis(
+            symmetric = false, goodMax = HOLD_GOAL_REF_SEC, okMax = HOLD_GOAL_REF_SEC / 2f,
+            max = HOLD_AXIS_MAX_SEC, higherIsBetter = true,
+        ),
     )
 }
 

@@ -90,4 +90,39 @@
     <string name="chords_tone_sharp">sharp</string>
     <string name="chords_tone_flat">flat</string>
 
+    <!-- Results gauges (performance-presentation redesign 2026-07-17). A round's playing is shown as
+         named gauges (labeled bars) + a per-metric chart. "Score" is the game currency; the gauges
+         describe the playing itself. Pitch accuracy is universal (one absolute scale, all games);
+         the rest are game-specific. -->
+    <string name="results_score_label">Score</string>
+    <string name="results_your_playing">Your playing</string>
+    <!-- Under Pitch accuracy when some prompts were missed. %1$d = landed, %2$d = played. -->
+    <string name="results_landed_scope">based on the %1$d of %2$d you landed</string>
+    <!-- Gauge titles -->
+    <string name="gauge_pitch_accuracy">Pitch accuracy</string>
+    <string name="gauge_shift_accuracy">Shift accuracy</string>
+    <string name="gauge_steadiness">Steadiness</string>
+    <string name="gauge_hold">Hold</string>
+    <!-- Pitch accuracy words (one absolute scale, all games) -->
+    <string name="gauge_pitch_excellent">Excellent</string>
+    <string name="gauge_pitch_solid">Solid</string>
+    <string name="gauge_pitch_developing">Developing</string>
+    <!-- Shift accuracy words (the interval travelled, start-independent) -->
+    <string name="gauge_shift_precise">Precise</string>
+    <string name="gauge_shift_good">Good</string>
+    <string name="gauge_shift_loose">Loose</string>
+    <!-- Steadiness words (bow wobble) -->
+    <string name="gauge_steadiness_good">Rock steady</string>
+    <string name="gauge_steadiness_ok">A little wobbly</string>
+    <string name="gauge_steadiness_developing">Wobbly</string>
+    <!-- Hold words (share of holds that reached the goal) -->
+    <string name="gauge_hold_good">All held</string>
+    <string name="gauge_hold_ok">Most held</string>
+    <string name="gauge_hold_developing">Few held</string>
+    <!-- Technical value readouts. %1$d = cents; %1$s = seconds (pre-formatted "4.2") -->
+    <string name="gauge_value_cents">%1$d¢ avg</string>
+    <string name="gauge_value_seconds">%1$s s avg</string>
+    <!-- Chart metric selector accessibility; %1$s = metric name -->
+    <string name="gauge_chart_show">Show %1$s</string>
+
 </resources>

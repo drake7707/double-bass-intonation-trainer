@@ -30,9 +30,14 @@ fun ProgressDotsCommon(
     dots: List<DotInfo>,
     modifier: Modifier = Modifier,
     size: Dp = Spacing.PROGRESS_DOT_SIZE,
+    /** Centre each row instead of left-aligning (used on the results summary; the mid-round top
+     * bars keep the default). */
+    centered: Boolean = false,
 ) {
     FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(Spacing.PROGRESS_DOT_SPACING),
+        horizontalArrangement = if (centered)
+            Arrangement.spacedBy(Spacing.PROGRESS_DOT_SPACING, Alignment.CenterHorizontally)
+        else Arrangement.spacedBy(Spacing.PROGRESS_DOT_SPACING),
         verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING),
         modifier = modifier.fillMaxWidth()
     ) {

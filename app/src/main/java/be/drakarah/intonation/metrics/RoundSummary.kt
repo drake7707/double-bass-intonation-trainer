@@ -31,6 +31,12 @@ data class SummaryChartPoint(
     val isPitched: Boolean get() = !missed && !wrongOctave && signedCents != null
 }
 
+/** One dot in the summary's top progress strip — the same per-prompt star pips the player watched
+ * fill in during play. Kept **star-coloured on purpose**: the pips echo the live play experience,
+ * while the gauges + chart below use the new pitch scale. (For Chords one dot = one chord, taking
+ * the weakest tone, matching the live top bar.) */
+data class ProgressDot(val stars: Int, val missed: Boolean)
+
 /** This round against the true previous 7-day block (same exercise + mode). */
 data class RoundTrend(
     val thisRoundAvgAbsCents: Float,
@@ -77,6 +83,9 @@ data class RoundSummaryData(
     /** The performance gauges for this round, in display order (see [buildGauges] / the 2026-07-17
      * presentation redesign). Empty for legacy callers; populated by [buildRoundSummary]. */
     val gauges: List<RoundGauge> = emptyList(),
+    /** Per-prompt star pips for the top strip (all games, Sustain included). Empty for legacy
+     * callers; populated by [buildRoundSummary]. */
+    val progressDots: List<ProgressDot> = emptyList(),
 ) {
     val hitRatePct: Int? get() =
         if (attemptCount > 0) (100f * scoredCount / attemptCount).roundToInt() else null
@@ -189,6 +198,17 @@ fun buildRoundSummary(round: RoundRecord, previousBlockAvgCents: Float? = null):
         )
     }
 
+    // Top progress pips (all games). Chords collapse per-tone rows into one dot per chord (weakest
+    // tone), matching the single pip the player saw per chord during play.
+    fun AttemptRecord.pipMissed() = outcome == AttemptOutcome.WRONG_NOTE || outcome == AttemptOutcome.TIMEOUT
+    val progressDots = if (round.exerciseType == EXERCISE_TYPE_CHORDS) {
+        attempts.groupBy { it.promptIndex }.toSortedMap().map { (_, tones) ->
+            ProgressDot(stars = tones.minOfOrNull { it.stars } ?: 0, missed = tones.any { it.pipMissed() })
+        }
+    } else {
+        attempts.map { ProgressDot(it.stars, it.pipMissed()) }
+    }
+
     val shiftExtras: List<ShiftAttemptExtras?>? =
         if (round.exerciseType == EXERCISE_TYPE_SHIFT)
             attempts.map { ShiftAttemptExtras.decodeOrNull(it.extrasJson) }
@@ -251,5 +271,6 @@ fun buildRoundSummary(round: RoundRecord, previousBlockAvgCents: Float? = null):
             }
         } else null,
         gauges = buildGauges(round),
+        progressDots = progressDots,
     ).withTrend(previousBlockAvgCents)
 }

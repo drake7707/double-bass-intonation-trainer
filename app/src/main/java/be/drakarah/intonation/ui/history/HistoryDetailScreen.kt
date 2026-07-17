@@ -71,7 +71,9 @@ fun HistoryDetailScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
-            contentAlignment = Alignment.Center,
+            // Top-aligned so every result has the same top margin regardless of how tall its content
+            // is (vertical-centering pushed short rounds — e.g. Shifts — down inconsistently).
+            contentAlignment = Alignment.TopCenter,
         ) {
             when (val s = state) {
                 HistoryDetailUiState.Loading -> CircularProgressIndicator()

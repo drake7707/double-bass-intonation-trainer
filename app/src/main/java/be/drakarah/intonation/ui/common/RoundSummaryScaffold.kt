@@ -14,12 +14,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -27,7 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import be.drakarah.intonation.R
-import be.drakarah.intonation.metrics.EXERCISE_TYPE_SUSTAIN
+import be.drakarah.intonation.metrics.GaugeKind
 import be.drakarah.intonation.metrics.RoundOutcome
 import be.drakarah.intonation.metrics.RoundSummaryData
 import be.drakarah.intonation.ui.theme.ResultColors
@@ -71,14 +74,24 @@ fun RoundSummaryScaffold(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (showDots && data.chartPoints.isNotEmpty()) {
+        // Consistent breathing gap below the app bar (content is top-aligned in History).
+        Spacer(Modifier.height(Spacing.SECTION_BREAK))
+        // --- Top progress pips: the same star-coloured strip the player watched during play
+        // (History has no game top bar, so it draws them here for continuity). ---
+        if (showDots && data.progressDots.isNotEmpty()) {
             ProgressDotsCommon(
-                dots = data.chartPoints.mapIndexed { i, p -> scoreDot(i, p.stars, p.missed) },
+                dots = data.progressDots.mapIndexed { i, d -> scoreDot(i, d.stars, d.missed) },
+                centered = true,
             )
             Spacer(Modifier.height(Spacing.SECTION_BREAK))
         }
-        // --- Score block (the hero) ---
-        Text(stringResource(R.string.summary_round_complete), style = MaterialTheme.typography.headlineSmall)
+        // --- Score block (the hero). Labeled "Score" so it reads as the game currency, distinct
+        // from the "Your playing" gauges below (the skill breakdown). ---
+        Text(
+            stringResource(R.string.results_score_label),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         Text(
             "${data.totalScore}",
             fontSize = TextSizes.SCORE_DISPLAY,
@@ -91,16 +104,9 @@ fun RoundSummaryScaffold(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        // --- How-in-tune block ---
-        val coachLine = data.coachSentence()
-        val hasIntonationBlock = coachLine != null || data.band != null ||
-            data.chartPoints.isNotEmpty() || data.trend != null
-        if (hasIntonationBlock) {
+        // --- "Your playing" block: gauges + a per-metric chart ---
+        if (data.gauges.isNotEmpty() || data.trend != null) {
             SectionDivider()
-            coachLine?.let {
-                Text(it, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
-                Spacer(Modifier.height(Spacing.ITEM_SPACING))
-            }
             RoundSummaryBreakdown(data)
         }
 
@@ -116,6 +122,12 @@ fun RoundSummaryScaffold(
                 Spacer(Modifier.height(Spacing.SECTION_BREAK))
                 TraceFeedbackPrompt(onSubmit = l.onTraceFeedback)
             }
+        }
+
+        // --- Coaching line (the anchor: one plain observation, above the buttons) ---
+        data.coachSentence()?.let {
+            SectionDivider()
+            Text(it, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
         }
 
         // --- Buttons ---
@@ -138,40 +150,49 @@ fun RoundSummaryScaffold(
 private fun RoundSummaryData.coachSentence(): String? =
     verdict?.sentence() ?: sustainVerdict?.sentence()
 
-/** The per-exercise middle of the summary: "how in tune" word, the cents chart + legend, the
- * shift start caution, and the stars line. Sustain has none of these (it's hold-based). */
+/** "Your playing": the labeled gauge bars, the week trend, and one per-metric chart under a metric
+ * selector (redesign 2026-07-17). Same shape for every game — Sustain included (its gauges are Pitch
+ * accuracy / Steadiness / Hold). */
 @Composable
 private fun ColumnScope.RoundSummaryBreakdown(data: RoundSummaryData) {
-    if (data.exerciseType == EXERCISE_TYPE_SUSTAIN) return
-
-    data.band?.let { band ->
+    if (data.gauges.isNotEmpty()) {
         Text(
-            stringResource(R.string.note_how_in_tune, band.label),
-            style = MaterialTheme.typography.headlineSmall,
+            stringResource(R.string.results_your_playing),
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        if (data.hasMisses) {
-            Text(
-                stringResource(R.string.note_how_in_tune_scope, data.scoredCount, data.attemptCount),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
+        Spacer(Modifier.height(Spacing.ITEM_SPACING))
+        data.gauges.forEachIndexed { i, gauge ->
+            if (i > 0) Spacer(Modifier.height(Spacing.ITEM_SPACING))
+            GaugeBar(gauge)
+            // The pitch gauge owns the "how much landed" honesty note.
+            if (gauge.kind == GaugeKind.PITCH_ACCURACY && data.hasMisses) {
+                Spacer(Modifier.height(Spacing.COMPONENT_SPACING))
+                Text(
+                    stringResource(R.string.results_landed_scope, data.scoredCount, data.attemptCount),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 
     data.trend?.let {
-        Spacer(Modifier.height(Spacing.FINE_SPACING))
+        Spacer(Modifier.height(Spacing.ITEM_SPACING))
         ImprovementLine(it)
     }
 
-    if (data.chartPoints.isNotEmpty()) {
-        // No "above the line is sharp" caption — the chart makes that obvious (Sarah, 2026-07-17).
+    // The chart: a metric selector, then that metric's note-by-note view. Only gauges that actually
+    // recorded points are offered (e.g. a fully-missed round has nothing to plot).
+    val chartable = data.gauges.filter { it.hasChart() }
+    if (chartable.isNotEmpty()) {
+        var selected by remember { mutableStateOf(0) }
+        val pick = selected.coerceIn(0, chartable.size - 1)
+        Spacer(Modifier.height(Spacing.SECTION_BREAK))
+        MetricSelector(chartable, pick, onSelect = { selected = it })
         Spacer(Modifier.height(Spacing.ITEM_SPACING))
-        SummaryCentsChart(data.chartPoints)
-        Spacer(Modifier.height(Spacing.ITEM_SPACING))
-        AccuracyLegend()
+        MetricChart(chartable[pick])
     }
 
     if (data.shiftStartFlagged == true) {
@@ -189,19 +210,6 @@ private fun ColumnScope.RoundSummaryBreakdown(data: RoundSummaryData) {
             )
         }
     }
-
-    if (data.chartPoints.isNotEmpty()) {
-        Spacer(Modifier.height(Spacing.ITEM_SPACING))
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(0.5f),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-        )
-    }
-    Spacer(Modifier.height(Spacing.ITEM_SPACING))
-    Text(
-        stringResource(R.string.note_stars_line, data.starsEarned, data.starsPossible),
-        style = MaterialTheme.typography.titleLarge,
-    )
 }
 
 @Composable

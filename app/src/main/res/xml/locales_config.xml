@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-app languages offered in Android's system settings (API 33+) and validated against the
+     app's translated resources. English is the base (values/), Dutch and French are values-nl /
+     values-fr. Note names (Do Ré Mi vs C D E) are a separate user setting, not a locale. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="nl" />
+    <locale android:name="fr" />
+</locale-config>

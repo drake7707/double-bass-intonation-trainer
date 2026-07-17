@@ -5,6 +5,7 @@ ksp = "2.3.5"
 room = "2.8.4"
 
 activityCompose = "1.13.0"
+appcompat = "1.7.0"
 composeBom = "2026.03.01"
 coreKtx = "1.18.0"
 datastore = "1.2.1"
@@ -16,6 +17,7 @@ navigationCompose = "2.9.7"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }

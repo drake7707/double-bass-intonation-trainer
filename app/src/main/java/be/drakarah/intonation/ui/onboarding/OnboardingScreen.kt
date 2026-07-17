@@ -44,6 +44,7 @@ import be.drakarah.intonation.R
 import be.drakarah.intonation.game.PlayerLevel
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.settings.AppSettings
+import be.drakarah.intonation.ui.common.LanguagePicker
 import be.drakarah.intonation.ui.common.displayLabel
 import be.drakarah.intonation.ui.theme.Spacing
 import kotlinx.coroutines.launch
@@ -246,6 +247,16 @@ private fun WelcomeStep(onNext: () -> Unit) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
     )
+    Spacer(Modifier.height(Spacing.SECTION_BREAK))
+    // Language first, so the rest of the wizard is read in the player's own language. Changing it
+    // recreates the activity (AppCompat), which re-enters onboarding at this welcome step.
+    Text(
+        stringResource(R.string.wizard_language_label),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(Spacing.FINE_SPACING))
+    LanguagePicker()
     Spacer(Modifier.height(Spacing.SECTION_BREAK * 1.5f))
     Button(onClick = onNext, modifier = Modifier.fillMaxWidth()) {
         Text(stringResource(R.string.wizard_lets_go), modifier = Modifier.padding(4.dp))

@@ -67,6 +67,7 @@ dependencies {
     implementation(project(":dsp"))
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat) // per-app locale backport (AppCompatDelegate) for < API 33
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)

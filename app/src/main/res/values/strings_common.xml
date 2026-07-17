@@ -90,4 +90,15 @@
     <!-- Top-bar back arrow accessibility description -->
     <string name="common_cd_back">Back</string>
 
+    <!-- App language picker (ui/common/LanguagePicker.kt). The endonyms (English/Nederlands/
+         Français) are deliberately identical in every language — NOT overridden in values-nl/fr —
+         so a user in the wrong language can still find their own. Only "System default" translates. -->
+    <string name="language_system">System default</string>
+    <string name="language_english">English</string>
+    <string name="language_dutch">Nederlands</string>
+    <string name="language_french">Français</string>
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_sub">The app\'s language. Note names (Do Ré Mi / C D E) are chosen separately.</string>
+    <string name="wizard_language_label">Language</string>
+
 </resources>

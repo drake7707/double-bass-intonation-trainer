@@ -55,6 +55,7 @@ import be.drakarah.intonation.BuildConfig
 import be.drakarah.intonation.data.ImportMode
 import be.drakarah.intonation.music.NoteNameStyle
 import be.drakarah.intonation.settings.AppSettings
+import be.drakarah.intonation.ui.common.LanguagePicker
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.displayBlurb
 import be.drakarah.intonation.ui.common.displayLabel
@@ -283,6 +284,12 @@ fun SettingsScreen(
             }
 
             SectionHeader(stringResource(R.string.settings_section_notes))
+            SettingBlock(
+                stringResource(R.string.settings_language_title),
+                stringResource(R.string.settings_language_sub),
+            ) {
+                LanguagePicker()
+            }
             SettingBlock(
                 stringResource(R.string.settings_note_names_title),
                 stringResource(R.string.settings_note_names_sub),

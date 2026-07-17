@@ -179,33 +179,39 @@ its own scoring category** — scores are only ever compared between identical s
 ## Round results
 
 - **One shared results screen** across all four games (built from a single data model, so a live
-  round and a reopened past round render identically). Top to bottom: the big round score, the
-  **coach line** (one observation), **"How in tune: <word>"**, the per-attempt **cents chart** with
-  its colour legend, the **stars** earned, a **trend line**, then — for a just-finished round only —
-  your personal-best line, any achievements, and "Let's go again". It **scrolls**, so nothing (like
-  the practice-report box) can be pushed out of reach.
-- **One four-colour accuracy scale, everywhere** (progress dots, chart, reveals): **green ≤5¢ ·
-  yellow ≤15¢ · orange ≤30¢ · red beyond / missed** — the same boundaries as the star rating, so
-  colour and stars never disagree. A **legend** under the chart names each colour ("spot on / a bit
-  off / quite off / off or missed"); with Expert mode on it also shows the cent ranges. Reveal words
-  follow the same four steps ("Spot on / a bit sharp / quite sharp / too sharp").
-- **"How in tune" tells the truth about misses.** The word grades the notes you *landed*, but it's
-  **capped by how many you landed** — a half-missed round can't read "Solid" — and when any prompt
-  was missed a subline spells out "based on the N of M notes you landed".
+  round and a reopened past round render identically). Top to bottom: the star-coloured **per-note
+  pips**, the labeled **"Score"** (the game currency), a **"Your playing"** block of **gauge bars**,
+  a **metric selector + one chart**, a **coaching lightbulb**, then — for a just-finished round only
+  — your personal-best line, any achievements, and "Let's go again". It **scrolls**.
+- **Performance as named gauges** (labeled bars), not one overloaded rating. **Pitch accuracy** is
+  the one universal gauge in *every* game — "how in tune were the notes I played", on one absolute
+  scale (**Excellent ≤10¢ · Solid ≤25¢ · Developing beyond**, the same at every difficulty). Each
+  game adds its own: **Shift accuracy** (the interval travelled, its own wider scale), **Steadiness**
+  + **Hold** (Long Notes). Scoring/stars stay game-specific; "how in tune" never does.
+- **One chart per metric, chosen by a selector above it.** Picking a metric swaps the whole chart —
+  y-axis (units + range), data and colour bands together. **A dot's colour is the y-axis band it
+  lands in** (green/yellow/orange), so colour and position can never disagree; **red is only ever a
+  miss**, and "Developing" is orange (a growth colour, not failure). Y-ranges are fixed so a round
+  can't be made to look worse by auto-zoom.
+- **One coaching lightbulb.** A single line (styled like the Progress insight) — a brief "what went
+  well" plus the one thing to watch — that **absorbs** the older separate texts (coach sentence,
+  shift "check your start"), so the summary never stacks blocks below the chart.
+- **Pitch accuracy tells the truth about misses.** It grades the notes you *landed*, **capped by how
+  many you landed** (a half-missed round can't read "Solid"), with a subline "based on the N of M you
+  landed" when any prompt was missed.
+- **Stars** are no longer a results rating — they live on the **mid-round reveal card** (the instant
+  "did I nail it") and colour the **top pips** (matching what you saw during play).
 - **"More in tune than last week"** compares the genuinely previous 7-day block for the *same*
-  exercise and mode, and stays silent until there's a real week to compare against (no false
-  "improved" in your first days). It's words-and-colour, no arrow.
-- The **cents chart** (each attempt as a dot above/below the in-tune line) shows on Find the Note,
-  Shifts (landings) and Chords (tones); Long Notes is hold-based and shows its bow-control breakdown
-  instead.
+  exercise and mode, staying silent until there's a real week to compare against.
 
 ## History
 
 - **Round History** — Progress → the **history icon (top-right)** opens a list of every past round
   (all games, arco and pizz, newest first) showing date, score and how-in-tune word. **Tap any
   round to reopen its full results screen**, rebuilt from the stored attempts. History shows what you
-  *played* — score, chart, stars, verdict, trend — and deliberately omits the meta-game (no
-  personal-best line, achievement unlocks or "Let's go again").
+  *played* — score, gauges, per-metric chart and coaching — and deliberately omits the meta-game (no
+  personal-best line, achievement unlocks or "Let's go again"). The list row's pitch-accuracy word
+  is computed exactly like the detail screen, so they always agree.
 
 ## Progress
 

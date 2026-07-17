@@ -5,6 +5,31 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-17 Results-presentation redesign (branch `performance-presentation`)
+The score/stars/"how in tune" overlap, rebuilt around one model (plan:
+`docs/PERFORMANCE_PRESENTATION_PLAN_2026-07-17.md`). Verified on your phone via History replay
+(gauge bars, per-metric chart, centred pips, consistent top margin, list == detail); still wants a
+**live-round pass** and a read of the coaching voice:
+
+- **Play a live round of each game** (Find the Note, Long Notes, Shifts, Chords) and check the
+  results screen: "Score" hero → "Your playing" gauge bars → metric selector + chart → coaching
+  lightbulb → PB/achievements/"Let's go again". The live path shares the History scaffold but I
+  couldn't drive it without the bass.
+- **Shift accuracy gauge** only appears on rounds played *from now on* (older rounds never saved the
+  interval). Play a shift round and confirm the **Pitch / Shift** selector toggles the chart
+  (y-axis + colours swap), and the "check your start" caution now shows only inside the coaching
+  lightbulb, not as a separate row.
+- **Chords** — confirm one pitch-accuracy gauge + "landed X/Y" reads right per-tone, and the top
+  pips are one-per-chord (weakest tone), matching play.
+- **Coaching voice** — the lightbulb copy is provisional (`results_praise_*`,
+  `results_watch_shift_start`). Read it on a few rounds; tell me what to reword (it must name what
+  was actually good, never generic; pitch terms, not hand geometry).
+- **Absolute pitch scale for beginners** — the pitch word is 10/25¢ at every difficulty by design.
+  Watch whether "Developing" (orange, never red) feels honest-but-encouraging on RELAXED, or too
+  harsh — this is the one pedagogy call we flagged to revisit with real use.
+- **NL/FR** — the new gauge/coaching strings are drafts; needs your + teacher sign-off before those
+  locales ship.
+
 ### 2026-07-17 Progress-screen layout overhaul (your feedback: "clearer divide into sections")
 Restructured to read as the same stack of sections as the Results screen. Compiles + APK built.
 Purely visual — just eyeball it on the phone:
@@ -935,6 +960,18 @@ Home screen:
 
 
 
+- [BUG/FEATURE] Some issues with the result screen
+  * Right now it's red for severely out of tune and yellow for lightly out of tune, what is the cents difference, maybe an orange should be another step in between red and yellow thresholds of cents
+  * Results screen need to be scrollable otherwise feedback can't be submitted
+  * The font size is all over the place in the results screen.
+  * I don't think I was solidly in tune with that one game, Solid felt wrong.
+
+  * Wrong octave detection didn't trigger accidentally, those were my mistakes so that's really good
+
+  * More in tune than last week but afaik I didn't even play anything last week Arco note accuracy games. The app doesn't even exist a week iirc.
+  * Maybe have short vertical dividers between the sections to make it clearer in result page, it's kind of a wall of text.
+
+
 OPEN FEEDBACK & IDEAS:
 --------------
 
@@ -1016,18 +1053,6 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 - [BUG] The shift reveal screen "great shift" text is too long to read in the time the reveal is shown. I would just leave it to great shift and show what it means in the result after the game. If you attach an icon to it then it's immediately recognizeable.
 
 - [CONSISTENCY] A chart in the shift and chords results like in note accuracy 
-
-
-- [BUG/FEATURE] Some issues with the result screen
-  * Right now it's red for severely out of tune and yellow for lightly out of tune, what is the cents difference, maybe an orange should be another step in between red and yellow thresholds of cents
-  * Results screen need to be scrollable otherwise feedback can't be submitted
-  * The font size is all over the place in the results screen.
-  * I don't think I was solidly in tune with that one game, Solid felt wrong.
-
-  * Wrong octave detection didn't trigger accidentally, those were my mistakes so that's really good
-
-  * More in tune than last week but afaik I didn't even play anything last week Arco note accuracy games. The app doesn't even exist a week iirc.
-  * Maybe have short vertical dividers between the sections to make it clearer in result page, it's kind of a wall of text.
 
 
 

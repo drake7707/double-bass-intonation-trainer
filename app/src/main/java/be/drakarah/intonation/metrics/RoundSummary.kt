@@ -74,6 +74,9 @@ data class RoundSummaryData(
     /** Shift only: any attempt where an off start pushed the landing off. Null when unknown
      * (old rounds without extras) — the UI then omits the explainer row. */
     val shiftStartFlagged: Boolean?,
+    /** The performance gauges for this round, in display order (see [buildGauges] / the 2026-07-17
+     * presentation redesign). Empty for legacy callers; populated by [buildRoundSummary]. */
+    val gauges: List<RoundGauge> = emptyList(),
 ) {
     val hitRatePct: Int? get() =
         if (attemptCount > 0) (100f * scoredCount / attemptCount).roundToInt() else null
@@ -247,5 +250,6 @@ fun buildRoundSummary(round: RoundRecord, previousBlockAvgCents: Float? = null):
                 shiftStartPushedLandingOff(e?.startCents, e?.shiftCents, a.centsError)
             }
         } else null,
+        gauges = buildGauges(round),
     ).withTrend(previousBlockAvgCents)
 }

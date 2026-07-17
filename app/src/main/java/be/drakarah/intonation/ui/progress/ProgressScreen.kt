@@ -48,11 +48,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.R
 import be.drakarah.intonation.game.ACHIEVEMENTS
 import be.drakarah.intonation.metrics.Bias
 import be.drakarah.intonation.metrics.BiasDirection
@@ -80,10 +83,10 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 private val exerciseTabs = listOf(
-    EXERCISE_NOTE_ACCURACY to "Find the Note",
-    EXERCISE_SUSTAIN to "Long Notes",
-    EXERCISE_SHIFT to "Shifts",
-    EXERCISE_CHORDS to "Chords",
+    EXERCISE_NOTE_ACCURACY to R.string.home_find_note,
+    EXERCISE_SUSTAIN to R.string.home_long_notes,
+    EXERCISE_SHIFT to R.string.progress_tab_shifts,
+    EXERCISE_CHORDS to R.string.home_chords,
 )
 
 /** Color for a mastery band. Kept here (UI layer) — the `metrics/` domain stays free of Compose. */
@@ -109,16 +112,19 @@ fun ProgressScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Progress") },
+                title = { Text(stringResource(R.string.progress_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.common_cd_back),
+                        )
                     }
                 },
                 actions = {
                     TextButton(onClick = onOpenAchievements) {
                         Text(
-                            "${unlocked.size}/${ACHIEVEMENTS.size}",
+                            stringResource(R.string.progress_ach_count, unlocked.size, ACHIEVEMENTS.size),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
@@ -126,7 +132,7 @@ fun ProgressScreen(
                         Spacer(Modifier.width(Spacing.COMPONENT_SPACING))
                         Icon(
                             Icons.Default.EmojiEvents,
-                            contentDescription = "Achievements",
+                            contentDescription = stringResource(R.string.progress_cd_achievements),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -143,11 +149,11 @@ fun ProgressScreen(
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
 
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
-                exerciseTabs.forEach { (type, label) ->
+                exerciseTabs.forEach { (type, labelRes) ->
                     FilterChip(
                         selected = state.exerciseType == type,
                         onClick = { viewModel.setExerciseType(type) },
-                        label = { Text(label) },
+                        label = { Text(stringResource(labelRes)) },
                     )
                 }
             }
@@ -178,7 +184,7 @@ fun ProgressScreen(
 
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text("Done")
+                Text(stringResource(R.string.progress_done))
             }
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
@@ -205,12 +211,12 @@ private fun EmptyState() {
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            "No rounds yet",
+            stringResource(R.string.progress_no_rounds),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            "Play a game to see your progress here.",
+            stringResource(R.string.progress_no_rounds_sub),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -225,11 +231,15 @@ private fun StatTrio(state: ProgressUiState) {
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        StatBlock("rounds", "${state.totalRounds}")
-        StatBlock("best", state.bestPercent?.let { String.format(Locale.US, "%.0f%%", it) } ?: "—")
+        StatBlock(stringResource(R.string.progress_stat_rounds), "${state.totalRounds}")
         StatBlock(
-            "day streak",
-            if (state.streakDays > 0) "${state.streakDays}" else "—",
+            stringResource(R.string.progress_stat_best),
+            state.bestPercent?.let { String.format(Locale.US, "%.0f%%", it) }
+                ?: stringResource(R.string.progress_dash),
+        )
+        StatBlock(
+            stringResource(R.string.progress_stat_streak),
+            if (state.streakDays > 0) "${state.streakDays}" else stringResource(R.string.progress_dash),
             leadingIcon = if (state.streakDays > 0) Icons.Filled.LocalFireDepartment else null,
             iconTint = ResultColors.close,
         )
@@ -313,7 +323,7 @@ private fun CoachingSummaryCard(summary: CoachingSummary, isSustain: Boolean, ex
                 .padding(Spacing.CARD_PADDING),
             verticalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING),
         ) {
-            Text("This week", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.progress_this_week), style = MaterialTheme.typography.titleMedium)
 
             if (expert) ExpertSummary(summary, isSustain) else PlainSummary(summary, isSustain)
 
@@ -326,44 +336,58 @@ private fun CoachingSummaryCard(summary: CoachingSummary, isSustain: Boolean, ex
  * Streak lives in the top stat trio, so it isn't repeated here. */
 @Composable
 private fun PlainSummary(summary: CoachingSummary, isSustain: Boolean) {
-    val times = if (summary.roundsThisWeek == 1) "time" else "times"
-    SummaryLine("You practiced ${summary.roundsThisWeek} $times this week.")
+    SummaryLine(
+        pluralStringResource(
+            R.plurals.progress_practiced, summary.roundsThisWeek, summary.roundsThisWeek
+        )
+    )
     if (isSustain) {
-        SummaryLine("Try to hold each note long and steady — your bow control is below.")
+        SummaryLine(stringResource(R.string.progress_sustain_hint))
     } else {
         if (summary.weekBand != null) {
             SummaryLine(intonationSentence(summary.weekBand))
             summary.trend?.let { TrendLine(it) }
         } else {
-            SummaryLine("Play a few more rounds this week to see how in tune you're playing.")
+            SummaryLine(stringResource(R.string.progress_need_more))
         }
-        summary.rightNotePct?.let { SummaryLine("You found the right note $it% of the time.") }
+        summary.rightNotePct?.let {
+            SummaryLine(stringResource(R.string.progress_right_note_pct, it))
+        }
     }
 }
 
 /** Expert mode: the terse, numeric nitty-gritty. */
 @Composable
 private fun ExpertSummary(summary: CoachingSummary, isSustain: Boolean) {
-    SummaryLine("${summary.roundsThisWeek} rounds")
+    SummaryLine(
+        pluralStringResource(
+            R.plurals.progress_rounds_count, summary.roundsThisWeek, summary.roundsThisWeek
+        )
+    )
     if (!isSustain) {
         if (summary.trend == null && summary.rightNotePct == null) {
-            SummaryLine("Not enough scored notes this week for a verdict (need ${MIN_SCORED_FOR_VERDICT}+).")
+            SummaryLine(stringResource(R.string.progress_no_verdict, MIN_SCORED_FOR_VERDICT))
         }
         summary.trend?.let { t ->
-            val line = if (t.hasComparison)
-                "Intonation ${cents(t.thisWeekCents)} (last wk ${cents(t.lastWeekCents!!)}, " +
-                    "${abs(t.deltaCents).roundToInt()}¢ ${if (t.direction == TrendDirection.LOOSER) "looser" else "tighter"})"
-            else
-                "Intonation ${cents(t.thisWeekCents)} this week"
+            val line = if (t.hasComparison) stringResource(
+                R.string.progress_intonation_compared,
+                cents(t.thisWeekCents),
+                cents(t.lastWeekCents!!),
+                cents(abs(t.deltaCents)),
+                stringResource(
+                    if (t.direction == TrendDirection.LOOSER) R.string.progress_looser
+                    else R.string.progress_tighter
+                ),
+            ) else stringResource(R.string.progress_intonation_this_week, cents(t.thisWeekCents))
             SummaryLine(line)
         }
         val quality = buildList {
-            summary.rightNotePct?.let { add("$it% notes landed") }
-            summary.steadyPct?.let { add("$it% clean") }
+            summary.rightNotePct?.let { add(stringResource(R.string.progress_pct_landed, it)) }
+            summary.steadyPct?.let { add(stringResource(R.string.progress_pct_clean, it)) }
         }
         if (quality.isNotEmpty()) SummaryLine(quality.joinToString(" · "))
     } else {
-        summary.steadyPct?.let { SummaryLine("$it% clean") }
+        summary.steadyPct?.let { SummaryLine(stringResource(R.string.progress_pct_clean, it)) }
     }
 }
 
@@ -374,30 +398,33 @@ private fun SummaryLine(text: String) {
 
 /** Friendly, colour-neutral encouragement about how in tune the week was. Colour lives in the
  * per-position bars below, so this sentence never reads harsh. */
-private fun intonationSentence(band: MasteryBand): String = when (band) {
-    MasteryBand.LOCKED -> "Your notes are landing right in tune — amazing work!"
-    MasteryBand.SOLID -> "Your notes are landing nicely in tune."
-    MasteryBand.DEVELOPING -> "Your notes are getting closer to in tune — keep practising!"
-}
+@Composable
+private fun intonationSentence(band: MasteryBand): String = stringResource(
+    when (band) {
+        MasteryBand.LOCKED -> R.string.progress_intonation_locked
+        MasteryBand.SOLID -> R.string.progress_intonation_solid
+        MasteryBand.DEVELOPING -> R.string.progress_intonation_developing
+    }
+)
 
 @Composable
 private fun TrendLine(trend: WeekTrend) {
     val (icon, tint, phrase) = when {
         !trend.hasComparison -> Triple(
             null, MaterialTheme.colorScheme.onSurfaceVariant,
-            "Keep playing to see how you improve each week.",
+            stringResource(R.string.progress_trend_no_comparison),
         )
         trend.direction == TrendDirection.TIGHTER -> Triple(
             Icons.AutoMirrored.Filled.TrendingUp, ResultColors.excellent,
-            "That's more in tune than last week!",
+            stringResource(R.string.progress_trend_tighter),
         )
         trend.direction == TrendDirection.LOOSER -> Triple(
             Icons.AutoMirrored.Filled.TrendingDown, ResultColors.off,
-            "A little off from last week — you'll get it back.",
+            stringResource(R.string.progress_trend_looser),
         )
         else -> Triple(
             Icons.AutoMirrored.Filled.TrendingFlat, MaterialTheme.colorScheme.onSurfaceVariant,
-            "About the same as last week.",
+            stringResource(R.string.progress_trend_steady),
         )
     }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -429,7 +456,7 @@ private fun InsightLine(text: String) {
 @Composable
 private fun MasteryByPosition(stats: List<PositionMastery>, expert: Boolean) {
     Column {
-        Text("Accuracy by position", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.progress_accuracy_by_position), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(Spacing.FINE_SPACING))
         val muted = MaterialTheme.colorScheme.onSurfaceVariant
         stats.forEach { stat ->
@@ -476,14 +503,20 @@ private fun MasteryByPosition(stats: List<PositionMastery>, expert: Boolean) {
                             )
                             if (expert) {
                                 Text(
-                                    "${cents(stat.avgAbsCents)} · ${stat.scoredCount}",
+                                    stringResource(
+                                        R.string.progress_cents_samples,
+                                        cents(stat.avgAbsCents), stat.scoredCount,
+                                    ),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = muted,
                                 )
                             }
                         } else {
                             Text(
-                                if (expert) "${cents(stat.avgAbsCents)} · ${stat.scoredCount}" else "keep playing",
+                                if (expert) stringResource(
+                                    R.string.progress_cents_samples,
+                                    cents(stat.avgAbsCents), stat.scoredCount,
+                                ) else stringResource(R.string.progress_keep_playing),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = muted,
                                 textAlign = TextAlign.End,
@@ -519,11 +552,22 @@ private fun BiasCue(bias: Bias, expert: Boolean) {
 @Composable
 private fun SustainMetrics(sustain: SustainSummary) {
     Column {
-        Text("Bow control", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.progress_bow_control), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(Spacing.FINE_SPACING))
-        MetricRow("Average hold", String.format(Locale.US, "%.1f s", sustain.avgHeldMs / 1000f))
-        sustain.avgSteadinessCents?.let { MetricRow("Steadiness", cents(it)) }
-        sustain.avgResets?.let { MetricRow("Bow changes / note", String.format(Locale.US, "%.1f", it)) }
+        MetricRow(
+            stringResource(R.string.progress_avg_hold),
+            stringResource(
+                R.string.progress_seconds_value,
+                String.format(Locale.US, "%.1f", sustain.avgHeldMs / 1000f),
+            ),
+        )
+        sustain.avgSteadinessCents?.let { MetricRow(stringResource(R.string.progress_steadiness), cents(it)) }
+        sustain.avgResets?.let {
+            MetricRow(
+                stringResource(R.string.progress_bow_changes),
+                String.format(Locale.US, "%.1f", it),
+            )
+        }
     }
 }
 

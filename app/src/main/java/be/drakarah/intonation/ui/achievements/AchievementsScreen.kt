@@ -25,14 +25,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import be.drakarah.intonation.R
 import be.drakarah.intonation.game.ACHIEVEMENTS
 import be.drakarah.intonation.game.AchievementDef
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
+import be.drakarah.intonation.ui.common.displayDescription
+import be.drakarah.intonation.ui.common.displayTitle
 import be.drakarah.intonation.ui.theme.Spacing
 
 @Composable
@@ -50,10 +54,10 @@ fun AchievementsScreen(
                 .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
         ) {
             Spacer(Modifier.height(Spacing.SECTION_BREAK))
-            Text("Achievements", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(R.string.ach_title), style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(Spacing.FINE_SPACING))
             Text(
-                "${unlocked.size} of ${ACHIEVEMENTS.size} unlocked",
+                stringResource(R.string.ach_unlocked_count, unlocked.size, ACHIEVEMENTS.size),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -82,7 +86,7 @@ fun AchievementsScreen(
             }
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text("Back")
+                Text(stringResource(R.string.ach_back))
             }
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
@@ -115,14 +119,14 @@ private fun AchievementCell(def: AchievementDef, isUnlocked: Boolean) {
             } else {
                 Icon(
                     Icons.Default.Lock,
-                    contentDescription = "Locked achievement",
+                    contentDescription = stringResource(R.string.ach_cd_locked),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.height(40.dp),
                 )
             }
             Spacer(Modifier.height(Spacing.FINE_SPACING))
             Text(
-                def.title,
+                def.displayTitle,
                 style = MaterialTheme.typography.labelLarge,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
@@ -132,8 +136,7 @@ private fun AchievementCell(def: AchievementDef, isUnlocked: Boolean) {
             )
             Spacer(Modifier.height(Spacing.COMPONENT_SPACING))
             Text(
-                if (LocalTechnicalDetails.current) def.technicalDescription ?: def.description
-                else def.description,
+                def.displayDescription(LocalTechnicalDetails.current),
                 style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center,
                 maxLines = 3,

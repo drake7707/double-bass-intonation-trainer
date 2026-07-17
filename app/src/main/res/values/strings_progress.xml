@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Progress (progress_) and Achievements (ach_) screens.
+     Achievement titles/descriptions are keyed by the achievement id (ach_<ID>_*), mapped in
+     ui/common/Labels.kt achievementTitle/achievementDescription. The ids and emoji stay in the
+     domain (game/Achievements.kt) — only the words are here. -->
+<resources>
+
+    <!-- Progress screen -->
+    <string name="progress_title">Progress</string>
+    <!-- Plain "Shifts" tab (Home only has the templated "Shifts — …") -->
+    <string name="progress_tab_shifts">Shifts</string>
+    <string name="progress_cd_achievements">Achievements</string>
+    <!-- %1$d = unlocked, %2$d = total -->
+    <string name="progress_ach_count">%1$d/%2$d</string>
+    <string name="progress_done">Done</string>
+    <string name="progress_no_rounds">No rounds yet</string>
+    <string name="progress_no_rounds_sub">Play a game to see your progress here.</string>
+
+    <string name="progress_stat_rounds">rounds</string>
+    <string name="progress_stat_best">best</string>
+    <string name="progress_stat_streak">day streak</string>
+    <string name="progress_dash">—</string>
+
+    <string name="progress_this_week">This week</string>
+    <!-- Plain summary lines -->
+    <plurals name="progress_practiced">
+        <item quantity="one">You practiced 1 time this week.</item>
+        <item quantity="other">You practiced %1$d times this week.</item>
+    </plurals>
+    <string name="progress_sustain_hint">Try to hold each note long and steady — your bow control is below.</string>
+    <string name="progress_need_more">Play a few more rounds this week to see how in tune you\'re playing.</string>
+    <!-- %1$d = percent -->
+    <string name="progress_right_note_pct">You found the right note %1$d%% of the time.</string>
+    <string name="progress_intonation_locked">Your notes are landing right in tune — amazing work!</string>
+    <string name="progress_intonation_solid">Your notes are landing nicely in tune.</string>
+    <string name="progress_intonation_developing">Your notes are getting closer to in tune — keep practising!</string>
+
+    <!-- Trend lines -->
+    <string name="progress_trend_no_comparison">Keep playing to see how you improve each week.</string>
+    <string name="progress_trend_tighter">That\'s more in tune than last week!</string>
+    <string name="progress_trend_looser">A little off from last week — you\'ll get it back.</string>
+    <string name="progress_trend_steady">About the same as last week.</string>
+
+    <!-- Expert summary lines -->
+    <plurals name="progress_rounds_count">
+        <item quantity="one">1 round</item>
+        <item quantity="other">%1$d rounds</item>
+    </plurals>
+    <!-- %1$d = minimum scored notes needed -->
+    <string name="progress_no_verdict">Not enough scored notes this week for a verdict (need %1$d+).</string>
+    <!-- %1$s = this-week cents, %2$s = last-week cents, %3$s = delta, %4$s = looser/tighter -->
+    <string name="progress_intonation_compared">Intonation %1$s (last wk %2$s, %3$s %4$s)</string>
+    <!-- %1$s = this-week cents -->
+    <string name="progress_intonation_this_week">Intonation %1$s this week</string>
+    <string name="progress_looser">looser</string>
+    <string name="progress_tighter">tighter</string>
+    <!-- %1$d = percent -->
+    <string name="progress_pct_landed">%1$d%% notes landed</string>
+    <string name="progress_pct_clean">%1$d%% clean</string>
+
+    <string name="progress_accuracy_by_position">Accuracy by position</string>
+    <string name="progress_keep_playing">keep playing</string>
+    <!-- %1$s = avg cents, %2$d = sample count -->
+    <string name="progress_cents_samples">%1$s · %2$d</string>
+
+    <string name="progress_bow_control">Bow control</string>
+    <string name="progress_avg_hold">Average hold</string>
+    <string name="progress_steadiness">Steadiness</string>
+    <string name="progress_bow_changes">Bow changes / note</string>
+    <!-- %1$s = seconds, pre-formatted ("4.2") -->
+    <string name="progress_seconds_value">%1$s s</string>
+
+    <!-- Achievements screen -->
+    <string name="ach_title">Achievements</string>
+    <!-- %1$d = unlocked, %2$d = total -->
+    <string name="ach_unlocked_count">%1$d of %2$d unlocked</string>
+    <string name="ach_cd_locked">Locked achievement</string>
+    <string name="ach_back">Back</string>
+
+    <!-- Achievement definitions (id-keyed). description = plain; description_tech = with numbers. -->
+    <string name="ach_FIRST_ROUND_title">First round</string>
+    <string name="ach_FIRST_ROUND_desc">Complete your first round.</string>
+    <string name="ach_BULLSEYE_title">Bullseye</string>
+    <string name="ach_BULLSEYE_desc">Land one note dead center.</string>
+    <string name="ach_BULLSEYE_desc_tech">Land a note within 2 cents.</string>
+    <string name="ach_SHARPSHOOTER_title">Sharpshooter</string>
+    <string name="ach_SHARPSHOOTER_desc">Finish a round with nearly every note in tune.</string>
+    <string name="ach_SHARPSHOOTER_desc_tech">Finish a round averaging within 10 cents.</string>
+    <string name="ach_PERFECT_ROUND_title">Perfect round</string>
+    <string name="ach_PERFECT_ROUND_desc">Three stars on every note of a round.</string>
+    <string name="ach_ALL_STRINGS_title">All four strings</string>
+    <string name="ach_ALL_STRINGS_desc">Score on all four strings in one round.</string>
+    <string name="ach_NOTES_100_title">A hundred notes</string>
+    <string name="ach_NOTES_100_desc">Play 100 scored notes in total.</string>
+    <string name="ach_NOTES_1000_title">A thousand notes</string>
+    <string name="ach_NOTES_1000_desc">Play 1000 scored notes in total.</string>
+    <string name="ach_MARATHON_title">Marathon</string>
+    <string name="ach_MARATHON_desc">100 notes in a single day.</string>
+    <string name="ach_WEEK_STREAK_title">Week streak</string>
+    <string name="ach_WEEK_STREAK_desc">Practice seven days in a row.</string>
+    <string name="ach_MONTH_STREAK_title">Month streak</string>
+    <string name="ach_MONTH_STREAK_desc">Practice thirty days in a row.</string>
+    <string name="ach_STEADY_HAND_title">Steady hand</string>
+    <string name="ach_STEADY_HAND_desc">A Long Notes round with every hold completed.</string>
+    <string name="ach_LIGHTNING_SHIFT_title">Lightning shift</string>
+    <string name="ach_LIGHTNING_SHIFT_desc">A three-star shift landed in under a second.</string>
+    <string name="ach_TRIADS_IN_TUNE_title">Triads in tune</string>
+    <string name="ach_TRIADS_IN_TUNE_desc">A Chords round with every note earning stars.</string>
+    <string name="ach_SNIPER_title">Sniper</string>
+    <string name="ach_SNIPER_desc">Finish a round with every note nearly perfect.</string>
+    <string name="ach_SNIPER_desc_tech">Finish a round averaging within 5 cents.</string>
+    <string name="ach_TIGHT_GROUP_title">Tight group</string>
+    <string name="ach_TIGHT_GROUP_desc">Every note in a round lands dead center.</string>
+    <string name="ach_TIGHT_GROUP_desc_tech">Every note in a round within 5 cents.</string>
+    <string name="ach_TRIPLE_BULLSEYE_title">Triple bullseye</string>
+    <string name="ach_TRIPLE_BULLSEYE_desc">Three dead-center notes in a single round.</string>
+    <string name="ach_TRIPLE_BULLSEYE_desc_tech">Three notes within 2 cents in a single round.</string>
+    <string name="ach_NEW_RECORD_title">New record</string>
+    <string name="ach_NEW_RECORD_desc">Beat one of your own personal bests.</string>
+    <string name="ach_EARLY_BIRD_title">Early bird</string>
+    <string name="ach_EARLY_BIRD_desc">Practice before 7 in the morning.</string>
+    <string name="ach_NIGHT_OWL_title">Night owl</string>
+    <string name="ach_NIGHT_OWL_desc">Practice at 11 at night or later.</string>
+    <string name="ach_PIZZ_PRECISION_title">Pizzicato precision</string>
+    <string name="ach_PIZZ_PRECISION_desc">A plucked round with nearly every note in tune.</string>
+    <string name="ach_PIZZ_PRECISION_desc_tech">Finish a pizz round averaging within 12 cents.</string>
+    <string name="ach_ARPEGGIO_ACE_title">Arpeggio ace</string>
+    <string name="ach_ARPEGGIO_ACE_desc">A Chords round with three stars on every note.</string>
+    <string name="ach_UNWAVERING_title">Unwavering</string>
+    <string name="ach_UNWAVERING_desc">A Long Notes round with three stars on every hold.</string>
+    <string name="ach_SURE_FOOTED_title">Sure-footed</string>
+    <string name="ach_SURE_FOOTED_desc">A Shifts round with three stars on every landing.</string>
+    <string name="ach_POSITION_EXPLORER_title">Position explorer</string>
+    <string name="ach_POSITION_EXPLORER_desc">Score across four or more positions in one round.</string>
+    <string name="ach_NOTES_500_title">Five hundred notes</string>
+    <string name="ach_NOTES_500_desc">Play 500 scored notes in total.</string>
+
+</resources>

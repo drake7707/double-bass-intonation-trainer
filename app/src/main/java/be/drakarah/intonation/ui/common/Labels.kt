@@ -3,6 +3,7 @@ package be.drakarah.intonation.ui.common
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import be.drakarah.intonation.R
+import be.drakarah.intonation.game.AchievementDef
 import be.drakarah.intonation.game.ChordFingering
 import be.drakarah.intonation.game.ChordQuality
 import be.drakarah.intonation.game.Difficulty
@@ -109,6 +110,85 @@ val ChordFingering.displayBlurb: String
 @Composable
 fun modeLabel(mode: String): String =
     stringResource(if (mode == "pizz") R.string.mode_pizz else R.string.mode_arco)
+
+// --- Achievements -------------------------------------------------------------------------
+// Titles and descriptions are keyed by the achievement's stable id (never translate the id).
+// An explicit map — not resources.getIdentifier — so resource shrinking can't drop them.
+
+private fun achievementTitleRes(id: String): Int = when (id) {
+    "FIRST_ROUND" -> R.string.ach_FIRST_ROUND_title
+    "BULLSEYE" -> R.string.ach_BULLSEYE_title
+    "SHARPSHOOTER" -> R.string.ach_SHARPSHOOTER_title
+    "PERFECT_ROUND" -> R.string.ach_PERFECT_ROUND_title
+    "ALL_STRINGS" -> R.string.ach_ALL_STRINGS_title
+    "NOTES_100" -> R.string.ach_NOTES_100_title
+    "NOTES_1000" -> R.string.ach_NOTES_1000_title
+    "MARATHON" -> R.string.ach_MARATHON_title
+    "WEEK_STREAK" -> R.string.ach_WEEK_STREAK_title
+    "MONTH_STREAK" -> R.string.ach_MONTH_STREAK_title
+    "STEADY_HAND" -> R.string.ach_STEADY_HAND_title
+    "LIGHTNING_SHIFT" -> R.string.ach_LIGHTNING_SHIFT_title
+    "TRIADS_IN_TUNE" -> R.string.ach_TRIADS_IN_TUNE_title
+    "SNIPER" -> R.string.ach_SNIPER_title
+    "TIGHT_GROUP" -> R.string.ach_TIGHT_GROUP_title
+    "TRIPLE_BULLSEYE" -> R.string.ach_TRIPLE_BULLSEYE_title
+    "NEW_RECORD" -> R.string.ach_NEW_RECORD_title
+    "EARLY_BIRD" -> R.string.ach_EARLY_BIRD_title
+    "NIGHT_OWL" -> R.string.ach_NIGHT_OWL_title
+    "PIZZ_PRECISION" -> R.string.ach_PIZZ_PRECISION_title
+    "ARPEGGIO_ACE" -> R.string.ach_ARPEGGIO_ACE_title
+    "UNWAVERING" -> R.string.ach_UNWAVERING_title
+    "SURE_FOOTED" -> R.string.ach_SURE_FOOTED_title
+    "POSITION_EXPLORER" -> R.string.ach_POSITION_EXPLORER_title
+    else -> R.string.ach_NOTES_500_title
+}
+
+private fun achievementDescRes(id: String): Int = when (id) {
+    "FIRST_ROUND" -> R.string.ach_FIRST_ROUND_desc
+    "BULLSEYE" -> R.string.ach_BULLSEYE_desc
+    "SHARPSHOOTER" -> R.string.ach_SHARPSHOOTER_desc
+    "PERFECT_ROUND" -> R.string.ach_PERFECT_ROUND_desc
+    "ALL_STRINGS" -> R.string.ach_ALL_STRINGS_desc
+    "NOTES_100" -> R.string.ach_NOTES_100_desc
+    "NOTES_1000" -> R.string.ach_NOTES_1000_desc
+    "MARATHON" -> R.string.ach_MARATHON_desc
+    "WEEK_STREAK" -> R.string.ach_WEEK_STREAK_desc
+    "MONTH_STREAK" -> R.string.ach_MONTH_STREAK_desc
+    "STEADY_HAND" -> R.string.ach_STEADY_HAND_desc
+    "LIGHTNING_SHIFT" -> R.string.ach_LIGHTNING_SHIFT_desc
+    "TRIADS_IN_TUNE" -> R.string.ach_TRIADS_IN_TUNE_desc
+    "SNIPER" -> R.string.ach_SNIPER_desc
+    "TIGHT_GROUP" -> R.string.ach_TIGHT_GROUP_desc
+    "TRIPLE_BULLSEYE" -> R.string.ach_TRIPLE_BULLSEYE_desc
+    "NEW_RECORD" -> R.string.ach_NEW_RECORD_desc
+    "EARLY_BIRD" -> R.string.ach_EARLY_BIRD_desc
+    "NIGHT_OWL" -> R.string.ach_NIGHT_OWL_desc
+    "PIZZ_PRECISION" -> R.string.ach_PIZZ_PRECISION_desc
+    "ARPEGGIO_ACE" -> R.string.ach_ARPEGGIO_ACE_desc
+    "UNWAVERING" -> R.string.ach_UNWAVERING_desc
+    "SURE_FOOTED" -> R.string.ach_SURE_FOOTED_desc
+    "POSITION_EXPLORER" -> R.string.ach_POSITION_EXPLORER_desc
+    else -> R.string.ach_NOTES_500_desc
+}
+
+/** Only the four precision achievements carry a numbers-first variant. */
+private fun achievementTechDescRes(id: String): Int = when (id) {
+    "BULLSEYE" -> R.string.ach_BULLSEYE_desc_tech
+    "SHARPSHOOTER" -> R.string.ach_SHARPSHOOTER_desc_tech
+    "SNIPER" -> R.string.ach_SNIPER_desc_tech
+    "TIGHT_GROUP" -> R.string.ach_TIGHT_GROUP_desc_tech
+    "TRIPLE_BULLSEYE" -> R.string.ach_TRIPLE_BULLSEYE_desc_tech
+    else -> R.string.ach_PIZZ_PRECISION_desc_tech
+}
+
+val AchievementDef.displayTitle: String
+    @Composable get() = stringResource(achievementTitleRes(id))
+
+/** Plain-language goal, or the numbers-first variant when [technical] and one exists. */
+@Composable
+fun AchievementDef.displayDescription(technical: Boolean): String =
+    if (technical && hasTechnicalDescription) stringResource(achievementTechDescRes(id))
+    else stringResource(achievementDescRes(id))
 
 /** A chord's display name: root pitch class + quality word ("Ré Majeur" / "D major").
  * Solfège mode keeps the capitalized "Majeur" convention in every language. */

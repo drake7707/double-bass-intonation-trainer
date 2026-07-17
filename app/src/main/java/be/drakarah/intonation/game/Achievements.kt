@@ -30,135 +30,76 @@ data class RoundFacts(
 data class AchievementDef(
     val id: String,
     val emoji: String,
-    val title: String,
-    /** Plain-language goal — no cents (glossary: numbers live behind "Show technical details"). */
-    val description: String,
-    /** Exact threshold wording, shown instead of [description] when technical details are on. */
-    val technicalDescription: String? = null,
+    /** Whether this achievement has a numbers-first variant, shown when technical details are on.
+     * The words themselves live in resources (strings_progress.xml), mapped by [id] in the UI. */
+    val hasTechnicalDescription: Boolean = false,
     val check: (RoundFacts) -> Boolean,
 )
 
 val ACHIEVEMENTS: List<AchievementDef> = listOf(
-    AchievementDef(
-        "FIRST_ROUND", "🎉", "First round",
-        "Complete your first round.",
-    ) { true },
-    AchievementDef(
-        "BULLSEYE", "🎯", "Bullseye",
-        "Land one note dead center.",
-        "Land a note within 2 cents.",
-    ) { f -> f.attemptCents.any { it != null && abs(it) <= 2f } },
-    AchievementDef(
-        "SHARPSHOOTER", "🏹", "Sharpshooter",
-        "Finish a round with nearly every note in tune.",
-        "Finish a round averaging within 10 cents.",
-    ) { f -> f.avgAbsCents != null && f.avgAbsCents <= 10f && f.attemptStars.size >= 5 },
-    AchievementDef(
-        "PERFECT_ROUND", "💯", "Perfect round",
-        "Three stars on every note of a round.",
-    ) { f -> f.attemptStars.isNotEmpty() && f.attemptStars.all { it == 3 } },
-    AchievementDef(
-        "ALL_STRINGS", "🎻", "All four strings",
-        "Score on all four strings in one round.",
-    ) { f -> f.attemptStrings.filterNotNull().toSet().size >= 4 },
-    AchievementDef(
-        "NOTES_100", "💪", "A hundred notes",
-        "Play 100 scored notes in total.",
-    ) { f -> f.totalAttemptsAllTime >= 100 },
-    AchievementDef(
-        "NOTES_1000", "🏋", "A thousand notes",
-        "Play 1000 scored notes in total.",
-    ) { f -> f.totalAttemptsAllTime >= 1000 },
-    AchievementDef(
-        "MARATHON", "🏃", "Marathon",
-        "100 notes in a single day.",
-    ) { f -> f.attemptsToday >= 100 },
-    AchievementDef(
-        "WEEK_STREAK", "🔥", "Week streak",
-        "Practice seven days in a row.",
-    ) { f -> f.practiceStreakDays >= 7 },
-    AchievementDef(
-        "MONTH_STREAK", "🌋", "Month streak",
-        "Practice thirty days in a row.",
-    ) { f -> f.practiceStreakDays >= 30 },
-    AchievementDef(
-        "STEADY_HAND", "🧘", "Steady hand",
-        "A Long Notes round with every hold completed.",
-    ) { f -> f.exerciseType == "SUSTAIN" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it >= 1 } },
-    AchievementDef(
-        "LIGHTNING_SHIFT", "⚡", "Lightning shift",
-        "A three-star shift landed in under a second.",
-    ) { f ->
+    AchievementDef("FIRST_ROUND", "🎉") { true },
+    AchievementDef("BULLSEYE", "🎯", hasTechnicalDescription = true) { f ->
+        f.attemptCents.any { it != null && abs(it) <= 2f }
+    },
+    AchievementDef("SHARPSHOOTER", "🏹", hasTechnicalDescription = true) { f ->
+        f.avgAbsCents != null && f.avgAbsCents <= 10f && f.attemptStars.size >= 5
+    },
+    AchievementDef("PERFECT_ROUND", "💯") { f ->
+        f.attemptStars.isNotEmpty() && f.attemptStars.all { it == 3 }
+    },
+    AchievementDef("ALL_STRINGS", "🎻") { f ->
+        f.attemptStrings.filterNotNull().toSet().size >= 4
+    },
+    AchievementDef("NOTES_100", "💪") { f -> f.totalAttemptsAllTime >= 100 },
+    AchievementDef("NOTES_1000", "🏋") { f -> f.totalAttemptsAllTime >= 1000 },
+    AchievementDef("MARATHON", "🏃") { f -> f.attemptsToday >= 100 },
+    AchievementDef("WEEK_STREAK", "🔥") { f -> f.practiceStreakDays >= 7 },
+    AchievementDef("MONTH_STREAK", "🌋") { f -> f.practiceStreakDays >= 30 },
+    AchievementDef("STEADY_HAND", "🧘") { f ->
+        f.exerciseType == "SUSTAIN" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it >= 1 }
+    },
+    AchievementDef("LIGHTNING_SHIFT", "⚡") { f ->
         f.exerciseType == "SHIFT" && f.attemptStars.zip(f.landingTimesMs)
             .any { (stars, t) -> stars == 3 && t != null && t < 1000 }
     },
-    AchievementDef(
-        "TRIADS_IN_TUNE", "🎼", "Triads in tune",
-        "A Chords round with every note earning stars.",
-    ) { f -> f.exerciseType == "CHORDS" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it >= 1 } },
+    AchievementDef("TRIADS_IN_TUNE", "🎼") { f ->
+        f.exerciseType == "CHORDS" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it >= 1 }
+    },
 
     // --- Precision beyond the basics ---
-    AchievementDef(
-        "SNIPER", "🥇", "Sniper",
-        "Finish a round with every note nearly perfect.",
-        "Finish a round averaging within 5 cents.",
-    ) { f -> f.avgAbsCents != null && f.avgAbsCents <= 5f && f.attemptStars.size >= 5 },
-    AchievementDef(
-        "TIGHT_GROUP", "📍", "Tight group",
-        "Every note in a round lands dead center.",
-        "Every note in a round within 5 cents.",
-    ) { f ->
+    AchievementDef("SNIPER", "🥇", hasTechnicalDescription = true) { f ->
+        f.avgAbsCents != null && f.avgAbsCents <= 5f && f.attemptStars.size >= 5
+    },
+    AchievementDef("TIGHT_GROUP", "📍", hasTechnicalDescription = true) { f ->
         val scored = f.attemptCents.filterNotNull()
         scored.size >= 5 && scored.size == f.attemptCents.size && scored.all { abs(it) <= 5f }
     },
-    AchievementDef(
-        "TRIPLE_BULLSEYE", "🎇", "Triple bullseye",
-        "Three dead-center notes in a single round.",
-        "Three notes within 2 cents in a single round.",
-    ) { f -> f.attemptCents.count { it != null && abs(it) <= 2f } >= 3 },
-    AchievementDef(
-        "NEW_RECORD", "🏆", "New record",
-        "Beat one of your own personal bests.",
-    ) { f -> f.beatOwnBest },
+    AchievementDef("TRIPLE_BULLSEYE", "🎇", hasTechnicalDescription = true) { f ->
+        f.attemptCents.count { it != null && abs(it) <= 2f } >= 3
+    },
+    AchievementDef("NEW_RECORD", "🏆") { f -> f.beatOwnBest },
 
     // --- When you play ---
-    AchievementDef(
-        "EARLY_BIRD", "🌅", "Early bird",
-        "Practice before 7 in the morning.",
-    ) { f -> f.localHour < 7 },
-    AchievementDef(
-        "NIGHT_OWL", "🦉", "Night owl",
-        "Practice at 11 at night or later.",
-    ) { f -> f.localHour >= 23 },
+    AchievementDef("EARLY_BIRD", "🌅") { f -> f.localHour < 7 },
+    AchievementDef("NIGHT_OWL", "🦉") { f -> f.localHour >= 23 },
 
     // --- Per-technique mastery ---
-    AchievementDef(
-        "PIZZ_PRECISION", "🤌", "Pizzicato precision",
-        "A plucked round with nearly every note in tune.",
-        "Finish a pizz round averaging within 12 cents.",
-    ) { f -> f.mode == "pizz" && f.avgAbsCents != null && f.avgAbsCents <= 12f && f.attemptStars.size >= 5 },
-    AchievementDef(
-        "ARPEGGIO_ACE", "🎹", "Arpeggio ace",
-        "A Chords round with three stars on every note.",
-    ) { f -> f.exerciseType == "CHORDS" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it == 3 } },
-    AchievementDef(
-        "UNWAVERING", "🕉", "Unwavering",
-        "A Long Notes round with three stars on every hold.",
-    ) { f -> f.exerciseType == "SUSTAIN" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it == 3 } },
-    AchievementDef(
-        "SURE_FOOTED", "🧗", "Sure-footed",
-        "A Shifts round with three stars on every landing.",
-    ) { f -> f.exerciseType == "SHIFT" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it == 3 } },
+    AchievementDef("PIZZ_PRECISION", "🤌", hasTechnicalDescription = true) { f ->
+        f.mode == "pizz" && f.avgAbsCents != null && f.avgAbsCents <= 12f && f.attemptStars.size >= 5
+    },
+    AchievementDef("ARPEGGIO_ACE", "🎹") { f ->
+        f.exerciseType == "CHORDS" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it == 3 }
+    },
+    AchievementDef("UNWAVERING", "🕉") { f ->
+        f.exerciseType == "SUSTAIN" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it == 3 }
+    },
+    AchievementDef("SURE_FOOTED", "🧗") { f ->
+        f.exerciseType == "SHIFT" && f.attemptStars.isNotEmpty() && f.attemptStars.all { it == 3 }
+    },
 
     // --- Range & volume ---
-    AchievementDef(
-        "POSITION_EXPLORER", "🗺", "Position explorer",
-        "Score across four or more positions in one round.",
-    ) { f -> f.distinctPositions >= 4 },
-    AchievementDef(
-        "NOTES_500", "🎓", "Five hundred notes",
-        "Play 500 scored notes in total.",
-    ) { f -> f.totalAttemptsAllTime >= 500 },
+    AchievementDef("POSITION_EXPLORER", "🗺") { f -> f.distinctPositions >= 4 },
+    AchievementDef("NOTES_500", "🎓") { f -> f.totalAttemptsAllTime >= 500 },
 )
 
 /** Returns the ids newly earned by this round, given what was already unlocked. */

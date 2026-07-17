@@ -21,7 +21,7 @@ fun AchievementUnlocks(achievements: List<AchievementDef>) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         achievements.forEach { def ->
             Text(
-                "${def.emoji} " + stringResource(R.string.common_achievement_unlocked, def.title),
+                "${def.emoji} " + stringResource(R.string.common_achievement_unlocked, def.displayTitle),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.tertiary,
             )

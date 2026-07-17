@@ -81,7 +81,7 @@
     <string name="trace_went_well">Went well</string>
     <string name="trace_had_issues">Had issues</string>
     <string name="trace_what_happened">What happened?</string>
-    <string name="trace_save_note">Save note</string>
+    <string name="trace_save_note">Save feedback</string>
 
     <!-- Microphone gate (ui/common/RequireMicPermission.kt). %1$s = app name -->
     <string name="common_mic_rationale">%1$s needs the microphone to hear your bass.</string>

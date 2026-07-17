@@ -21,6 +21,10 @@
     <string name="progress_stat_streak">day streak</string>
     <string name="progress_dash">—</string>
 
+    <!-- Compact "This week" mini-stats (number above, this label below) -->
+    <string name="progress_stat_this_week">this week</string>
+    <string name="progress_stat_right_note">right note</string>
+
     <string name="progress_this_week">This week</string>
     <!-- Plain summary lines -->
     <plurals name="progress_practiced">

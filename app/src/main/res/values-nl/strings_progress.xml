@@ -15,6 +15,10 @@
     <string name="progress_stat_streak">dagen op rij</string>
     <string name="progress_dash">—</string>
 
+    <!-- Compact "Deze week" mini-stats (getal boven, dit label eronder) -->
+    <string name="progress_stat_this_week">deze week</string>
+    <string name="progress_stat_right_note">juiste noot</string>
+
     <string name="progress_this_week">Deze week</string>
     <plurals name="progress_practiced">
         <item quantity="one">Je oefende deze week 1 keer.</item>

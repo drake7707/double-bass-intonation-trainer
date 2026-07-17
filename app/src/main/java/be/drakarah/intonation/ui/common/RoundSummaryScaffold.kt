@@ -133,16 +133,6 @@ fun RoundSummaryScaffold(
     }
 }
 
-@Composable
-private fun SectionDivider() {
-    Spacer(Modifier.height(Spacing.SECTION_BREAK))
-    HorizontalDivider(
-        modifier = Modifier.fillMaxWidth(0.5f),
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-    )
-    Spacer(Modifier.height(Spacing.SECTION_BREAK))
-}
-
 /** The coach sentence for this round — pitch exercises' verdict or sustain's hold verdict. */
 @Composable
 private fun RoundSummaryData.coachSentence(): String? =

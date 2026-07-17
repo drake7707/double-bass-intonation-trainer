@@ -5,6 +5,22 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-17 Progress-screen layout overhaul (your feedback: "clearer divide into sections")
+Restructured to read as the same stack of sections as the Results screen. Compiles + APK built.
+Purely visual — just eyeball it on the phone:
+
+- **Section dividers** — the same thin, half-width, low-alpha divider from the Results screen now
+  separates chips / chart+stats / "This week" / "Accuracy by position" (shared `SectionDivider`).
+  The "This week" **card is gone** — it's a titled section like the others now.
+- **"This week" no longer a text blob** — the two counts ("practiced N times", "right note N%") are
+  now compact **mini-stats** (number over a small label), leaving a single warm sentence. The
+  redundant "keep playing to see how you improve" filler is dropped when there's no last-week
+  comparison. Check it reads as scannable, not a paragraph.
+- **Coaching tip is a callout** — the lightbulb cue sits in a tinted rounded box with the icon
+  anchored to the first line (it used to float unaligned when the tip wrapped). Check it stands out
+  and the icon lines up.
+- Chip row still wraps to two rows with 4 games — left as-is (will matter more if more games land).
+
 ### 2026-07-17 Results-screen overhaul + Round History (your feedback batch, branch `ux-overhaul`)
 The whole batch of results-screen feedback, diagnosed and fixed. Plan:
 `C:\Users\Drake7707\.claude\plans\snug-juggling-anchor.md`. Tests + lint green

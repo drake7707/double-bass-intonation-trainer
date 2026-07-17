@@ -15,6 +15,10 @@
     <string name="progress_stat_streak">jours d\'affilée</string>
     <string name="progress_dash">—</string>
 
+    <!-- Mini-stats compactes « Cette semaine » (nombre au-dessus, ce libellé en dessous) -->
+    <string name="progress_stat_this_week">cette semaine</string>
+    <string name="progress_stat_right_note">bonne note</string>
+
     <string name="progress_this_week">Cette semaine</string>
     <plurals name="progress_practiced">
         <item quantity="one">Tu as pratiqué %1$d fois cette semaine.</item>

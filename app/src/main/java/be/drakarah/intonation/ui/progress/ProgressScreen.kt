@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.PlayCircleOutline
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -71,6 +70,7 @@ import be.drakarah.intonation.ui.chords.EXERCISE_CHORDS
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.detailedLabel
 import be.drakarah.intonation.ui.common.label
+import be.drakarah.intonation.ui.common.SectionDivider
 import be.drakarah.intonation.ui.common.modeLabel
 import be.drakarah.intonation.ui.common.positionShortLabel
 import be.drakarah.intonation.ui.common.sentence
@@ -166,12 +166,13 @@ fun ProgressScreen(
                     )
                 }
             }
-            Spacer(Modifier.height(Spacing.SECTION_BREAK))
 
             if (!state.hasData) {
+                Spacer(Modifier.height(Spacing.SECTION_BREAK))
                 EmptyState()
                 Spacer(Modifier.weight(1f))
             } else {
+                SectionDivider()
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -180,12 +181,17 @@ fun ProgressScreen(
                     ScoreChart(percents = state.scorePercents)
                     Spacer(Modifier.height(Spacing.ITEM_SPACING))
                     StatTrio(state)
-                    Spacer(Modifier.height(Spacing.SECTION_BREAK))
-                    state.summary?.let { CoachingSummaryCard(it, state.isSustain, expert) }
-                    Spacer(Modifier.height(Spacing.SECTION_BREAK))
+                    state.summary?.let {
+                        SectionDivider()
+                        ThisWeekSection(it, state.isSustain, expert)
+                    }
                     if (state.isSustain) {
-                        state.summary?.sustain?.let { SustainMetrics(it) }
+                        state.summary?.sustain?.let {
+                            SectionDivider()
+                            SustainMetrics(it)
+                        }
                     } else if (state.positionMastery.isNotEmpty()) {
+                        SectionDivider()
                         MasteryByPosition(state.positionMastery, expert)
                     }
                 }
@@ -322,46 +328,56 @@ private fun ScoreChart(percents: List<Float>) {
     }
 }
 
-/** The "teacher's notebook": this-week activity, intonation trend, cleanliness, and one coaching cue. */
+/** The "teacher's notebook" section: this-week activity, intonation verdict, and one coaching cue.
+ * A titled section (dividers above/below) rather than a card, so Progress reads as the same stack of
+ * sections as the Results screen instead of a card floating in loose text (Sarah, 2026-07-17). */
 @Composable
-private fun CoachingSummaryCard(summary: CoachingSummary, isSustain: Boolean, expert: Boolean) {
-    Card(Modifier.fillMaxWidth()) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(Spacing.CARD_PADDING),
-            verticalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING),
-        ) {
-            Text(stringResource(R.string.progress_this_week), style = MaterialTheme.typography.titleMedium)
+private fun ThisWeekSection(summary: CoachingSummary, isSustain: Boolean, expert: Boolean) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING)) {
+        Text(stringResource(R.string.progress_this_week), style = MaterialTheme.typography.titleMedium)
 
-            if (expert) ExpertSummary(summary, isSustain) else PlainSummary(summary, isSustain)
+        if (expert) ExpertSummary(summary, isSustain) else PlainThisWeek(summary, isSustain)
 
-            summary.insight?.let { InsightLine(it.sentence()) }
-        }
+        summary.insight?.let { InsightCallout(it.sentence()) }
     }
 }
 
-/** Beginner default: warm, plain-language coaching for a young student — full sentences, no jargon.
- * Streak lives in the top stat trio, so it isn't repeated here. */
+/** Beginner default: the two numbers that matter as scannable mini-stats, then one warm sentence.
+ * The "practiced N times" and "right note N%" sentences used to stack as a wall of text — the counts
+ * are now stat blocks and only the intonation verdict stays prose. Streak lives in the top trio, and
+ * the no-comparison "keep playing to see improvement" filler is dropped (the verdict already
+ * encourages). */
 @Composable
-private fun PlainSummary(summary: CoachingSummary, isSustain: Boolean) {
-    SummaryLine(
-        pluralStringResource(
-            R.plurals.progress_practiced, summary.roundsThisWeek, summary.roundsThisWeek
-        )
-    )
+private fun PlainThisWeek(summary: CoachingSummary, isSustain: Boolean) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.SECTION_BREAK)) {
+        MiniStat("${summary.roundsThisWeek}", stringResource(R.string.progress_stat_this_week))
+        if (!isSustain) {
+            summary.rightNotePct?.let {
+                MiniStat("$it%", stringResource(R.string.progress_stat_right_note))
+            }
+        }
+    }
     if (isSustain) {
         SummaryLine(stringResource(R.string.progress_sustain_hint))
+    } else if (summary.weekBand != null) {
+        SummaryLine(intonationSentence(summary.weekBand))
+        summary.trend?.takeIf { it.hasComparison }?.let { TrendLine(it) }
     } else {
-        if (summary.weekBand != null) {
-            SummaryLine(intonationSentence(summary.weekBand))
-            summary.trend?.let { TrendLine(it) }
-        } else {
-            SummaryLine(stringResource(R.string.progress_need_more))
-        }
-        summary.rightNotePct?.let {
-            SummaryLine(stringResource(R.string.progress_right_note_pct, it))
-        }
+        SummaryLine(stringResource(R.string.progress_need_more))
+    }
+}
+
+/** A compact number+label pair — smaller than the top [StatBlock] trio so the week's figures read as
+ * secondary detail, not a second headline. */
+@Composable
+private fun MiniStat(value: String, label: String) {
+    Column {
+        Text(value, style = MaterialTheme.typography.titleMedium)
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -442,13 +458,18 @@ private fun TrendLine(trend: WeekTrend) {
     }
 }
 
+/** The single "watch this" coaching cue, as a tinted callout box. Boxing it (rather than a bare
+ * icon+text row) gives the most actionable line on the screen visual weight and keeps the lightbulb
+ * anchored to the first text line when the tip wraps (Sarah, 2026-07-17). */
 @Composable
-private fun InsightLine(text: String) {
+private fun InsightCallout(text: String) {
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(top = Spacing.COMPONENT_SPACING),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING),
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+            .padding(Spacing.ITEM_SPACING),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING),
     ) {
         Icon(
             Icons.Outlined.Lightbulb,
@@ -473,7 +494,7 @@ private fun MasteryByPosition(stats: List<PositionMastery>, expert: Boolean) {
             // Below the sample threshold the bar is greyed and the conclusions (word + bias) are
             // hidden — it shows there's data, but not enough to draw a verdict from yet.
             val barColor = if (enough) bandColor(stat.band) else muted.copy(alpha = 0.4f)
-            Column(Modifier.padding(vertical = 6.dp)) {
+            Column(Modifier.padding(vertical = Spacing.FINE_SPACING)) {
                 Row(
                     Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,

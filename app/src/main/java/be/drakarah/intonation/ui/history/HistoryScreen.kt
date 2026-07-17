@@ -31,8 +31,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.R
+import be.drakarah.intonation.ui.common.color
 import be.drakarah.intonation.ui.common.exerciseLabel
 import be.drakarah.intonation.ui.common.modeLabel
+import be.drakarah.intonation.ui.common.pitchAccuracyWord
 import be.drakarah.intonation.ui.theme.Spacing
 import java.text.DateFormat
 import java.util.Date
@@ -119,7 +121,14 @@ private fun HistoryRow(row: HistoryRowUi, onClick: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-}
+                row.pitchLevel?.let { level ->
+                    Text(
+                        level.pitchAccuracyWord(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = level.color(),
+                    )
+                }
+            }
             Text(
                 stringResource(R.string.history_row_score, row.totalScore, row.maxScore),
                 style = MaterialTheme.typography.titleMedium,

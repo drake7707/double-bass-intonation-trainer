@@ -66,4 +66,33 @@
     <string name="chords_tone_sharp">trop haut</string>
     <string name="chords_tone_flat">trop bas</string>
 
+    <!-- Mesures de résultat (refonte de la présentation 2026-07-17). Brouillon — en attente de validation Sarah/prof. -->
+    <string name="results_score_label">Score</string>
+    <string name="results_your_playing">Ton jeu</string>
+    <string name="results_landed_scope">sur les %1$d de %2$d réussies</string>
+    <string name="gauge_pitch_accuracy">Justesse</string>
+    <string name="gauge_shift_accuracy">Glissé</string>
+    <string name="gauge_steadiness">Stabilité</string>
+    <string name="gauge_hold">Tenue</string>
+    <string name="gauge_pitch_excellent">Excellent</string>
+    <string name="gauge_pitch_solid">Solide</string>
+    <string name="gauge_pitch_developing">En progrès</string>
+    <string name="gauge_shift_precise">Précis</string>
+    <string name="gauge_shift_good">Bien</string>
+    <string name="gauge_shift_loose">Imprécis</string>
+    <string name="gauge_steadiness_good">Parfaitement stable</string>
+    <string name="gauge_steadiness_ok">Un peu instable</string>
+    <string name="gauge_steadiness_developing">Instable</string>
+    <string name="gauge_hold_good">Toutes tenues</string>
+    <string name="gauge_hold_ok">La plupart tenues</string>
+    <string name="gauge_hold_developing">Peu tenues</string>
+    <string name="gauge_value_cents">%1$d¢ moy.</string>
+    <string name="gauge_value_seconds">%1$s s moy.</string>
+    <string name="gauge_chart_show">Afficher %1$s</string>
+    <string name="results_praise_pitch">Pile juste.</string>
+    <string name="results_praise_shift">Glissés précis.</string>
+    <string name="results_praise_steady">Archet parfaitement stable.</string>
+    <string name="results_praise_hold">Chaque note tenue.</string>
+    <string name="results_watch_shift_start">Stabilise ta note de départ avant de glisser — c\'est elle qui a décalé les arrivées.</string>
+
 </resources>

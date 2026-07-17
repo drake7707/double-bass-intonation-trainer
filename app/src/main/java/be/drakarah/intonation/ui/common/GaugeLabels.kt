@@ -70,6 +70,17 @@ fun RoundGauge.technicalValue(): String? {
     }
 }
 
+/** The pitch-accuracy word for a bare level — used by the History list, which has only the
+ * session's capped level (not a full gauge). Same words as the pitch gauge. */
+@Composable
+fun GaugeLevel.pitchAccuracyWord(): String = stringResource(
+    when (this) {
+        GaugeLevel.GOOD -> R.string.gauge_pitch_excellent
+        GaugeLevel.OK -> R.string.gauge_pitch_solid
+        GaugeLevel.DEVELOPING -> R.string.gauge_pitch_developing
+    }
+)
+
 /** The one accuracy colour scale (shared with dots/chart): GOOD green, OK yellow, DEVELOPING orange
  * (a growth colour), MISS red — red is only ever a gap/miss. */
 fun GaugeZone.color(): Color = when (this) {

@@ -6,13 +6,18 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.data.SessionRepository
+import be.drakarah.intonation.metrics.GaugeLevel
+import be.drakarah.intonation.metrics.MasteryThresholds
+import be.drakarah.intonation.metrics.cappedMasteryBand
+import be.drakarah.intonation.metrics.toGaugeLevel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
-/** One row in the history list — everything shown comes from the session row alone (no attempt
- * reads), so the list stays a single cheap query. */
+/** One row in the history list. The pitch-accuracy word is the universal metric, computed the same
+ * (hit-rate-capped, NOTE scale) way as the results screen — so the list and the detail always
+ * agree (the bug that started the redesign). */
 data class HistoryRowUi(
     val sessionId: Long,
     val startedAt: Long,
@@ -20,16 +25,26 @@ data class HistoryRowUi(
     val mode: String,
     val totalScore: Int,
     val maxScore: Int,
+    /** Universal pitch-accuracy level; null when nothing scored (no intonation to grade). */
+    val pitchLevel: GaugeLevel?,
 )
 
 /** Lists past completed rounds (all exercises, arco + pizz), newest first — Sarah's request for a
- * way to reopen a round's results without replaying it. Reuses `recentSessions` (as Progress does)
- * and maps in-memory; no new list query. */
+ * way to reopen a round's results without replaying it. Combines the session list with one grouped
+ * attempt-count query so the pitch word can be hit-rate-capped without reading every attempt. */
 class HistoryViewModel(repository: SessionRepository) : ViewModel() {
 
     val rows: StateFlow<List<HistoryRowUi>> =
-        repository.recentSessions(limit = 500).map { sessions ->
+        combine(
+            repository.recentSessions(limit = 500),
+            repository.attemptCountsBySession(),
+        ) { sessions, counts ->
+            val countsById = counts.associateBy { it.sessionId }
             sessions.map { s ->
+                val c = countsById[s.id]
+                val pitchLevel = if (c == null) null else
+                    cappedMasteryBand(s.avgAbsCents, c.scoredCount, c.attemptCount, MasteryThresholds.NOTE)
+                        ?.toGaugeLevel()
                 HistoryRowUi(
                     sessionId = s.id,
                     startedAt = s.startedAt,
@@ -37,6 +52,7 @@ class HistoryViewModel(repository: SessionRepository) : ViewModel() {
                     mode = s.mode,
                     totalScore = s.totalScore,
                     maxScore = s.maxScore,
+                    pitchLevel = pitchLevel,
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

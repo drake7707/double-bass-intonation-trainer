@@ -65,7 +65,8 @@ data class RoundGauge(
  * a distinct skill from pitch, so it does not share the pitch thresholds (principle 2). */
 val STEADINESS_THRESHOLDS = MasteryThresholds(lockedMax = 8f, solidMax = 20f)
 
-private fun MasteryBand.toGaugeLevel(): GaugeLevel = when (this) {
+/** Map the (pitch) mastery band to the shared 3-rung gauge level. */
+fun MasteryBand.toGaugeLevel(): GaugeLevel = when (this) {
     MasteryBand.LOCKED -> GaugeLevel.GOOD
     MasteryBand.SOLID -> GaugeLevel.OK
     MasteryBand.DEVELOPING -> GaugeLevel.DEVELOPING

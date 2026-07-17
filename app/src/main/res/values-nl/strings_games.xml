@@ -66,4 +66,33 @@
     <string name="chords_tone_sharp">te hoog</string>
     <string name="chords_tone_flat">te laag</string>
 
+    <!-- Resultaat-metingen (presentatie-herziening 2026-07-17). Draft — wacht op nazicht Sarah/leraar. -->
+    <string name="results_score_label">Score</string>
+    <string name="results_your_playing">Je spel</string>
+    <string name="results_landed_scope">op basis van de %1$d van %2$d die je haalde</string>
+    <string name="gauge_pitch_accuracy">Zuiverheid</string>
+    <string name="gauge_shift_accuracy">Verschuiving</string>
+    <string name="gauge_steadiness">Stabiliteit</string>
+    <string name="gauge_hold">Aanhouden</string>
+    <string name="gauge_pitch_excellent">Uitstekend</string>
+    <string name="gauge_pitch_solid">Stevig</string>
+    <string name="gauge_pitch_developing">In ontwikkeling</string>
+    <string name="gauge_shift_precise">Precies</string>
+    <string name="gauge_shift_good">Goed</string>
+    <string name="gauge_shift_loose">Onnauwkeurig</string>
+    <string name="gauge_steadiness_good">Kaarsrecht</string>
+    <string name="gauge_steadiness_ok">Een beetje wiebelig</string>
+    <string name="gauge_steadiness_developing">Wiebelig</string>
+    <string name="gauge_hold_good">Alles gehaald</string>
+    <string name="gauge_hold_ok">Meeste gehaald</string>
+    <string name="gauge_hold_developing">Weinig gehaald</string>
+    <string name="gauge_value_cents">%1$d¢ gem.</string>
+    <string name="gauge_value_seconds">%1$s s gem.</string>
+    <string name="gauge_chart_show">Toon %1$s</string>
+    <string name="results_praise_pitch">Precies zuiver.</string>
+    <string name="results_praise_shift">Precieze verschuivingen.</string>
+    <string name="results_praise_steady">Kaarsrechte streek.</string>
+    <string name="results_praise_hold">Elke noot vastgehouden.</string>
+    <string name="results_watch_shift_start">Stem eerst je startnoot af voor je verschuift — die duwde de landingen scheef.</string>
+
 </resources>

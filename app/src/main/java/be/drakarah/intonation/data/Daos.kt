@@ -47,7 +47,19 @@ interface SessionDao {
             "AND epochDay >= :fromDay AND epochDay < :untilDay"
     )
     fun roundsInWindow(exerciseType: String, fromDay: Int, untilDay: Int): Flow<Int>
+
+    /** Per-session attempt vs SCORED counts — one grouped scan, so the History list can hit-rate-cap
+     * the pitch-accuracy word without reading every attempt row. */
+    @Query(
+        "SELECT sessionId AS sessionId, COUNT(*) AS attemptCount, " +
+            "SUM(CASE WHEN outcome = 'SCORED' AND centsError IS NOT NULL THEN 1 ELSE 0 END) AS scoredCount " +
+            "FROM attempts GROUP BY sessionId"
+    )
+    fun attemptCountsBySession(): Flow<List<SessionAttemptCounts>>
 }
+
+/** Projection for [SessionDao.attemptCountsBySession]. */
+data class SessionAttemptCounts(val sessionId: Long, val attemptCount: Int, val scoredCount: Int)
 
 @Dao
 interface AchievementDao {

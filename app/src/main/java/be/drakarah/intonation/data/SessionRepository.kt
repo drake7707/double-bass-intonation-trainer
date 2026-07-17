@@ -21,6 +21,11 @@ class SessionRepository(private val db: IntonationDatabase) {
     fun recentSessions(limit: Int = 50): Flow<List<SessionEntity>> =
         db.sessionDao().recentSessions(limit)
 
+    /** Per-session attempt/scored counts (one grouped query) — lets the History list compute the
+     * same hit-rate-capped pitch-accuracy word the results screen shows. */
+    fun attemptCountsBySession(): Flow<List<SessionAttemptCounts>> =
+        db.sessionDao().attemptCountsBySession()
+
     /** One completed session with its attempts in prompt order — backs the history detail. */
     suspend fun sessionWithAttempts(id: Long): Pair<SessionEntity, List<AttemptEntity>>? {
         val session = db.sessionDao().sessionById(id) ?: return null

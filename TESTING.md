@@ -5,6 +5,18 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-17 Language switch fixed (it was silently doing nothing)
+The in-app language picker (onboarding + Settings) never actually applied or persisted a language.
+Root cause: `MainActivity` was a plain `ComponentActivity` with a framework (`android:Theme.Material`)
+theme, so `AppCompatDelegate.setApplicationLocales` had no live AppCompat delegate to drive — it
+no-opped on every API level. Fix: `MainActivity` is now an `AppCompatActivity` and the app theme is
+an AppCompat parent; AppCompat now applies + persists the locale itself. Installed on your phone.
+- [ ] Settings → pick **Nederlands** → the app should recreate and come back in Dutch immediately.
+- [ ] Fully close and reopen the app → it should still be in Dutch (choice persisted).
+- [ ] Pick **Français** → French; pick **System** → back to the phone's language.
+- [ ] Sanity: note names (Do Ré Mi vs C D E) are unaffected by the language switch.
+- [ ] NL/FR copy still needs your + teacher sign-off (separate item below) — this is just the switch.
+
 ### 2026-07-17 Results-presentation redesign (branch `performance-presentation`)
 The score/stars/"how in tune" overlap, rebuilt around one model (plan:
 `docs/PERFORMANCE_PRESENTATION_PLAN_2026-07-17.md`). Verified on your phone via History replay

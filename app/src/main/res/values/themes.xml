@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.IntonationTrainer" parent="android:Theme.Material.NoActionBar">
+    <!-- AppCompat parent (not the framework android:Theme.Material) so MainActivity can be an
+         AppCompatActivity — required for AppCompatDelegate.setApplicationLocales (the in-app language
+         switch) to have a live delegate to work through. Dark, matching the dark-only Compose theme;
+         the in-app colours all come from IntonationTrainerTheme, so this only styles the launch window. -->
+    <style name="Theme.IntonationTrainer" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
         <item name="android:statusBarColor">@color/window_background</item>
         <item name="android:navigationBarColor">@color/window_background</item>

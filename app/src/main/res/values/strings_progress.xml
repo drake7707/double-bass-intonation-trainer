@@ -79,7 +79,6 @@
     <!-- %1$d = unlocked, %2$d = total -->
     <string name="ach_unlocked_count">%1$d of %2$d unlocked</string>
     <string name="ach_cd_locked">Locked achievement</string>
-    <string name="ach_back">Back</string>
 
     <!-- Achievement definitions (id-keyed). description = plain; description_tech = with numbers. -->
     <string name="ach_FIRST_ROUND_title">First round</string>

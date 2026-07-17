@@ -61,7 +61,6 @@
     <string name="ach_title">Succès</string>
     <string name="ach_unlocked_count">%1$d sur %2$d débloqués</string>
     <string name="ach_cd_locked">Succès verrouillé</string>
-    <string name="ach_back">Retour</string>
 
     <string name="ach_FIRST_ROUND_title">Première manche</string>
     <string name="ach_FIRST_ROUND_desc">Termine ta première manche.</string>

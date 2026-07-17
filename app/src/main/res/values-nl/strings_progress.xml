@@ -61,7 +61,6 @@
     <string name="ach_title">Prestaties</string>
     <string name="ach_unlocked_count">%1$d van %2$d vrijgespeeld</string>
     <string name="ach_cd_locked">Vergrendelde prestatie</string>
-    <string name="ach_back">Terug</string>
 
     <string name="ach_FIRST_ROUND_title">Eerste ronde</string>
     <string name="ach_FIRST_ROUND_desc">Voltooi je eerste ronde.</string>

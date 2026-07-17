@@ -14,6 +14,9 @@
     <string name="difficulty_relaxed">Relaxed</string>
     <string name="difficulty_standard">Standard</string>
     <string name="difficulty_strict">Strict</string>
+    <string name="difficulty_relaxed_blurb">A wide margin still scores well — best while you\'re learning where notes sit.</string>
+    <string name="difficulty_standard_blurb">The everyday setting — balanced between forgiving and precise.</string>
+    <string name="difficulty_strict_blurb">Only near-perfect intonation scores well — for polishing accuracy once you\'re solid.</string>
 
     <!-- Shift levels (game/Positions.kt ShiftLevel) — say WHAT the level is -->
     <string name="shift_level_basic">One string, fingers 1↔4</string>

@@ -24,6 +24,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.GraphicEq
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -44,6 +46,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -75,7 +78,7 @@ import be.drakarah.intonation.ui.theme.TextSizes
 import java.util.Locale
 import kotlin.math.abs
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun DebugPitchScreen(
     onBack: () -> Unit,
@@ -123,7 +126,24 @@ fun DebugPitchScreen(
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+    Scaffold(
+        topBar = {
+            if (!sweepMode) {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.debug_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.common_cd_back),
+                            )
+                        }
+                    },
+                )
+            }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { padding ->
         if (sweepMode && hasPermission) {
             SweepView(
                 sweep = sweep,
@@ -151,9 +171,6 @@ fun DebugPitchScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Spacing.ITEM_SPACING),
         ) {
-            Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
-            Text(stringResource(R.string.debug_title), style = MaterialTheme.typography.headlineMedium)
-
             if (!hasPermission) {
                 Text(stringResource(R.string.debug_permission_required))
                 Button(onClick = { permissionLauncher.launch(Manifest.permission.RECORD_AUDIO) }) {
@@ -339,10 +356,6 @@ fun DebugPitchScreen(
                 }
             }
 
-            Spacer(Modifier.height(Spacing.ITEM_SPACING))
-            OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.debug_back))
-            }
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
     }

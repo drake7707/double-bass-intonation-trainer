@@ -10,6 +10,9 @@
     <string name="difficulty_relaxed">Soepel</string>
     <string name="difficulty_standard">Standaard</string>
     <string name="difficulty_strict">Streng</string>
+    <string name="difficulty_relaxed_blurb">Een ruime marge scoort nog goed — fijn zolang je nog leert waar de noten liggen.</string>
+    <string name="difficulty_standard_blurb">De standaardinstelling — evenwicht tussen soepel en precies.</string>
+    <string name="difficulty_strict_blurb">Alleen bijna-perfecte intonatie scoort goed — om je precisie aan te scherpen als je al stevig staat.</string>
 
     <string name="shift_level_basic">Eén snaar, vingers 1↔4</string>
     <string name="shift_level_intermediate">Eén snaar, elke vinger</string>

@@ -10,6 +10,9 @@
     <string name="difficulty_relaxed">Souple</string>
     <string name="difficulty_standard">Standard</string>
     <string name="difficulty_strict">Strict</string>
+    <string name="difficulty_relaxed_blurb">Une large marge compte encore comme juste — utile tant que tu apprends où se trouvent les notes.</string>
+    <string name="difficulty_standard_blurb">Le réglage du quotidien — équilibre entre souplesse et précision.</string>
+    <string name="difficulty_strict_blurb">Seule une intonation quasi parfaite obtient un bon score — pour affiner ta justesse une fois à l\'aise.</string>
 
     <string name="shift_level_basic">Une corde, doigts 1↔4</string>
     <string name="shift_level_intermediate">Une corde, n\'importe quel doigt</string>

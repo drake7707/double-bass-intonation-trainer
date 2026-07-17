@@ -39,6 +39,15 @@ val Difficulty.displayLabel: String
         }
     )
 
+val Difficulty.displayBlurb: String
+    @Composable get() = stringResource(
+        when (this) {
+            Difficulty.RELAXED -> R.string.difficulty_relaxed_blurb
+            Difficulty.STANDARD -> R.string.difficulty_standard_blurb
+            Difficulty.STRICT -> R.string.difficulty_strict_blurb
+        }
+    )
+
 val ShiftLevel.displayLabel: String
     @Composable get() = stringResource(
         when (this) {

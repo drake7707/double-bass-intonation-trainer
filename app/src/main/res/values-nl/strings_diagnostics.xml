@@ -12,7 +12,6 @@
     <string name="about_attribution_body">Toonhoogtedetectie aangepast van Tuner, © Michael Moessner, GPL-3.0-or-later.\nhttps://codeberg.org/thetwom/Tuner</string>
     <string name="about_show_license">Volledige licentietekst tonen</string>
     <string name="about_hide_license">Licentietekst verbergen</string>
-    <string name="about_back">Terug</string>
 
     <string name="rec_title_reports">Oefenrapporten</string>
     <string name="rec_title_recordings">Opnames</string>
@@ -55,7 +54,6 @@
     <string name="debug_stop_and_save">Stoppen en opname opslaan</string>
     <string name="debug_record_2min">Neem tot 2 minuten op</string>
     <string name="debug_manage_recordings">Opnames beheren</string>
-    <string name="debug_back">Terug</string>
     <string name="debug_cd_switch_mode">Wissel arco / pizz</string>
 
     <string name="debug_sweep_title">Notenoverzicht</string>

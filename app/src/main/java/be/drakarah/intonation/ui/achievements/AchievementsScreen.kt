@@ -12,15 +12,18 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -39,6 +42,7 @@ import be.drakarah.intonation.ui.common.displayDescription
 import be.drakarah.intonation.ui.common.displayTitle
 import be.drakarah.intonation.ui.theme.Spacing
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AchievementsScreen(
     onBack: () -> Unit,
@@ -46,15 +50,27 @@ fun AchievementsScreen(
 ) {
     val unlocked by viewModel.unlocked.collectAsStateWithLifecycle()
 
-    Scaffold { padding ->
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.ach_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.common_cd_back),
+                        )
+                    }
+                },
+            )
+        }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
         ) {
-            Spacer(Modifier.height(Spacing.SECTION_BREAK))
-            Text(stringResource(R.string.ach_title), style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(Spacing.FINE_SPACING))
             Text(
                 stringResource(R.string.ach_unlocked_count, unlocked.size, ACHIEVEMENTS.size),
@@ -83,10 +99,6 @@ fun AchievementsScreen(
                 items(ordered, key = { it.id }) { def ->
                     AchievementCell(def, def.id in unlocked)
                 }
-            }
-            Spacer(Modifier.height(Spacing.ITEM_SPACING))
-            OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.ach_back))
             }
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }

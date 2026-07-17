@@ -29,10 +29,12 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.PlayCircleOutline
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -128,21 +130,21 @@ fun ProgressScreen(
                         Icon(
                             Icons.Default.History,
                             contentDescription = stringResource(R.string.history_cd_open),
-                            tint = MaterialTheme.colorScheme.primary,
                         )
                     }
-                    TextButton(onClick = onOpenAchievements) {
+                    TextButton(
+                        onClick = onOpenAchievements,
+                        colors = ButtonDefaults.textButtonColors(contentColor = LocalContentColor.current),
+                    ) {
                         Text(
                             stringResource(R.string.progress_ach_count, unlocked.size, ACHIEVEMENTS.size),
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(Modifier.width(Spacing.COMPONENT_SPACING))
                         Icon(
                             Icons.Default.EmojiEvents,
                             contentDescription = stringResource(R.string.progress_cd_achievements),
-                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -155,7 +157,7 @@ fun ProgressScreen(
                 .padding(padding)
                 .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
         ) {
-            Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
+            Spacer(Modifier.height(Spacing.FINE_SPACING))
 
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
                 exerciseTabs.forEach { (type, labelRes) ->

@@ -17,8 +17,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,6 +34,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,6 +68,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
@@ -192,7 +196,21 @@ fun SettingsScreen(
         )
     }
 
-    Scaffold { padding ->
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.settings_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.common_cd_back),
+                        )
+                    }
+                },
+            )
+        }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -201,9 +219,6 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Spacing.SECTION_BREAK),
         ) {
-            Spacer(Modifier.height(Spacing.SCREEN_EDGE_TOP))
-            Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium)
-
             SectionHeader(stringResource(R.string.settings_section_coaching))
             SettingBlock(
                 stringResource(R.string.settings_technical_title),
@@ -265,6 +280,11 @@ fun SettingsScreen(
                         }
                     }
                 }
+                Text(
+                    settings.difficulty.displayBlurb,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 if (LocalTechnicalDetails.current) {
                     Text(
                         stringResource(
@@ -541,9 +561,6 @@ fun SettingsScreen(
             Spacer(Modifier.height(Spacing.ITEM_SPACING))
             TextButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.settings_about))
-            }
-            OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_back))
             }
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }

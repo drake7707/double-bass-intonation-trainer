@@ -16,7 +16,6 @@
     <string name="about_attribution_body">Pitch detection adapted from Tuner, © Michael Moessner, GPL-3.0-or-later.\nhttps://codeberg.org/thetwom/Tuner</string>
     <string name="about_show_license">Show full license text</string>
     <string name="about_hide_license">Hide license text</string>
-    <string name="about_back">Back</string>
 
     <!-- Practice reports / Recordings -->
     <string name="rec_title_reports">Practice reports</string>
@@ -67,7 +66,6 @@
     <string name="debug_stop_and_save">Stop and save recording</string>
     <string name="debug_record_2min">Record up to 2 minutes</string>
     <string name="debug_manage_recordings">Manage recordings</string>
-    <string name="debug_back">Back</string>
     <string name="debug_cd_switch_mode">Switch arco / pizz</string>
 
     <!-- Note sweep -->

@@ -11,12 +11,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,12 +39,27 @@ import be.drakarah.intonation.ui.theme.Spacing
 /** Published source code — the GPL requires this link to stay visible (user request, TESTING.md). */
 private const val SOURCE_URL = "https://github.com/drake7707/double-bass-intonation-trainer"
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     var licenseText by remember { mutableStateOf<String?>(null) }
 
-    Scaffold { padding ->
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.about_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.common_cd_back),
+                        )
+                    }
+                },
+            )
+        }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -47,8 +67,6 @@ fun AboutScreen(onBack: () -> Unit) {
                 .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL)
                 .verticalScroll(rememberScrollState()),
         ) {
-            Spacer(Modifier.height(Spacing.SECTION_BREAK))
-            Text(stringResource(R.string.about_title), style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(Spacing.FINE_SPACING))
             Text(
                 stringResource(R.string.about_intro),
@@ -100,10 +118,6 @@ fun AboutScreen(onBack: () -> Unit) {
                 }
             }
 
-            Spacer(Modifier.height(Spacing.SECTION_BREAK))
-            OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.about_back))
-            }
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
     }

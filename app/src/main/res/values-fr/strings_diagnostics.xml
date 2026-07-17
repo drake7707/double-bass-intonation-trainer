@@ -13,7 +13,6 @@
     <string name="about_attribution_body">Détection de hauteur adaptée de Tuner, © Michael Moessner, GPL-3.0-or-later.\nhttps://codeberg.org/thetwom/Tuner</string>
     <string name="about_show_license">Afficher le texte complet de la licence</string>
     <string name="about_hide_license">Masquer le texte de la licence</string>
-    <string name="about_back">Retour</string>
 
     <string name="rec_title_reports">Rapports de pratique</string>
     <string name="rec_title_recordings">Enregistrements</string>
@@ -56,7 +55,6 @@
     <string name="debug_stop_and_save">Arrêter et enregistrer</string>
     <string name="debug_record_2min">Enregistrer jusqu\'à 2 minutes</string>
     <string name="debug_manage_recordings">Gérer les enregistrements</string>
-    <string name="debug_back">Retour</string>
     <string name="debug_cd_switch_mode">Basculer arco / pizz</string>
 
     <string name="debug_sweep_title">Balayage des notes</string>

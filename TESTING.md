@@ -46,6 +46,34 @@ The full plan is `docs/UX_OVERHAUL_PLAN_2026-07-16.md`; every change below needs
 - Pitch Analyzer: friendlier framing, raw pipeline numbers behind an in-screen expander — check
   you can still diagnose with it (sound-level bar + heard-note + Check every note are all still there).
 
+### 2026-07-17 Full string extraction + NL/FR + language picker + shift-badge fix (branch `ux-overhaul`)
+After your English copy sign-off, every user-facing string moved to resources and I drafted NL/FR.
+The whole UI now compiles/lints/builds clean (`:app:lintDebug` green). To verify on the phone:
+
+- **Language picker** (your request): on the **first onboarding screen** and in **Settings → Notes &
+  tuning → Language**. Options: System default / English / Nederlands / Français. Switching recreates
+  the app in that language immediately. **Endonyms stay in their own language** in every UI language
+  (so a lost user finds their own). Note names (Do Ré Mi / C D E) are still a *separate* setting — a
+  language switch must NOT change your note-name choice.
+- **Dutch (NL) — you review natively.** Every screen in Dutch: zuiver / te hoog / te laag; games,
+  coach lines, Settings, Full setup, Progress, achievements. **This is a draft — flag anything that
+  reads wrong and I'll fix it in `values-nl` (no code change).** (You already tweaked a couple of
+  lines — coach time-pressure, shift "check je start" — those are in.)
+- **French (FR) — for your teacher.** Same coverage: juste / trop haut / trop bas. Draft for their
+  review; fixes land in `values-fr`.
+- **Kept English on purpose** (matches the JSONL/log a report is read against): the Pitch Analyzer's
+  raw diagnostic rows + engine-config line, and the developer feedback email subject/body. The
+  visible dialogs around sending are translated. Confirm that reads OK.
+- **"Double Bass Coach" is never translated** (product name) — check the launcher label and headers
+  stay "Double Bass Coach" in NL and FR too.
+- **Shift badge reworked (your feedback, twice).** The old green "great shift — your starting note
+  was sharp/flat" was too long for the reveal and praise-colored a *problem*. Now a short amber
+  **"check your start"** badge with a flag, shown only when the shift itself was accurate but the
+  start note pushed the landing off; the round summary carries the full explanation with the same
+  icon. **Check it reads as a caution, not praise, and is legible in the reveal window.**
+- Re-confirm **scores/PBs still show** (all persisted ids/enum constants unchanged) and the wizard
+  still works on a **cleared-data install**, now with the language step first.
+
 ### 2026-07-16 Progress screen redesigned to coach, not grade (your feedback batch)
 Full rework of the Progress screen, driven by your live feedback while I watched on the emulator/phone
 with your imported data. **Verified on-screen against your real data (emulator + Pixel); still worth a

@@ -466,16 +466,49 @@ Branch **`ux-overhaul`** (off `main`@`dc89ae5`). One commit per todo. `:app`+`:d
   RoundCoach returns verdict enums; ALL coaching wording now in **`ui/common/CoachingLabels.kt`**
   (the one file 5b turns into resources); tests assert enums
 
-### Deliberately NOT done yet — gated on Sarah
-**STRING FREEZE GATE:** phases **5b** (extract ~350 strings to `strings.xml`, plurals,
-`localeConfig`, pseudolocale check; enum label fields like PlayerLevel/ShiftLevel/ChordFingering/
-Achievements/Position can become `@StringRes` ints — R constants keep domain tests pure) and
-**6** (values-nl + values-fr drafts; she reviews NL, her teacher FR) run ONLY after:
-1. her on-phone pass of the TESTING.md "2026-07-16 UX overhaul" + "Pace" Pending blocks
-   (`app\build\outputs\apk\debug\app-debug.apk` is built and ready to install), and
-2. her review of the English copy (grep-able: CoachingLabels.kt + the screens touched above).
-Also post-freeze: full FEATURES.md rewrite (currently carries a banner), listing-en NL/FR,
-phase 7 Play collateral. Solfège spelling decision: keep "Ré" accent in all languages (noted §5B).
+### Phase 5b + 6 — DONE (2026-07-17). Gate was lifted by Sarah.
+She did the on-phone pass and English copy review ("you're good to go to do nl and fr strings"),
+then asked for a language picker on the first onboarding screen + Settings. So the string freeze
+opened and 5b/6 ran:
+
+- **5b (string extraction)** — commits `974044f`→`7972438`, one per screen cluster:
+  `5b-1` coach prose + shared components (strings_common.xml); `5b-2` domain-label mappers
+  (`ui/common/Labels.kt` + strings_labels.xml — PlayerLevel/ShiftLevel/ChordFingering/Difficulty
+  lose English label fields; `chordName`→UI `chordDisplayName`; `Insight`/`PositionMastery` carry
+  `positionId` not a prebuilt label); `5b-3` game screens (strings_games.xml) + the short shift
+  badge rework below; `5b-4` Home + onboarding (DailyFocus is plain data now; day-streak plural);
+  `5b-5` Settings; `5b-6` Tune up/Drone/Room check/Full setup (WizardViewModel state → enums
+  WizardStage/StringHintKind/WizardFailReason); `5b-7` Progress + Achievements (AchievementDef
+  loses title/description; `hasTechnicalDescription: Boolean` + id-keyed resources); `5b-8` About/
+  Practice reports/Pitch Analyzer (DebugViewModel `captureState` → CaptureUiState enum).
+- **5b-9 + 6a (`4c3c97d`)** — locale plumbing + in-app language picker. `androidx.appcompat` added
+  for per-app locales on API 26–32; `res/xml/locales_config.xml` (en/nl/fr) + manifest
+  `localeConfig` + `AppLocalesMetadataHolderService`; `MainActivity.attachBaseContext` applies the
+  stored locale so switching works below API 33. `ui/common/LanguagePicker.kt` (AppLanguage:
+  System/English/Nederlands/Français via `AppCompatDelegate`) on the onboarding welcome step and in
+  Settings. Endonyms identical across locales (`translatable=false`); only "System default" translates.
+- **6b/6c (`8e538c5`)** — full **values-nl** (Sarah reviews) + **values-fr** (her teacher reviews)
+  DRAFTS for all 8 files. Vocab: NL zuiver/te hoog/te laag, FR juste/trop haut/trop bas; arco/pizz
+  international; solfège "Ré"/"Majeur" kept. Lint fixes: `app_name` translatable=false; FR plural
+  `one` forms carry `%1$d` (ImpliedQuantity); Settings backup strings pre-resolved at composition.
+- **Diagnostics carve-out (plan §B.6):** the Pitch Analyzer's raw diagnostic-row keys
+  (raw/smoothed/accepted/noise/harmonic energy) + engine-config line + the developer email
+  subject/body template stay English on purpose — they mirror the JSONL/log vocabulary a report is
+  read against.
+
+Full suite + `:app:lintDebug` + `assembleDebug` all green; APK at
+`app\build\outputs\apk\debug\app-debug.apk`.
+
+**Still open (post-review polish, not blocking):** NL/FR are drafts awaiting Sarah + teacher sign-off
+(fix in place in values-nl / values-fr — no code change); full FEATURES.md rewrite (banner in place);
+listing-en NL/FR; phase 7 Play collateral.
+
+### Shift "great shift" badge → "check your start" (user feedback, `5183147`+`60a1bd0`)
+The reveal's "great shift — your starting note was sharp/flat" sentence was too long to read in the
+reveal window, and green/praise-colored wording was counterintuitive when the message is really
+"your start was off". Now a short amber **"check your start"** badge with a flag icon, only when the
+shift distance was accurate but the start note (≥15¢ off) pushed the landing off; the round summary
+repeats the icon with the full explanation. (`ShiftAttemptUi.isStartPushedLandingOff`.)
 
 ### Notes for whoever continues
 - Every commit compiled + unit-tested before landing; `:dsp` untouched the whole branch.

@@ -54,8 +54,8 @@
     <string name="shift_go">GA —</string>
     <string name="shift_distance">afstand verschuiving</string>
     <string name="shift_confident">zekere verschuiving</string>
-    <string name="shift_breakdown_landed">geland %1$s¢</string>
-    <string name="shift_breakdown_full">start %1$s¢  ·  geland %2$s¢</string>
+    <string name="shift_breakdown_landed">uitgekomen op %1$s¢</string>
+    <string name="shift_breakdown_full">start %1$s¢  ·  uitgekomen op %2$s¢</string>
     <string name="shift_check_start">check je start</string>
     <string name="shift_check_start_explainer">Check je start = de verschuiving had de juiste grootte maar de startnoot was niet zuiver. Zet de start goed vóór GA.</string>
 

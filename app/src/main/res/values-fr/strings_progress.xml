@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French (FR). DRAFT — Sarah's teacher reviews. -->
+<resources>
+
+    <string name="progress_title">Progrès</string>
+    <string name="progress_tab_shifts">Glissés</string>
+    <string name="progress_cd_achievements">Succès</string>
+    <string name="progress_ach_count">%1$d/%2$d</string>
+    <string name="progress_done">Terminé</string>
+    <string name="progress_no_rounds">Aucune manche encore</string>
+    <string name="progress_no_rounds_sub">Joue une partie pour voir tes progrès ici.</string>
+
+    <string name="progress_stat_rounds">manches</string>
+    <string name="progress_stat_best">record</string>
+    <string name="progress_stat_streak">jours d\'affilée</string>
+    <string name="progress_dash">—</string>
+
+    <string name="progress_this_week">Cette semaine</string>
+    <plurals name="progress_practiced">
+        <item quantity="one">Tu as pratiqué %1$d fois cette semaine.</item>
+        <item quantity="other">Tu as pratiqué %1$d fois cette semaine.</item>
+    </plurals>
+    <string name="progress_sustain_hint">Essaie de tenir chaque note longue et stable — ton contrôle d\'archet est ci-dessous.</string>
+    <string name="progress_need_more">Joue encore quelques manches cette semaine pour voir à quel point tu joues juste.</string>
+    <string name="progress_right_note_pct">Tu as trouvé la bonne note %1$d%% du temps.</string>
+    <string name="progress_intonation_locked">Tes notes tombent pile juste — magnifique !</string>
+    <string name="progress_intonation_solid">Tes notes tombent bien juste.</string>
+    <string name="progress_intonation_developing">Tes notes se rapprochent du juste — continue à pratiquer !</string>
+
+    <string name="progress_trend_no_comparison">Continue à jouer pour voir tes progrès chaque semaine.</string>
+    <string name="progress_trend_tighter">C\'est plus juste que la semaine dernière !</string>
+    <string name="progress_trend_looser">Un peu moins bien que la semaine dernière — tu vas le retrouver.</string>
+    <string name="progress_trend_steady">À peu près comme la semaine dernière.</string>
+
+    <plurals name="progress_rounds_count">
+        <item quantity="one">%1$d manche</item>
+        <item quantity="other">%1$d manches</item>
+    </plurals>
+    <string name="progress_no_verdict">Pas assez de notes notées cette semaine pour un verdict (il en faut au moins %1$d).</string>
+    <string name="progress_intonation_compared">Justesse %1$s (semaine dernière %2$s, %3$s %4$s)</string>
+    <string name="progress_intonation_this_week">Justesse %1$s cette semaine</string>
+    <string name="progress_looser">moins serré</string>
+    <string name="progress_tighter">plus serré</string>
+    <string name="progress_pct_landed">%1$d%% notes posées</string>
+    <string name="progress_pct_clean">%1$d%% propres</string>
+
+    <string name="progress_accuracy_by_position">Précision par position</string>
+    <string name="progress_keep_playing">continue à jouer</string>
+    <string name="progress_cents_samples">%1$s · %2$d</string>
+
+    <string name="progress_bow_control">Contrôle d\'archet</string>
+    <string name="progress_avg_hold">Tenue moyenne</string>
+    <string name="progress_steadiness">Stabilité</string>
+    <string name="progress_bow_changes">Changements d\'archet / note</string>
+    <string name="progress_seconds_value">%1$s s</string>
+
+    <string name="ach_title">Succès</string>
+    <string name="ach_unlocked_count">%1$d sur %2$d débloqués</string>
+    <string name="ach_cd_locked">Succès verrouillé</string>
+    <string name="ach_back">Retour</string>
+
+    <string name="ach_FIRST_ROUND_title">Première manche</string>
+    <string name="ach_FIRST_ROUND_desc">Termine ta première manche.</string>
+    <string name="ach_BULLSEYE_title">Dans le mille</string>
+    <string name="ach_BULLSEYE_desc">Pose une note pile au centre.</string>
+    <string name="ach_BULLSEYE_desc_tech">Pose une note à moins de 2 cents.</string>
+    <string name="ach_SHARPSHOOTER_title">Tireur d\'élite</string>
+    <string name="ach_SHARPSHOOTER_desc">Termine une manche avec presque toutes les notes justes.</string>
+    <string name="ach_SHARPSHOOTER_desc_tech">Termine une manche avec une moyenne sous 10 cents.</string>
+    <string name="ach_PERFECT_ROUND_title">Manche parfaite</string>
+    <string name="ach_PERFECT_ROUND_desc">Trois étoiles sur chaque note d\'une manche.</string>
+    <string name="ach_ALL_STRINGS_title">Les quatre cordes</string>
+    <string name="ach_ALL_STRINGS_desc">Marque des points sur les quatre cordes en une manche.</string>
+    <string name="ach_NOTES_100_title">Cent notes</string>
+    <string name="ach_NOTES_100_desc">Joue 100 notes notées au total.</string>
+    <string name="ach_NOTES_1000_title">Mille notes</string>
+    <string name="ach_NOTES_1000_desc">Joue 1000 notes notées au total.</string>
+    <string name="ach_MARATHON_title">Marathon</string>
+    <string name="ach_MARATHON_desc">100 notes en une seule journée.</string>
+    <string name="ach_WEEK_STREAK_title">Semaine d\'affilée</string>
+    <string name="ach_WEEK_STREAK_desc">Pratique sept jours d\'affilée.</string>
+    <string name="ach_MONTH_STREAK_title">Mois d\'affilée</string>
+    <string name="ach_MONTH_STREAK_desc">Pratique trente jours d\'affilée.</string>
+    <string name="ach_STEADY_HAND_title">Main sûre</string>
+    <string name="ach_STEADY_HAND_desc">Une manche de Notes Longues avec chaque tenue réussie.</string>
+    <string name="ach_LIGHTNING_SHIFT_title">Glissé éclair</string>
+    <string name="ach_LIGHTNING_SHIFT_desc">Un glissé trois étoiles arrivé en moins d\'une seconde.</string>
+    <string name="ach_TRIADS_IN_TUNE_title">Accords justes</string>
+    <string name="ach_TRIADS_IN_TUNE_desc">Une manche d\'Accords avec chaque note étoilée.</string>
+    <string name="ach_SNIPER_title">Sniper</string>
+    <string name="ach_SNIPER_desc">Termine une manche avec chaque note presque parfaite.</string>
+    <string name="ach_SNIPER_desc_tech">Termine une manche avec une moyenne sous 5 cents.</string>
+    <string name="ach_TIGHT_GROUP_title">Groupe serré</string>
+    <string name="ach_TIGHT_GROUP_desc">Chaque note d\'une manche tombe pile au centre.</string>
+    <string name="ach_TIGHT_GROUP_desc_tech">Chaque note d\'une manche à moins de 5 cents.</string>
+    <string name="ach_TRIPLE_BULLSEYE_title">Triple dans le mille</string>
+    <string name="ach_TRIPLE_BULLSEYE_desc">Trois notes pile au centre en une seule manche.</string>
+    <string name="ach_TRIPLE_BULLSEYE_desc_tech">Trois notes à moins de 2 cents en une seule manche.</string>
+    <string name="ach_NEW_RECORD_title">Nouveau record</string>
+    <string name="ach_NEW_RECORD_desc">Bats l\'un de tes propres records personnels.</string>
+    <string name="ach_EARLY_BIRD_title">Lève-tôt</string>
+    <string name="ach_EARLY_BIRD_desc">Pratique avant 7 h du matin.</string>
+    <string name="ach_NIGHT_OWL_title">Oiseau de nuit</string>
+    <string name="ach_NIGHT_OWL_desc">Pratique à 23 h ou plus tard.</string>
+    <string name="ach_PIZZ_PRECISION_title">Précision pizzicato</string>
+    <string name="ach_PIZZ_PRECISION_desc">Une manche pincée avec presque toutes les notes justes.</string>
+    <string name="ach_PIZZ_PRECISION_desc_tech">Termine une manche pizz avec une moyenne sous 12 cents.</string>
+    <string name="ach_ARPEGGIO_ACE_title">As de l\'arpège</string>
+    <string name="ach_ARPEGGIO_ACE_desc">Une manche d\'Accords avec trois étoiles sur chaque note.</string>
+    <string name="ach_UNWAVERING_title">Inébranlable</string>
+    <string name="ach_UNWAVERING_desc">Une manche de Notes Longues avec trois étoiles sur chaque tenue.</string>
+    <string name="ach_SURE_FOOTED_title">Pied sûr</string>
+    <string name="ach_SURE_FOOTED_desc">Une manche de Glissés avec trois étoiles sur chaque arrivée.</string>
+    <string name="ach_POSITION_EXPLORER_title">Explorateur de positions</string>
+    <string name="ach_POSITION_EXPLORER_desc">Marque des points sur quatre positions ou plus en une manche.</string>
+    <string name="ach_NOTES_500_title">Cinq cents notes</string>
+    <string name="ach_NOTES_500_desc">Joue 500 notes notées au total.</string>
+
+</resources>

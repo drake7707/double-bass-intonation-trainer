@@ -86,6 +86,16 @@ fun SettingsScreen(
     var pendingImportUri by remember { mutableStateOf<Uri?>(null) }   // shows Merge/Replace chooser
     var pendingReplaceUri by remember { mutableStateOf<Uri?>(null) }  // shows destructive confirm
 
+    // Resolve backup status strings at composition (lint: no LocalContext.getString off-thread);
+    // the "%1$s"-style ones are raw templates we String.format in the coroutine with runtime args.
+    val msgOpenFileFailed = stringResource(R.string.settings_open_file_failed)
+    val fmtImportedSkipped = stringResource(R.string.settings_imported_skipped)
+    val fmtImported = stringResource(R.string.settings_imported)
+    val fmtImportFailed = stringResource(R.string.settings_import_failed)
+    val msgShareBackup = stringResource(R.string.settings_share_backup)
+    val msgBackupCreated = stringResource(R.string.settings_backup_created)
+    val fmtExportFailed = stringResource(R.string.settings_export_failed)
+
     val runImport: (Uri, ImportMode) -> Unit = { uri, mode ->
         scope.launch {
             backupBusy = true
@@ -93,15 +103,14 @@ fun SettingsScreen(
             backupStatus = try {
                 val summary = withContext(Dispatchers.IO) {
                     val input = context.contentResolver.openInputStream(uri)
-                        ?: error(context.getString(R.string.settings_open_file_failed))
+                        ?: error(msgOpenFileFailed)
                     input.use { backup.import(it, mode) }
                 }
-                if (summary.skippedSessions > 0) context.getString(
-                    R.string.settings_imported_skipped,
-                    summary.importedSessions, summary.skippedSessions,
-                ) else context.getString(R.string.settings_imported, summary.importedSessions)
+                if (summary.skippedSessions > 0) String.format(
+                    fmtImportedSkipped, summary.importedSessions, summary.skippedSessions,
+                ) else String.format(fmtImported, summary.importedSessions)
             } catch (e: Exception) {
-                context.getString(R.string.settings_import_failed, e.message ?: "")
+                String.format(fmtImportFailed, e.message ?: "")
             }
             backupBusy = false
         }
@@ -130,12 +139,12 @@ fun SettingsScreen(
                             putExtra(Intent.EXTRA_STREAM, uri)
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         },
-                        context.getString(R.string.settings_share_backup),
+                        msgShareBackup,
                     ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 )
-                context.getString(R.string.settings_backup_created)
+                msgBackupCreated
             } catch (e: Exception) {
-                context.getString(R.string.settings_export_failed, e.message ?: "")
+                String.format(fmtExportFailed, e.message ?: "")
             }
             backupBusy = false
         }

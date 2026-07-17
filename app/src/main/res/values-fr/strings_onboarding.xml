@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French (FR). DRAFT — Sarah's teacher reviews. -->
+<resources>
+
+    <string name="wizard_step_counter">%1$d sur %2$d</string>
+
+    <string name="wizard_skip_title">Passer la configuration ?</string>
+    <string name="wizard_skip_body">Sans la configuration de deux minutes, l\'app ne connaît pas le son de ta contrebasse, et les scores peuvent être peu fiables.\n\nTu peux toujours la faire plus tard via Réglages → Configuration complète.</string>
+    <string name="wizard_skip_anyway">Passer quand même</string>
+    <string name="wizard_cancel">Annuler</string>
+
+    <string name="wizard_welcome_body">Ton coach pour jouer juste — des jeux courts, de vrais scores, et un retour qui aide vraiment.\n\nQuelques questions rapides pour tout régler pour toi.</string>
+    <string name="wizard_lets_go">C\'est parti</string>
+    <string name="wizard_next">Suivant</string>
+    <string name="wizard_back">Retour</string>
+    <string name="wizard_later">Plus tard</string>
+    <string name="wizard_setup_now">Configurer maintenant (2 minutes)</string>
+
+    <string name="wizard_notes_title">Comment nommes-tu tes notes ?</string>
+    <string name="wizard_notes_explainer">Ce que ton professeur utilise — chaque note de l\'app est écrite ainsi.</string>
+    <string name="wizard_notes_solfege_title">Do Ré Mi</string>
+    <string name="wizard_notes_solfege_sub">Sol · La · Si — noms en solfège</string>
+    <string name="wizard_notes_letters_title">C D E</string>
+    <string name="wizard_notes_letters_sub">G · A · B — noms en lettres</string>
+
+    <string name="wizard_pace_title">Combien de temps de réflexion veux-tu ?</string>
+    <string name="wizard_pace_explainer">Le temps de lire la note et de placer ta main avant la fin du chrono. La notation est aussi juste à chaque rythme.</string>
+    <string name="wizard_pace_seconds">%1$d secondes pour trouver chaque note</string>
+
+    <string name="wizard_length_title">Quelle durée pour une manche ?</string>
+    <string name="wizard_length_explainer">Tu peux toujours changer ça dans les Réglages.</string>
+    <string name="wizard_length_notes">%1$d notes</string>
+    <string name="wizard_length_short_sub">Courte — environ une minute</string>
+    <string name="wizard_length_standard_sub">La manche standard</string>
+    <string name="wizard_length_long_sub">Une longue manche d\'entraînement</string>
+
+    <string name="wizard_style_title">Comment l\'app doit-elle te parler ?</string>
+    <string name="wizard_style_explainer">Les deux disent la même chose — l\'une en mots, l\'autre en chiffres.</string>
+    <string name="wizard_style_plain_title">Langage simple</string>
+    <string name="wizard_style_plain_sub">\"Presque — un peu trop haut\"</string>
+    <string name="wizard_style_numbers_title">Afficher les chiffres</string>
+    <string name="wizard_style_numbers_sub">\"+12,3 cents\" — pour les joueurs avancés et les curieux</string>
+
+    <string name="wizard_beta_title">Une remarque honnête</string>
+    <string name="wizard_beta_body">Double Bass Coach est récent et n\'a été testé jusqu\'ici que sur un petit nombre de téléphones et de contrebasses. Il n\'entend peut-être pas encore parfaitement ton installation.\n\nSi une note n\'est pas captée ou qu\'un score paraît faux, tu peux enregistrer un rapport de pratique et l\'envoyer par mail au développeur — c\'est exactement comme ça que l\'app s\'améliore. Tu le trouveras sous Réglages → Aider à améliorer l\'app.</string>
+
+    <string name="wizard_setup_title">Dernière chose — laisse l\'app entendre ta contrebasse</string>
+    <string name="wizard_setup_body">Chaque micro de téléphone entend une contrebasse différemment. La configuration écoute ta pièce et quelques notes que tu joues, pour que tes notes soient notées correctement. Ça prend environ deux minutes, une seule fois.\n\nTout ce que tu as choisi ici peut être modifié plus tard dans les Réglages.</string>
+
+</resources>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French (FR). DRAFT — Sarah's teacher reviews. app_name reste "Double Bass Coach". -->
+<resources>
+
+    <string name="home_title_two_line">Double Bass\nCoach</string>
+
+    <plurals name="home_streak">
+        <item quantity="one">%1$d jour d\'affilée</item>
+        <item quantity="other">%1$d jours d\'affilée</item>
+    </plurals>
+
+    <string name="home_cd_progress">Progrès</string>
+    <string name="home_cd_settings">Réglages</string>
+
+    <string name="home_gate_title">Prêt à jouer ?</string>
+    <string name="home_gate_full_setup">• L\'app ne connaît pas encore ta contrebasse — fais une fois la Configuration complète de deux minutes, sinon les scores ne veulent pas dire grand-chose.</string>
+    <string name="home_gate_tune">• Tu n\'as pas accordé depuis un moment — une basse désaccordée rend chaque score inutile.</string>
+    <string name="home_gate_room">• Ta pièce n\'a pas été vérifiée récemment — le bruit de fond peut gêner.</string>
+    <string name="home_gate_full_setup_btn">Configuration complète d\'abord (2 minutes)</string>
+    <string name="home_gate_tune_btn">Accorder d\'abord</string>
+    <string name="home_gate_room_btn">Vérifier la pièce d\'abord</string>
+    <string name="home_gate_start_anyway">Jouer quand même</string>
+
+    <string name="home_todays_focus">Objectif du jour</string>
+    <string name="focus_note_arco_title">Trouve la Note · arco</string>
+    <string name="focus_note_arco_sub">Pose des premières notes justes à l\'archet.</string>
+    <string name="focus_shift_one_string_title">Glissés · une corde</string>
+    <string name="focus_shift_one_string_sub">Des glissés assurés sur une corde.</string>
+    <string name="focus_sustain_title">Notes Longues · arco</string>
+    <string name="focus_sustain_sub">Archet régulier, justesse stable.</string>
+    <string name="focus_note_pizz_title">Trouve la Note · pizz</string>
+    <string name="focus_note_pizz_sub">Premières arrivées, en pizzicato.</string>
+    <string name="focus_shift_across_title">Glissés · entre cordes</string>
+    <string name="focus_shift_across_sub">Des changements de corde qui arrivent justes.</string>
+    <string name="focus_chords_title">Accords · arco</string>
+    <string name="focus_chords_sub">Arpège un accord, note après note.</string>
+    <string name="home_focus_need_two_positions">Choisis au moins deux positions ci-dessous pour glisser entre elles.</string>
+    <string name="home_focus_need_chord_positions">Choisis ci-dessous des positions qui forment un accord complet.</string>
+    <string name="home_focus_sub_with_best">%1$s  ·  Record %2$d/%3$d</string>
+
+    <string name="home_section_tuning">Accord &amp; oreille</string>
+    <string name="home_section_practice">Entraînement</string>
+    <string name="home_section_tools">Outils</string>
+
+    <string name="home_tune_up">Accorder</string>
+    <string name="home_tune_up_sub">Vérifie tes cordes à vide avant de jouer.</string>
+    <string name="home_drone">Bourdon</string>
+    <string name="home_drone_sub">Une note tenue pour jouer avec, à l\'oreille.</string>
+    <string name="home_arco">Arco</string>
+    <string name="home_pizz">Pizz</string>
+    <string name="home_positions_caption">Positions à travailler (chaque combinaison a ses propres scores)</string>
+    <string name="home_best">Record : %1$d / %2$d</string>
+    <string name="home_find_note">Trouve la Note</string>
+    <string name="home_find_note_sub">Joue la note affichée — pose-la juste du premier coup.</string>
+    <string name="home_long_notes">Notes Longues</string>
+    <string name="home_long_notes_sub">Tiens une note stable et juste.</string>
+    <string name="home_long_notes_pizz">Archet seulement — une note pincée s\'éteint trop vite pour être tenue.</string>
+    <string name="home_shifts_title">Glissés — %1$s</string>
+    <string name="home_shifts_need_two">Choisis au moins deux positions pour glisser entre elles.</string>
+    <string name="home_chords">Accords</string>
+    <string name="home_chords_sub">Joue un accord note après note, du bas vers le haut, juste.</string>
+    <string name="home_chords_need_positions">Choisis des positions qui forment un accord complet.</string>
+    <string name="home_room_check">Vérif. de la pièce</string>
+    <string name="home_room_check_sub">Une écoute rapide de ta pièce pour que tes notes soient captées de façon fiable.</string>
+    <string name="home_pitch_analyzer">Analyseur de hauteur</string>
+    <string name="home_pitch_analyzer_sub">Vois ce que l\'app entend — utile si des notes ne sont pas captées.</string>
+
+</resources>

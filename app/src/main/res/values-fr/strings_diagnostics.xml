@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French (FR). DRAFT — Sarah's teacher reviews. Les clés de diagnostic brutes de l'Analyseur
+     de hauteur et la ligne de config moteur restent en anglais (elles reflètent le vocabulaire
+     des journaux) ; l'habillage est traduit. -->
+<resources>
+
+    <string name="about_title">À propos</string>
+    <string name="about_intro">Un coach de pratique pour contrebasse — pas un accordeur. Il écoute la première note que tu poses et la note, pour t\'apprendre à placer la note juste du premier coup plutôt qu\'à la corriger après.</string>
+    <string name="about_license_title">Licence</string>
+    <string name="about_license_body">Cette app est un logiciel libre, sous licence GNU General Public License v3.0 ou ultérieure. Tu peux l\'utiliser, l\'étudier, la partager et la modifier selon les termes de cette licence.</string>
+    <string name="about_source_title">Code source</string>
+    <string name="about_attribution_title">Attribution</string>
+    <string name="about_attribution_body">Détection de hauteur adaptée de Tuner, © Michael Moessner, GPL-3.0-or-later.\nhttps://codeberg.org/thetwom/Tuner</string>
+    <string name="about_show_license">Afficher le texte complet de la licence</string>
+    <string name="about_hide_license">Masquer le texte de la licence</string>
+    <string name="about_back">Retour</string>
+
+    <string name="rec_title_reports">Rapports de pratique</string>
+    <string name="rec_title_recordings">Enregistrements</string>
+    <string name="rec_sub_reports">Manches enregistrées. Touche l\'enveloppe pour en envoyer une au développeur quand quelque chose a semblé faux.</string>
+    <string name="rec_sub_recordings">Extraits enregistrés depuis l\'Analyseur de hauteur. Touche l\'enveloppe pour en envoyer un au développeur.</string>
+    <string name="rec_empty_reports">Aucun rapport de pratique encore — joue une manche avec l\'enregistrement activé.</string>
+    <string name="rec_empty_recordings">Rien d\'enregistré encore — utilise les boutons d\'enregistrement sur l\'écran Analyseur de hauteur.</string>
+    <string name="rec_meta">%1$s · %2$d s · %3$s Mo</string>
+    <string name="rec_cd_play">Lire</string>
+    <string name="rec_cd_stop">Arrêter</string>
+    <string name="rec_cd_send">Envoyer au développeur</string>
+    <string name="rec_cd_delete">Supprimer</string>
+    <string name="rec_back">Retour</string>
+    <string name="rec_delete_title">Supprimer %1$s ?</string>
+    <string name="rec_delete_body">Supprime cet enregistrement et ses données du téléphone.</string>
+    <string name="rec_delete_confirm">Supprimer</string>
+    <string name="rec_send_title">Envoyer au développeur ?</string>
+    <string name="rec_send_body">Ceci empaquette %1$s — l\'enregistrement micro complet plus ce que l\'app a entendu — et ouvre ton app mail adressée à %2$s. Il contient tout ce que le micro a capté pendant l\'enregistrement, pas seulement ton jeu.</string>
+    <string name="rec_send_confirm">Envoyer</string>
+    <string name="rec_share_chooser">Envoyer le rapport au développeur</string>
+
+    <string name="debug_title">Analyseur de hauteur</string>
+    <string name="debug_permission_required">L\'autorisation du micro est requise.</string>
+    <string name="debug_grant_permission">Autoriser</string>
+    <string name="debug_listening">écoute…</string>
+    <string name="debug_cents_value">%1$s cents</string>
+    <string name="debug_sound_level">niveau sonore %1$d / 100</string>
+    <string name="debug_too_quiet">  (trop faible — traité comme bruit de fond)</string>
+    <string name="debug_game_capture_prefix">capture jeu : </string>
+    <string name="debug_state_arming">préparation</string>
+    <string name="debug_state_await_quiet">attente du silence</string>
+    <string name="debug_state_listening">prêt — écoute</string>
+    <string name="debug_state_capturing">capture…</string>
+    <string name="debug_cd_capture_stable">Capture stable</string>
+    <string name="debug_no_capture">aucune note stable capturée encore</string>
+    <string name="debug_check_every_note">Vérifier chaque note</string>
+    <string name="debug_save_8s">Enregistrer les 8 dernières secondes</string>
+    <string name="debug_cd_stop_long">Arrêter l\'enregistrement long</string>
+    <string name="debug_cd_start_long">Démarrer l\'enregistrement long</string>
+    <string name="debug_stop_and_save">Arrêter et enregistrer</string>
+    <string name="debug_record_2min">Enregistrer jusqu\'à 2 minutes</string>
+    <string name="debug_manage_recordings">Gérer les enregistrements</string>
+    <string name="debug_back">Retour</string>
+    <string name="debug_cd_switch_mode">Basculer arco / pizz</string>
+
+    <string name="debug_sweep_title">Balayage des notes</string>
+    <string name="debug_sweep_count">%1$d / %2$d</string>
+    <string name="debug_sweep_ready">notes prêtes pour le jeu</string>
+    <string name="debug_sweep_wait">Attends le silence</string>
+    <string name="debug_sweep_capturing">Capture…</string>
+    <string name="debug_sweep_play">Joue une note</string>
+    <string name="debug_sweep_save">Enregistrer 8 dernières s (WAV + log)</string>
+    <string name="debug_sweep_reset">Réinitialiser</string>
+    <string name="debug_sweep_exit">Quitter le balayage</string>
+
+</resources>

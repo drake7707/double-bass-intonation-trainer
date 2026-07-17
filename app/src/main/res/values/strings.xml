@@ -2,5 +2,5 @@
 <resources>
     <!-- Never shorten to "Bass Coach" — people read "bass" alone as bass guitar (user decision,
          docs/UX_OVERHAUL_PLAN_2026-07-16.md §10.1). Launchers may ellipsize; that's accepted. -->
-    <string name="app_name">Double Bass Coach</string>
+    <string name="app_name" translatable="false">Double Bass Coach</string>
 </resources>

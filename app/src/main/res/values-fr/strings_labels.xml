@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French (FR). DRAFT — Sarah's teacher reviews. -->
+<resources>
+
+    <string name="pace_calm">Calme</string>
+    <string name="pace_steady">Régulier</string>
+    <string name="pace_quick">Rapide</string>
+    <string name="pace_swift">Vif</string>
+
+    <string name="difficulty_relaxed">Souple</string>
+    <string name="difficulty_standard">Standard</string>
+    <string name="difficulty_strict">Strict</string>
+
+    <string name="shift_level_basic">Une corde, doigts 1↔4</string>
+    <string name="shift_level_intermediate">Une corde, n\'importe quel doigt</string>
+    <string name="shift_level_advanced">D\'une corde à l\'autre</string>
+    <string name="shift_level_basic_short">1↔4</string>
+    <string name="shift_level_intermediate_short">tout doigt</string>
+    <string name="shift_level_advanced_short">entre cordes</string>
+
+    <string name="position_open">Corde à vide</string>
+    <string name="position_open_short_hint">corde à vide</string>
+    <string name="position_half">Demi-position</string>
+    <string name="position_first">Première position</string>
+    <string name="position_second">Deuxième position</string>
+    <string name="position_third">Troisième position</string>
+    <string name="position_fourth">Quatrième position</string>
+    <string name="position_fifth">Cinquième position</string>
+    <string name="position_open_short">0</string>
+    <string name="position_half_short">½</string>
+    <string name="position_first_short">1re</string>
+    <string name="position_second_short">2e</string>
+    <string name="position_third_short">3e</string>
+    <string name="position_fourth_short">4e</string>
+    <string name="position_fifth_short">5e</string>
+
+    <string name="chord_fingering_natural">Naturel</string>
+    <string name="chord_fingering_fingered">Plutôt doigté</string>
+    <string name="chord_fingering_open">Plutôt à vide</string>
+    <string name="chord_fingering_natural_blurb">La forme de main la plus proche — comme dans un morceau ; cordes à vide là où elles tombent.</string>
+    <string name="chord_fingering_fingered_blurb">Doigte les notes dans tes positions pour t\'entraîner ; cordes à vide seulement si nécessaire.</string>
+    <string name="chord_fingering_open_blurb">Utilise les cordes à vide dès qu\'une note s\'y trouve (les cordes à vide ne comptent pas).</string>
+
+    <string name="chord_quality_major_solfege">Majeur</string>
+    <string name="chord_quality_minor_solfege">mineur</string>
+    <string name="chord_quality_major_letters">majeur</string>
+    <string name="chord_quality_minor_letters">mineur</string>
+    <string name="chord_display_name">%1$s %2$s</string>
+
+    <string name="mode_arco">arco</string>
+    <string name="mode_pizz">pizz</string>
+
+</resources>

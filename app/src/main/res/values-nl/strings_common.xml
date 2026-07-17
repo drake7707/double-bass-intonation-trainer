@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dutch (NL). DRAFT — Sarah reviews natively. Musical vocab: zuiver / te hoog / te laag;
+     arco & pizz stay international; solfège keeps "Ré". app_name is not translated. -->
+<resources>
+
+    <string name="coach_band_locked">Vast</string>
+    <string name="coach_band_solid">Stevig</string>
+    <string name="coach_band_developing">In ontwikkeling</string>
+
+    <string name="coach_bias_centered">zuiver</string>
+    <string name="coach_bias_flat">een tikje te laag</string>
+    <string name="coach_bias_sharp">een tikje te hoog</string>
+    <string name="coach_bias_flat_cents">%1$d¢ te laag</string>
+    <string name="coach_bias_sharp_cents">%1$d¢ te hoog</string>
+
+    <string name="coach_insight_bias_flat">Je %1$s %2$s-positie komt een beetje te laag uit — mik een tikje hoger.</string>
+    <string name="coach_insight_bias_sharp">Je %1$s %2$s-positie komt een beetje te hoog uit — mik een tikje lager.</string>
+    <string name="coach_insight_tightening">Je speelt zuiverder dan vorige week — ga zo door!</string>
+    <string name="coach_insight_anchor">Je %1$s %2$s-positie is je anker — mooi zuiver.</string>
+
+    <string name="coach_round_nothing_scored">Pittige ronde — deze keer geen zuivere noten. Vertraag en speel ze één voor één zuiver.</string>
+    <string name="coach_round_lean_sharp">Goede ronde — de meeste noten waren iets te hoog. Mik volgende keer een tikje lager.</string>
+    <string name="coach_round_lean_flat">Goede ronde — de meeste noten waren iets te laag. Mik volgende keer een tikje hoger.</string>
+    <string name="coach_round_time_pressure">De noten die je speelde waren zuiver — voor sommige noten was de tijd op. Adem even in voor elke noot.</string>
+    <string name="coach_round_locked">Spot-on — je noten zitten vandaag precies in het midden.</string>
+    <string name="coach_round_improved">Zuiverder dan vorige week — je oefening werpt vruchten af.</string>
+    <string name="coach_round_solid">Sterke ronde — je noten zitten dicht bij het midden.</string>
+    <string name="coach_round_developing">Elke ronde traint je gehoor een beetje — blijf oefenen.</string>
+
+    <string name="coach_sustain_all_held">Elke lange noot mooi aangehouden — heerlijk gelijkmatig gestreken.</string>
+    <string name="coach_sustain_most_held">Goed vastgehouden — een paar noten gleden vroeg weg. Houd de streek gelijkmatig.</string>
+    <string name="coach_sustain_few_held">Lange noten zijn lastig — trager en lichter strijken helpt de noot te stabiel te worden.</string>
+
+    <string name="reveal_spot_on">Precies goed!</string>
+    <string name="reveal_close_sharp">Bijna — een tikje te hoog</string>
+    <string name="reveal_close_flat">Bijna — een tikje te laag</string>
+    <string name="reveal_too_sharp">Te hoog</string>
+    <string name="reveal_too_flat">Te laag</string>
+    <string name="reveal_cents_value">%1$s cent</string>
+
+    <string name="drift_sharp">Je gaat steeds iets te hoog spelen\nmik een tikje lager</string>
+    <string name="drift_flat">Je gaat steeds iets te laag spelen\nmik een tikje hoger</string>
+
+    <string name="countin_get_ready">Maak je klaar</string>
+    <string name="countin_pick_up">pak je contrabas</string>
+
+    <string name="summary_round_complete">Ronde klaar</string>
+    <string name="summary_of_max">van %1$d</string>
+    <string name="summary_new_best_was">Nieuw persoonlijk record! (was %1$d)</string>
+    <string name="summary_first_round">Eerste ronde met deze instelling — dat is je record om te verslaan.</string>
+    <string name="summary_points_to_beat">Record: %1$d — nog %2$d punten te gaan</string>
+    <string name="summary_play_again">Nog een keer</string>
+    <string name="summary_done">Klaar</string>
+
+    <string name="common_achievement_unlocked">%1$s vrijgespeeld!</string>
+
+    <string name="improvement_technical">gemiddeld %1$s cent — vorige week %2$s</string>
+    <string name="improvement_better">zuiverder dan vorige week</string>
+    <string name="improvement_worse">iets minder zuiver dan vorige week</string>
+    <string name="improvement_same">ongeveer gelijk aan vorige week</string>
+    <string name="improvement_cd_improved">Beter</string>
+    <string name="improvement_cd_worse">Minder</string>
+
+    <string name="trace_prompt">Deze ronde is opgenomen als oefenrapport — hoe ging het?</string>
+    <string name="trace_went_well">Ging goed</string>
+    <string name="trace_had_issues">Had problemen</string>
+    <string name="trace_what_happened">Wat gebeurde er?</string>
+    <string name="trace_save_note">Feedback opslaan</string>
+
+    <string name="common_mic_rationale">%1$s heeft de microfoon nodig om je contrabas te horen.</string>
+    <string name="common_mic_grant">Microfoontoegang geven</string>
+
+    <string name="common_cd_back">Terug</string>
+
+    <!-- language_english/dutch/french are intentionally NOT overridden — endonyms stay identical. -->
+    <string name="language_system">Systeemtaal</string>
+    <string name="settings_language_title">Taal</string>
+    <string name="settings_language_sub">De taal van de app. Notennamen (Do Ré Mi / C D E) kies je apart.</string>
+    <string name="wizard_language_label">Taal</string>
+
+</resources>

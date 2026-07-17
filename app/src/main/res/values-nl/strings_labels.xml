@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dutch (NL). DRAFT — Sarah reviews natively. -->
+<resources>
+
+    <string name="pace_calm">Rustig</string>
+    <string name="pace_steady">Gestaag</string>
+    <string name="pace_quick">Vlot</string>
+    <string name="pace_swift">Snel</string>
+
+    <string name="difficulty_relaxed">Soepel</string>
+    <string name="difficulty_standard">Standaard</string>
+    <string name="difficulty_strict">Streng</string>
+
+    <string name="shift_level_basic">Eén snaar, vingers 1↔4</string>
+    <string name="shift_level_intermediate">Eén snaar, elke vinger</string>
+    <string name="shift_level_advanced">Over de snaren</string>
+    <string name="shift_level_basic_short">1↔4</string>
+    <string name="shift_level_intermediate_short">elke vinger</string>
+    <string name="shift_level_advanced_short">over snaren</string>
+
+    <string name="position_open">Losse snaar</string>
+    <string name="position_open_short_hint">losse snaar</string>
+    <string name="position_half">Halve positie</string>
+    <string name="position_first">Eerste positie</string>
+    <string name="position_second">Tweede positie</string>
+    <string name="position_third">Derde positie</string>
+    <string name="position_fourth">Vierde positie</string>
+    <string name="position_fifth">Vijfde positie</string>
+    <string name="position_open_short">0</string>
+    <string name="position_half_short">½</string>
+    <string name="position_first_short">1e</string>
+    <string name="position_second_short">2e</string>
+    <string name="position_third_short">3e</string>
+    <string name="position_fourth_short">4e</string>
+    <string name="position_fifth_short">5e</string>
+
+    <string name="chord_fingering_natural">Natuurlijk</string>
+    <string name="chord_fingering_fingered">Liefst gegrepen</string>
+    <string name="chord_fingering_open">Liefst los</string>
+    <string name="chord_fingering_natural_blurb">Dichtste handvorm — zoals je het in een stuk zou spelen; losse snaren waar ze vallen.</string>
+    <string name="chord_fingering_fingered_blurb">Grijp de noten in je posities om te oefenen; losse snaren alleen als het niet anders kan.</string>
+    <string name="chord_fingering_open_blurb">Gebruik losse snaren waar een noot erop ligt (losse snaren tellen niet mee).</string>
+
+    <!-- Solfège chord names keep the French-style "Majeur/mineur" (Sarah reads fixed-do solfège). -->
+    <string name="chord_quality_major_solfege">Majeur</string>
+    <string name="chord_quality_minor_solfege">mineur</string>
+    <string name="chord_quality_major_letters">majeur</string>
+    <string name="chord_quality_minor_letters">mineur</string>
+    <string name="chord_display_name">%1$s %2$s</string>
+
+    <string name="mode_arco">arco</string>
+    <string name="mode_pizz">pizz</string>
+
+</resources>

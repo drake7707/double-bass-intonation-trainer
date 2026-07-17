@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French (FR). DRAFT — Sarah's teacher reviews. Vocab: juste / trop haut / trop bas;
+     arco & pizz international; solfège "Ré". app_name non traduit. -->
+<resources>
+
+    <string name="coach_band_locked">Bien ancré</string>
+    <string name="coach_band_solid">Solide</string>
+    <string name="coach_band_developing">En progrès</string>
+
+    <string name="coach_bias_centered">centré</string>
+    <string name="coach_bias_flat">un peu trop bas</string>
+    <string name="coach_bias_sharp">un peu trop haut</string>
+    <string name="coach_bias_flat_cents">%1$d¢ trop bas</string>
+    <string name="coach_bias_sharp_cents">%1$d¢ trop haut</string>
+
+    <string name="coach_insight_bias_flat">Ta position %1$s %2$s tombe un peu trop bas — vise un peu plus haut.</string>
+    <string name="coach_insight_bias_sharp">Ta position %1$s %2$s tombe un peu trop haut — vise un peu plus bas.</string>
+    <string name="coach_insight_tightening">Tu joues plus juste que la semaine dernière — continue !</string>
+    <string name="coach_insight_anchor">Ta position %1$s %2$s est ton ancrage — bien juste.</string>
+
+    <string name="coach_round_nothing_scored">Manche difficile — aucune note propre cette fois. Ralentis et pose-les une par une.</string>
+    <string name="coach_round_lean_sharp">Bonne manche — la plupart des notes penchaient trop haut. Vise un peu plus bas la prochaine fois.</string>
+    <string name="coach_round_lean_flat">Bonne manche — la plupart des notes penchaient trop bas. Vise un peu plus haut la prochaine fois.</string>
+    <string name="coach_round_time_pressure">Les notes que tu as jouées étaient justes — certaines ont juste manqué de temps. Respire avant chaque note.</string>
+    <string name="coach_round_locked">Bien ancré — tes notes sont tombées pile au centre aujourd\'hui.</string>
+    <string name="coach_round_improved">Plus juste que la semaine dernière — ton travail paie.</string>
+    <string name="coach_round_solid">Manche solide — tes notes sont proches du centre.</string>
+    <string name="coach_round_developing">Chaque manche entraîne un peu ton oreille — continue à les poser.</string>
+
+    <string name="coach_sustain_all_held">Chaque tenue réussie — un archet magnifiquement régulier.</string>
+    <string name="coach_sustain_most_held">Bonne tenue — quelques notes ont lâché tôt. Garde l\'archet régulier.</string>
+    <string name="coach_sustain_few_held">Les notes longues sont difficiles — un archet plus lent et plus léger aide la note à se poser.</string>
+
+    <string name="reveal_spot_on">Pile juste !</string>
+    <string name="reveal_close_sharp">Presque — un peu trop haut</string>
+    <string name="reveal_close_flat">Presque — un peu trop bas</string>
+    <string name="reveal_too_sharp">Trop haut</string>
+    <string name="reveal_too_flat">Trop bas</string>
+    <string name="reveal_cents_value">%1$s cents</string>
+
+    <string name="drift_sharp">Tu dérives vers le haut\nvise un peu plus bas</string>
+    <string name="drift_flat">Tu dérives vers le bas\nvise un peu plus haut</string>
+
+    <string name="countin_get_ready">Prépare-toi</string>
+    <string name="countin_pick_up">prends ta contrebasse</string>
+
+    <string name="summary_round_complete">Manche terminée</string>
+    <string name="summary_of_max">sur %1$d</string>
+    <string name="summary_new_best_was">Nouveau record perso ! (avant %1$d)</string>
+    <string name="summary_first_round">Première manche avec ce réglage — c\'est ton record à battre.</string>
+    <string name="summary_points_to_beat">Record : %1$d — %2$d points à rattraper</string>
+    <string name="summary_play_again">On recommence</string>
+    <string name="summary_done">Terminé</string>
+
+    <string name="common_achievement_unlocked">%1$s débloqué !</string>
+
+    <string name="improvement_technical">moyenne %1$s cents — la semaine dernière %2$s</string>
+    <string name="improvement_better">plus juste que la semaine dernière</string>
+    <string name="improvement_worse">un peu moins bien que la semaine dernière</string>
+    <string name="improvement_same">à peu près comme la semaine dernière</string>
+    <string name="improvement_cd_improved">Amélioré</string>
+    <string name="improvement_cd_worse">Moins bien</string>
+
+    <string name="trace_prompt">Cette manche a été enregistrée comme rapport de pratique — comment ça s\'est passé ?</string>
+    <string name="trace_went_well">Bien passé</string>
+    <string name="trace_had_issues">Des soucis</string>
+    <string name="trace_what_happened">Que s\'est-il passé ?</string>
+    <string name="trace_save_note">Enregistrer le retour</string>
+
+    <string name="common_mic_rationale">%1$s a besoin du micro pour entendre ta contrebasse.</string>
+    <string name="common_mic_grant">Autoriser le micro</string>
+
+    <string name="common_cd_back">Retour</string>
+
+    <!-- language_english/dutch/french : endonymes non traduits (identiques partout). -->
+    <string name="language_system">Langue du système</string>
+    <string name="settings_language_title">Langue</string>
+    <string name="settings_language_sub">La langue de l\'app. Les noms de notes (Do Ré Mi / C D E) se choisissent séparément.</string>
+    <string name="wizard_language_label">Langue</string>
+
+</resources>

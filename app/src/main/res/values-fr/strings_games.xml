@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French (FR). DRAFT — Sarah's teacher reviews. Texte en jeu court (lisible à 2 m). -->
+<resources>
+
+    <string name="game_quit">Quitter la manche</string>
+    <string name="game_listening">écoute…</string>
+    <string name="game_no_note">Aucune note entendue</string>
+    <string name="game_wrong_note">mauvaise note ?</string>
+    <string name="game_wrong_octave">bonne note,\nmauvaise octave</string>
+    <string name="game_dot_next">Note %1$d : suivante</string>
+    <string name="game_dot_pending">Note %1$d : à venir</string>
+    <string name="game_dot_missed">Note %1$d : manquée</string>
+    <string name="game_dot_perfect">Note %1$d : parfaite</string>
+    <string name="game_dot_close">Note %1$d : presque</string>
+
+    <string name="note_play">Joue</string>
+    <string name="note_avg_technical">moyenne %1$s cents d\'écart</string>
+    <string name="note_how_in_tune">Justesse : %1$s</string>
+    <string name="note_chart_caption">tes notes — au-dessus de la ligne c\'est trop haut, en dessous trop bas</string>
+    <string name="note_chart_caption_technical">cents d\'écart par note</string>
+    <string name="note_stars_line">%1$d étoiles sur %2$d</string>
+    <string name="note_pace_faster">Tu as trouvé chaque note avec du temps de reste — c\'est un progrès !</string>
+    <string name="note_pace_slower">Plusieurs notes ont manqué de temps — un peu plus de marge garde le plaisir.</string>
+    <string name="note_pace_switch">Passer au rythme %1$s</string>
+
+    <string name="sustain_hold">Tiens</string>
+    <string name="sustain_play_and_hold">joue et tiens %1$s s…</string>
+    <string name="sustain_too_sharp">▼ trop haut</string>
+    <string name="sustain_too_flat">▲ trop bas</string>
+    <string name="sustain_seconds_value">%1$s s</string>
+    <string name="sustain_held">tenue !</string>
+    <string name="sustain_best_time">meilleur %1$s s</string>
+    <string name="sustain_metric_in_tune">Juste</string>
+    <string name="sustain_metric_steady">Régulier</string>
+    <string name="sustain_spot_on">pile juste</string>
+    <string name="sustain_cents_sharp">%1$s¢ trop haut</string>
+    <string name="sustain_cents_flat">%1$s¢ trop bas</string>
+    <string name="sustain_rock_steady">parfaitement stable</string>
+    <string name="sustain_wobble_cents">±%1$s¢</string>
+    <string name="sustain_wobble_cents_word">±%1$s¢ d\'oscillation</string>
+    <string name="sustain_little_wobbly">un peu instable</string>
+    <string name="sustain_wobbly">instable</string>
+    <string name="sustain_focus_steady_true">Parfaitement stable et juste.</string>
+    <string name="sustain_focus_sitting_sharp">Archet régulier — mais trop haut. Place la note un cheveu plus bas.</string>
+    <string name="sustain_focus_sitting_flat">Archet régulier — mais trop bas. Place la note un cheveu plus haut.</string>
+    <string name="sustain_focus_bow">Justesse correcte — mais la note a dérivé. Régularise la vitesse d\'archet.</string>
+    <string name="sustain_focus_both">Pose la justesse sur un archet lent et régulier.</string>
+    <string name="sustain_focus_hold_longer">Fais sonner la note plus longtemps — tiens-la stable tout du long.</string>
+
+    <string name="shift_start_on">Commence sur</string>
+    <string name="shift_wrong_start">ce n\'est pas ça — commence sur</string>
+    <string name="shift_then_go">puis VA vers</string>
+    <string name="shift_hold">tiens…</string>
+    <string name="shift_go">VA —</string>
+    <string name="shift_distance">distance du glissé</string>
+    <string name="shift_confident">glissé assuré</string>
+    <string name="shift_breakdown_landed">arrivée %1$s¢</string>
+    <string name="shift_breakdown_full">départ %1$s¢  ·  arrivée %2$s¢</string>
+    <string name="shift_check_start">vérifie ton départ</string>
+    <string name="shift_check_start_explainer">Vérifie ton départ = le glissé avait la bonne taille — c\'est la note de départ qui a décalé l\'arrivée. Pose bien le départ avant VA.</string>
+
+    <string name="chords_arpeggio">arpège — une note à la fois</string>
+    <string name="chords_wrong_root">ce n\'est pas ça —\ncommence sur %1$s</string>
+    <string name="chords_play">joue</string>
+    <string name="chords_tone_wrong">faux ?</string>
+    <string name="chords_tone_spot_on">pile juste</string>
+    <string name="chords_tone_sharp">trop haut</string>
+    <string name="chords_tone_flat">trop bas</string>
+
+</resources>

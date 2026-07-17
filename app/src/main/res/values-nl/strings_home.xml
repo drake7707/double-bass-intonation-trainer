@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dutch (NL). DRAFT — Sarah reviews natively. app_name blijft "Double Bass Coach". -->
+<resources>
+
+    <string name="home_title_two_line">Double Bass\nCoach</string>
+
+    <plurals name="home_streak">
+        <item quantity="one">1 dag op rij</item>
+        <item quantity="other">%1$d dagen op rij</item>
+    </plurals>
+
+    <string name="home_cd_progress">Voortgang</string>
+    <string name="home_cd_settings">Instellingen</string>
+
+    <string name="home_gate_title">Klaar om te spelen?</string>
+    <string name="home_gate_full_setup">• De app kent je contrabas nog niet — doe eenmalig de Volledige set-up van twee minuten, anders zeggen de scores weinig.</string>
+    <string name="home_gate_tune">• Je hebt al een tijd niet gestemd — een ontstemde bas maakt elke score zinloos.</string>
+    <string name="home_gate_room">• Je ruimte is niet recent gecheckt — achtergrondgeluid kan in de weg zitten.</string>
+    <string name="home_gate_full_setup_btn">Eerst Volledige set-up (2 minuten)</string>
+    <string name="home_gate_tune_btn">Eerst stemmen</string>
+    <string name="home_gate_room_btn">Eerst ruimtecheck</string>
+    <string name="home_gate_start_anyway">Toch starten</string>
+
+    <string name="home_todays_focus">Focus van vandaag</string>
+    <string name="focus_note_arco_title">Vind de Noot · arco</string>
+    <string name="focus_note_arco_sub">Land zuivere eerste noten met de strijkstok.</string>
+    <string name="focus_shift_one_string_title">Verschuivingen · één snaar</string>
+    <string name="focus_shift_one_string_sub">Zekere verschuivingen langs één snaar.</string>
+    <string name="focus_sustain_title">Lange Noten · arco</string>
+    <string name="focus_sustain_sub">Gelijkmatige streek, stabiele toon.</string>
+    <string name="focus_note_pizz_title">Vind de Noot · pizz</string>
+    <string name="focus_note_pizz_sub">Eerste landingen, getokkeld.</string>
+    <string name="focus_shift_across_title">Verschuivingen · over de snaren</string>
+    <string name="focus_shift_across_sub">Snaarwisselingen die zuiver landen.</string>
+    <string name="focus_chords_title">Akkoorden · arco</string>
+    <string name="focus_chords_sub">Speel een drieklank uit, noot voor noot.</string>
+    <string name="home_focus_need_two_positions">Kies hieronder minstens twee posities om tussen te verschuiven.</string>
+    <string name="home_focus_need_chord_positions">Kies hieronder posities die samen een volledig akkoord vormen.</string>
+    <string name="home_focus_sub_with_best">%1$s  ·  Record %2$d/%3$d</string>
+
+    <string name="home_section_tuning">Stemmen &amp; gehoortraining</string>
+    <string name="home_section_practice">Oefenen</string>
+    <string name="home_section_tools">Hulpmiddelen</string>
+
+    <string name="home_tune_up">Stemmen</string>
+    <string name="home_tune_up_sub">Check je losse snaren voor je speelt.</string>
+    <string name="home_drone">Bordun</string>
+    <string name="home_drone_sub">Een vaste toon om op gehoor mee mee te spelen.</string>
+    <string name="home_arco">Arco</string>
+    <string name="home_pizz">Pizz</string>
+    <string name="home_positions_caption">Posities om te oefenen (elke combinatie heeft eigen scores)</string>
+    <string name="home_best">Record: %1$d / %2$d</string>
+    <string name="home_find_note">Vind de Noot</string>
+    <string name="home_find_note_sub">Speel de noot die je ziet — land hem meteen goed.</string>
+    <string name="home_long_notes">Lange Noten</string>
+    <string name="home_long_notes_sub">Houd één noot stabiel en zuiver aan.</string>
+    <string name="home_long_notes_pizz">Alleen arco — een getokkelde noot sterft te snel weg om aan te houden.</string>
+    <string name="home_shifts_title">Verschuivingen — %1$s</string>
+    <string name="home_shifts_need_two">Kies minstens twee posities om tussen te verschuiven.</string>
+    <string name="home_chords">Akkoorden</string>
+    <string name="home_chords_sub">Speel een akkoord noot voor noot, van onder naar boven, zuiver.</string>
+    <string name="home_chords_need_positions">Kies posities die samen een volledig akkoord vormen.</string>
+    <string name="home_room_check">Ruimtecheck</string>
+    <string name="home_room_check_sub">Een korte luistercheck van je ruimte zodat je noten betrouwbaar worden opgepikt.</string>
+    <string name="home_pitch_analyzer">Toonhoogte-analyse</string>
+    <string name="home_pitch_analyzer_sub">Kijk wat de app hoort — handig als noten niet worden opgepikt.</string>
+
+</resources>

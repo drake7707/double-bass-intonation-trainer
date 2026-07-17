@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French (FR). DRAFT — Sarah's teacher reviews. -->
+<resources>
+
+    <string name="settings_title">Réglages</string>
+
+    <string name="settings_section_coaching">Coaching</string>
+    <string name="settings_section_notes">Notes &amp; accord</string>
+    <string name="settings_section_sounds">Sons &amp; alertes</string>
+    <string name="settings_section_setup">Configuration</string>
+    <string name="settings_section_data">Tes données</string>
+    <string name="settings_section_help">Aider à améliorer l\'app</string>
+
+    <string name="settings_on">Activé</string>
+    <string name="settings_off">Désactivé</string>
+
+    <string name="settings_technical_title">Afficher les détails techniques</string>
+    <string name="settings_technical_sub">Affiche partout les cents, pourcentages et mesures exacts. Désactivé garde l\'app en langage simple.</string>
+
+    <string name="settings_pace_title">Rythme</string>
+    <string name="settings_pace_sub">Le temps que tu as pour lire la consigne et trouver la note. La notation est aussi juste à chaque rythme, et tes records sont conservés quand tu montes.</string>
+    <string name="settings_pace_current">Jusqu\'à %1$d s pour commencer chaque note.</string>
+
+    <string name="settings_difficulty_title">Difficulté</string>
+    <string name="settings_difficulty_sub">À quel point la notation est indulgente quand une note n\'est pas parfaitement juste.</string>
+    <string name="settings_difficulty_zero">Les points tombent à zéro à ±%1$d cents.</string>
+
+    <string name="settings_length_title">Longueur de manche</string>
+    <string name="settings_length_sub">Combien de notes dans une manche. Les scores ne se comparent qu\'à longueur égale.</string>
+
+    <string name="settings_note_names_title">Noms de notes</string>
+    <string name="settings_note_names_sub">Ce que ton professeur utilise — les notes sont écrites ainsi partout.</string>
+
+    <string name="settings_enharmonics_title">Mélanger dièses &amp; bémols</string>
+    <string name="settings_enharmonics_sub">Affiche parfois La♯ comme Si♭ — la même note a deux noms, tu apprends ainsi les deux. Désactivé écrit tout en dièses.</string>
+
+    <string name="settings_a4_title">Diapason (La4)</string>
+    <string name="settings_a4_sub">Le La sur lequel ton orchestre s\'accorde. Laisse à 440 sauf indication de ton professeur.</string>
+    <string name="settings_hz">%1$d Hz</string>
+
+    <string name="settings_chord_fingering_title">Doigté d\'accord</string>
+    <string name="settings_chord_fingering_sub">Dans le jeu Accords, une note peut souvent se jouer de plusieurs façons — à vide ou doigtée dans tes positions. Voici comment le jeu choisit (les cordes à vide ne comptent jamais).</string>
+
+    <string name="settings_sound_title">Retour sonore</string>
+    <string name="settings_sound_sub">Un carillon quand tu poses une note, un bip quand tu manques — pour garder les yeux sur la touche.</string>
+    <string name="settings_volume_label">Volume (relâche pour l\'entendre)</string>
+    <string name="settings_muted_cd">Le volume média du téléphone est coupé</string>
+    <string name="settings_muted_warning">Le volume média de ton téléphone est coupé — les sons du jeu restent silencieux quoi que dise ce curseur.</string>
+
+    <string name="settings_drift_title">Alerte de dérive</string>
+    <string name="settings_drift_sub">Alerte quand tout ce que tu joues se met à pencher trop haut ou trop bas, pour recaler ton oreille au lieu d\'ancrer de fausses notes.</string>
+
+    <string name="settings_listening_title">Configuration d\'écoute</string>
+    <string name="settings_listening_sub">Vérif. de la pièce mesure le bruit de fond (rapide — fais-la quand tu joues dans un nouvel endroit). Configuration complète apprend à l\'app le son de ta contrebasse sur ce téléphone (une fois, ou avec un nouveau téléphone ou une nouvelle basse).</string>
+    <string name="settings_room_check_btn">Vérif. de la pièce</string>
+    <string name="settings_full_setup_btn">Configuration complète (nouveau téléphone ou nouvelle basse)</string>
+    <string name="settings_noise_gate">Seuil de bruit : le son sous ce niveau est ignoré comme bruit de pièce (seuil au niveau %1$d / 100 — Vérif. de la pièce le règle automatiquement).</string>
+
+    <string name="settings_octave_title">Bonne note, mauvaise octave compte quand même</string>
+    <string name="settings_octave_sub">Les notes graves peuvent tromper le micro d\'une octave entière. Garde ceci activé pour que ça ne te coûte jamais de points — l\'app note alors ta justesse.</string>
+
+    <string name="settings_backup_title">Sauvegarde &amp; restauration</string>
+    <string name="settings_backup_sub">Exporte tout ton historique de pratique vers un fichier que tu gardes, puis restaure-le sur un nouveau téléphone. Rien n\'est stocké dans le cloud — ce fichier est ta seule copie.</string>
+    <string name="settings_export_btn">Exporter la sauvegarde</string>
+    <string name="settings_import_btn">Importer une sauvegarde</string>
+    <string name="settings_share_backup">Partager la sauvegarde</string>
+    <string name="settings_backup_created">Sauvegarde créée — garde-la en lieu sûr.</string>
+    <string name="settings_export_failed">Échec de l\'export : %1$s</string>
+    <string name="settings_import_failed">Échec de l\'import : %1$s</string>
+    <string name="settings_open_file_failed">Impossible d\'ouvrir le fichier.</string>
+    <string name="settings_imported">%1$d manches importées.</string>
+    <string name="settings_imported_skipped">%1$d manches importées, %2$d déjà présentes ignorées.</string>
+    <string name="settings_import_title">Importer une sauvegarde</string>
+    <string name="settings_import_body">Fusionner garde ce qui est sur ce téléphone et ajoute les manches de la sauvegarde qui n\'y sont pas encore. Remplacer efface d\'abord l\'historique de ce téléphone.</string>
+    <string name="settings_merge">Fusionner</string>
+    <string name="settings_replace_ellipsis">Remplacer…</string>
+    <string name="settings_replace_title">Remplacer toutes les données ?</string>
+    <string name="settings_replace_body">Ceci supprime définitivement tout l\'historique, les records personnels et les succès sur ce téléphone, puis charge la sauvegarde. Impossible à annuler.</string>
+    <string name="settings_replace_confirm">Tout remplacer</string>
+
+    <string name="settings_traces_title">Enregistrer les rapports de pratique</string>
+    <string name="settings_traces_sub">Enregistre tes manches — le son et ce que l\'app a entendu — pour que, quand quelque chose semble faux (une note non captée, un score bizarre), tu puisses envoyer le rapport au développeur et faire corriger l\'app. Laisse désactivé pour jouer normalement.</string>
+    <string name="settings_view_reports">Voir les rapports de pratique</string>
+
+    <string name="settings_about">À propos &amp; licences</string>
+    <string name="settings_back">Retour</string>
+
+</resources>

@@ -446,7 +446,7 @@ private fun SweepView(
 ) {
     val total = DebugViewModel.MIDI_RANGE.count()
     val allDone = sweep.size >= total
-        Column(
+    Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),

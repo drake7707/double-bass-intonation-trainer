@@ -6,9 +6,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.data.SessionRepository
-import be.drakarah.intonation.metrics.EXERCISE_TYPE_SUSTAIN
-import be.drakarah.intonation.metrics.MasteryBand
-import be.drakarah.intonation.metrics.masteryThresholdsFor
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -23,8 +20,6 @@ data class HistoryRowUi(
     val mode: String,
     val totalScore: Int,
     val maxScore: Int,
-    /** Band from the session's stored average; null for Sustain (hold-based) or an empty round. */
-    val band: MasteryBand?,
 )
 
 /** Lists past completed rounds (all exercises, arco + pizz), newest first — Sarah's request for a
@@ -42,8 +37,6 @@ class HistoryViewModel(repository: SessionRepository) : ViewModel() {
                     mode = s.mode,
                     totalScore = s.totalScore,
                     maxScore = s.maxScore,
-                    band = if (s.exerciseType == EXERCISE_TYPE_SUSTAIN) null
-                    else s.avgAbsCents?.let { MasteryBand.of(it, masteryThresholdsFor(s.exerciseType)) },
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

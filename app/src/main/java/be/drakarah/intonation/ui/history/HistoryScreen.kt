@@ -31,21 +31,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.R
-import be.drakarah.intonation.metrics.MasteryBand
 import be.drakarah.intonation.ui.common.exerciseLabel
-import be.drakarah.intonation.ui.common.label
 import be.drakarah.intonation.ui.common.modeLabel
-import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
 import java.text.DateFormat
 import java.util.Date
-
-/** Band → colour, mirroring the Progress screen's mapping (three bands, not the four-star scale). */
-internal fun bandColor(band: MasteryBand) = when (band) {
-    MasteryBand.LOCKED -> ResultColors.excellent
-    MasteryBand.SOLID -> ResultColors.close
-    MasteryBand.DEVELOPING -> ResultColors.off
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,14 +119,7 @@ private fun HistoryRow(row: HistoryRowUi, onClick: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                row.band?.let { band ->
-                    Text(
-                        band.label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = bandColor(band),
-                    )
-                }
-            }
+}
             Text(
                 stringResource(R.string.history_row_score, row.totalScore, row.maxScore),
                 style = MaterialTheme.typography.titleMedium,

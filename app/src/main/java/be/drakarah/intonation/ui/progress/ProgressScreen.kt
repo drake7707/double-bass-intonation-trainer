@@ -25,7 +25,6 @@ import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingFlat
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.PlayCircleOutline
@@ -106,7 +105,6 @@ private fun cents(value: Float): String = "${value.roundToInt()}¢"
 fun ProgressScreen(
     onBack: () -> Unit,
     onOpenAchievements: () -> Unit,
-    onOpenHistory: () -> Unit,
     viewModel: ProgressViewModel = viewModel(factory = ProgressViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -126,12 +124,6 @@ fun ProgressScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onOpenHistory) {
-                        Icon(
-                            Icons.Default.History,
-                            contentDescription = stringResource(R.string.history_cd_open),
-                        )
-                    }
                     TextButton(
                         onClick = onOpenAchievements,
                         colors = ButtonDefaults.textButtonColors(contentColor = LocalContentColor.current),

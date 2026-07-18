@@ -1,9 +1,12 @@
 package be.drakarah.intonation.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 // v1 is dark-only by design (practice rooms, stands, stages).
@@ -52,6 +55,15 @@ object ResultColors {
 fun IntonationTrainerTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = DarkColors,
-        content = content,
-    )
+    ) {
+        // Root Surface so every Text() gets the theme's onBackground as its default color
+        // instead of Compose's hardcoded black — without this, any Text that doesn't pass
+        // an explicit color (e.g. onboarding titles/body copy) renders unreadable black.
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background,
+        ) {
+            content()
+        }
+    }
 }

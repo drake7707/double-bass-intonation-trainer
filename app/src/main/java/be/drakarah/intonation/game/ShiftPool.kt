@@ -70,8 +70,8 @@ class ShiftPool(
             do {
                 pick = pairs.random(random)
             } while (pairs.size > 1 && previous != null &&
-                pick.start.target.midi == previous!!.start.target.midi &&
-                pick.target.target.midi == previous!!.target.target.midi
+                pick.start.target.midi == previous.start.target.midi &&
+                pick.target.target.midi == previous.target.target.midi
             )
             previous = pick
             result.add(pick)

@@ -195,7 +195,7 @@ class ChordsViewModel(
                             is ArpeggioState.Capturing -> {
                                 val next = ChordsPhase.Playing(cs.toneIndex, cs.wrongRoot)
                                 if (state.phase != next) {
-                                    if ((state.phase as? ChordsPhase.Playing)?.toneIndex != cs.toneIndex) {
+                                    if (state.phase.toneIndex != cs.toneIndex) {
                                         trace?.event(
                                             sample.timestampMs, "tone",
                                             "idx=${cs.toneIndex} wrongRoot=${cs.wrongRoot}",

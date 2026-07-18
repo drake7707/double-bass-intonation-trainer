@@ -2,8 +2,10 @@
 <!-- French (FR). DRAFT — Sarah's teacher reviews. -->
 <resources>
 
+    <!-- Tune up (ui/tune/) -->
     <string name="tune_play_each">Joue chaque corde à vide</string>
-    <string name="tune_cd_in_tune">%1$s juste</string>
+    <!-- %1$s = string name; accessibility description of the green check -->
+    <string name="tune_cd_in_tune">%1$s accordée</string>
     <string name="tune_cents_sharp">cents trop haut</string>
     <string name="tune_cents_flat">cents trop bas</string>
     <string name="tune_in_tune">juste</string>
@@ -12,37 +14,41 @@
     <string name="tune_sharp">trop haut</string>
     <string name="tune_flat">trop bas</string>
     <string name="tune_play_prompt">joue une corde à vide</string>
-    <string name="tune_all_done">Toutes les cordes justes — à toi de jouer !</string>
+    <string name="tune_all_done">Toutes les cordes sont accordées — à toi de jouer !</string>
     <string name="tune_skip">Passer</string>
-    <string name="tune_cd_needle">Aiguille d\'accord</string>
+    <string name="tune_cd_needle">Aiguille d\'accordage</string>
 
-    <string name="drone_sub">Une note tenue pour jouer avec — écoute et ajuste-toi. Rien n\'est noté.</string>
+    <!-- Drone (ui/drone/) -->
+    <string name="drone_sub">Une note tenue pour jouer avec — écoute et ajuste ta note. Rien n\'est noté.</string>
+    <!-- %1$s = the note it actually sounds as (phone speakers can't play bass register) -->
     <string name="drone_sounding">tu l\'entendras comme %1$s</string>
     <string name="drone_sounding_fifth">tu l\'entendras comme %1$s · avec une quinte au-dessus</string>
-    <string name="drone_playing">En cours</string>
+    <string name="drone_playing">Lecture</string>
     <string name="drone_stopped">Arrêté</string>
     <string name="drone_play">Jouer</string>
     <string name="drone_stop">Arrêter</string>
-    <string name="drone_fifth_chip">Ajoute une quinte — une deuxième note qui facilite l\'accord</string>
+    <string name="drone_fifth_chip">Ajouter une quinte — une deuxième note qui facilite l\'accordage</string>
     <string name="drone_open_strings">Cordes à vide</string>
     <string name="drone_any_note">N\'importe quelle note</string>
     <string name="drone_volume">Volume</string>
 
-    <string name="room_intro">Une vérif. rapide que l\'app entend ton jeu le plus doux par-dessus les bruits de ta pièce. Moins d\'une minute.</string>
-    <string name="room_step1_title">Étape 1 : Reste silencieux</string>
-    <string name="room_step1_body">Ne joue pas. Laisse l\'app écouter la pièce telle qu\'elle sonne normalement.</string>
-    <string name="room_step1_label">Étape 1 : reste silencieux</string>
+    <!-- Room check (ui/calibrate/CalibrateScreen.kt) -->
+    <string name="room_intro">Une vérification rapide pour voir si l\'app entend ton jeu doux malgré les bruits de la pièce. Moins d\'une minute.</string>
+    <string name="room_step1_title">Étape 1 : reste silencieux</string>
+    <string name="room_step1_body">Ne joue pas. Laisse l\'app écouter le son normal de la pièce.</string>
+    <string name="room_step1_label">Étape 1 : silence</string>
     <string name="room_transition_title">Prépare-toi à jouer DOUCEMENT</string>
     <string name="room_transition_sub">Ensuite : archet doux ou pincements légers</string>
     <string name="room_step2_label">Étape 2 : jeu doux</string>
     <string name="room_play_softly">joue doucement…</string>
     <string name="room_results">Résultats</string>
     <string name="room_verdict_good">Ta pièce est bien silencieuse</string>
-    <string name="room_verdict_tight">Faisable, mais un peu bruyant</string>
+    <string name="room_verdict_tight">Possible, mais un peu bruyant</string>
     <string name="room_verdict_overlap">Trop bruyant</string>
-    <string name="room_explain_good">L\'app distingue facilement ton jeu de la pièce. Tout est prêt.</string>
-    <string name="room_explain_tight">Les notes très douces risquent de ne pas passer ici. Une pièce plus calme fonctionne encore mieux.</string>
-    <string name="room_explain_overlap">L\'app ne distingue pas ton jeu doux du bruit de fond de la pièce. Essaie une pièce plus calme.</string>
+    <string name="room_explain_good">L\'app distingue facilement ton jeu du bruit de la pièce. Tout est prêt.</string>
+    <string name="room_explain_tight">Les notes très douces risquent de ne pas être détectées ici. Une pièce plus calme serait encore mieux.</string>
+    <string name="room_explain_overlap">L\'app ne distingue pas ton jeu doux du bruit de fond. Essaie une pièce plus calme.</string>
+    <!-- %1$s = noise ceiling, %2$s = playing floor, %3$s = gate (pre-formatted levels) -->
     <string name="room_tech_line_no_gate">bruit jusqu\'à %1$s · jeu doux à partir de %2$s</string>
     <string name="room_tech_line_gate">bruit jusqu\'à %1$s · jeu doux à partir de %2$s · seuil %3$s</string>
     <string name="room_saved">Enregistré.</string>
@@ -50,63 +56,85 @@
     <string name="room_measure_again">Mesurer à nouveau</string>
     <string name="room_try_again">Réessayer (pièce plus calme)</string>
 
+    <!-- Full setup (ui/calibrate/WizardScreen.kt) -->
     <string name="setup_title">Configuration complète</string>
-    <string name="setup_intro_1">L\'app écoute quelques notes pour apprendre le son de ta contrebasse sur ce téléphone. D\'abord un moment de silence, puis des notes à l\'archet, puis en pizzicato. Environ deux minutes.</string>
-    <string name="setup_intro_2">Aie ta basse prête et accordée. Chaque note commence à s\'enregistrer d\'elle-même après un court compte à rebours, tu n\'as jamais à poser la basse.</string>
+    <string name="setup_intro_1">L\'app écoute quelques notes pour apprendre le son de ta contrebasse avec ce téléphone. D\'abord un moment de silence, puis des notes à l\'archet, puis en pizzicato. Cela prend environ deux minutes.</string>
+    <string name="setup_intro_2">Prépare ta contrebasse et accorde-la. Chaque note commence automatiquement après un court compte à rebours, tu n\'as jamais besoin de poser l\'instrument.</string>
     <string name="setup_start">Démarrer</string>
     <string name="setup_keep_quiet">Reste silencieux…</string>
     <string name="setup_measuring_room">Mesure du bruit de fond de la pièce.</string>
-    <string name="setup_retry">Pas bien entendu — on réessaie.</string>
+    <string name="setup_retry">Je n\'ai pas bien entendu — essayons encore.</string>
+
+    <!-- Stage names shown above the prompted note -->
     <string name="setup_stage_lowest">Corde la plus grave</string>
     <string name="setup_stage_open">Cordes à vide</string>
     <string name="setup_stage_high">Note aiguë</string>
-    <string name="setup_stage_pizz_check">Vérif. pizz</string>
-    <string name="setup_stage_pizz_stopped">Pizz doigté</string>
+    <string name="setup_stage_pizz_check">Vérification pizzicato</string>
+    <string name="setup_stage_pizz_stopped">Pizzicato doigté</string>
+
+    <!-- How to play the prompted note; the action word is part of the string -->
     <string name="setup_hint_open_bows">ARCHET — corde à vide, longs coups d\'archet</string>
-    <string name="setup_hint_high">ARCHET — corde de Sol, deuxième position</string>
-    <string name="setup_hint_pizz_open">PINCE — pince quelques fois — laisse les autres cordes résonner</string>
-    <string name="setup_hint_pizz_stopped">PINCE — doigte la note, pince une fois et laisse résonner</string>
+    <string name="setup_hint_high">ARCHET — corde de Sol, 2e position</string>
+    <string name="setup_hint_pizz_open">PIZZ — pince plusieurs fois — laisse les autres cordes résonner</string>
+    <string name="setup_hint_pizz_stopped">PIZZ — doigte la note, pince une fois et laisse résonner</string>
+
+    <!-- %1$d = seconds -->
     <string name="setup_get_ready">Prépare-toi… %1$d</string>
     <string name="setup_start_now">Commencer maintenant</string>
     <string name="setup_pluck_ring">Pince &amp; laisse résonner…</string>
-    <string name="setup_keep_bowing">Continue à l\'archet…</string>
+    <string name="setup_keep_bowing">Continue à jouer à l\'archet…</string>
+
+    <!-- %1$s = note name -->
     <string name="setup_hearing">entend %1$s</string>
-    <string name="setup_pizz_transition_title">C\'est l\'heure du pizz</string>
-    <string name="setup_pizz_transition_sub">Range ton archet et prépare-toi</string>
+
+    <string name="setup_pizz_transition_title">Maintenant, place au pizzicato</string>
+    <string name="setup_pizz_transition_sub">Pose ton archet et prépare-toi</string>
     <string name="setup_analyzing">Analyse…</string>
-    <string name="setup_failed_title">La configuration n\'a pas pu finir</string>
-    <string name="setup_fail_signal">Les enregistrements ne contenaient pas assez de signal jouable. Réessaie plus près du téléphone, dans une pièce plus calme.</string>
-    <string name="setup_fail_core">Une corde à vide n\'a pas été détectée de façon fiable cette fois. Rien n\'a été modifié — recommence (des coups d\'archet plus longs et réguliers) pour que les réglages reposent sur des prises propres.</string>
+
+    <string name="setup_failed_title">La configuration n\'a pas pu se terminer</string>
+    <string name="setup_fail_signal">Les enregistrements ne contenaient pas assez de signal jouable. Essaie plus près du téléphone, dans une pièce plus calme.</string>
+    <string name="setup_fail_core">Une corde à vide n\'a pas été détectée correctement cette fois. Rien n\'a été modifié — recommence avec des coups d\'archet plus longs et plus réguliers pour obtenir des réglages fiables.</string>
     <string name="setup_close">Fermer</string>
-    <string name="setup_sum_noisy">La pièce était trop bruyante pour finir.</string>
-    <string name="setup_sum_all">Tout est prêt — chaque note a été bien entendue.</string>
-    <string name="setup_sum_some">Presque — quelques notes ont posé problème à l\'app.</string>
-    <string name="setup_note_bowed">%1$s (à l\'archet)</string>
-    <string name="setup_note_plucked">%1$s (pincée)</string>
+
+    <string name="setup_sum_noisy">La pièce était trop bruyante pour terminer.</string>
+    <string name="setup_sum_all">Tout est prêt — chaque note a été entendue correctement.</string>
+    <string name="setup_sum_some">Presque terminé — quelques notes ont posé problème.</string>
+
+    <!-- %1$s = note name -->
+    <string name="setup_note_bowed">%1$s (archet)</string>
+    <string name="setup_note_plucked">%1$s (pizzicato)</string>
+
     <string name="setup_heard">bien entendue</string>
     <string name="setup_hard">difficile à entendre</string>
     <string name="setup_wrong_octave_first">mauvaise octave au début</string>
     <string name="setup_not_heard">non entendue</string>
     <string name="setup_off_pitch">fausse</string>
-    <string name="setup_warn_pizz_octave">Les notes pincées affichent parfois la mauvaise octave sur ce téléphone. L\'app en corrige la plupart — si tu le remarques en jeu, envoie un rapport de pratique pour l\'affiner.</string>
-    <string name="setup_warn_pizz_timing">Les notes pincées mettent un instant à se poser sur ce téléphone, donc un pizz peut parfois sonner un peu trop haut. La meilleure valeur mesurée a été enregistrée.</string>
-    <string name="setup_warn_high">Les notes très aiguës peuvent parfois se lire trop bas sur ce téléphone. Si tu le remarques en jeu, envoie un rapport de pratique.</string>
+
+    <string name="setup_warn_pizz_octave">Les notes en pizzicato peuvent parfois afficher la mauvaise octave sur ce téléphone. L\'app en corrige la plupart — si tu le remarques pendant un jeu, envoie un rapport de pratique pour aider à l\'améliorer.</string>
+    <string name="setup_warn_pizz_timing">Les notes en pizzicato mettent parfois un instant à se stabiliser sur ce téléphone, donc un pizz peut occasionnellement sembler un peu trop haut. La meilleure valeur mesurée a été enregistrée.</string>
+    <string name="setup_warn_high">Les notes très aiguës peuvent parfois être détectées trop basses sur ce téléphone. Si tu le remarques pendant un jeu, envoie un rapport de pratique.</string>
+
     <string name="setup_details_show">Détails techniques</string>
     <string name="setup_details_hide">Masquer les détails techniques</string>
     <string name="setup_detail_mic">Microphone</string>
-    <string name="setup_detail_room">Pièce</string>
+    <string name="setup_detail_room">Environnement</string>
     <string name="setup_room_clear">sans bruit</string>
-    <string name="setup_room_tight">juste — les notes douces peuvent tomber</string>
+    <string name="setup_room_tight">limite — les notes douces peuvent disparaître</string>
     <string name="setup_room_overlap">trop bruyant pour régler un seuil</string>
-    <string name="setup_detail_settle">Temps de pose octave pizz</string>
+
+    <string name="setup_detail_settle">Stabilisation octave pizz</string>
+    <!-- %1$d = milliseconds -->
     <string name="setup_ms">%1$d ms</string>
-    <string name="setup_not_needed">non nécessaire</string>
-    <string name="setup_detail_lock">Timing de verrou pizz</string>
-    <string name="setup_lock_value">attends %1$d ms, tiens %2$d ms</string>
-    <string name="setup_thresholds_adjusted">La gestion de l\'octave a été ajustée pour le micro de ce téléphone.</string>
-    <string name="setup_noisy_nothing_saved">La pièce était trop bruyante pour finir — rien n\'a été enregistré. Réessaie dans un endroit plus calme.</string>
-    <string name="setup_saved">Enregistré — tous les jeux utilisent désormais ces réglages.</string>
+    <string name="setup_not_needed">pas nécessaire</string>
+
+    <string name="setup_detail_lock">Temps de verrouillage pizz</string>
+    <!-- %1$d / %2$d = milliseconds -->
+    <string name="setup_lock_value">attente %1$d ms, tenue %2$d ms</string>
+
+    <string name="setup_thresholds_adjusted">La gestion de l\'octave a été ajustée pour le microphone de ce téléphone.</string>
+    <string name="setup_noisy_nothing_saved">La pièce était trop bruyante pour terminer — rien n\'a été enregistré. Réessaie dans un endroit plus calme.</string>
+    <string name="setup_saved">Enregistré — tous les jeux utilisent maintenant ces réglages.</string>
     <string name="setup_save">Enregistrer</string>
-    <string name="setup_discard">Abandonner</string>
+    <string name="setup_discard">Annuler</string>
 
 </resources>

@@ -121,6 +121,7 @@ private fun AppNavGraph(
                 onOpenDrone = { navController.navigate(Routes.DRONE) },
                 onOpenCalibrate = { navController.navigate(Routes.CALIBRATE) },
                 onOpenProgress = { navController.navigate(Routes.PROGRESS) },
+                onOpenHistory = { navController.navigate(Routes.HISTORY) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 onOpenDebug = { navController.navigate(Routes.DEBUG) },
             )
@@ -158,7 +159,6 @@ private fun AppNavGraph(
             ProgressScreen(
                 onBack = { navController.popBackStack() },
                 onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) },
-                onOpenHistory = { navController.navigate(Routes.HISTORY) },
             )
         }
         composable(Routes.HISTORY) {

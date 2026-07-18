@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dutch (NL). DRAFT — Sarah reviews natively. -->
+<!-- Dutch (NL). Child-friendly wording. -->
 <resources>
 
     <string name="settings_title">Instellingen</string>
 
     <string name="settings_section_coaching">Coaching</string>
-    <string name="settings_section_notes">Noten &amp; stemming</string>
+    <string name="settings_section_notes">Noten &amp; stemmen</string>
     <string name="settings_section_sounds">Geluid &amp; waarschuwingen</string>
-    <string name="settings_section_setup">Set-up</string>
+    <string name="settings_section_setup">Instellen</string>
     <string name="settings_section_data">Je gegevens</string>
     <string name="settings_section_help">Help de app verbeteren</string>
 
@@ -15,71 +15,75 @@
     <string name="settings_off">Uit</string>
 
     <string name="settings_technical_title">Technische details tonen</string>
-    <string name="settings_technical_sub">Toon overal exacte cent, percentages en metingen. Uit houdt de app in gewone taal.</string>
+    <string name="settings_technical_sub">Toon overal exacte cijfers, percentages en metingen. Uit gebruikt gewone taal.</string>
 
     <string name="settings_pace_title">Tempo</string>
-    <string name="settings_pace_sub">Hoeveel tijd je krijgt om de opdracht te lezen en de noot te vinden. Het scoren is even eerlijk bij elk tempo, en je records blijven behouden als je opschuift.</string>
-    <string name="settings_pace_current">Tot %1$d s om elke noot te starten.</string>
+    <string name="settings_pace_sub">Hoeveel tijd je krijgt om de opdracht te lezen en de noot te vinden. Elke snelheid wordt eerlijk gescoord, en je beste scores blijven bewaard.</string>
+    <string name="settings_pace_current">Tot %1$d seconden om elke noot te starten.</string>
 
     <string name="settings_difficulty_title">Moeilijkheid</string>
-    <string name="settings_difficulty_sub">Hoe mild het scoren is als een noot niet helemaal zuiver is.</string>
-    <string name="settings_difficulty_zero">Punten bereiken nul bij ±%1$d cent.</string>
+    <string name="settings_difficulty_sub">Hoe streng de score is als een noot niet helemaal zuiver klinkt.</string>
+    <string name="settings_difficulty_zero">Je krijgt nul punten bij ±%1$d cent.</string>
 
-    <string name="settings_length_title">Rondelengte</string>
-    <string name="settings_length_sub">Hoeveel noten in één ronde. Scores vergelijken alleen binnen dezelfde lengte.</string>
+    <string name="settings_length_title">Lengte van de ronde</string>
+    <string name="settings_length_sub">Hoeveel noten in één ronde zitten. Scores worden alleen vergeleken met rondes van dezelfde lengte.</string>
 
     <string name="settings_note_names_title">Notennamen</string>
-    <string name="settings_note_names_sub">Wat je leraar ook gebruikt — noten worden overal zo geschreven.</string>
+    <string name="settings_note_names_sub">Gebruik wat je leraar gebruikt — zo worden alle noten in de app geschreven.</string>
 
     <string name="settings_enharmonics_title">Kruisen &amp; mollen mengen</string>
-    <string name="settings_enharmonics_sub">Toon La♯ soms als Si♭ — dezelfde noot heeft twee namen, zo leer je ze allebei. Uit schrijft alles met kruisen.</string>
+    <string name="settings_enharmonics_sub">Toon dezelfde noot soms op twee manieren, zoals La♯ en Si♭. Zo leer je beide namen. Uit gebruikt alleen kruisen.</string>
 
-    <string name="settings_a4_title">Kamertoon (A4)</string>
-    <string name="settings_a4_sub">De A waarop je orkest stemt. Laat op 440 tenzij je leraar iets anders zegt.</string>
+    <string name="settings_a4_title">Stemtoon (A4)</string>
+    <string name="settings_a4_sub">De A waarop orkesten stemmen. Laat dit op 440 tenzij je leraar iets anders zegt.</string>
     <string name="settings_hz">%1$d Hz</string>
 
-    <string name="settings_chord_fingering_title">Akkoordvingerzetting</string>
-    <string name="settings_chord_fingering_sub">In het spel Akkoorden kan een noot vaak op meerdere manieren — los of gegrepen in je posities. Zo kiest het spel (losse snaren tellen nooit mee).</string>
+    <string name="settings_chord_fingering_title">Akkoord spelen</string>
+    <string name="settings_chord_fingering_sub">In Akkoorden kun je een noot soms op verschillende manieren spelen: met een open snaar of met je vingers. Zo kiest het spel wat het gebruikt (open snaren tellen niet mee voor de score).</string>
 
-    <string name="settings_sound_title">Geluidsfeedback</string>
-    <string name="settings_sound_sub">Een belletje als je een noot landt, een zoemer als je mist — zo kun je je ogen op de toets houden.</string>
-    <string name="settings_volume_label">Volume (loslaten om te horen)</string>
-    <string name="settings_muted_cd">Mediavolume van de telefoon staat uit</string>
-    <string name="settings_muted_warning">Het mediavolume van je telefoon staat uit — spelgeluiden blijven stil, wat deze schuif ook zegt.</string>
+    <string name="settings_sound_title">Geluidshulp</string>
+    <string name="settings_sound_sub">Een geluidje als je een noot goed speelt, en een waarschuwing als je mist — zo hoef je minder naar het scherm te kijken.</string>
+    <string name="settings_volume_label">Volume (laat los om te horen)</string>
+    <string name="settings_muted_cd">Mediavolume staat uit</string>
+    <string name="settings_muted_warning">Het mediavolume van je telefoon staat uit — je hoort geen spelgeluiden, ook niet met deze schuif.</string>
 
-    <string name="settings_drift_title">Zweefwaarschuwing</string>
-    <string name="settings_drift_sub">Waarschuwt wanneer alles wat je speelt te hoog of te laag begint te leunen, zodat je je gehoor kunt bijstellen in plaats van verkeerde noten in te oefenen.</string>
+    <string name="settings_drift_title">Ontstemmingswaarschuwing</string>
+    <string name="settings_drift_sub">Waarschuwt wanneer je noten steeds te hoog of te laag worden, zodat je jezelf kunt corrigeren.</string>
 
-    <string name="settings_listening_title">Luister-set-up</string>
-    <string name="settings_listening_sub">Ruimtecheck meet het achtergrondgeluid van je ruimte (kort — doe het wanneer je ergens nieuw oefent). Volledige set-up leert de app hoe je contrabas klinkt op deze telefoon (eenmalig, of bij een nieuwe telefoon of nieuwe bas).</string>
+    <string name="settings_listening_title">Luisterinstellingen</string>
+    <string name="settings_listening_sub">Ruimtecheck meet het geluid om je heen (doe dit als je ergens anders oefent). Volledige instelling leert de app hoe jouw contrabas klinkt op deze telefoon (eenmalig, of bij een nieuwe telefoon of bas).</string>
     <string name="settings_room_check_btn">Ruimtecheck</string>
-    <string name="settings_full_setup_btn">Volledige set-up (nieuwe telefoon of nieuwe bas)</string>
-    <string name="settings_noise_gate">Ruispoort: geluid onder dit niveau wordt genegeerd als ruimtegeluid (poort op niveau %1$d / 100 — Ruimtecheck stelt hem automatisch in).</string>
+    <string name="settings_full_setup_btn">Volledige instelling (nieuwe telefoon of bas)</string>
+    <string name="settings_noise_gate">Geluidsfilter: zachte geluiden onder niveau %1$d / 100 worden genegeerd als achtergrondgeluid. Ruimtecheck stelt dit automatisch in.</string>
 
-    <string name="settings_octave_title">Juiste noot, verkeerde octaaf telt toch</string>
-    <string name="settings_octave_sub">Lage noten kunnen de microfoon een heel octaaf misleiden. Laat dit aan zodat dat je nooit punten kost — de app scoort dan hoe zuiver je speelde.</string>
+    <string name="settings_octave_title">Juiste noot, verkeerde hoogte telt toch</string>
+    <string name="settings_octave_sub">Lage noten kunnen de microfoon soms een octaaf laten missen. Laat dit aan zodat je geen punten verliest door een meetfout.</string>
 
     <string name="settings_backup_title">Back-up &amp; herstel</string>
-    <string name="settings_backup_sub">Exporteer je hele oefengeschiedenis naar een bestand dat je bewaart, en herstel het op een nieuwe telefoon. Niets staat in de cloud — dit bestand is je enige kopie.</string>
-    <string name="settings_export_btn">Back-up exporteren</string>
-    <string name="settings_import_btn">Back-up importeren</string>
+    <string name="settings_backup_sub">Bewaar je hele oefengeschiedenis in een bestand en zet die terug op een nieuwe telefoon. Er wordt niets online opgeslagen — dit bestand is je enige kopie.</string>
+    <string name="settings_export_btn">Back-up maken</string>
+    <string name="settings_import_btn">Back-up terugzetten</string>
     <string name="settings_share_backup">Back-up delen</string>
-    <string name="settings_backup_created">Back-up gemaakt — bewaar hem op een veilige plek.</string>
-    <string name="settings_export_failed">Exporteren mislukt: %1$s</string>
-    <string name="settings_import_failed">Importeren mislukt: %1$s</string>
-    <string name="settings_open_file_failed">Kon het bestand niet openen.</string>
-    <string name="settings_imported">%1$d rondes geïmporteerd.</string>
-    <string name="settings_imported_skipped">%1$d rondes geïmporteerd, %2$d al aanwezig overgeslagen.</string>
-    <string name="settings_import_title">Back-up importeren</string>
-    <string name="settings_import_body">Samenvoegen behoudt wat op deze telefoon staat en voegt de rondes uit de back-up toe die er nog niet zijn. Vervangen wist eerst de geschiedenis van deze telefoon.</string>
+    <string name="settings_backup_created">Back-up gemaakt — bewaar hem goed.</string>
+
+    <string name="settings_export_failed">Back-up maken mislukt: %1$s</string>
+    <string name="settings_import_failed">Back-up terugzetten mislukt: %1$s</string>
+    <string name="settings_open_file_failed">Kan het bestand niet openen.</string>
+
+    <string name="settings_imported">%1$d rondes teruggezet.</string>
+    <string name="settings_imported_skipped">%1$d rondes teruggezet, %2$d stonden al op deze telefoon.</string>
+
+    <string name="settings_import_title">Back-up terugzetten</string>
+    <string name="settings_import_body">Samenvoegen houdt alles op deze telefoon en voegt nieuwe rondes uit de back-up toe. Vervangen wist eerst de geschiedenis op deze telefoon.</string>
+
     <string name="settings_merge">Samenvoegen</string>
     <string name="settings_replace_ellipsis">Vervangen…</string>
     <string name="settings_replace_title">Alle gegevens vervangen?</string>
-    <string name="settings_replace_body">Dit verwijdert alle geschiedenis, persoonlijke records en prestaties op deze telefoon definitief en laadt daarna de back-up. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="settings_replace_body">Dit verwijdert alle geschiedenis, beste scores en beloningen op deze telefoon. Daarna wordt de back-up geladen. Dit kan niet ongedaan worden gemaakt.</string>
     <string name="settings_replace_confirm">Alles vervangen</string>
 
     <string name="settings_traces_title">Oefenrapporten opnemen</string>
-    <string name="settings_traces_sub">Neemt je rondes op — het geluid en wat de app hoorde — zodat je, als er iets fout lijkt (een noot niet opgepikt, een vreemde score), het rapport naar de ontwikkelaar kunt mailen en de app gefixt wordt. Laat uit voor gewoon spelen.</string>
+    <string name="settings_traces_sub">Neemt je rondes op — het geluid en wat de app hoorde — zodat je een rapport naar de ontwikkelaar kunt sturen als iets niet klopt. Laat dit uit voor normaal oefenen.</string>
     <string name="settings_view_reports">Oefenrapporten bekijken</string>
 
     <string name="settings_about">Over &amp; licenties</string>

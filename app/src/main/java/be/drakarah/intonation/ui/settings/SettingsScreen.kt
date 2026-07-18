@@ -18,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -436,7 +437,7 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Icon(
-                            Icons.Default.VolumeOff,
+                            Icons.AutoMirrored.Default.VolumeOff,
                             contentDescription = stringResource(R.string.settings_muted_cd),
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.height(20.dp),

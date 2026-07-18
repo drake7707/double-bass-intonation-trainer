@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -58,6 +59,7 @@ fun HomeScreen(
     onOpenDrone: () -> Unit,
     onOpenCalibrate: () -> Unit,
     onOpenProgress: () -> Unit,
+    onOpenHistory: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenDebug: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
@@ -158,6 +160,9 @@ fun HomeScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING)) {
                     IconButton(onClick = onOpenProgress) {
                         Icon(Icons.Filled.BarChart, contentDescription = stringResource(R.string.home_cd_progress))
+                    }
+                    IconButton(onClick = onOpenHistory) {
+                        Icon(Icons.Filled.History, contentDescription = stringResource(R.string.history_cd_open))
                     }
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.home_cd_settings))

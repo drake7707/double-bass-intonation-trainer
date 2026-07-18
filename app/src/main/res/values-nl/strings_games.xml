@@ -1,98 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dutch (NL). DRAFT — Sarah reviews natively. Mid-round text stays short (2 m leesbaarheid). -->
 <resources>
 
+    <!-- Shared across games -->
     <string name="game_quit">Ronde stoppen</string>
-    <string name="game_listening">luisteren…</string>
+    <string name="game_listening">luistert…</string>
     <string name="game_no_note">Geen noot gehoord</string>
     <string name="game_wrong_note">verkeerde noot?</string>
-    <string name="game_wrong_octave">juiste noot,\nverkeerde octaaf</string>
+    <string name="game_wrong_octave">juiste noot,\nverkeerd octaaf</string>
+
     <string name="game_dot_next">Noot %1$d: volgende</string>
-    <string name="game_dot_pending">Noot %1$d: nog te doen</string>
+    <string name="game_dot_pending">Noot %1$d: wachtend</string>
     <string name="game_dot_missed">Noot %1$d: gemist</string>
     <string name="game_dot_perfect">Noot %1$d: perfect</string>
     <string name="game_dot_close">Noot %1$d: bijna</string>
 
+    <!-- Find the Note -->
     <string name="note_play">Speel</string>
     <string name="note_avg_technical">gemiddeld %1$s cent ernaast</string>
     <string name="note_how_in_tune">Hoe zuiver: %1$s</string>
-    <string name="note_how_in_tune_scope">op basis van de %1$d van %2$d noten die je raakte</string>
+    <string name="note_how_in_tune_scope">gebaseerd op de %1$d van %2$d noten die je raakte</string>
     <string name="note_stars_line">%1$d van %2$d sterren</string>
     <string name="note_pace_faster">Je vond elke noot met tijd over — dat is vooruitgang!</string>
-    <string name="note_pace_slower">Meerdere noten raakten op tijd — wat meer ademruimte houdt het leuk.</string>
+    <string name="note_pace_slower">Voor enkele noten was de tijd op — wat meer ademruimte houdt het leuk.</string>
     <string name="note_pace_switch">Wissel naar tempo %1$s</string>
 
-    <string name="sustain_hold">Houd vast</string>
-    <string name="sustain_play_and_hold">speel en houd %1$s s vast…</string>
+    <!-- Long Notes -->
+    <string name="sustain_hold">Houd aan</string>
+    <string name="sustain_play_and_hold">speel en houd %1$s s aan…</string>
     <string name="sustain_too_sharp">▼ te hoog</string>
     <string name="sustain_too_flat">▲ te laag</string>
     <string name="sustain_seconds_value">%1$s s</string>
     <string name="sustain_held">gehaald!</string>
-    <string name="sustain_best_time">best %1$s s</string>
+    <string name="sustain_best_time">beste %1$s s</string>
+
     <string name="sustain_metric_in_tune">Zuiver</string>
-    <string name="sustain_metric_steady">Gelijkmatig</string>
-    <string name="sustain_spot_on">precies goed</string>
+    <string name="sustain_metric_steady">Stabiel</string>
+
+    <string name="sustain_spot_on">helemaal zuiver</string>
     <string name="sustain_cents_sharp">%1$s¢ te hoog</string>
     <string name="sustain_cents_flat">%1$s¢ te laag</string>
-    <string name="sustain_rock_steady">kaarsrecht</string>
+
+    <string name="sustain_rock_steady">heel stabiel</string>
     <string name="sustain_wobble_cents">±%1$s¢</string>
-    <string name="sustain_wobble_cents_word">±%1$s¢ wiebel</string>
-    <string name="sustain_little_wobbly">een beetje wiebelig</string>
-    <string name="sustain_wobbly">wiebelig</string>
-    <string name="sustain_focus_steady_true">Kaarsrecht en zuiver.</string>
-    <string name="sustain_focus_sitting_sharp">Gelijkmatige streek — maar te hoog. Zet de noot een haartje lager.</string>
-    <string name="sustain_focus_sitting_flat">Gelijkmatige streek — maar te laag. Zet de noot een haartje hoger.</string>
-    <string name="sustain_focus_bow">Zuivere toon — maar de noot dwaalde. Maak je streeksnelheid gelijkmatiger.</string>
-    <string name="sustain_focus_both">Laat de toon settelen op een trage, gelijkmatige streek.</string>
+    <string name="sustain_wobble_cents_word">±%1$s¢ schommeling</string>
+    <string name="sustain_little_wobbly">licht onstabiel</string>
+    <string name="sustain_wobbly">onstabiel</string>
+
+    <string name="sustain_focus_steady_true">Heel stabiel en zuiver.</string>
+    <string name="sustain_focus_sitting_sharp">Mooie streek — maar te hoog. Plaats de noot iets lager.</string>
+    <string name="sustain_focus_sitting_flat">Mooie streek — maar te laag. Plaats de noot iets hoger.</string>
+    <string name="sustain_focus_bow">Goede toonhoogte — maar de noot schommelde. Houd je streek gelijkmatig.</string>
+    <string name="sustain_focus_both">Laat de toon tot rust komen met een rustige, gelijkmatige streek.</string>
     <string name="sustain_focus_hold_longer">Laat de noot langer klinken — houd hem de hele tijd stabiel.</string>
 
+    <!-- Shifts -->
     <string name="shift_start_on">Begin op</string>
-    <string name="shift_wrong_start">dat is het niet — begin op</string>
-    <string name="shift_then_go">GA dan naar</string>
-    <string name="shift_hold">houd vast…</string>
+    <string name="shift_wrong_start">dat is hem niet — begin op</string>
+    <string name="shift_then_go">ga DAN naar</string>
+    <string name="shift_hold">houd aan…</string>
     <string name="shift_go">GA —</string>
-    <string name="shift_distance">afstand verschuiving</string>
-    <string name="shift_confident">zekere verschuiving</string>
-    <string name="shift_breakdown_landed">uitgekomen op %1$s¢</string>
-    <string name="shift_breakdown_full">start %1$s¢  ·  uitgekomen op %2$s¢</string>
-    <string name="shift_check_start">check je start</string>
-    <string name="shift_check_start_explainer">Check je start = de verschuiving had de juiste grootte maar de startnoot was niet zuiver. Zet de start goed vóór GA.</string>
 
-    <string name="chords_arpeggio">arpeggio — één noot per keer</string>
-    <string name="chords_wrong_root">dat is het niet —\nbegin op %1$s</string>
+    <string name="shift_distance">verschuiving</string>
+    <string name="shift_confident">zekere verschuiving</string>
+
+    <string name="shift_breakdown_landed">geland op %1$s¢</string>
+    <string name="shift_breakdown_full">start %1$s¢ · geland op %2$s¢</string>
+
+    <string name="shift_check_start">controleer je start</string>
+    <string name="shift_check_start_explainer">Controleer je start = de verschuiving was juist, maar de startnoot duwde de landing weg. Zet de startnoot eerst goed voor je vertrekt.</string>
+
+    <!-- Chords -->
+    <string name="chords_arpeggio">arpeggio — één noot tegelijk</string>
+    <string name="chords_wrong_root">dat is hem niet —\nbegin op %1$s</string>
     <string name="chords_play">speel</string>
     <string name="chords_tone_wrong">fout?</string>
-    <string name="chords_tone_spot_on">precies goed</string>
+    <string name="chords_tone_spot_on">helemaal zuiver</string>
     <string name="chords_tone_sharp">te hoog</string>
     <string name="chords_tone_flat">te laag</string>
 
-    <!-- Resultaat-metingen (presentatie-herziening 2026-07-17). Draft — wacht op nazicht Sarah/leraar. -->
+    <!-- Results -->
     <string name="results_score_label">Score</string>
     <string name="results_your_playing">Je spel</string>
-    <string name="results_landed_scope">op basis van de %1$d van %2$d die je haalde</string>
+    <string name="results_landed_scope">gebaseerd op de %1$d van %2$d die je raakte</string>
+
     <string name="gauge_pitch_accuracy">Zuiverheid</string>
     <string name="gauge_shift_accuracy">Verschuiving</string>
     <string name="gauge_steadiness">Stabiliteit</string>
     <string name="gauge_hold">Aanhouden</string>
+
     <string name="gauge_pitch_excellent">Uitstekend</string>
-    <string name="gauge_pitch_solid">Stevig</string>
+    <string name="gauge_pitch_solid">Goed</string>
     <string name="gauge_pitch_developing">In ontwikkeling</string>
+
     <string name="gauge_shift_precise">Precies</string>
     <string name="gauge_shift_good">Goed</string>
-    <string name="gauge_shift_loose">Onnauwkeurig</string>
-    <string name="gauge_steadiness_good">Kaarsrecht</string>
-    <string name="gauge_steadiness_ok">Een beetje wiebelig</string>
-    <string name="gauge_steadiness_developing">Wiebelig</string>
-    <string name="gauge_hold_good">Alles gehaald</string>
-    <string name="gauge_hold_ok">Meeste gehaald</string>
-    <string name="gauge_hold_developing">Weinig gehaald</string>
+    <string name="gauge_shift_loose">Los</string>
+
+    <string name="gauge_steadiness_good">Heel stabiel</string>
+    <string name="gauge_steadiness_ok">Licht onstabiel</string>
+    <string name="gauge_steadiness_developing">Onstabiel</string>
+
+    <string name="gauge_hold_good">Alles aangehouden</string>
+    <string name="gauge_hold_ok">Meeste aangehouden</string>
+    <string name="gauge_hold_developing">Weinig aangehouden</string>
+
     <string name="gauge_value_cents">%1$d¢ gem.</string>
     <string name="gauge_value_seconds">%1$s s gem.</string>
+
     <string name="gauge_chart_show">Toon %1$s</string>
-    <string name="results_praise_pitch">Precies zuiver.</string>
+
+    <string name="results_praise_pitch">Helemaal zuiver.</string>
     <string name="results_praise_shift">Precieze verschuivingen.</string>
-    <string name="results_praise_steady">Kaarsrechte streek.</string>
-    <string name="results_praise_hold">Elke noot vastgehouden.</string>
-    <string name="results_watch_shift_start">Stem eerst je startnoot af voor je verschuift — die duwde de landingen scheef.</string>
+    <string name="results_praise_steady">Heel stabiele streek.</string>
+    <string name="results_praise_hold">Je hield elke noot aan.</string>
+
+    <string name="results_watch_shift_start">Zet de startnoot eerst goed — daardoor kwam je landing ernaast.</string>
 
 </resources>

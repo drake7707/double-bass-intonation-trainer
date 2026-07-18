@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dutch (NL). DRAFT — Sarah reviews natively. -->
+<!-- Dutch (NL). Revised for young players — Sarah/teacher review. -->
 <resources>
 
     <string name="progress_title">Voortgang</string>
@@ -11,112 +11,144 @@
     <string name="progress_no_rounds_sub">Speel een spel om hier je voortgang te zien.</string>
 
     <string name="progress_stat_rounds">rondes</string>
-    <string name="progress_stat_best">record</string>
+    <string name="progress_stat_best">beste</string>
     <string name="progress_stat_streak">dagen op rij</string>
     <string name="progress_dash">—</string>
 
-    <!-- Compact "Deze week" mini-stats (getal boven, dit label eronder) -->
     <string name="progress_stat_this_week">deze week</string>
     <string name="progress_stat_right_note">juiste noot</string>
 
     <string name="progress_this_week">Deze week</string>
+
     <plurals name="progress_practiced">
         <item quantity="one">Je oefende deze week 1 keer.</item>
         <item quantity="other">Je oefende deze week %1$d keer.</item>
     </plurals>
-    <string name="progress_sustain_hint">Probeer elke noot lang en stabiel aan te houden — je streekcontrole staat hieronder.</string>
-    <string name="progress_need_more">Speel deze week nog een paar rondes om te zien hoe zuiver je speelt.</string>
-    <string name="progress_right_note_pct">Je vond de juiste noot %1$d%% van de tijd.</string>
-    <string name="progress_intonation_locked">Je noten landen precies zuiver — geweldig!</string>
-    <string name="progress_intonation_solid">Je noten landen mooi zuiver.</string>
-    <string name="progress_intonation_developing">Je noten komen dichter bij zuiver — blijf oefenen!</string>
 
-    <string name="progress_trend_no_comparison">Blijf spelen om te zien hoe je elke week vooruitgaat.</string>
+    <string name="progress_sustain_hint">Probeer elke noot lang en stabiel te houden — je strijkstokcontrole staat hieronder.</string>
+
+    <string name="progress_need_more">Speel deze week nog een paar rondes om te zien hoe zuiver je speelt.</string>
+
+    <string name="progress_right_note_pct">Je vond de juiste noot %1$d%% van de tijd.</string>
+
+    <string name="progress_intonation_locked">Je noten zijn bijna altijd precies zuiver — geweldig!</string>
+    <string name="progress_intonation_solid">Je noten zijn mooi zuiver.</string>
+    <string name="progress_intonation_developing">Je noten komen steeds dichter bij zuiver — blijf oefenen!</string>
+
+    <string name="progress_trend_no_comparison">Blijf spelen om te zien hoe je elke week beter wordt.</string>
     <string name="progress_trend_tighter">Dat is zuiverder dan vorige week!</string>
-    <string name="progress_trend_looser">Iets minder dan vorige week — je krijgt het terug.</string>
-    <string name="progress_trend_steady">Ongeveer gelijk aan vorige week.</string>
+    <string name="progress_trend_looser">Iets minder zuiver dan vorige week — je krijgt het weer goed.</string>
+    <string name="progress_trend_steady">Ongeveer hetzelfde als vorige week.</string>
 
     <plurals name="progress_rounds_count">
         <item quantity="one">1 ronde</item>
         <item quantity="other">%1$d rondes</item>
     </plurals>
-    <string name="progress_no_verdict">Niet genoeg gescoorde noten deze week voor een oordeel (minstens %1$d nodig).</string>
+
+    <string name="progress_no_verdict">Nog niet genoeg noten deze week om je spel te beoordelen (minstens %1$d nodig).</string>
+
     <string name="progress_intonation_compared">Zuiverheid %1$s (vorige week %2$s, %3$s %4$s)</string>
     <string name="progress_intonation_this_week">Zuiverheid %1$s deze week</string>
+
     <string name="progress_looser">minder strak</string>
     <string name="progress_tighter">strakker</string>
-    <string name="progress_pct_landed">%1$d%% noten geland</string>
+
+    <string name="progress_pct_landed">%1$d%% noten goed geraakt</string>
     <string name="progress_pct_clean">%1$d%% zuiver</string>
 
-    <string name="progress_accuracy_by_position">Nauwkeurigheid per positie</string>
+    <string name="progress_accuracy_by_position">Zuiverheid per positie</string>
     <string name="progress_keep_playing">blijf spelen</string>
+
     <string name="progress_cents_samples">%1$s · %2$d</string>
 
-    <string name="progress_bow_control">Streekcontrole</string>
+    <string name="progress_bow_control">Strijkstokcontrole</string>
     <string name="progress_avg_hold">Gemiddelde aanhouding</string>
     <string name="progress_steadiness">Stabiliteit</string>
-    <string name="progress_bow_changes">Streekwissels / noot</string>
+    <string name="progress_bow_changes">Strijkstokwissels / noot</string>
     <string name="progress_seconds_value">%1$s s</string>
 
     <string name="ach_title">Prestaties</string>
-    <string name="ach_unlocked_count">%1$d van %2$d vrijgespeeld</string>
+    <string name="ach_unlocked_count">%1$d van %2$d gehaald</string>
     <string name="ach_cd_locked">Vergrendelde prestatie</string>
 
     <string name="ach_FIRST_ROUND_title">Eerste ronde</string>
-    <string name="ach_FIRST_ROUND_desc">Voltooi je eerste ronde.</string>
+    <string name="ach_FIRST_ROUND_desc">Speel je eerste ronde.</string>
+
     <string name="ach_BULLSEYE_title">In de roos</string>
-    <string name="ach_BULLSEYE_desc">Land één noot precies in het midden.</string>
-    <string name="ach_BULLSEYE_desc_tech">Land een noot binnen 2 cent.</string>
+    <string name="ach_BULLSEYE_desc">Raak één noot precies in het midden.</string>
+    <string name="ach_BULLSEYE_desc_tech">Raak een noot binnen 2 cent.</string>
+
     <string name="ach_SHARPSHOOTER_title">Scherpschutter</string>
-    <string name="ach_SHARPSHOOTER_desc">Rond een ronde af met bijna elke noot zuiver.</string>
-    <string name="ach_SHARPSHOOTER_desc_tech">Rond een ronde af met gemiddeld binnen 10 cent.</string>
+    <string name="ach_SHARPSHOOTER_desc">Eindig een ronde met bijna alle noten zuiver.</string>
+    <string name="ach_SHARPSHOOTER_desc_tech">Eindig een ronde met gemiddeld minder dan 10 cent afwijking.</string>
+
     <string name="ach_PERFECT_ROUND_title">Perfecte ronde</string>
     <string name="ach_PERFECT_ROUND_desc">Drie sterren op elke noot van een ronde.</string>
+
     <string name="ach_ALL_STRINGS_title">Alle vier de snaren</string>
-    <string name="ach_ALL_STRINGS_desc">Scoor op alle vier de snaren in één ronde.</string>
+    <string name="ach_ALL_STRINGS_desc">Speel op alle vier de snaren in één ronde.</string>
+
     <string name="ach_NOTES_100_title">Honderd noten</string>
     <string name="ach_NOTES_100_desc">Speel in totaal 100 gescoorde noten.</string>
+
     <string name="ach_NOTES_1000_title">Duizend noten</string>
     <string name="ach_NOTES_1000_desc">Speel in totaal 1000 gescoorde noten.</string>
+
     <string name="ach_MARATHON_title">Marathon</string>
-    <string name="ach_MARATHON_desc">100 noten op één dag.</string>
+    <string name="ach_MARATHON_desc">Speel 100 noten op één dag.</string>
+
     <string name="ach_WEEK_STREAK_title">Weekreeks</string>
-    <string name="ach_WEEK_STREAK_desc">Oefen zeven dagen op rij.</string>
+    <string name="ach_WEEK_STREAK_desc">Oefen zeven dagen achter elkaar.</string>
+
     <string name="ach_MONTH_STREAK_title">Maandreeks</string>
-    <string name="ach_MONTH_STREAK_desc">Oefen dertig dagen op rij.</string>
+    <string name="ach_MONTH_STREAK_desc">Oefen dertig dagen achter elkaar.</string>
+
     <string name="ach_STEADY_HAND_title">Vaste hand</string>
-    <string name="ach_STEADY_HAND_desc">Een ronde Lange Noten met elke aanhouding voltooid.</string>
+    <string name="ach_STEADY_HAND_desc">Een ronde Lange Noten waarbij je elke noot goed vasthoudt.</string>
+
     <string name="ach_LIGHTNING_SHIFT_title">Bliksemverschuiving</string>
-    <string name="ach_LIGHTNING_SHIFT_desc">Een driesterrenverschuiving geland in minder dan een seconde.</string>
-    <string name="ach_TRIADS_IN_TUNE_title">Drieklanken zuiver</string>
-    <string name="ach_TRIADS_IN_TUNE_desc">Een ronde Akkoorden met elke noot met sterren.</string>
-    <string name="ach_SNIPER_title">Sluipschutter</string>
-    <string name="ach_SNIPER_desc">Rond een ronde af met elke noot bijna perfect.</string>
-    <string name="ach_SNIPER_desc_tech">Rond een ronde af met gemiddeld binnen 5 cent.</string>
-    <string name="ach_TIGHT_GROUP_title">Strakke groep</string>
-    <string name="ach_TIGHT_GROUP_desc">Elke noot in een ronde landt precies in het midden.</string>
-    <string name="ach_TIGHT_GROUP_desc_tech">Elke noot in een ronde binnen 5 cent.</string>
-    <string name="ach_TRIPLE_BULLSEYE_title">Drievoudige roos</string>
-    <string name="ach_TRIPLE_BULLSEYE_desc">Drie noten precies in het midden in één ronde.</string>
+    <string name="ach_LIGHTNING_SHIFT_desc">Maak een driesterrenverschuiving in minder dan één seconde.</string>
+
+    <string name="ach_TRIADS_IN_TUNE_title">Zuivere drieklanken</string>
+    <string name="ach_TRIADS_IN_TUNE_desc">Een ronde Akkoorden met sterren op elke noot.</string>
+
+    <string name="ach_SNIPER_title">Scherpschutter</string>
+    <string name="ach_SNIPER_desc">Eindig een ronde met elke noot bijna perfect.</string>
+    <string name="ach_SNIPER_desc_tech">Eindig een ronde met gemiddeld minder dan 5 cent afwijking.</string>
+
+    <string name="ach_TIGHT_GROUP_title">Dichte groep</string>
+    <string name="ach_TIGHT_GROUP_desc">Elke noot van een ronde zit precies in het midden.</string>
+    <string name="ach_TIGHT_GROUP_desc_tech">Elke noot van een ronde binnen 5 cent.</string>
+
+    <string name="ach_TRIPLE_BULLSEYE_title">Drie keer raak</string>
+    <string name="ach_TRIPLE_BULLSEYE_desc">Raak drie noten precies in het midden in één ronde.</string>
     <string name="ach_TRIPLE_BULLSEYE_desc_tech">Drie noten binnen 2 cent in één ronde.</string>
-    <string name="ach_NEW_RECORD_title">Nieuw record</string>
-    <string name="ach_NEW_RECORD_desc">Verbreek een van je eigen persoonlijke records.</string>
+
+    <string name="ach_NEW_RECORD_title">Nieuw beste resultaat</string>
+    <string name="ach_NEW_RECORD_desc">Verbeter één van je eigen beste scores.</string>
+
     <string name="ach_EARLY_BIRD_title">Vroege vogel</string>
-    <string name="ach_EARLY_BIRD_desc">Oefen voor 7 uur \'s ochtends.</string>
+    <string name="ach_EARLY_BIRD_desc">Oefen vóór 7 uur \'s ochtends.</string>
+
     <string name="ach_NIGHT_OWL_title">Nachtuil</string>
     <string name="ach_NIGHT_OWL_desc">Oefen om 11 uur \'s avonds of later.</string>
+
     <string name="ach_PIZZ_PRECISION_title">Pizzicato-precisie</string>
-    <string name="ach_PIZZ_PRECISION_desc">Een getokkelde ronde met bijna elke noot zuiver.</string>
-    <string name="ach_PIZZ_PRECISION_desc_tech">Rond een pizz-ronde af met gemiddeld binnen 12 cent.</string>
-    <string name="ach_ARPEGGIO_ACE_title">Arpeggio-aas</string>
+    <string name="ach_PIZZ_PRECISION_desc">Een getokkelde ronde met bijna alle noten zuiver.</string>
+    <string name="ach_PIZZ_PRECISION_desc_tech">Eindig een pizz-ronde met gemiddeld minder dan 12 cent afwijking.</string>
+
+    <string name="ach_ARPEGGIO_ACE_title">Arpeggio-kampioen</string>
     <string name="ach_ARPEGGIO_ACE_desc">Een ronde Akkoorden met drie sterren op elke noot.</string>
-    <string name="ach_UNWAVERING_title">Onwrikbaar</string>
+
+    <string name="ach_UNWAVERING_title">Superstabiel</string>
     <string name="ach_UNWAVERING_desc">Een ronde Lange Noten met drie sterren op elke aanhouding.</string>
-    <string name="ach_SURE_FOOTED_title">Zekere tred</string>
+
+    <string name="ach_SURE_FOOTED_title">Zeker van je stuk</string>
     <string name="ach_SURE_FOOTED_desc">Een ronde Verschuivingen met drie sterren op elke landing.</string>
+
     <string name="ach_POSITION_EXPLORER_title">Positieverkenner</string>
-    <string name="ach_POSITION_EXPLORER_desc">Scoor over vier of meer posities in één ronde.</string>
+    <string name="ach_POSITION_EXPLORER_desc">Scoor in vier of meer posities tijdens één ronde.</string>
+
     <string name="ach_NOTES_500_title">Vijfhonderd noten</string>
     <string name="ach_NOTES_500_desc">Speel in totaal 500 gescoorde noten.</string>
-
 </resources>

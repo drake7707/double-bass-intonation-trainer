@@ -7,18 +7,18 @@
     <string name="pace_quick">Rapide</string>
     <string name="pace_swift">Vif</string>
 
-    <string name="difficulty_relaxed">Souple</string>
+    <string name="difficulty_relaxed">Facile</string>
     <string name="difficulty_standard">Standard</string>
-    <string name="difficulty_strict">Strict</string>
-    <string name="difficulty_relaxed_blurb">Une large marge compte encore comme juste — utile tant que tu apprends où se trouvent les notes.</string>
-    <string name="difficulty_standard_blurb">Le réglage du quotidien — équilibre entre souplesse et précision.</string>
-    <string name="difficulty_strict_blurb">Seule une intonation quasi parfaite obtient un bon score — pour affiner ta justesse une fois à l\'aise.</string>
+    <string name="difficulty_strict">Exigeant</string>
+    <string name="difficulty_relaxed_blurb">Une grande marge reste acceptée — idéal quand tu apprends où placer les notes.</string>
+    <string name="difficulty_standard_blurb">Le réglage du quotidien — un équilibre entre tolérance et précision.</string>
+    <string name="difficulty_strict_blurb">Seules les notes presque parfaites obtiennent un bon score — pour affiner ta justesse quand tu es déjà à l\'aise.</string>
 
     <string name="shift_level_basic">Une corde, doigts 1↔4</string>
-    <string name="shift_level_intermediate">Une corde, n\'importe quel doigt</string>
-    <string name="shift_level_advanced">D\'une corde à l\'autre</string>
+    <string name="shift_level_intermediate">Une corde, tous les doigts</string>
+    <string name="shift_level_advanced">Entre les cordes</string>
     <string name="shift_level_basic_short">1↔4</string>
-    <string name="shift_level_intermediate_short">tout doigt</string>
+    <string name="shift_level_intermediate_short">tous doigts</string>
     <string name="shift_level_advanced_short">entre cordes</string>
 
     <string name="position_open">Corde à vide</string>
@@ -39,10 +39,10 @@
 
     <string name="chord_fingering_natural">Naturel</string>
     <string name="chord_fingering_fingered">Plutôt doigté</string>
-    <string name="chord_fingering_open">Plutôt à vide</string>
-    <string name="chord_fingering_natural_blurb">La forme de main la plus proche — comme dans un morceau ; cordes à vide là où elles tombent.</string>
-    <string name="chord_fingering_fingered_blurb">Doigte les notes dans tes positions pour t\'entraîner ; cordes à vide seulement si nécessaire.</string>
-    <string name="chord_fingering_open_blurb">Utilise les cordes à vide dès qu\'une note s\'y trouve (les cordes à vide ne comptent pas).</string>
+    <string name="chord_fingering_open">Plutôt cordes à vide</string>
+    <string name="chord_fingering_natural_blurb">La forme de main la plus proche — comme dans un morceau ; les cordes à vide quand elles se présentent.</string>
+    <string name="chord_fingering_fingered_blurb">Doigte les notes dans tes positions pour t\'entraîner ; cordes à vide seulement quand c\'est nécessaire.</string>
+    <string name="chord_fingering_open_blurb">Utilise les cordes à vide quand une note s\'y trouve (les cordes à vide ne sont pas notées).</string>
 
     <string name="chord_quality_major_solfege">Majeur</string>
     <string name="chord_quality_minor_solfege">mineur</string>

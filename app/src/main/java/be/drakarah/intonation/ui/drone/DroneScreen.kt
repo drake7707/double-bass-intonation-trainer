@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.VolumeOff
@@ -123,7 +125,7 @@ fun DroneScreen(
                 if (state.isPlaying) R.string.drone_playing else R.string.drone_stopped
             )
             Icon(
-                if (state.isPlaying) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
+                if (state.isPlaying) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
                 contentDescription = playingLabel,
                 tint = if (state.isPlaying) ResultColors.excellent else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp)

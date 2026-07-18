@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Rondegeschiedenis (concept — Sarah/leraar nog nakijken) -->
 <resources>
-    <string name="history_title">Geschiedenis</string>
-    <string name="history_cd_open">Rondegeschiedenis</string>
-    <string name="history_empty">Nog geen rondes gespeeld — speel een ronde en die verschijnt hier.</string>
+
+    <string name="history_title">Historiek</string>
+    <string name="history_cd_open">Rondehistoriek</string>
+
+    <string name="history_empty">Nog geen rondes gespeeld — werk een ronde af en die verschijnt hier.</string>
+
     <string name="history_not_found">Deze ronde is niet meer beschikbaar.</string>
+
     <string name="history_row_score">%1$d / %2$d</string>
+
     <string name="history_detail_title">%1$s · %2$s</string>
+
 </resources>

@@ -5,8 +5,8 @@
 <resources>
 
     <!-- Coaching vocabulary (ui/common/CoachingLabels.kt — the domain picks enums, these say it) -->
-    <string name="coach_band_locked">Locked in</string>
-    <string name="coach_band_solid">Solid</string>
+    <string name="coach_band_locked">Spot on!</string>
+    <string name="coach_band_solid">Getting closer</string>
     <string name="coach_band_developing">Developing</string>
 
     <string name="coach_bias_centered">centered</string>
@@ -27,7 +27,7 @@
     <string name="coach_round_lean_sharp">Good round — most notes leaned sharp. Try aiming a touch lower next time.</string>
     <string name="coach_round_lean_flat">Good round — most notes leaned flat. Try aiming a touch higher next time.</string>
     <string name="coach_round_time_pressure">The notes you played were in tune — some just ran out of time. Take a breath before each one.</string>
-    <string name="coach_round_locked">Locked in — your notes landed right in the center today.</string>
+    <string name="coach_round_locked">Spot on — your notes landed right in the center today.</string>
     <string name="coach_round_solid">Solid round — your notes are sitting close to center.</string>
     <string name="coach_round_developing">Every round trains your ear a little — keep landing them.</string>
 

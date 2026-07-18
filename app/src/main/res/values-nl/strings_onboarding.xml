@@ -1,50 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dutch (NL). DRAFT — Sarah reviews natively. -->
+<!-- Dutch (Flemish). Kept short and friendly for first-run onboarding. -->
 <resources>
 
+    <!-- %1$d = current step, %2$d = last step -->
     <string name="wizard_step_counter">%1$d van %2$d</string>
 
-    <string name="wizard_skip_title">Set-up overslaan?</string>
-    <string name="wizard_skip_body">Zonder de set-up van twee minuten kent de app je contrabas niet, en kunnen scores onbetrouwbaar zijn.\n\nJe kunt hem later altijd doen via Instellingen → Volledige set-up.</string>
+    <string name="wizard_skip_title">Instellen overslaan?</string>
+    <string name="wizard_skip_body">Zonder de set-up van twee minuten kent de app je contrabas nog niet goed, en kunnen scores onbetrouwbaar zijn.\n\nJe kunt dit later altijd doen via Instellingen → Volledige set-up.</string>
     <string name="wizard_skip_anyway">Toch overslaan</string>
     <string name="wizard_cancel">Annuleren</string>
 
-    <string name="wizard_welcome_body">Je coach voor zuiver spelen — korte spellen, echte scores, en feedback die echt helpt.\n\nEnkele korte vragen om alles voor je in te stellen.</string>
+    <string name="wizard_welcome_body">Je coach om zuiver te spelen — korte spelletjes, echte scores en feedback die helpt.\n\nEen paar korte vragen om alles voor jou in te stellen.</string>
     <string name="wizard_lets_go">Aan de slag</string>
     <string name="wizard_next">Volgende</string>
     <string name="wizard_back">Terug</string>
     <string name="wizard_later">Later</string>
     <string name="wizard_setup_now">Nu instellen (2 minuten)</string>
 
+    <!-- Q1: note names -->
     <string name="wizard_notes_title">Hoe noem je je noten?</string>
     <string name="wizard_notes_explainer">Wat je leraar ook gebruikt — elke noot in de app wordt zo geschreven.</string>
     <string name="wizard_notes_solfege_title">Do Ré Mi</string>
-    <string name="wizard_notes_solfege_sub">Sol · La · Si — solfège-namen</string>
+    <string name="wizard_notes_solfege_sub">Sol · La · Si — solfègenamen</string>
     <string name="wizard_notes_letters_title">C D E</string>
     <string name="wizard_notes_letters_sub">G · A · B — letternamen</string>
 
+    <!-- Q2: pace -->
     <string name="wizard_pace_title">Hoeveel denktijd wil je?</string>
-    <string name="wizard_pace_explainer">Tijd om de noot te lezen en je hand te plaatsen voor de tijd om is. Het scoren is even eerlijk bij elk tempo.</string>
+    <string name="wizard_pace_explainer">Tijd om de noot te lezen en je hand te plaatsen voor de tijd om is. De score blijft even eerlijk bij elk tempo.</string>
+    <!-- %1$d = seconds -->
     <string name="wizard_pace_seconds">%1$d seconden om elke noot te vinden</string>
 
+    <!-- Q3: round length -->
     <string name="wizard_length_title">Hoe lang mag één ronde duren?</string>
     <string name="wizard_length_explainer">Je kunt dit later altijd aanpassen in Instellingen.</string>
+    <!-- %1$d = number of notes -->
     <string name="wizard_length_notes">%1$d noten</string>
     <string name="wizard_length_short_sub">Kort — ongeveer een minuut</string>
-    <string name="wizard_length_standard_sub">De standaardronde</string>
+    <string name="wizard_length_standard_sub">De gewone ronde</string>
     <string name="wizard_length_long_sub">Een lange oefenronde</string>
 
+    <!-- Q4: plain language vs numbers -->
     <string name="wizard_style_title">Hoe moet de app tegen je praten?</string>
-    <string name="wizard_style_explainer">Ze zeggen hetzelfde — de een in woorden, de ander in cijfers.</string>
+    <string name="wizard_style_explainer">Ze zeggen hetzelfde — de ene in woorden, de andere in cijfers.</string>
     <string name="wizard_style_plain_title">Gewone taal</string>
-    <string name="wizard_style_plain_sub">\"Bijna — een tikje te hoog\"</string>
+    <string name="wizard_style_plain_sub">"Bijna — een tikje te hoog"</string>
     <string name="wizard_style_numbers_title">Toon de cijfers</string>
-    <string name="wizard_style_numbers_sub">\"+12,3 cent\" — voor gevorderde spelers en de nieuwsgierigen</string>
+    <string name="wizard_style_numbers_sub">"+12,3 cent" — voor gevorderde spelers en nieuwsgierigen</string>
 
+    <!-- Beta note -->
     <string name="wizard_beta_title">Eén eerlijke opmerking</string>
-    <string name="wizard_beta_body">Double Bass Coach is nieuw en is tot nu toe getest op een klein aantal telefoons en contrabassen. Misschien hoort hij jouw setup nog niet perfect.\n\nAls een noot niet wordt opgepikt of een score vreemd lijkt, kun je een oefenrapport opnemen en naar de ontwikkelaar mailen — precies zo wordt de app beter. Je vindt het onder Instellingen → Help de app verbeteren.</string>
+    <string name="wizard_beta_body">Double Bass Coach is nieuw en is tot nu toe getest op een klein aantal telefoons en contrabassen. Het kan zijn dat hij jouw setup nog niet perfect hoort.\n\nAls een noot niet wordt opgepikt of een score vreemd lijkt, kun je een oefenrapport opnemen en naar de ontwikkelaar mailen — zo wordt de app beter. Je vindt dit via Instellingen → Help de app verbeteren.</string>
 
+    <!-- Full setup nudge -->
     <string name="wizard_setup_title">Nog één ding — laat de app je contrabas horen</string>
-    <string name="wizard_setup_body">Elke telefoonmicrofoon hoort een contrabas anders. De set-up luistert naar je ruimte en een paar noten die je speelt, zodat je noten juist worden gescoord. Het duurt ongeveer twee minuten, eenmalig.\n\nAlles wat je hier koos, kun je later aanpassen in Instellingen.</string>
+    <string name="wizard_setup_body">Elke telefoonmicrofoon hoort een contrabas anders. De set-up luistert naar je ruimte en een paar noten die je speelt, zodat je noten juist worden beoordeeld. Het duurt ongeveer twee minuten, één keer.\n\nAlles wat je hier koos, kun je later aanpassen in Instellingen.</string>
 
 </resources>

@@ -1,69 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dutch (NL). DRAFT — Sarah reviews natively. The Pitch Analyzer's raw diagnostic-row keys and
-     engine-config line stay English (they mirror the log vocabulary); chrome is translated. -->
 <resources>
 
+    <!-- About -->
     <string name="about_title">Over</string>
-    <string name="about_intro">Een oefencoach voor contrabas — geen stemapparaat. Hij luistert naar de eerste noot die je landt en scoort die, zodat je leert de noot meteen goed te plaatsen in plaats van hem achteraf te corrigeren.</string>
+    <string name="about_intro">Een oefencoach voor contrabas — geen stemapparaat. De app luistert naar de eerste noot die je speelt en beoordeelt die, zodat je leert de noot meteen juist te plaatsen in plaats van achteraf te corrigeren.</string>
     <string name="about_license_title">Licentie</string>
-    <string name="about_license_body">Deze app is vrije software, onder de GNU General Public License v3.0 of later. Je mag hem gebruiken, bestuderen, delen en aanpassen onder de voorwaarden van die licentie.</string>
+    <string name="about_license_body">Deze app is vrije software, onder de GNU General Public License v3.0 of later. Je mag hem gebruiken, bestuderen, delen en aanpassen volgens de voorwaarden van die licentie.</string>
     <string name="about_source_title">Broncode</string>
-    <string name="about_attribution_title">Vermelding</string>
-    <string name="about_attribution_body">Toonhoogtedetectie aangepast van Tuner, © Michael Moessner, GPL-3.0-or-later.\nhttps://codeberg.org/thetwom/Tuner</string>
-    <string name="about_show_license">Volledige licentietekst tonen</string>
-    <string name="about_hide_license">Licentietekst verbergen</string>
+    <string name="about_attribution_title">Met dank aan</string>
+    <string name="about_attribution_body">Toonhoogtedetectie gebaseerd op Tuner, © Michael Moessner, GPL-3.0-or-later.\nhttps://codeberg.org/thetwom/Tuner</string>
+    <string name="about_show_license">Volledige licentie tonen</string>
+    <string name="about_hide_license">Licentie verbergen</string>
 
+    <!-- Practice reports / Recordings -->
     <string name="rec_title_reports">Oefenrapporten</string>
     <string name="rec_title_recordings">Opnames</string>
-    <string name="rec_sub_reports">Opgenomen rondes. Tik op de envelop om er een naar de ontwikkelaar te mailen wanneer er iets fout leek.</string>
-    <string name="rec_sub_recordings">Fragmenten opgeslagen vanuit de Toonhoogte-analyse. Tik op de envelop om er een naar de ontwikkelaar te mailen.</string>
-    <string name="rec_empty_reports">Nog geen oefenrapporten — speel een ronde met opnemen aan.</string>
-    <string name="rec_empty_recordings">Nog niets opgenomen — gebruik de opslagknoppen op het scherm Toonhoogte-analyse.</string>
+    <string name="rec_sub_reports">Opgenomen rondes. Tik op de envelop om er één naar de ontwikkelaar te mailen als er iets niet klopte.</string>
+    <string name="rec_sub_recordings">Opnames uit de Pitch Analyzer. Tik op de envelop om er één naar de ontwikkelaar te mailen.</string>
+    <string name="rec_empty_reports">Nog geen oefenrapporten — speel een ronde met opnemen ingeschakeld.</string>
+    <string name="rec_empty_recordings">Nog geen opnames — gebruik de opslagknoppen in de Pitch Analyzer.</string>
     <string name="rec_meta">%1$s · %2$d s · %3$s MB</string>
-    <string name="rec_cd_play">Speel</string>
+    <string name="rec_cd_play">Afspelen</string>
     <string name="rec_cd_stop">Stop</string>
     <string name="rec_cd_send">Naar ontwikkelaar sturen</string>
     <string name="rec_cd_delete">Verwijderen</string>
     <string name="rec_back">Terug</string>
     <string name="rec_delete_title">%1$s verwijderen?</string>
-    <string name="rec_delete_body">Verwijdert deze opname en zijn gegevens van de telefoon.</string>
+    <string name="rec_delete_body">Verwijdert deze opname en de bijbehorende gegevens van je telefoon.</string>
     <string name="rec_delete_confirm">Verwijderen</string>
     <string name="rec_send_title">Naar ontwikkelaar sturen?</string>
-    <string name="rec_send_body">Dit pakt %1$s in — de volledige microfoonopname plus wat de app hoorde — en opent je mailapp met %2$s als geadresseerde. Het bevat alles wat de microfoon oppikte tijdens het opnemen, niet alleen je spel.</string>
-    <string name="rec_send_confirm">Verstuur</string>
+    <string name="rec_send_body">Dit verstuurt %1$s — de volledige microfoonopname én wat de app hoorde — en opent je e-mailapp met %2$s als ontvanger. Alles wat de microfoon tijdens de opname oppikte wordt meegestuurd, niet alleen je spel.</string>
+    <string name="rec_send_confirm">Versturen</string>
     <string name="rec_share_chooser">Rapport naar ontwikkelaar sturen</string>
 
-    <string name="debug_title">Toonhoogte-analyse</string>
-    <string name="debug_permission_required">Microfoontoestemming is vereist.</string>
-    <string name="debug_grant_permission">Toestemming geven</string>
-    <string name="debug_listening">luisteren…</string>
+    <!-- Pitch Analyzer -->
+    <string name="debug_title">Pitch Analyzer</string>
+    <string name="debug_permission_required">Microfoontoegang is vereist.</string>
+    <string name="debug_grant_permission">Toegang geven</string>
+    <string name="debug_listening">luistert…</string>
     <string name="debug_cents_value">%1$s cent</string>
     <string name="debug_sound_level">geluidsniveau %1$d / 100</string>
-    <string name="debug_too_quiet">  (te stil — behandeld als achtergrondgeluid)</string>
-    <string name="debug_game_capture_prefix">spelopname: </string>
+    <string name="debug_too_quiet">  (te stil — beschouwd als achtergrondgeluid)</string>
+    <string name="debug_game_capture_prefix">game capture: </string>
+
     <string name="debug_state_arming">klaarzetten</string>
     <string name="debug_state_await_quiet">wachten op stilte</string>
-    <string name="debug_state_listening">scherp — luisteren</string>
+    <string name="debug_state_listening">klaar — luistert</string>
     <string name="debug_state_capturing">opnemen…</string>
-    <string name="debug_cd_capture_stable">Opname stabiel</string>
-    <string name="debug_no_capture">nog geen stabiele noot opgenomen</string>
-    <string name="debug_check_every_note">Elke noot checken</string>
-    <string name="debug_save_8s">De laatste 8 seconden opslaan</string>
+
+    <string name="debug_cd_capture_stable">Stabiele noot vastleggen</string>
+    <string name="debug_no_capture">nog geen stabiele noot vastgelegd</string>
+    <string name="debug_check_every_note">Elke noot controleren</string>
+    <string name="debug_save_8s">Laatste 8 seconden opslaan</string>
     <string name="debug_cd_stop_long">Lange opname stoppen</string>
     <string name="debug_cd_start_long">Lange opname starten</string>
     <string name="debug_stop_and_save">Stoppen en opname opslaan</string>
-    <string name="debug_record_2min">Neem tot 2 minuten op</string>
+    <string name="debug_record_2min">Tot 2 minuten opnemen</string>
     <string name="debug_manage_recordings">Opnames beheren</string>
     <string name="debug_cd_switch_mode">Wissel arco / pizz</string>
 
-    <string name="debug_sweep_title">Notenoverzicht</string>
+    <!-- Note sweep -->
+    <string name="debug_sweep_title">Notenscan</string>
     <string name="debug_sweep_count">%1$d / %2$d</string>
-    <string name="debug_sweep_ready">noten spelklaar</string>
+    <string name="debug_sweep_ready">noten klaar voor het spel</string>
     <string name="debug_sweep_wait">Wacht op stilte</string>
-    <string name="debug_sweep_capturing">Opnemen…</string>
+    <string name="debug_sweep_capturing">Vastleggen…</string>
     <string name="debug_sweep_play">Speel een noot</string>
     <string name="debug_sweep_save">Laatste 8 s opslaan (WAV + log)</string>
     <string name="debug_sweep_reset">Reset</string>
-    <string name="debug_sweep_exit">Overzicht sluiten</string>
+    <string name="debug_sweep_exit">Scan afsluiten</string>
 
 </resources>

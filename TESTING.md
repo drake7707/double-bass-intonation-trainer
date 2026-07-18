@@ -984,6 +984,13 @@ Home screen:
   * Maybe have short vertical dividers between the sections to make it clearer in result page, it's kind of a wall of text.
 
 
+
+- [BUG] The shift reveal screen "great shift" text is too long to read in the time the reveal is shown. I would just leave it to great shift and show what it means in the result after the game. If you attach an icon to it then it's immediately recognizeable.
+
+- [CONSISTENCY] A chart in the shift and chords results like in note accuracy 
+
+
+
 OPEN FEEDBACK & IDEAS:
 --------------
 
@@ -1058,14 +1065,6 @@ Polyphonic: is it possible to have a complete breakdown of the instrument with c
 
 
 - Are pizz and arco notes easily distinguisable? I accidently played pizz while i was on arco and the system should detect that and warn me. Now it happily processed pizz as arco with the pizz settings leading to issues with wrong notes and such.
-
-
-
-
-- [BUG] The shift reveal screen "great shift" text is too long to read in the time the reveal is shown. I would just leave it to great shift and show what it means in the result after the game. If you attach an icon to it then it's immediately recognizeable.
-
-- [CONSISTENCY] A chart in the shift and chords results like in note accuracy 
-
 
 
 

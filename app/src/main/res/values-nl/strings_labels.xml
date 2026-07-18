@@ -1,28 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dutch (NL). DRAFT — Sarah reviews natively. -->
+<!-- Dutch (Flemish). Musical terminology follows common string-teaching usage. -->
 <resources>
 
+    <!-- Pace -->
     <string name="pace_calm">Rustig</string>
-    <string name="pace_steady">Gestaag</string>
+    <string name="pace_steady">Gelijkmatig</string>
     <string name="pace_quick">Vlot</string>
     <string name="pace_swift">Snel</string>
 
+    <!-- Scoring difficulty -->
     <string name="difficulty_relaxed">Soepel</string>
     <string name="difficulty_standard">Standaard</string>
     <string name="difficulty_strict">Streng</string>
-    <string name="difficulty_relaxed_blurb">Een ruime marge scoort nog goed — fijn zolang je nog leert waar de noten liggen.</string>
-    <string name="difficulty_standard_blurb">De standaardinstelling — evenwicht tussen soepel en precies.</string>
-    <string name="difficulty_strict_blurb">Alleen bijna-perfecte intonatie scoort goed — om je precisie aan te scherpen als je al stevig staat.</string>
+    <string name="difficulty_relaxed_blurb">Een ruime marge scoort nog goed — ideaal terwijl je leert waar noten zitten.</string>
+    <string name="difficulty_standard_blurb">De gewone instelling — een balans tussen vergevend en precies.</string>
+    <string name="difficulty_strict_blurb">Alleen bijna perfecte zuiverheid scoort goed — om je nauwkeurigheid te verfijnen.</string>
 
+    <!-- Shift levels -->
     <string name="shift_level_basic">Eén snaar, vingers 1↔4</string>
     <string name="shift_level_intermediate">Eén snaar, elke vinger</string>
-    <string name="shift_level_advanced">Over de snaren</string>
+    <string name="shift_level_advanced">Over snaren</string>
     <string name="shift_level_basic_short">1↔4</string>
     <string name="shift_level_intermediate_short">elke vinger</string>
     <string name="shift_level_advanced_short">over snaren</string>
 
-    <string name="position_open">Losse snaar</string>
-    <string name="position_open_short_hint">losse snaar</string>
+    <!-- Left-hand positions -->
+    <string name="position_open">Open snaar</string>
+    <string name="position_open_short_hint">open snaar</string>
     <string name="position_half">Halve positie</string>
     <string name="position_first">Eerste positie</string>
     <string name="position_second">Tweede positie</string>
@@ -37,20 +41,22 @@
     <string name="position_fourth_short">4e</string>
     <string name="position_fifth_short">5e</string>
 
+    <!-- Chord fingering preference -->
     <string name="chord_fingering_natural">Natuurlijk</string>
-    <string name="chord_fingering_fingered">Liefst gegrepen</string>
-    <string name="chord_fingering_open">Liefst los</string>
-    <string name="chord_fingering_natural_blurb">Dichtste handvorm — zoals je het in een stuk zou spelen; losse snaren waar ze vallen.</string>
-    <string name="chord_fingering_fingered_blurb">Grijp de noten in je posities om te oefenen; losse snaren alleen als het niet anders kan.</string>
-    <string name="chord_fingering_open_blurb">Gebruik losse snaren waar een noot erop ligt (losse snaren tellen niet mee).</string>
+    <string name="chord_fingering_fingered">Liefst met vingers</string>
+    <string name="chord_fingering_open">Liefst open snaren</string>
+    <string name="chord_fingering_natural_blurb">De meest natuurlijke handvorm — zoals je het in een stuk zou spelen; open snaren waar ze passen.</string>
+    <string name="chord_fingering_fingered_blurb">Speel noten met vingers in je posities om te oefenen; open snaren alleen als het nodig is.</string>
+    <string name="chord_fingering_open_blurb">Gebruik open snaren wanneer een noot erop zit (open snaren tellen niet mee).</string>
 
-    <!-- Solfège chord names keep the French-style "Majeur/mineur" (Sarah reads fixed-do solfège). -->
+    <!-- Chord quality -->
     <string name="chord_quality_major_solfege">Majeur</string>
     <string name="chord_quality_minor_solfege">mineur</string>
     <string name="chord_quality_major_letters">majeur</string>
     <string name="chord_quality_minor_letters">mineur</string>
     <string name="chord_display_name">%1$s %2$s</string>
 
+    <!-- Playing modes -->
     <string name="mode_arco">arco</string>
     <string name="mode_pizz">pizz</string>
 

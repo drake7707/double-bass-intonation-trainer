@@ -221,7 +221,7 @@ private fun ColumnScope.RoundSummaryBreakdown(data: RoundSummaryData) {
 private fun PersonalBestLine(outcome: RoundOutcome, totalScore: Int) {
     when {
         outcome.isNewBest && outcome.previousBest != null -> Text(
-            stringResource(R.string.summary_new_best_was, outcome.previousBest ?: 0),
+            stringResource(R.string.summary_new_best_was, outcome.previousBest),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
         )

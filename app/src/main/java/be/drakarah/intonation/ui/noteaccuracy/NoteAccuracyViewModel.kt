@@ -42,6 +42,7 @@ import be.drakarah.intonation.music.NoteSpec
 import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.settings.applying
 import be.drakarah.intonation.settings.detectionExtrasJson
+import be.drakarah.intonation.settings.playStyleThreshold
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -73,6 +74,9 @@ data class AttemptUi(
     val energyLevel: Float? = null,
     val captureWobbleCents: Float? = null,
     val retryCount: Int? = null,
+    // Attack-shape features for the game trace's per-note play-style log (null on timeouts).
+    val attackMaxStep: Float? = null,
+    val attackRiseSamples: Int? = null,
 )
 
 sealed interface NoteAccuracyPhase {
@@ -148,6 +152,9 @@ class NoteAccuracyViewModel(
     /** Calibration-owned detection thresholds (defaults until the wizard measures them). */
     private var wrongNoteMinLevel = 55f
     private var lowestPlayableHz = 40f
+    /** Per-rig pizz/arco attack-shape threshold; null until the wizard finds a clean separation.
+     * Used ONLY to log the classified playing style into the game trace for now (no warning yet). */
+    private var playStyleThreshold: be.drakarah.intonation.game.PlayStyleThreshold? = null
     /** Player-owned (scales with level, auto-tuned by LevelAdvisor): min read→play time. */
     private var minReadMs = 900L
     /** Pitch of the previous prompt's accepted answer (Hz), threaded into each new capture for
@@ -177,6 +184,7 @@ class NoteAccuracyViewModel(
             ignoreWrongOctave = settings.ignoreWrongOctave
             wrongNoteMinLevel = settings.wrongNoteMinLevel
             lowestPlayableHz = settings.lowestPlayableHz
+            playStyleThreshold = settings.playStyleThreshold()
             minReadMs = settings.playerLevel.minReadMs
             // Calibrated capture timing (attack-skip / stability window / octave-settle) now lives
             // in the shared CaptureParams.applying so Shift and Chords freeze on the same rig values.
@@ -290,12 +298,22 @@ class NoteAccuracyViewModel(
         energyLevel = energyLevel,
         captureWobbleCents = captureWobbleCents,
         retryCount = retryCount,
+        attackMaxStep = attackMaxStep,
+        attackRiseSamples = attackRiseSamples,
     )
 
     private fun onAttemptFinished(result: AttemptUi, nowMs: Long) {
-        // retryCount ("took N tries") is already stamped by the domain machine.
+        // retryCount ("took N tries") is already stamped by the domain machine. The play-style
+        // classification is logged for false-positive monitoring only (no warning acts on it yet):
+        // compare style vs the exercise mode across a batch of traces. The decision itself is the
+        // domain classifier's — this only formats it. See docs/DETECTION.md §10.
+        val style = be.drakarah.intonation.game.PlayStyleClassifier.classify(
+            result.attackMaxStep ?: 0f, result.attackRiseSamples ?: 0, playStyleThreshold,
+        )
         trace?.event(nowMs, "result",
-            "midi=${result.target.midi} cents=${result.cents} wrong=${result.wrongNote} timeout=${result.timedOut}")
+            "midi=${result.target.midi} cents=${result.cents} wrong=${result.wrongNote} " +
+                "timeout=${result.timedOut} step=%.0f rise=%d style=%s".format(
+                    result.attackMaxStep ?: 0f, result.attackRiseSamples ?: -1, style))
         val drift = if (driftWarningEnabled)
             driftDetector.onAttempt(result.cents.takeUnless { result.wrongNote }) else null
         if (soundFeedback) {

@@ -43,6 +43,40 @@ class AttemptCaptureTest {
                 sample(t, hz * 2f.pow(wobble / 1200f))
             }.toList()
 
+    /** A note with an explicit attack level ramp, then a steady hold at the last level. */
+    private fun noteWithLevels(fromMs: Long, hz: Float, ramp: List<Float>, holdMs: Long): List<PitchSample> {
+        val out = ArrayList<PitchSample>()
+        var t = fromMs
+        for (lv in ramp) { out.add(sample(t, hz, accepted = true, level = lv)); t += hop }
+        val end = t + holdMs
+        while (t < end) { out.add(sample(t, hz, accepted = true, level = ramp.last())); t += hop }
+        return out
+    }
+
+    // --- attack-shape (pizz/arco discriminator) -----------------------------------------
+
+    @Test
+    fun gradualBowedCrescendoHasALowAttackStep() {
+        val capture = AttemptCapture(CaptureParams.arco())
+        // a bowed onset: energy climbs a little each hop
+        val ramp = listOf(22f, 30f, 40f, 50f, 60f, 70f, 80f, 90f, 100f)
+        val state = run(capture, silence(0, 300) + noteWithLevels(300, 98.5f, ramp, holdMs = 1000))
+        val r = (state as CaptureState.Frozen).result
+        assertTrue("bowed attackMaxStep ${r.attackMaxStep}", r.attackMaxStep <= 30f)
+        assertTrue("bowed attackRiseSamples ${r.attackRiseSamples}", r.attackRiseSamples >= 3)
+    }
+
+    @Test
+    fun pluckedStepHasAHighAttackStep() {
+        val capture = AttemptCapture(CaptureParams.arco())
+        // a pluck: energy jumps into the plateau in one hop
+        val ramp = listOf(22f, 100f)
+        val state = run(capture, silence(0, 300) + noteWithLevels(300, 98.5f, ramp, holdMs = 1000))
+        val r = (state as CaptureState.Frozen).result
+        assertTrue("plucked attackMaxStep ${r.attackMaxStep}", r.attackMaxStep >= 50f)
+        assertTrue("plucked attackRiseSamples ${r.attackRiseSamples}", r.attackRiseSamples <= 1)
+    }
+
     // --- clean arco landing -------------------------------------------------------------
 
     @Test

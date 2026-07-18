@@ -450,6 +450,18 @@ private fun SummaryContent(
                         ),
                     )
                 }
+                if (r.playStylePizzChecks.isNotEmpty()) {
+                    DetailRow(
+                        stringResource(R.string.setup_detail_style),
+                        stringResource(
+                            when (r.playStyleVerdict) {
+                                SeparationVerdict.GOOD -> R.string.setup_style_clear
+                                SeparationVerdict.TIGHT -> R.string.setup_style_tight
+                                SeparationVerdict.OVERLAP -> R.string.setup_style_overlap
+                            }
+                        ),
+                    )
+                }
                 if (r.thresholdsAdjusted) {
                     Text(
                         stringResource(R.string.setup_thresholds_adjusted),

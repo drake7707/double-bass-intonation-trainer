@@ -117,6 +117,11 @@
     <string name="setup_not_needed">niet nodig</string>
     <string name="setup_detail_lock">Pizz-herkenningstijd</string>
     <string name="setup_lock_value">wacht %1$d ms, houd %2$d ms</string>
+    <!-- DRAFT: awaiting Sarah + teacher copy sign-off -->
+    <string name="setup_detail_style">Arco versus pizzicato</string>
+    <string name="setup_style_clear">goed uit elkaar te houden</string>
+    <string name="setup_style_tight">uit elkaar te houden, maar nipt</string>
+    <string name="setup_style_overlap">te gelijk om op deze telefoon te onderscheiden</string>
 
     <string name="setup_thresholds_adjusted">De herkenning is aangepast voor de microfoon van deze telefoon.</string>
     <string name="setup_noisy_nothing_saved">De ruimte was te luid — er is niets opgeslagen. Probeer het opnieuw op een stillere plek.</string>

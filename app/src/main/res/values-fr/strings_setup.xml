@@ -130,6 +130,11 @@
     <string name="setup_detail_lock">Temps de verrouillage pizz</string>
     <!-- %1$d / %2$d = milliseconds -->
     <string name="setup_lock_value">attente %1$d ms, tenue %2$d ms</string>
+    <!-- DRAFT: awaiting Sarah + teacher copy sign-off -->
+    <string name="setup_detail_style">Archet ou pizzicato</string>
+    <string name="setup_style_clear">bien distingués</string>
+    <string name="setup_style_tight">distingués, mais de justesse</string>
+    <string name="setup_style_overlap">trop semblables à distinguer sur ce téléphone</string>
 
     <string name="setup_thresholds_adjusted">La gestion de l\'octave a été ajustée pour le microphone de ce téléphone.</string>
     <string name="setup_noisy_nothing_saved">La pièce était trop bruyante pour terminer — rien n\'a été enregistré. Réessaie dans un endroit plus calme.</string>

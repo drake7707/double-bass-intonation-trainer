@@ -43,6 +43,7 @@ import be.drakarah.intonation.music.centsBetween
 import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.settings.applying
 import be.drakarah.intonation.settings.detectionExtrasJson
+import be.drakarah.intonation.settings.playStyleThreshold
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -140,6 +141,8 @@ class ShiftViewModel(
     /** Calibration-owned landing-filter thresholds (shared with Note Accuracy via CaptureFilter). */
     private var wrongNoteMinLevel = 55f
     private var lowestPlayableHz = 40f
+    /** Per-rig pizz/arco threshold; used only to log the start note's classified style to the trace. */
+    private var playStyleThreshold: be.drakarah.intonation.game.PlayStyleThreshold? = null
     private val driftDetector = be.drakarah.intonation.game.DriftDetector()
     private var startedAtWallClock = 0L
     /** Context snapshot for the round in progress; set from settings in [start]. */
@@ -162,6 +165,7 @@ class ShiftViewModel(
             driftWarningEnabled = settings.driftWarning
             wrongNoteMinLevel = settings.wrongNoteMinLevel
             lowestPlayableHz = settings.lowestPlayableHz
+            playStyleThreshold = settings.playStyleThreshold()
             captureParams = captureParams.applying(settings, pizz = mode == "pizz")
             shiftParams = shiftParams.copy(
                 departTimeoutMs = settings.playerLevel.shiftDepartTimeoutMs,
@@ -208,7 +212,15 @@ class ShiftViewModel(
                                 }
                             ShiftState.HoldStart ->
                                 if (state.phase !is ShiftPhase.Hold) {
-                                    trace?.event(sample.timestampMs, "hold", "start confirmed")
+                                    // Log the START note's classified playing style (its onset is a
+                                    // real attack, unlike the mid-glide landing) for pizz-in-arco
+                                    // false-positive monitoring. See docs/DETECTION.md §10.
+                                    val step = capture?.confirmedStartAttackStep ?: 0f
+                                    val rise = capture?.confirmedStartAttackRise ?: 0
+                                    val style = be.drakarah.intonation.game.PlayStyleClassifier
+                                        .classify(step, rise, playStyleThreshold)
+                                    trace?.event(sample.timestampMs, "hold",
+                                        "start confirmed step=%.0f rise=%d style=%s".format(step, rise, style))
                                     _uiState.value = state.copy(phase = ShiftPhase.Hold)
                                 }
                             ShiftState.Shift, ShiftState.Landing ->

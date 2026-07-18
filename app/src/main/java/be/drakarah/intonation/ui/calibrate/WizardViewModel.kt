@@ -10,6 +10,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import be.drakarah.intonation.IntonationApplication
 import be.drakarah.intonation.calibration.CalibrationAnalysis
 import be.drakarah.intonation.calibration.SeparationVerdict
+import be.drakarah.intonation.game.CaptureParams
 import be.drakarah.intonation.calibration.TakeScore
 import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
@@ -101,6 +102,14 @@ data class WizardResult(
     val pizzStabilityWindowMs: Long,
     /** True when even the slowest timing couldn't land every plucked take on its settled pitch. */
     val pizzTimingUnreliable: Boolean,
+    /** How cleanly bowed and plucked attacks separate on this rig (drives the pizz/arco warning). */
+    val playStyleVerdict: SeparationVerdict,
+    /** Per bowed take: display midi -> read as bowed (good). */
+    val playStyleArcoChecks: List<Pair<Int, Boolean>>,
+    /** Per plucked take: display midi -> read as plucked (good). */
+    val playStylePizzChecks: List<Pair<Int, Boolean>>,
+    /** Fraction of plucked takes the armed threshold catches (0 when it stays off). */
+    val playStylePizzRecall: Float,
 )
 
 /** Full calibration wizard (M5): measures the room, picks the mic source, measures the
@@ -387,6 +396,10 @@ class WizardViewModel(
     private var finalPizzOddRelative: Float = baseConfig.oddHarmonicMinRelative
     private var finalPizzAttackSkipMs: Long = 60L
     private var finalPizzStabilityWindowMs: Long = 150L
+    /** Pizz/arco attack-shape classifier threshold from the separation step (0 = styles overlap on
+     * this rig, classifier stays off). */
+    private var finalPizzArcoStep: Float = 0f
+    private var finalPizzArcoRise: Int = 1
 
     private suspend fun computeResult(): WizardResult? {
         if (quietLevels.size < 30 || stringTakes.size < OPEN_STRING_MIDIS.size + 1) return null
@@ -486,6 +499,32 @@ class WizardViewModel(
         finalPizzAttackSkipMs = pizzTiming.attackSkipMs
         finalPizzStabilityWindowMs = pizzTiming.stabilityWindowMs
 
+        // 5d. pizz/arco attack-shape separation: replay the labeled bowed AND plucked takes through
+        //     the real game capture (each under the config its style will run with) and measure how
+        //     cleanly the attack shapes split on THIS rig. Sets the classifier threshold — or leaves
+        //     it off when the two styles overlap here. All decisions live in CalibrationAnalysis.
+        val arcoParams = CaptureParams.arco().copy(
+            octaveFoldMinHz = finalLowestHz, promptTimeoutMs = 20_000,
+        )
+        val pizzParams = CaptureParams.pizz().copy(
+            attackSkipMs = finalPizzAttackSkipMs, stabilityWindowMs = finalPizzStabilityWindowMs,
+            octaveSettleMs = finalPizzSettleMs.takeIf { it > 0 }, octaveFoldMinHz = finalLowestHz,
+            promptTimeoutMs = 20_000,
+        )
+        val arcoShapes = (stringTakes.values + high).mapNotNull { take ->
+            CalibrationAnalysis.attackShapeOf(
+                PitchEngine(finalConfig()).wavSamples(take.pcm).toList(), arcoParams,
+            )?.let { take.expectedHz to it }
+        }.toMap()
+        val pizzShapes = (pizzTakes.values + pizzStoppedTakes.values).mapNotNull { take ->
+            CalibrationAnalysis.attackShapeOf(
+                PitchEngine(pizzConfig()).wavSamples(take.pcm).toList(), pizzParams,
+            )?.let { take.expectedHz to it }
+        }.toMap()
+        val playStyle = CalibrationAnalysis.playStyleSeparation(arcoShapes, pizzShapes)
+        finalPizzArcoStep = playStyle.threshold?.attackMaxStep ?: 0f
+        finalPizzArcoRise = playStyle.threshold?.maxRiseSamples ?: 1
+
         return WizardResult(
             sourceLabel = chosenSource.label,
             verdict = verdict,
@@ -500,6 +539,14 @@ class WizardViewModel(
             pizzAttackSkipMs = pizzTiming.attackSkipMs,
             pizzStabilityWindowMs = pizzTiming.stabilityWindowMs,
             pizzTimingUnreliable = !pizzTiming.resolved,
+            playStyleVerdict = playStyle.verdict,
+            playStyleArcoChecks = playStyle.arcoChecks.map { (hz, ok) ->
+                nearestNote(hz.toDouble(), a4).midi to ok
+            },
+            playStylePizzChecks = playStyle.pizzChecks.map { (hz, ok) ->
+                nearestNote(hz.toDouble(), a4).midi to ok
+            },
+            playStylePizzRecall = playStyle.pizzRecall,
         )
     }
 
@@ -540,7 +587,8 @@ class WizardViewModel(
             """"wrongNoteMinLevel":${finalWrongNoteFloor ?: baseConfig.sensitivity},""" +
             """"lowestPlayableHz":$finalLowestHz,"pizzOctaveSettleMs":$finalPizzSettleMs,""" +
             """"pizzAttackSkipMs":$finalPizzAttackSkipMs,""" +
-            """"pizzStabilityWindowMs":$finalPizzStabilityWindowMs}"""
+            """"pizzStabilityWindowMs":$finalPizzStabilityWindowMs,""" +
+            """"pizzArcoAttackStep":$finalPizzArcoStep,"pizzArcoMaxRiseSamples":$finalPizzArcoRise}"""
         // (stage label, take) for every recording made this run
         val takes = buildList {
             stringTakes.forEach { (midi, t) -> add(Triple("arco", midi, t)) }
@@ -619,6 +667,8 @@ class WizardViewModel(
                 pizzOddHarmonicMinRelative = finalPizzOddRelative,
                 pizzAttackSkipMs = finalPizzAttackSkipMs,
                 pizzStabilityWindowMs = finalPizzStabilityWindowMs,
+                pizzArcoAttackStep = finalPizzArcoStep,
+                pizzArcoMaxRiseSamples = finalPizzArcoRise,
             )
             _state.value = summary.copy(saved = true)
         }

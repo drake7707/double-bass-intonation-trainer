@@ -24,6 +24,11 @@ data class NoteAttempt(
     val captureWobbleCents: Float?,
     /** Captures discarded before this one landed ("took N tries"). */
     val retryCount: Int,
+    /** Attack-shape features of the frozen capture (pizz/arco discriminator; see [CapturedPitch]).
+     * Carried so the game trace can log the classified playing style per note for false-positive
+     * monitoring. Null on "no note". */
+    val attackMaxStep: Float? = null,
+    val attackRiseSamples: Int? = null,
 )
 
 sealed interface NoteAttemptState {
@@ -140,6 +145,8 @@ class NoteAttemptCapture(
             energyLevel = frozen.energyLevel,
             captureWobbleCents = frozen.captureWobbleCents,
             retryCount = 0,
+            attackMaxStep = frozen.attackMaxStep,
+            attackRiseSamples = frozen.attackRiseSamples,
         )
     }
 

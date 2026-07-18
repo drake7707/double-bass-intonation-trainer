@@ -5,6 +5,7 @@ import be.drakarah.intonation.game.AttemptCapture
 import be.drakarah.intonation.game.CaptureParams
 import be.drakarah.intonation.game.CaptureState
 import be.drakarah.intonation.game.CapturedPitch
+import be.drakarah.intonation.game.PlayStyleThreshold
 import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.pow
@@ -241,6 +242,12 @@ object CalibrationAnalysis {
             octaveFoldMinHz = lowestPlayableHz,
             promptTimeoutMs = 20_000,
         )
+        return freezes(samples, params)
+    }
+
+    /** Runs the game capture over one recorded take under [params], re-arming on each freeze, and
+     * returns the frozen results — the shared replay used by every per-rig profiling step. */
+    fun freezes(samples: List<PitchSample>, params: CaptureParams): List<CapturedPitch> {
         fun fresh() = AttemptCapture(params, skipQuietGate = true, requireOnsetRise = true)
         val out = ArrayList<CapturedPitch>()
         var cap = fresh()
@@ -378,6 +385,92 @@ object CalibrationAnalysis {
         }
         return PizzTimingProfile(
             timing.attackSkipMs, timing.stabilityWindowMs, resolved = chosen != null, checks,
+        )
+    }
+
+    // ---- pizz/arco attack-shape separation (the wizard's arco + pizz takes) -----------------
+    // Physically a bowed onset is a gradual crescendo and a pluck is a near-instant step; the
+    // capture stamps each freeze with the steepest attack step + the rise length (see AttemptCapture
+    // and docs/DETECTION.md §10). This step measures the gap between the two styles on THIS rig and
+    // sets the classifier threshold — refusing to arm it when they overlap, exactly as the gate
+    // refuses when room noise and soft playing overlap. All decision logic lives here (domain).
+
+    /** The attack shape of one recorded take, reduced to the values the classifier reads: the
+     * strongest attack step across the take's freezes (best evidence of a pluck) and the shortest
+     * rise (a pluck that landed already saturated). */
+    data class AttackShape(val maxStep: Float, val riseSamples: Int)
+
+    /** Threshold above the measured arco ceiling before a step counts as plucked — margin so a
+     * slightly punchier bow stroke in a game never trips it. */
+    private const val PLAY_STYLE_STEP_MARGIN = 3f
+    /** Least pizz-catch rate (at the zero-arco-false-positive threshold) worth arming the warning. */
+    private const val PLAY_STYLE_MIN_RECALL_TIGHT = 0.3f
+    private const val PLAY_STYLE_MIN_RECALL_GOOD = 0.6f
+    /** Least gap (level steps) between the pizz median and the arco ceiling to call it a clean split. */
+    private const val PLAY_STYLE_MIN_GAP_GOOD = 10f
+
+    /** How well the two playing styles' attacks separate on this rig, and the classifier threshold. */
+    data class PlayStyleProfile(
+        val verdict: SeparationVerdict,
+        /** Armed classifier threshold; null when the styles OVERLAP (warning stays off). */
+        val threshold: PlayStyleThreshold?,
+        /** Steepest attack step any bowed take produced — the false-positive ceiling. */
+        val arcoCeiling: Float,
+        /** Fraction of plucked takes the chosen threshold catches. */
+        val pizzRecall: Float,
+        /** Per bowed take (expected Hz) -> read as bowed (good). */
+        val arcoChecks: List<Pair<Float, Boolean>>,
+        /** Per plucked take (expected Hz) -> read as plucked (good). */
+        val pizzChecks: List<Pair<Float, Boolean>>,
+    )
+
+    /** Reduces a recorded take to its [AttackShape] by replaying it through the game capture under
+     * [params]; null when the take never froze (nothing to judge). */
+    fun attackShapeOf(samples: List<PitchSample>, params: CaptureParams): AttackShape? {
+        val f = freezes(samples, params)
+        if (f.isEmpty()) return null
+        return AttackShape(
+            maxStep = f.maxOf { it.attackMaxStep },
+            riseSamples = f.minOf { it.attackRiseSamples },
+        )
+    }
+
+    /** Sets the pizz/arco classifier threshold from the wizard's labeled takes. The threshold is
+     * placed just above the worst (steepest) bowed attack so no bowed note is ever misread as pizz on
+     * this rig; the rise cut sits just under the shortest bowed rise for the same reason. The verdict
+     * grades how much of the plucked set that zero-false-positive threshold still catches — OVERLAP
+     * (don't arm) when too few plucks clear it, meaning the two styles' attacks are indistinguishable
+     * on this rig. Pure over the reduced per-take shapes, so it is unit-testable in isolation. */
+    fun playStyleSeparation(
+        arco: Map<Float, AttackShape>, pizz: Map<Float, AttackShape>,
+    ): PlayStyleProfile {
+        if (arco.isEmpty() || pizz.isEmpty()) {
+            return PlayStyleProfile(SeparationVerdict.OVERLAP, null, 0f, 0f, emptyList(), emptyList())
+        }
+        val arcoCeil = arco.values.maxOf { it.maxStep }
+        val stepThreshold = arcoCeil + PLAY_STYLE_STEP_MARGIN
+        // Bowed onsets always ramp, so the rise cut sits strictly under the fastest bowed rise —
+        // guaranteeing no bowed take is caught by the secondary rule. If some bowed take already
+        // lands at the plateau (rise 0), the cut goes to -1, disabling the rise rule entirely (no
+        // rise can be ≤ -1) rather than flagging those bowed takes.
+        val riseCut = arco.values.minOf { it.riseSamples } - 1
+        fun plucked(a: AttackShape) = a.maxStep >= stepThreshold || a.riseSamples <= riseCut
+        val recall = pizz.values.count { plucked(it) }.toFloat() / pizz.size
+        val gap = percentile(pizz.values.map { it.maxStep }, 50) - arcoCeil
+        val verdict = when {
+            recall >= PLAY_STYLE_MIN_RECALL_GOOD && gap >= PLAY_STYLE_MIN_GAP_GOOD -> SeparationVerdict.GOOD
+            recall >= PLAY_STYLE_MIN_RECALL_TIGHT -> SeparationVerdict.TIGHT
+            else -> SeparationVerdict.OVERLAP
+        }
+        val threshold = if (verdict == SeparationVerdict.OVERLAP) null
+        else PlayStyleThreshold(stepThreshold, riseCut)
+        return PlayStyleProfile(
+            verdict = verdict,
+            threshold = threshold,
+            arcoCeiling = arcoCeil,
+            pizzRecall = recall,
+            arcoChecks = arco.map { (hz, a) -> hz to !plucked(a) },
+            pizzChecks = pizz.map { (hz, a) -> hz to plucked(a) },
         )
     }
 }

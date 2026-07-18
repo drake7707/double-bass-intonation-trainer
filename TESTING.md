@@ -5,6 +5,24 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-18 Pizz/arco play-style classifier (your "warn me when I play pizz in arco" idea)
+Detects when a note is plucked vs bowed from its **attack shape** (a bow crescendos into the note, a
+pluck steps straight in). Built from your real traces (both your confirmed 15 & 17 Jul pizz-in-arco
+shift rounds are caught; zero false positives across every note you actually bowed). The per-rig
+threshold is measured + graded by the **calibration wizard** from its labeled arco/pizz takes, and —
+for now — the classification is only **logged into the game trace** so we can watch for false
+positives before any warning fires mid-round. The actual warning is **not built yet** (waiting on your
+design call). Full write-up: DETECTION.md §10. Needs a re-calibration + a couple of traced rounds:
+- [ ] **Re-run the full calibration wizard.** In the summary → *technical details*, look for
+      **"Arco vs pizzicato"** — on your phone it should say **"clearly told apart"** (GOOD). If it
+      says "too alike", the classifier stays off (that's the honest fallback) — tell me.
+- [ ] **Trace an arco round, bow it cleanly.** Turn on Settings → Debug → Record & trace games, play a
+      Note-Accuracy **arco** round bowing every note. Then a **shift arco** round. Share the traces —
+      every `result`/`hold` line should read `style=ARCO` (no false `style=PIZZ` on real bowing).
+- [ ] **Trace an arco round, fumble a few pizz on purpose.** Same but deliberately pluck 3–4 notes.
+      Those should read `style=PIZZ` in the `…-arco-…` trace. That confirms the catch rate in-context.
+- [ ] Nothing should *behave* differently yet (no warning, no score change) — it's monitoring only.
+
 ### 2026-07-17 Language switch fixed (it was silently doing nothing)
 The in-app language picker (onboarding + Settings) never actually applied or persisted a language.
 Root cause: `MainActivity` was a plain `ComponentActivity` with a framework (`android:Theme.Material`)

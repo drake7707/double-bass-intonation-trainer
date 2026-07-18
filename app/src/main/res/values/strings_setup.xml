@@ -118,6 +118,10 @@
     <string name="setup_detail_lock">Pizz lock timing</string>
     <!-- %1$d / %2$d = milliseconds -->
     <string name="setup_lock_value">wait %1$d ms, hold %2$d ms</string>
+    <string name="setup_detail_style">Bowed vs plucked</string>
+    <string name="setup_style_clear">clearly told apart</string>
+    <string name="setup_style_tight">told apart, but only just</string>
+    <string name="setup_style_overlap">too alike to tell apart on this phone</string>
     <string name="setup_thresholds_adjusted">Octave handling was adjusted for this phone\'s microphone.</string>
     <string name="setup_noisy_nothing_saved">The room was too noisy to finish — nothing was saved. Try again somewhere quieter.</string>
     <string name="setup_saved">Saved — all games now use these settings.</string>

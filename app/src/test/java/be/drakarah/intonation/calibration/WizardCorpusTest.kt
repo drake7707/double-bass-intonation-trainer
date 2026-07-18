@@ -176,6 +176,52 @@ class WizardCorpusTest {
     }
 
     @Test
+    fun playStyleSeparatesBowedFromPluckedOnTheReferenceRig() {
+        // Replay the reference rig's labeled bowed AND plucked calibration takes through the real
+        // game capture (each under its style's config) and let the separation step judge them. A
+        // bowed onset is a gradual crescendo (low attack step), a pluck steps in (high step), so the
+        // two must split cleanly here — no bowed take misread, most plucks caught.
+        val arcoCfg = PitchEngineConfig()
+        val pizzCfg = PitchEngineConfig(oddHarmonicMinRatio = 1.2f, oddHarmonicMinRelative = 0.01f)
+        val arcoParams = be.drakarah.intonation.game.CaptureParams.arco()
+            .copy(octaveFoldMinHz = 38.9f, promptTimeoutMs = 20_000)
+        val pizzParams = be.drakarah.intonation.game.CaptureParams.pizz()
+            .copy(octaveFoldMinHz = 38.9f, promptTimeoutMs = 20_000)
+
+        fun shapes(names: Map<Float, String>, cfg: PitchEngineConfig, params: be.drakarah.intonation.game.CaptureParams) =
+            names.mapNotNull { (hz, wav) ->
+                CalibrationAnalysis.attackShapeOf(replay(readFloatWav(wav), cfg), params)?.let { hz to it }
+            }.toMap()
+
+        val arco = shapes(
+            mapOf(
+                41.2f to "calibration-arco-28-20260713-073213.wav",
+                55f to "calibration-arco-33-20260713-073213.wav",
+                73.4f to "calibration-arco-38-20260713-073213.wav",
+                98f to "calibration-arco-43-20260713-073213.wav",
+            ), arcoCfg, arcoParams,
+        )
+        val pizz = shapes(
+            mapOf(
+                41.2f to "calibration-pizz-28-20260713-073213.wav",
+                55f to "calibration-pizz-33-20260713-073213.wav",
+                73.4f to "calibration-pizz-38-20260713-073213.wav",
+                98f to "calibration-pizz-43-20260713-073213.wav",
+            ), pizzCfg, pizzParams,
+        )
+
+        val sep = CalibrationAnalysis.playStyleSeparation(arco, pizz)
+        assertTrue("styles must separate on the reference rig (verdict ${sep.verdict})",
+            sep.verdict != SeparationVerdict.OVERLAP)
+        assertTrue("a threshold must be armed", sep.threshold != null)
+        // no bowed take misread as plucked
+        assertTrue("every bowed take should read as bowed (${sep.arcoChecks})",
+            sep.arcoChecks.all { it.second })
+        // most plucked takes caught
+        assertTrue("pizz recall ${sep.pizzRecall}", sep.pizzRecall >= 0.5f)
+    }
+
+    @Test
     fun pizzOctaveFitFallsBackToStrictWhenNothingClears() {
         // a rig with no octave artifact: every candidate is clean and safe -> keep the strictest.
         fun ts() = TakeScore(200, 200, 1f, 0f, 0f, 100)

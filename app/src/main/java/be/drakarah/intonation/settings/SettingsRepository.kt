@@ -89,6 +89,13 @@ data class AppSettings(
      * [CaptureParams.pizz] preset; the wizard overrides per rig. See DETECTION.md §2.2. */
     val pizzAttackSkipMs: Long = 60,
     val pizzStabilityWindowMs: Long = 150,
+    /** Pizz/arco attack-shape classifier threshold (see [be.drakarah.intonation.game.PlayStyle] and
+     * DETECTION.md §10). Steepest attack energy-step at/above which a note is read as plucked; a
+     * note whose rise is ≤ [pizzArcoMaxRiseSamples] is also plucked. 0 = not calibrated / the two
+     * styles overlap on this rig, so the classifier stays off. Measured by the wizard's pizz/arco
+     * separation step; there is no shipped default (it is rig-specific and must be earned). */
+    val pizzArcoAttackStep: Float = 0f,
+    val pizzArcoMaxRiseSamples: Int = 1,
     /** Last completed full calibration (epoch ms, 0 = never). */
     val fullCalibrationAt: Long = 0,
     /** Drone mode's last pitch class (0 = Do/C … 11 = Si/B) and just-fifth toggle. */
@@ -109,6 +116,14 @@ data class AppSettings(
 /** The one place where saved calibration turns into a runnable detection config. [pizz] selects
  * the looser pizz octave-down knobs (plucked low notes read an octave high much more readily);
  * everything else is shared. Callers pass pizz = (mode == "pizz"); arco/live screens leave it. */
+/** The armed pizz/arco classifier threshold for this rig, or null when the calibration wizard has
+ * not found a clean separation (the classifier stays off). Domain type, so the game/trace read it
+ * without touching settings internals. */
+fun AppSettings.playStyleThreshold(): be.drakarah.intonation.game.PlayStyleThreshold? =
+    if (pizzArcoAttackStep > 0f)
+        be.drakarah.intonation.game.PlayStyleThreshold(pizzArcoAttackStep, pizzArcoMaxRiseSamples)
+    else null
+
 fun PitchEngineConfig.applying(settings: AppSettings, pizz: Boolean = false): PitchEngineConfig = copy(
     sensitivity = settings.micSensitivity,
     audioSource = settings.audioSource,
@@ -148,7 +163,8 @@ fun AppSettings.detectionExtrasJson(): String =
         """"pizzOddHarmonicMinRelative":$pizzOddHarmonicMinRelative,""" +
         """"wrongNoteMinLevel":$wrongNoteMinLevel,"lowestPlayableHz":$lowestPlayableHz,""" +
         """"pizzOctaveSettleMs":$pizzOctaveSettleMs,""" +
-        """"pizzAttackSkipMs":$pizzAttackSkipMs,"pizzStabilityWindowMs":$pizzStabilityWindowMs}"""
+        """"pizzAttackSkipMs":$pizzAttackSkipMs,"pizzStabilityWindowMs":$pizzStabilityWindowMs,""" +
+        """"pizzArcoAttackStep":$pizzArcoAttackStep,"pizzArcoMaxRiseSamples":$pizzArcoMaxRiseSamples}"""
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
@@ -181,6 +197,8 @@ class SettingsRepository(private val context: Context) {
         val pizzOctaveSettleMs = longPreferencesKey("pizzOctaveSettleMs")
         val pizzAttackSkipMs = longPreferencesKey("pizzAttackSkipMs")
         val pizzStabilityWindowMs = longPreferencesKey("pizzStabilityWindowMs")
+        val pizzArcoAttackStep = floatPreferencesKey("pizzArcoAttackStep")
+        val pizzArcoMaxRiseSamples = intPreferencesKey("pizzArcoMaxRiseSamples")
         val fullCalibrationAt = longPreferencesKey("fullCalibrationAt")
         val dronePitchClass = intPreferencesKey("dronePitchClass")
         val droneFifth = booleanPreferencesKey("droneFifth")
@@ -231,6 +249,8 @@ class SettingsRepository(private val context: Context) {
             pizzOctaveSettleMs = prefs[Keys.pizzOctaveSettleMs] ?: 300,
             pizzAttackSkipMs = prefs[Keys.pizzAttackSkipMs] ?: 60,
             pizzStabilityWindowMs = prefs[Keys.pizzStabilityWindowMs] ?: 150,
+            pizzArcoAttackStep = prefs[Keys.pizzArcoAttackStep] ?: 0f,
+            pizzArcoMaxRiseSamples = prefs[Keys.pizzArcoMaxRiseSamples] ?: 1,
             fullCalibrationAt = prefs[Keys.fullCalibrationAt] ?: 0,
             dronePitchClass = (prefs[Keys.dronePitchClass] ?: 9).coerceIn(0, 11),
             droneFifth = prefs[Keys.droneFifth] ?: false,
@@ -261,6 +281,10 @@ class SettingsRepository(private val context: Context) {
         /** Pizz capture timing measured from the plucked takes; null keeps current. */
         pizzAttackSkipMs: Long? = null,
         pizzStabilityWindowMs: Long? = null,
+        /** Pizz/arco attack-shape classifier threshold from the separation step. Pass 0f to disarm
+         * (styles overlap on this rig); null keeps the current value. */
+        pizzArcoAttackStep: Float? = null,
+        pizzArcoMaxRiseSamples: Int? = null,
     ) {
         context.dataStore.edit {
             it[Keys.audioSource] = audioSource
@@ -275,6 +299,8 @@ class SettingsRepository(private val context: Context) {
             pizzStabilityWindowMs?.let { v -> it[Keys.pizzStabilityWindowMs] = v.coerceIn(100L, 400L) }
             pizzOddHarmonicMinRatio?.let { v -> it[Keys.pizzOddHarmonicMinRatio] = v.coerceIn(1.05f, 3f) }
             pizzOddHarmonicMinRelative?.let { v -> it[Keys.pizzOddHarmonicMinRelative] = v.coerceIn(0.005f, 0.05f) }
+            pizzArcoAttackStep?.let { v -> it[Keys.pizzArcoAttackStep] = v.coerceIn(0f, 100f) }
+            pizzArcoMaxRiseSamples?.let { v -> it[Keys.pizzArcoMaxRiseSamples] = v.coerceIn(-1, 10) }
             it[Keys.fullCalibrationAt] = epochMs
             it[Keys.lastCalibratedAt] = epochMs
             it[Keys.onboardingCompleted] = true

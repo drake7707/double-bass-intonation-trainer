@@ -70,6 +70,17 @@ data class CapturedPitch(
      * Bounded by the stability band on CLEAN freezes, wider on SHAKY ones. A steadiness proxy for
      * every exercise (not just Sustain); persisted for coaching. */
     val captureWobbleCents: Float = 0f,
+    /** Steepest single-sample rise in energy level (0..100) on the attack leading into this freeze —
+     * the pizz/arco discriminator. A bowed onset is a gradual crescendo (small steps ~10-15); a
+     * plucked onset steps into the plateau in one sample (~35-60). Target-agnostic raw measurement;
+     * the pizz/arco decision (threshold) lives in the domain classifier, calibrated per rig by the
+     * wizard. See docs/DETECTION.md §10. */
+    val attackMaxStep: Float = 0f,
+    /** Samples from the attack foot (energy ≥ [ATTACK_FOOT_LEVEL]) to the plateau (≥
+     * [ATTACK_PLATEAU_LEVEL]) on the attack into this freeze. A bowed crescendo takes several; a
+     * pluck that lands already saturated takes 0-1. Secondary pizz signal (catches plucks whose step
+     * happened before onset was confirmed). */
+    val attackRiseSamples: Int = 0,
 )
 
 sealed interface CaptureState {
@@ -131,6 +142,13 @@ class AttemptCapture(
     /** Accepted samples since the attack skip ended. */
     private val buffer = ArrayList<Buffered>()
 
+    // Attack-shape tracking (pizz/arco discriminator). A pluck's steep energy step lands during the
+    // attack transient — which the pitch detector REJECTS (octave-rich, unstable) so it happens
+    // BEFORE onset — and it can climb from a level below the buffer/onset thresholds. So the feature
+    // is measured from a rolling history of EVERY sample's level (accepted or not), walked back from
+    // the freeze plateau at freeze time. Mirrors the offline trace analysis this was fitted from.
+    private val levelHistory = ArrayDeque<Float>()
+
     /** Feed the next sample; returns the state after processing it. */
     fun process(sample: PitchSample): CaptureState {
         if (state is CaptureState.Frozen || state is CaptureState.TimedOut) return state
@@ -145,6 +163,11 @@ class AttemptCapture(
             else -> noiseFloor + 0.008f * (sample.energyLevel - noiseFloor)
         }
         hasNoiseFloor = true
+
+        // Attack-shape envelope: a rolling window of every sample's level, walked back from the
+        // plateau at freeze to measure how sharply the note stepped in (see [attackShape]).
+        levelHistory.addLast(sample.energyLevel)
+        while (levelHistory.size > ATTACK_HISTORY) levelHistory.removeFirst()
 
         when (state) {
             CaptureState.AwaitQuiet -> processAwaitQuiet(sample)
@@ -315,6 +338,7 @@ class AttemptCapture(
 
     private fun freeze(window: List<Buffered>, quality: CaptureQuality, nowMs: Long) {
         val hz = median(window.map { it.hz })
+        val (attackStep, attackRise) = attackShape()
         state = CaptureState.Frozen(
             CapturedPitch(
                 frequencyHz = hz,
@@ -323,8 +347,38 @@ class AttemptCapture(
                 quality = quality,
                 energyLevel = median(window.map { it.level }),
                 captureWobbleCents = spreadCents(window.map { it.hz }),
+                attackMaxStep = attackStep,
+                attackRiseSamples = attackRise,
             )
         )
+    }
+
+    /** The attack shape from the level history, walked back from the freeze plateau — mirrors the
+     * offline trace analysis. Find the final high plateau, then look at the [ATTACK_WINDOW] samples
+     * climbing into it: the steepest single-sample energy jump (a pluck steps in ~40-60 in one hop,
+     * a bow crescendo ~10-15) and how many samples the climb into the plateau took (a pluck that was
+     * already loud takes 0-1). Returns (maxStep, riseSamples). */
+    private fun attackShape(): Pair<Float, Int> {
+        val lv = levelHistory.toList()
+        if (lv.size < 2) return 0f to 0
+        val peak = lv.max()
+        if (peak < ATTACK_PLATEAU_LEVEL) return 0f to 0
+        val hi = maxOf(ATTACK_PLATEAU_LEVEL, peak - 10f)
+        val end = lv.indexOfLast { it >= hi }
+        if (end < 0) return 0f to 0
+        var plateauStart = end
+        while (plateauStart - 1 >= 0 && lv[plateauStart - 1] >= hi) plateauStart--
+        val from = maxOf(0, plateauStart - ATTACK_WINDOW)
+        var maxStep = 0f
+        for (i in from + 1..plateauStart) {
+            val d = lv[i] - lv[i - 1]
+            if (d > maxStep) maxStep = d
+        }
+        // Rise = samples of the actual CLIMB into the plateau (level between the foot and the
+        // plateau). Silence before the note is below the foot and excluded, so a pluck that steps
+        // straight from quiet to plateau reads 0-1, a bow crescendo several.
+        val rise = (from..plateauStart).count { lv[it] >= ATTACK_FOOT_LEVEL && lv[it] < hi }
+        return maxStep to rise
     }
 
     /** Contiguous run of stability-window length with the smallest cent spread, if any. */
@@ -367,5 +421,15 @@ class AttemptCapture(
         const val OCTAVE_MATCH_CENTS = 70f
         /** Rejected-window run during octave settling long enough to mean the note has died. */
         const val OCTAVE_SETTLE_DIE_DROPS = 8
+        /** Rolling level-history length (samples) kept for the attack-shape measure — long enough to
+         * reach from the freeze plateau back through the stability window to the attack climb. */
+        const val ATTACK_HISTORY = 40
+        /** Samples of the climb into the plateau examined for the steepest step. */
+        const val ATTACK_WINDOW = 6
+        /** Energy level (0..100) the climb must clear to count as part of the attack (below it is
+         * silence / room, not the note climbing). */
+        const val ATTACK_FOOT_LEVEL = 40f
+        /** Energy level (0..100) counted as the attack having reached its plateau. */
+        const val ATTACK_PLATEAU_LEVEL = 85f
     }
 }

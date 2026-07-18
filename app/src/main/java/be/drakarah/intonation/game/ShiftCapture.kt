@@ -82,6 +82,14 @@ class ShiftCapture(
     var state: ShiftState = ShiftState.ConfirmStart()
         private set
 
+    /** Attack shape of the confirmed START note (a fresh onset, unlike the mid-glide landing) — the
+     * meaningful pizz/arco signal for a shift. 0 until the start is confirmed. Read by the ViewModel
+     * to log the classified playing style into the game trace. See docs/DETECTION.md §10. */
+    var confirmedStartAttackStep: Float = 0f
+        private set
+    var confirmedStartAttackRise: Int = 0
+        private set
+
     private val cueDelayMs =
         random.nextLong(params.cueDelayMinMs, params.cueDelayMaxMs + 1)
 
@@ -122,6 +130,8 @@ class ShiftCapture(
                 val cents = cents(s.result.frequencyHz, startHz)
                 if (abs(cents) <= params.startToleranceCents) {
                     confirmedStartHz = s.result.frequencyHz
+                    confirmedStartAttackStep = s.result.attackMaxStep
+                    confirmedStartAttackRise = s.result.attackRiseSamples
                     cueAtMs = sample.timestampMs + cueDelayMs
                     state = ShiftState.HoldStart
                 } else {

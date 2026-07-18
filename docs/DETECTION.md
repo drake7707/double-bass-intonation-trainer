@@ -5,7 +5,12 @@
 problem, every design decision, what worked and what didn't, and how we got there — so after a
 context reset we can be current again in one read.
 
-Last updated: 2026-07-15, after the **pizz capture-timing** work: the plucked attack reads sharp and
+Last updated: 2026-07-18, after the **pizz/arco play-style classifier** (§10): detect when she plays
+pizzicato in an arco exercise (or vice versa) from the attack SHAPE — a bowed onset crescendos, a
+pluck steps in. Per-rig threshold set + graded (GOOD/TIGHT/OVERLAP) by the calibration wizard from
+its labeled arco/pizz takes; the classification is logged per note into the game trace for
+false-positive monitoring. The in-game warning is deferred. Earlier: the **pizz capture-timing** work:
+the plucked attack reads sharp and
 settles flatter, so the shipped 60/150 lock could freeze the transient and score a pizz note ~10–20¢
 sharp (her pizz-accuracy report, verified from full game traces). Fixed by making the pizz
 attack-skip and stability-window **calibration-owned per rig** (§2.2), measured by the wizard's pizz
@@ -614,8 +619,9 @@ and can become a round-replay regression if the `onCaptured` decision is extract
 2. Pull the newest `game-trace-*.jsonl` (+`.wav`) from
    `/sdcard/Android/data/be.drakarah.intonation/files/snippets/` via adb.
 3. Read the `event` lines: `prompt` (t, target midi, previous pitch), `result` (cents, wrong,
-   timeout), `discard` (hz, quality, level, elapsed-ms, ring/soon/harm flags). Correlate her
-   read→play timing against captures.
+   timeout, **and the play-style log `step`/`rise`/`style`** — see §10), `discard` (hz, quality,
+   level, elapsed-ms, ring/soon/harm flags), and for Shift `hold` (start confirmed, with the same
+   `step`/`rise`/`style`). Correlate her read→play timing against captures.
 4. If a DSP change is needed, replay the `.wav` through `PitchEngine.wavSamples` under candidate
    configs (that's exactly what the wizard and corpus tests do).
 5. Fix, add a regression test from the recording, re-run on device, confirm from a fresh trace.
@@ -623,3 +629,113 @@ and can become a round-replay regression if the `onCaptured` decision is extract
 **The signal hierarchy that actually worked, in order:** genuine attack (energy rise) > ring-over
 pitch-match > read-time floor > energy/harmonic/unplayable artifact checks. Reach for attack
 detection first.
+
+## 10. Pizz vs. arco — the play-style classifier (attack shape)
+
+**The problem (Sarah, 2026-07-18, recurring):** she keeps *accidentally playing pizzicato while the
+exercise is set to arco* (and the reverse is possible). The app silently scores the plucked note
+with the arco config, which produces spurious wrong-notes and octave reads. She wants it to **detect
+the style mismatch and warn**, not score it. This section is the classifier that detects the style;
+the *warning* that acts on it is deliberately **not built yet** (see "Status" below) — for now the
+classification is only **logged into the game trace** so real false-positive rates can be watched
+before a warning ever fires at her mid-round.
+
+### 10.1 The discriminator is attack SHAPE — not decay, not level height
+
+Physically a **bowed** onset is a gradual energy *crescendo* as the bow engages the string; a
+**plucked** onset is a near-instant *step* to full energy. That is the whole signal. Two things it is
+**not**, both learned the hard way from her real traces:
+
+- **Not level height / decay.** `energyLevel` is a log 0..100 scale that *saturates at 100* for
+  essentially every real played note within a sample or two, so the height at the freeze, and the
+  post-freeze decay within a few hundred ms, tell you almost nothing (pizz hasn't decayed below
+  saturation yet, and she often re-plucks/holds). Decay was measured and **rejected** as too weak.
+- **Not rise-time measured from the prompt window start.** The prompt→freeze window is full of the
+  previous note's ring-out and ambient, whose spurious rises swamp the real onset. Measuring from the
+  *window start* found nothing. (This is also why the *calibration* recordings — clean silence → one
+  note — misled an early analysis into thinking plain rise-time worked: they have no pre-note junk.)
+
+What works is the steepest single-sample energy jump on the **final climb into the freeze plateau**,
+plus how many samples that climb took.
+
+### 10.2 The two features (`AttemptCapture`, target-agnostic)
+
+`AttemptCapture` keeps a rolling history of **every** sample's `energyLevel` (accepted or not —
+`ATTACK_HISTORY = 40` samples ≈ 0.9 s) and, at each freeze, walks back from the freeze plateau to
+stamp two fields on `CapturedPitch`:
+
+- **`attackMaxStep`** — the steepest single-sample energy rise in the `ATTACK_WINDOW = 6` samples
+  climbing into the plateau. Bowed ≈ 5–15; plucked ≈ 20–60.
+- **`attackRiseSamples`** — how many samples of that window sat in the climb band
+  (`ATTACK_FOOT_LEVEL 40` ≤ level < plateau). A pluck that steps straight from quiet to plateau reads
+  0–1; a bow crescendo reads several. Silence before the note is below the foot and excluded.
+
+**Why "every sample, walked back from the plateau" and not "from onset":** a pluck's sharp step lands
+during the attack *transient*, which the pitch detector **rejects** (octave-rich, unstable) — so by
+the time the pitch is *accepted* (onset), the level is already saturated and an onset-anchored measure
+reads a flat ≈0 step. The step must be read from the raw level history, before pitch acceptance. This
+was a real bug found via the corpus test (the calibration `pizz-38` take steps `33→81` = 48 in the
+level log, but an onset-anchored measure reported 17). Mirrors the offline trace analysis it was
+fitted from.
+
+### 10.3 The decision lives in the domain (`game/PlayStyle.kt`)
+
+`PlayStyleClassifier.classify(attackMaxStep, attackRiseSamples, threshold)` → `ARCO | PIZZ | UNKNOWN`.
+A note is **PIZZ** if `attackMaxStep ≥ threshold.attackMaxStep` **or**
+`attackRiseSamples ≤ threshold.maxRiseSamples`; **ARCO** otherwise; **UNKNOWN** when there is no
+armed threshold. The `PlayStyleThreshold` is per-rig (the level scale depends on mic/sensitivity), so
+there is **no shipped default** — it must be earned by calibration. UI never makes this call; the VMs
+only format the domain result into the trace.
+
+### 10.4 The threshold is set + validated in the wizard (per rig)
+
+The calibration wizard already records labeled **arco** takes (open strings + the high note) and
+**pizz** takes (open + stopped plucks). `CalibrationAnalysis.playStyleSeparation(arco, pizz)` replays
+each through the real game capture, reduces each take to its `AttackShape`, and:
+
+- places the step threshold **just above the steepest bowed attack** (`arcoCeiling + margin 3`) so no
+  bowed note on this rig is ever misread as plucked — the same zero-false-positive philosophy as the
+  noise gate;
+- sets the rise cut **just under the fastest bowed rise** (`arcoMinRise − 1`; if a bowed take already
+  lands at the plateau, the cut goes to −1, disabling the rise rule rather than flagging bow strokes);
+- grades the split as a `SeparationVerdict`: **GOOD** (clean gap, most plucks caught), **TIGHT**
+  (caught, but only just), or **OVERLAP** — and on OVERLAP **refuses to arm** the classifier
+  (threshold `null`), exactly as the gate refuses when room noise and soft playing overlap.
+
+On the reference Pixel 6a the calibration takes separate cleanly: bowed steps ≤ 11, plucked 21–63 →
+**GOOD**, threshold ≈ 14, every bowed take read as bowed, every pluck caught. Saved via
+`setFullCalibration` into `AppSettings.pizzArcoAttackStep` / `pizzArcoMaxRiseSamples`
+(`playStyleThreshold()` reconstitutes the domain type; 0 step = not armed). Shown in the wizard
+summary's technical details as "Arco vs pizzicato: clearly told apart / only just / too alike".
+
+### 10.5 Monitoring, not warning (current status)
+
+The three-game capture already writes the classification into the **game trace** so real
+false-positive rates can be watched before any warning is wired:
+
+- **Note Accuracy** `result` events carry `step=… rise=… style=PIZZ|ARCO|UNKNOWN`.
+- **Shift** `hold` events carry the same for the **start note** (a fresh onset — the meaningful
+  signal, unlike the mid-glide landing, whose capture regime the attack feature does **not** transfer
+  to; Sustain/Chords are single held/arpeggio notes, not a style-mismatch scenario, so they are not
+  logged).
+
+To monitor: turn tracing on, play a round, and compare `style` against the exercise mode in the
+header — a `style=PIZZ` in an `…-arco-…` trace is either a real slip (both her confirmed 2026-07-18
+slips were caught) or a false positive to investigate.
+
+**Status:** the classifier + per-rig threshold + trace logging are **done**; the in-game warning
+(discard the mismatched note, tell her "that sounded like pizz — you're in arco mode", re-arm) is
+**deferred** pending her design review of the interaction. The attack-shape features are additive and
+behaviour-neutral — nothing scores or rejects differently because of them yet.
+
+### 10.6 Where the numbers came from, and the tests
+
+Fitted from her real gameplay traces (78 arco + 38 pizz Note-Accuracy notes, plus arco/pizz shift
+rounds — see `.trace-incoming/`), where attack-shape gave ~79% pizz recall at **zero** false
+positives across every note she actually bowed; two confirmed pizz-in-arco shift rounds (15 & 17 Jul)
+were both caught. Guarded by:
+- `AttemptCaptureTest` — a gradual bowed crescendo reads a low step / long rise; a plucked step reads
+  a high step / ~0 rise.
+- `PlayStyleTest` — the pure classifier decision and the pure separation (GOOD / OVERLAP / empty).
+- `WizardCorpusTest.playStyleSeparatesBowedFromPluckedOnTheReferenceRig` — the labeled calibration
+  WAVs replayed through the real capture must separate with zero bowed false-positives.

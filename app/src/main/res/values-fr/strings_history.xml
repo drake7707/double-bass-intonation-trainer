@@ -4,7 +4,7 @@
 
     <string name="history_title">Historique</string>
     <string name="history_cd_open">Historique des manches</string>
-    <string name="history_empty">Aucune manche jouée pour l’instant — termine une manche et elle apparaîtra ici.</string>
+    <string name="history_empty_sub">Termine une manche et elle apparaîtra ici.</string>
     <string name="history_not_found">Cette manche n’est plus disponible.</string>
     <!-- Ligne : score sur maximum. %1$d = score, %2$d = maximum. -->
     <string name="history_row_score">%1$d / %2$d</string>

@@ -35,7 +35,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -68,6 +67,7 @@ import be.drakarah.intonation.metrics.SustainSummary
 import be.drakarah.intonation.metrics.TrendDirection
 import be.drakarah.intonation.metrics.WeekTrend
 import be.drakarah.intonation.ui.chords.EXERCISE_CHORDS
+import be.drakarah.intonation.ui.common.EmptyState
 import be.drakarah.intonation.ui.common.LocalTechnicalDetails
 import be.drakarah.intonation.ui.common.detailedLabel
 import be.drakarah.intonation.ui.common.label
@@ -163,7 +163,11 @@ fun ProgressScreen(
 
             if (!state.hasData) {
                 Spacer(Modifier.height(Spacing.SECTION_BREAK))
-                EmptyState()
+                EmptyState(
+                    icon = Icons.Outlined.PlayCircleOutline,
+                    title = R.string.common_no_rounds_title,
+                    subtitle = R.string.progress_no_rounds_sub,
+                )
                 Spacer(Modifier.weight(1f))
             } else {
                 SectionDivider()
@@ -191,45 +195,8 @@ fun ProgressScreen(
                 }
             }
 
-            Spacer(Modifier.height(Spacing.ITEM_SPACING))
-            OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.progress_done))
-            }
             Spacer(Modifier.height(Spacing.SCREEN_EDGE_BOTTOM))
         }
-    }
-}
-
-@Composable
-private fun EmptyState() {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .background(
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                MaterialTheme.shapes.medium
-            )
-            .padding(Spacing.CARD_PADDING),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)
-    ) {
-        Icon(
-            Icons.Outlined.PlayCircleOutline,
-            contentDescription = null,
-            modifier = Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            stringResource(R.string.progress_no_rounds),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            stringResource(R.string.progress_no_rounds_sub),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
     }
 }
 

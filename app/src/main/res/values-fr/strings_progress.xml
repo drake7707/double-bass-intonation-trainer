@@ -7,8 +7,6 @@
     <string name="progress_tab_shifts">Glissés</string>
     <string name="progress_cd_achievements">Succès</string>
     <string name="progress_ach_count">%1$d/%2$d</string>
-    <string name="progress_done">Terminé</string>
-    <string name="progress_no_rounds">Aucune manche pour l\'instant</string>
     <string name="progress_no_rounds_sub">Joue une partie pour voir tes progrès ici.</string>
 
     <string name="progress_stat_rounds">manches</string>

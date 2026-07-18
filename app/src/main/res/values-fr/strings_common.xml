@@ -78,6 +78,9 @@
 
     <string name="common_cd_back">Retour</string>
 
+    <!-- Shared "nothing here yet" empty state -->
+    <string name="common_no_rounds_title">Aucune manche pour l\'instant</string>
+
     <string name="language_system">Langue du système</string>
     <string name="language_english" translatable="false">English</string>
     <string name="language_dutch" translatable="false">Nederlands</string>

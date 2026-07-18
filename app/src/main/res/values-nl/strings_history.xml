@@ -4,7 +4,7 @@
     <string name="history_title">Historiek</string>
     <string name="history_cd_open">Rondehistoriek</string>
 
-    <string name="history_empty">Nog geen rondes gespeeld — werk een ronde af en die verschijnt hier.</string>
+    <string name="history_empty_sub">Werk een ronde af en die verschijnt hier.</string>
 
     <string name="history_not_found">Deze ronde is niet meer beschikbaar.</string>
 

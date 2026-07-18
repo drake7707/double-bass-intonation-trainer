@@ -12,8 +12,6 @@
     <string name="progress_cd_achievements">Achievements</string>
     <!-- %1$d = unlocked, %2$d = total -->
     <string name="progress_ach_count">%1$d/%2$d</string>
-    <string name="progress_done">Done</string>
-    <string name="progress_no_rounds">No rounds yet</string>
     <string name="progress_no_rounds_sub">Play a game to see your progress here.</string>
 
     <string name="progress_stat_rounds">rounds</string>

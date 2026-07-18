@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -27,10 +28,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import be.drakarah.intonation.R
+import be.drakarah.intonation.ui.common.EmptyState
 import be.drakarah.intonation.ui.common.color
 import be.drakarah.intonation.ui.common.exerciseLabel
 import be.drakarah.intonation.ui.common.modeLabel
@@ -71,11 +72,10 @@ fun HistoryScreen(
                     .padding(horizontal = Spacing.SCREEN_EDGE_HORIZONTAL),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    stringResource(R.string.history_empty),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
+                EmptyState(
+                    icon = Icons.Outlined.PlayCircleOutline,
+                    title = R.string.common_no_rounds_title,
+                    subtitle = R.string.history_empty_sub,
                 )
             }
         } else {

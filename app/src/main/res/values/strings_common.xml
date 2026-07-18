@@ -102,6 +102,9 @@
     <!-- Top-bar back arrow accessibility description -->
     <string name="common_cd_back">Back</string>
 
+    <!-- Shared "nothing here yet" empty state (ui/common/EmptyState.kt) -->
+    <string name="common_no_rounds_title">No rounds yet</string>
+
     <!-- App language picker (ui/common/LanguagePicker.kt). The endonyms (English/Nederlands/
          Français) are deliberately identical in every language — NOT overridden in values-nl/fr —
          so a user in the wrong language can still find their own. Only "System default" translates. -->

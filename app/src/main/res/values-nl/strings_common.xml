@@ -89,6 +89,9 @@
     <!-- Accessibility -->
     <string name="common_cd_back">Terug</string>
 
+    <!-- Shared "nothing here yet" empty state -->
+    <string name="common_no_rounds_title">Nog geen rondes</string>
+
     <!-- Language -->
     <string name="language_system">Systeemtaal</string>
     <string name="settings_language_title">Taal</string>

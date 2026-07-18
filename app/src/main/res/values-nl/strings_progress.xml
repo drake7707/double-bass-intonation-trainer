@@ -6,8 +6,6 @@
     <string name="progress_tab_shifts">Verschuivingen</string>
     <string name="progress_cd_achievements">Prestaties</string>
     <string name="progress_ach_count">%1$d/%2$d</string>
-    <string name="progress_done">Klaar</string>
-    <string name="progress_no_rounds">Nog geen rondes</string>
     <string name="progress_no_rounds_sub">Speel een spel om hier je voortgang te zien.</string>
 
     <string name="progress_stat_rounds">rondes</string>

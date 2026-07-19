@@ -53,6 +53,9 @@ class PitchGate(
     private val missingFundamentalMaxHz: Float = 63f,
     private val oddHarmonicMinRatio: Float = 2.0f,
     private val oddHarmonicMinRelative: Float = 0.02f,
+    /** Whether the odd-harmonic proof (rule 1 in [correctOctaveUp]) may drive octave-DOWN
+     * correction. See [PitchEngineConfig.oddHarmonicOctaveDown] — OFF for pizz. */
+    private val oddHarmonicOctaveDown: Boolean = true,
 ) {
     private val smoother = OutlierRemovingSmoother(
         numMovingAverage,
@@ -147,11 +150,18 @@ class PitchGate(
         // which then dragged the whole sustained Ré3 down an octave).
         if (half > missingFundamentalMaxHz) return frequency
 
-        val oddHz = 1.5f * frequency
-        val oddProminent = spectralPeakRatio(results, oddHz) > oddHarmonicMinRatio
-        val oddSubstantial = spectralPeakAmp(results, oddHz) >
-                oddHarmonicMinRelative * spectralPeakAmp(results, frequency)
-        if (oddProminent && oddSubstantial) return half
+        // Rule 1 — odd-harmonic proof (stateless). ARCO ONLY: on pizz this same 1.5x peak is
+        // produced by the open E/A string ringing sympathetically under a *correctly* fingered
+        // E2/G2, and firing here falsely halved those to E1/G1 (her 2026-07-19 shift report; a
+        // wrong-note where it was right, "mi2 especially"). Pizz octave-up errors are all handled
+        // by rule 2 below (verified across the corpus). See DETECTION.md §12.
+        if (oddHarmonicOctaveDown) {
+            val oddHz = 1.5f * frequency
+            val oddProminent = spectralPeakRatio(results, oddHz) > oddHarmonicMinRatio
+            val oddSubstantial = spectralPeakAmp(results, oddHz) >
+                    oddHarmonicMinRelative * spectralPeakAmp(results, frequency)
+            if (oddProminent && oddSubstantial) return half
+        }
 
         val decayContinuation = lastValidHz > 0f
                 && timestampMs - lastValidMs <= DECAY_MEMORY_MS

@@ -130,6 +130,12 @@ fun PitchEngineConfig.applying(settings: AppSettings, pizz: Boolean = false): Pi
     missingFundamentalMaxHz = settings.missingFundamentalMaxHz,
     oddHarmonicMinRatio = if (pizz) settings.pizzOddHarmonicMinRatio else settings.oddHarmonicMinRatio,
     oddHarmonicMinRelative = if (pizz) settings.pizzOddHarmonicMinRelative else settings.oddHarmonicMinRelative,
+    // Odd-harmonic octave-DOWN proof: ARCO ONLY. On pizz it falsely halves a correctly fingered
+    // E2/G2 whose octave-below open string (E/A) rings sympathetically at 1.5x (2026-07-19 shift
+    // report); pizz octave-up errors are handled by the decay-continuation rule instead. The pizz
+    // odd-harmonic knobs above are now vestigial for capture but kept for the header/diagnostics.
+    // See DETECTION.md §12.
+    oddHarmonicOctaveDown = !pizz,
 )
 
 /** The one place saved calibration + the player's level turn into game CAPTURE timing — the

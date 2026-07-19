@@ -5,6 +5,23 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-19 Pizz Mi/Sol on the Ré string said "wrong note" though it was right (your report — INSTALLED)
+Root-caused from your `game-trace-shift-basic-pizz-20260719-155051` (with "ignore wrong octave" OFF,
+which is what exposed it). Your **correctly-fingered Mi2 (E2) and Sol2 (G2)** were being read a full
+octave **down** (E1/G1) and branded wrong notes. Cause: PitchGate's odd-harmonic octave-**down** proof
+mis-fires on pizz — plucking E2/G2 makes the open E/A string ring sympathetically, and that ringing's
+harmonic looks (to the proof) like evidence the note is really an octave lower. **Mi2 was worst because
+E1 is an open string.** Fix (DETECTION.md §12): that proof is now **arco-only**; pizz relies on the
+decay-continuation rule, which handles every genuine pizz octave-up in the test corpus. The arco
+A-string octave fix is untouched. Guarded by a new regression test built from your trace.
+- [ ] **Play a pizz shift round on the Ré string** (basic level, so it lands on Mi2 and Sol2), with
+      "ignore wrong octave" **still OFF**. Mi2 and Sol2 should now score normally, not "wrong note."
+- [ ] **Play pizz find-the-note across 1st/2nd position** — confirm no new octave weirdness on the low
+      strings (especially open E / low Mi), i.e. the fix didn't cause notes to read an octave *high*.
+- [ ] With "ignore wrong octave" back **ON** (your normal setting), everything should still feel right.
+- [ ] If any pizz low note now reads an octave *high* again, trace it and send it — that's the one
+      thing this change could regress (see DETECTION.md §12.5).
+
 ### 2026-07-19 Game-trace enrichment (makes future detection debugging much easier)
 Purely a **debug-instrumentation** change — nothing about gameplay, scoring, or detection changes. The
 game trace (Settings → Debug → Record & trace games) now records more per note so we stop hunting

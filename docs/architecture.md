@@ -71,7 +71,7 @@ flowchart LR
 | Stage | Layer | Main job | Protects against |
 |---|---|---|---|
 | `PitchEngine` + detector | 1 (dsp) | estimate a candidate pitch | windows with no usable pitch |
-| `PitchGate` | 1 (dsp) | reject bad windows; octave-UP fix | noise, weak signal, missing-fundamental octave errors |
+| `PitchGate` | 1 (dsp) | reject bad windows; octave-up fix (halves an octave-high read; the odd-harmonic proof is **arco-only** — pizz relies on decay-continuation, DETECTION.md §12) | noise, weak signal, missing-fundamental octave errors |
 | `AttemptCapture` / `SustainCapture` | 2 (domain) | did a note start; is it stable | ring-over, resonance w/o attack, unstable attack, glides |
 | `captureFilter` | 3 (domain) | is the frozen note *really her attempt* | leftover ring, too-fast artifacts, harmonic misreads, unplayable/flimsy |
 
@@ -294,7 +294,7 @@ universals.** Three homes (full detail in [`DETECTION.md`](DETECTION.md) §5):
 
 | Home | Examples | Why |
 |---|---|---|
-| **Calibration wizard** → `AppSettings` | `micSensitivity`, `wrongNoteMinLevel`, `lowestPlayableHz`, pizz octave-settle/timing, octave-down knobs, mic source | depend on phone / room / instrument |
+| **Calibration wizard** → `AppSettings` | `micSensitivity`, `wrongNoteMinLevel`, `lowestPlayableHz`, pizz octave-settle/timing, octave-down knobs (arco; pizz's are vestigial since §12), mic source | depend on phone / room / instrument |
 | **`PlayerLevel`** (auto-tuned by `LevelAdvisor`) | `minReadMs` (reading speed), prompt/reveal/shift timeouts | depend on the player, not the mic |
 | **Universal constants** (hard-coded in `game/`) | `NON_OCTAVE_HARMONICS`, `NEAR_TARGET_CENTS`, `RING_MATCH_CENTS`, `WRONG_NOTE_CENTS` | a semitone / overtone is the same on every phone |
 

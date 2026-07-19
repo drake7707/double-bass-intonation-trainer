@@ -49,6 +49,12 @@ data class PitchEngineConfig(
     /** Octave-up correction: the 1.5x peak must be at least this fraction of the detected
      * note's own spectral peak (sympathetic open-string ringing measures well below it). */
     val oddHarmonicMinRelative: Float = 0.02f,
+    /** Whether the stateless odd-harmonic proof (rule 1) may drive octave-DOWN correction. ON for
+     * arco/general (the bowed A-string genuinely needs it); OFF for pizz, where it FALSELY halved
+     * fingered E2/G2 that sympathetically excite the open E/A string (2026-07-19 shift report). The
+     * decay-continuation rule (rule 2) still runs in both modes and handles every genuine pizz
+     * octave-up in the corpus. See PitchGate.correctOctaveUp + DETECTION.md §12. */
+    val oddHarmonicOctaveDown: Boolean = true,
 ) {
     /** Time between successive pitch samples. */
     val hopMs: Float
@@ -64,7 +70,8 @@ data class PitchEngineConfig(
             """"numMovingAverage":$numMovingAverage,"maxNumFaultyValues":$maxNumFaultyValues,""" +
             """"frequencyMin":$frequencyMin,"frequencyMax":$frequencyMax,""" +
             """"missingFundamentalMaxHz":$missingFundamentalMaxHz,""" +
-            """"oddHarmonicMinRatio":$oddHarmonicMinRatio,"oddHarmonicMinRelative":$oddHarmonicMinRelative}"""
+            """"oddHarmonicMinRatio":$oddHarmonicMinRatio,"oddHarmonicMinRelative":$oddHarmonicMinRelative,""" +
+            """"oddHarmonicOctaveDown":$oddHarmonicOctaveDown}"""
 }
 
 /** Microphone-to-pitch pipeline: AudioRecord -> overlapping windows -> detector -> gate.
@@ -101,6 +108,7 @@ class PitchEngine(
         missingFundamentalMaxHz = config.missingFundamentalMaxHz,
         oddHarmonicMinRatio = config.oddHarmonicMinRatio,
         oddHarmonicMinRelative = config.oddHarmonicMinRelative,
+        oddHarmonicOctaveDown = config.oddHarmonicOctaveDown,
     )
 
     fun samples(): Flow<PitchSample> = channelFlow {

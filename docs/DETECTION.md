@@ -5,7 +5,12 @@
 problem, every design decision, what worked and what didn't, and how we got there — so after a
 context reset we can be current again in one read.
 
-Last updated: 2026-07-19, adding **§11 — the game-trace file-format reference** (line types, every
+Last updated: 2026-07-19, adding **§12 — the odd-harmonic octave-DOWN proof is now ARCO-ONLY** (it
+falsely halved correctly-fingered pizz E2/G2 whose octave-below open string rings sympathetically; pizz
+now relies on the decay-continuation rule, which handles every genuine pizz octave-up in the corpus —
+her "mi2 said wrong note though it was right" report). This **reverses the §5 A "pizz needs looser
+odd-harmonic" premise** — read §12 if pizz octaves regress. Also earlier today: **§11 — the
+game-trace file-format reference** (line types, every
 event's field schema per game, symptom→where-to-look recipes, and §11.2.1's accept/reject + octave
 decision rules) so agents stop re-deriving the trace structure from source each time — plus a **Tier-1
 trace enrichment** the reference already documents: the `result` event now carries the frozen pitch and
@@ -497,6 +502,11 @@ point). Measured by the full calibration wizard from prompted notes (ground trut
   `WizardCorpusTest` (the chooser logic). This is the "better discriminator with calibration knobs"
   — the time-based §2.1 settle handles the *attack-transient* octave, this handles the *sustained
   resonance* octave.
+  **SUPERSEDED for capture (2026-07-19, §12):** the odd-harmonic octave-DOWN proof is now **disabled
+  for pizz** (`oddHarmonicOctaveDown=!pizz`) because it *falsely* halved correctly-fingered E2/G2 whose
+  octave-below open string rings sympathetically; the decay-continuation rule handles every genuine
+  pizz octave-up on its own. These pizz knobs are therefore **vestigial for capture** — still fitted
+  and carried in headers, but not consulted when the game runs pizz. Read §12 before touching this.
 
 Defaults in `AppSettings` are the reference-Pixel-6a values; the wizard overrides per device.
 
@@ -858,9 +868,17 @@ octave problems this doc spends the most effort on are invisible to it:
   it, not the up-correction.
 - **Attack-transient octave (§2.1)** before octave-settle — also `octaveCorrected:false`.
 
+Conversely, `octaveCorrected:true` is not always *good*. The flag literally means "`PitchGate` halved
+this window" — right when it undoes a real octave-up error, but it is also the **exact tell for the
+§12 pizz false octave-DOWN**: `octaveCorrected:true` on a note whose `smoothedHz` sits an octave
+**below** the prompt target (e.g. a fingered Mi2/E2 reading 41 Hz) = the arco-only odd-harmonic proof
+mis-firing on a pizz note whose octave-below open string rings sympathetically. If you see this on a
+`…-pizz-…` trace, check the header shows `oddHarmonicOctaveDown:false` (if it's `true`, this fix
+regressed or the app predates it) and read §12.
+
 So diagnose octave errors by **comparing `smoothedHz` across the note to where it settles / to the
-prompt's target midi**, not by trusting the `octaveCorrected` flag. `octaveCorrected:false` ≠ "no
-octave issue".
+prompt's target midi**, not by trusting the `octaveCorrected` flag either way: `octaveCorrected:false`
+≠ "no octave issue", and `octaveCorrected:true` an octave *below* the target = the §12 false-down.
 
 **Reading the frozen note off the `result` event.** The Note-Accuracy `result` (§11.3) now carries the
 freeze directly: `played` (raw frozen Hz, **pre** octave-fold), `wrongOct`, `react` (time to onset),
@@ -945,8 +963,69 @@ under a *different* config gives different octave decisions than the round actua
 |---|---|
 | **"It said no note / wouldn't lock"** | Between the `prompt` and the timeout: are there `accepted:true` samples at all? If not → a gate rejected them — use the §11.2.1 predicate to name which of `noise`/`harmRel`/`level` failed. If yes but no `result` → count `discard` events and read their reason bools (over-eager filter). |
 | **"Phantom / instant wrong note"** | `result` with `wrong=true` at a small `el`/`time`, or a `discard` with `ring=true`/`soon=true`. Compare the `result` `tMs` against the `prompt` `tMs` — a capture <1 s after the prompt is almost never her (§3.5). Check the previous note's `result` `cents`/`midi` still ringing in the sample `smoothedHz`. |
-| **"Right note, wrong octave"** | Read it off the `result`: `wrongOct=true` with `played` an octave from the target (`cents` is near-zero after folding). Then the sample lines around the freeze for the cause: `smoothedHz` sitting ×2 high. `octaveCorrected` catches only the up-correction case — sustained pizz (§5 A) reads `octaveCorrected:false`. Confirm against the header's octave-down knobs. |
+| **"Right note, wrong octave"** | Read it off the `result`: `wrongOct=true` with `played` an octave from the target (`cents` is near-zero after folding). Then the sample lines around the freeze for the cause: `smoothedHz` sitting ×2 high. `octaveCorrected` catches only the up-correction case — sustained pizz (§5 A) reads `octaveCorrected:false`. Confirm against the header's octave-down knobs. **Pizz reading an octave DOWN (`octaveCorrected:true`, e.g. E2→E1) is §12** — the arco-only odd-harmonic proof; confirm the header shows `oddHarmonicOctaveDown:false` for pizz. |
 | **"Wouldn't settle / scored late"** | The `result` `react` vs `stable`: large `react` = slow to onset (gate/attack, §3.1); large `stable` (or high `wob`) = onset fired but the pitch kept sliding (glide/wobble, §2.2). Then the `smoothedHz` samples between onset and freeze show the slide. |
 | **"Scored sharp/flat (pizz)"** | The `result` `cents` sign + the sample `smoothedHz` trajectory across the freeze window: a pluck that reads sharp then relaxes → capture-timing (§2.2); check `pizzAttackSkipMs`/`pizzStabilityWindowMs` in the header `detection` block. |
 | **"Played pizz in arco (or reverse)"** | `result`/`hold` `style=` vs the `<mode>` in the filename. `step`/`rise` are the raw features (§10). |
 | **General** | The **event stream reads as a timeline** — filter to `"event"` lines first to see the game's decisions, then zoom into the sample lines in the `tMs` window around any suspicious event. |
+
+---
+
+## 12. The odd-harmonic octave-DOWN proof is ARCO-ONLY (pizz uses decay-continuation)
+
+**This reverses the §5 A premise that "pizz needs a *looser* odd-harmonic octave-down proof." If you
+see pizz low notes suddenly reading an octave off again, start here.**
+
+### 12.1 The bug (Sarah, 2026-07-19, pizz shift, with "ignore wrong octave" turned OFF)
+Embedded trace feedback: *"mi/sol on the re string often said wrong note, though it was right, mi2
+especially."* From `game-trace-shift-basic-pizz-20260719-155051`: two landings frozen a full octave
+**below** the played note — Mi2/**E2 (82 Hz) → E1 (41 Hz)** (`land=-1201c`, `wrong=true`) and
+Sol2/**G2 (98 Hz) → G1 (49 Hz)** (`land=-1181c`). The detector even read G2 correctly (98.7 Hz) for
+two frames before the correction halved it and locked on 49 Hz (`octaveCorrected=true`). Not a wrong
+note and not her — a detection error. `ignoreWrongOctave` (default ON) normally *papers this over* by
+folding it back onto the target; she had it OFF, which is what exposed the underlying misread.
+
+### 12.2 Root cause — a genuine spectral ambiguity the odd-harmonic proof gets wrong on pizz
+An 82 Hz reading is ambiguous: it is either **E2's fundamental** or **E1's 2nd harmonic** (open E on a
+rolled-off mic — see §1). PitchGate's **rule 1, the odd-harmonic proof** (`correctOctaveUp`),
+disambiguates by looking for a peak at 1.5×f (= the 3rd harmonic of the octave-below). On **pizz**,
+plucking a correctly-fingered E2 **sympathetically drives the OPEN E string (E1)**, whose 3rd harmonic
+lands exactly at 1.5×82 ≈ 123 Hz — so the proof "sees E1's 3rd harmonic" and halves E2→E1. **Mi2 is
+worst because E1 is an open string** (maximum coupling); Sol2→G1 is the same mechanism via the A/D
+strings. The clean single-note calibration takes (open G2/D2) do **not** show this — the false peak only
+appears in the **resonant multi-string environment of a real shift** (ringing start note + sympathetic
+open strings), which is why calibration validated fine yet the bug is real in play.
+
+### 12.3 The fix — rule 1 is arco-only; pizz relies on rule 2 (decay-continuation)
+Proven on the corpus (`OctaveDownThresholdSweep`, run 2026-07-19, since removed):
+
+- Every **genuine pizz octave-up** in the corpus (Mi-resonance §5 A, open E1, open A1) is corrected
+  **by the decay-continuation rule alone** — they stay correct even with the odd-harmonic proof fully
+  OFF. So pizz does not need rule 1.
+- The **only** case that genuinely needs the stateless odd-harmonic proof is the **bowed arco A-string**
+  (open A1 arco reads A2 without it — the classic missing-fundamental case). Arco keeps rule 1.
+- No hard-coded threshold could thread it: on her rig ratio 4.0 fixes both notes but 5.0 already breaks
+  the arco A-string, and that window is rig-specific — exactly what Sarah's "no hard-coded thresholds"
+  rule forbids. The split is **physics, not a number**: a bow is a sustained onset with no attack for
+  the decay rule to latch, so it needs the stateless proof; a pluck has a clear attack→decay the decay
+  rule reads directly.
+
+Implementation: `PitchEngineConfig.oddHarmonicOctaveDown` (default **true**), set to `!pizz` in
+`settings.applying(config, pizz)`. `PitchGate.correctOctaveUp` gates **rule 1** behind it; **rule 2
+(decay-continuation) always runs** in both modes. The pizz odd-harmonic knobs
+(`pizzOddHarmonicMinRatio`/`Relative`) are now **vestigial for capture** — kept only so recording
+headers/diagnostics stay complete. The flag is in `toJson()`, so trace/snippet headers reproduce it.
+
+### 12.4 Guards
+- `dsp` `PizzOctaveDownFalsePositiveTest` — the 28 s corpus clip `shift-pizz-octavedown-20260719`
+  (trimmed from her trace, holds the Mi2 + Sol2 landings) under her real header config: proof **ON**
+  reproduces the octave-down (E1/G1); proof **OFF** (shipped for pizz) reads the true octave (E2/G2).
+- `dsp` `RealBassRegressionTest` / `PizzOctaveDownTest` — unchanged (default flag `true`), so the arco
+  A-string octave-up and the sustained-resonance octave-up still pass.
+
+### 12.5 If this ever needs revisiting
+If pizz low notes start reading an octave HIGH again (decay-continuation not catching a genuine
+octave-up), the fallback is **not** to re-enable rule 1 for pizz (it brings back this false-down).
+Prefer the time-based **pizz octave-settle** (§2.1, currently `pizzOctaveSettleMs=0` on her rig) or a
+better pizz-specific octave-up signal. Re-enabling rule 1 for pizz should regress
+`PizzOctaveDownFalsePositiveTest`.

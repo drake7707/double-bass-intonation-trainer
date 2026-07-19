@@ -5,6 +5,7 @@ import be.drakarah.intonation.dsp.PitchSample
 /** The frozen result of one arpeggio tone. [frequencyHz] null = no scoreable note (timed out
  * or nothing but artifacts). */
 data class ToneResult(
+    /** Raw frozen pitch (pre octave-fold), null when nothing scoreable happened. */
     val frequencyHz: Float?,
     val quality: CaptureQuality?,
     val timedOut: Boolean,
@@ -15,6 +16,16 @@ data class ToneResult(
     val captureWobbleCents: Float? = null,
     /** Artifacts discarded before this tone froze ("took N tries"). */
     val retryCount: Int = 0,
+    /** Tone vs its target, octave-folded when ignoreWrongOctave (keeps the within-octave error);
+     * null when nothing froze. Classified in the pipeline, not the ViewModel. */
+    val cents: Float? = null,
+    /** Frozen pitch folded onto the target octave (when ignoreWrongOctave); null when nothing froze. */
+    val playedHz: Float? = null,
+    /** A different note (≥ WRONG_NOTE_CENTS from the target after folding). */
+    val wrongNote: Boolean = false,
+    /** Right pitch class a whole octave off (only when not folded) — reported as such, consistent
+     * with every game (see [classifyAgainstTarget]). */
+    val wrongOctave: Boolean = false,
 )
 
 sealed interface ArpeggioState {
@@ -53,6 +64,9 @@ class ArpeggioCapture(
     /** Root only: an off-target capture sooner than she could read the chord and play is
      * leftover sound, not her attempt (measured from the first sample of the arpeggio). */
     private val minReadMs: Long = 900L,
+    /** Practice aid: fold a right-note-wrong-octave tone onto the target and score it there (off =
+     * report it as a wrong octave). Same shared classifier every game uses. */
+    private val ignoreWrongOctave: Boolean = true,
 ) {
     var state: ArpeggioState = ArpeggioState.Capturing(0)
         private set
@@ -126,12 +140,19 @@ class ArpeggioCapture(
             return
         }
         previousToneHz = frozen.frequencyHz
+        // Classify the accepted tone against its target with the ignoreWrongOctave-aware fold (the
+        // filter above used the raw classification); the ViewModel just maps this to UI/records.
+        val resultMatch = classifyAgainstTarget(frozen.frequencyHz, target, ignoreWrongOctave)
         acceptTone(
             ToneResult(
                 frozen.frequencyHz, frozen.quality, timedOut = false,
                 energyLevel = frozen.energyLevel,
                 captureWobbleCents = frozen.captureWobbleCents,
                 retryCount = reArmsThisTone,
+                cents = resultMatch.cents,
+                playedHz = resultMatch.playedHz,
+                wrongNote = resultMatch.wrongNote,
+                wrongOctave = resultMatch.wrongOctave,
             )
         )
     }

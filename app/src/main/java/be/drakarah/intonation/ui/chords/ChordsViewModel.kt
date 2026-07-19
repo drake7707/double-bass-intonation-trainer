@@ -24,7 +24,6 @@ import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.game.ArpeggioCapture
 import be.drakarah.intonation.game.ArpeggioState
 import be.drakarah.intonation.game.ChordFingering
-import be.drakarah.intonation.game.classifyAgainstTarget
 import be.drakarah.intonation.game.ChordPool
 import be.drakarah.intonation.game.ChordSpec
 import be.drakarah.intonation.game.Difficulty
@@ -36,7 +35,6 @@ import be.drakarah.intonation.game.isOpenString
 import be.drakarah.intonation.game.scoreAttempt
 import be.drakarah.intonation.game.stars
 import be.drakarah.intonation.music.NoteNameStyle
-import be.drakarah.intonation.music.centsBetween
 import be.drakarah.intonation.settings.SettingsRepository
 import be.drakarah.intonation.settings.applying
 import be.drakarah.intonation.settings.detectionExtrasJson
@@ -46,7 +44,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 const val EXERCISE_CHORDS = "CHORDS"
 
@@ -255,6 +252,7 @@ class ChordsViewModel(
             wrongNoteMinLevel = wrongNoteMinLevel,
             lowestPlayableHz = lowestPlayableHz,
             minReadMs = minReadMs,
+            ignoreWrongOctave = ignoreWrongOctave,
         )
     }
 
@@ -266,24 +264,19 @@ class ChordsViewModel(
         val tones = finished.tones.mapIndexed { i, tr ->
             val prompt = chord.tones[i]
             val scored = !prompt.isOpenString
-            // Classify each tone with the SAME shared octave logic every game uses: fold onto the
-            // target octave when ignoreWrongOctave (keeping the within-octave intonation error), else
-            // flag wrongOctave — so a tone an octave off is reported as such, not a flat wrong note.
-            val match = tr.frequencyHz?.let {
-                classifyAgainstTarget(it, prompt.target.frequency(a4), ignoreWrongOctave)
-            }
-            val cents = match?.cents
-            val wrongNote = match?.wrongNote == true
-            val wrongOctave = match?.wrongOctave == true
+            // The tone was classified against its target in the detection pipeline (ArpeggioCapture,
+            // shared classifier: fold when ignoreWrongOctave keeping the within-octave error, else
+            // flag wrongOctave). The ViewModel only maps it to UI/records.
+            val cents = tr.cents
             ToneUi(
                 prompt = prompt,
-                playedHz = match?.playedHz,
+                playedHz = tr.playedHz,
                 cents = if (scored) cents else null,
                 score = if (scored && cents != null) scoreAttempt(cents, difficulty) else 0,
                 starCount = if (scored && cents != null) stars(cents) else 0,
                 timedOut = tr.timedOut,
-                wrongNote = wrongNote,
-                wrongOctave = wrongOctave,
+                wrongNote = tr.wrongNote,
+                wrongOctave = tr.wrongOctave,
                 scored = scored,
                 energyLevel = tr.energyLevel,
                 captureWobbleCents = tr.captureWobbleCents,

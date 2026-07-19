@@ -175,6 +175,34 @@ class ShiftCaptureTest {
     }
 
     @Test
+    fun octaveOffLandingFoldsAndKeepsIntonationWhenIgnoringOctave() {
+        // Land the right pitch class an octave below the target (D2 = D3/2) but 8¢ sharp. With
+        // ignoreWrongOctave on (default), the landing is folded onto the target octave: not a wrong
+        // note / wrong octave, and the cents keep the 8¢ error (NOT zeroed) — same as Note Accuracy.
+        val octaveDownSharp = (targetHz / 2) * 2.0.pow(8.0 / 1200)
+        val script = silence(0, 300) + note(300, 2600, startHz) + note(2600, 4600, octaveDownSharp)
+        val result = (run(capture(), script) as ShiftState.Finished).result
+        assertTrue("should not time out", !result.timedOut)
+        assertTrue("an octave-off-but-in-tune landing is not a wrong note", !result.wrongNote)
+        assertTrue("...and not flagged wrong octave when folded", !result.wrongOctave)
+        assertEquals("fold keeps the within-octave error (+8¢), not 0", 8f, result.landingCents!!, 3f)
+    }
+
+    @Test
+    fun octaveOffLandingIsReportedAsWrongOctaveWhenNotIgnoring() {
+        val octaveDown = targetHz / 2
+        val cap = ShiftCapture(
+            startHz, targetHz, CaptureParams.arco(), ShiftParams(),
+            ignoreWrongOctave = false, random = Random(7),
+        )
+        val script = silence(0, 300) + note(300, 2600, startHz) + note(2600, 4600, octaveDown)
+        val result = (run(cap, script) as ShiftState.Finished).result
+        assertTrue("an octave-off landing is its own dimension, not a flat wrong note", result.wrongOctave)
+        assertTrue("landing cents kept raw (~-1200) when not folded",
+            abs(result.landingCents!! - (-1200f)) < 15f)
+    }
+
+    @Test
     fun neverShiftingTimesOut() {
         val script = silence(0, 300) + note(300, 8000, startHz)
         val state = run(capture(), script)

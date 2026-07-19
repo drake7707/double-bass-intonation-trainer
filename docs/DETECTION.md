@@ -406,11 +406,15 @@ into the intonation feel, drop toward 200. One-line change in `Scoring.kt`.
 **One shared octave classifier (2026-07-19).** The "is this the right note / a wrong note / the right
 note an octave off" decision — including the `ignoreWrongOctave` **fold** — is a single pure function,
 `game/TargetMatch.kt` (`classifyAgainstTarget(frozenHz, targetHz, ignoreWrongOctave)` →
-`TargetMatch(playedHz, cents, wrongNote, wrongOctave)`), used by **every** game: Note Accuracy
-(`NoteAttemptCapture`), Shift (`ShiftViewModel` landing + `ShiftCapture` filter), and Chords
-(`ChordsViewModel` per tone + `ArpeggioCapture` filter). Before this, only Note Accuracy computed
-`wrongOctave`; Shift and Chords branded an octave-off note a **flat wrong note** (Sarah: "that should
-be consistent across all games"). The **fold keeps the within-octave intonation error** — an octave
+`TargetMatch(playedHz, cents, wrongNote, wrongOctave)`), called from **every game's detection state
+machine** — Note Accuracy (`NoteAttemptCapture`), Shift (`ShiftCapture`, on the landing), Chords
+(`ArpeggioCapture`, per tone). The result carries the classification (`ShiftResult`/`ToneResult` gained
+`wrongOctave`/folded `cents`), and the ViewModels only **map it to UI/records** — classification is
+detection-pipeline logic, not UI (Sarah's call, 2026-07-19). Before this, only Note Accuracy computed
+`wrongOctave`; Shift and Chords branded an octave-off note a **flat wrong note**, and Shift/Chords did
+the classification in the ViewModel (untestable). Now all three are unit-tested in the domain
+(`ShiftCaptureTest`, `ArpeggioCaptureTest`, `NoteAttemptCaptureTest`). ("that should be consistent
+across all games.") The **fold keeps the within-octave intonation error** — an octave
 off but 7¢ sharp folds to +7¢, NOT 0 (it only nears 0 when the octave-off note is itself in tune,
 which is exactly when it should score well). `wrongOctave` flows to the outcome (`classifyOutcome`
 → WRONG_OCTAVE), the persisted `AttemptRecord.wrongOctave`, the reveal UI ("right note, wrong octave"

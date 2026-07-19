@@ -24,7 +24,7 @@ data class ShiftParams(
 )
 
 data class ShiftResult(
-    /** The frozen landing pitch, null when nothing scoreable happened. */
+    /** The frozen landing pitch (raw, pre octave-fold), null when nothing scoreable happened. */
     val landedHz: Float?,
     /** Cue-to-freeze time; the confident-shift bonus keys off this. */
     val landingTimeMs: Long?,
@@ -42,6 +42,14 @@ data class ShiftResult(
     val captureWobbleCents: Float? = null,
     /** Landing artifacts discarded before the real landing froze ("took N tries"). */
     val retryCount: Int = 0,
+    /** Landing vs the target, octave-folded when ignoreWrongOctave (keeps the within-octave error);
+     * null when nothing froze. The absolute-intonation term of the shift score. */
+    val landingCents: Float? = null,
+    /** The landing was a different note (≥ WRONG_NOTE_CENTS from the target after folding). */
+    val wrongNote: Boolean = false,
+    /** The landing was the right pitch class a whole octave off (only when not folded) — reported as
+     * such, not a flat wrong note, consistent with every game (see [classifyAgainstTarget]). */
+    val wrongOctave: Boolean = false,
 )
 
 sealed interface ShiftState {
@@ -74,6 +82,9 @@ class ShiftCapture(
     private val params: ShiftParams = ShiftParams(),
     /** Calibration-owned discard thresholds, shared with every game (see [CaptureFilterConfig]). */
     private val filterConfig: CaptureFilterConfig = CaptureFilterConfig(),
+    /** Practice aid: fold a right-note-wrong-octave landing onto the target and score it there
+     * (off = report it as a wrong octave). Same shared classifier every game uses. */
+    private val ignoreWrongOctave: Boolean = true,
     random: Random = Random.Default,
     /** Trace sink for a discarded artifact (phase = "start" | "landing") — the ViewModel logs it,
      * mirroring [NoteAttemptCapture]'s onDiscard so the game trace records why one was rejected. */
@@ -223,6 +234,12 @@ class ShiftCapture(
                     )
                     return
                 }
+                // Classify the accepted landing against the target with the shared octave logic (fold
+                // when ignoreWrongOctave, else flag wrongOctave) so an octave-off landing is reported
+                // as such, not a flat wrong note — same as Note Accuracy. targetHz <= 0 (state-machine
+                // unit tests) skips classification.
+                val landMatch = if (targetHz > 0.0)
+                    classifyAgainstTarget(s.result.frequencyHz, targetHz, ignoreWrongOctave) else null
                 state = ShiftState.Finished(
                     ShiftResult(
                         landedHz = s.result.frequencyHz,
@@ -233,6 +250,9 @@ class ShiftCapture(
                         energyLevel = s.result.energyLevel,
                         captureWobbleCents = s.result.captureWobbleCents,
                         retryCount = landingReArms,
+                        landingCents = landMatch?.cents,
+                        wrongNote = landMatch?.wrongNote == true,
+                        wrongOctave = landMatch?.wrongOctave == true,
                     )
                 )
             }

@@ -60,6 +60,34 @@ class ArpeggioCaptureTest {
     }
 
     @Test
+    fun octaveOffToneFoldsAndKeepsIntonationWhenIgnoringOctave() {
+        // Play root + third clean, then the fifth an octave below (E2 = E3/2) but 6¢ sharp. With
+        // ignoreWrongOctave on (default) the tone folds onto the target octave: not a wrong note /
+        // wrong octave, cents keep the 6¢ error (NOT zeroed) — same as every other game.
+        val fifthOctaveDownSharp = (fifthHz / 2) * Math.pow(2.0, 6.0 / 1200)
+        val script = silence(0, 150) + note(150, 950, rootHz) +
+                silence(950, 1150) + note(1150, 1950, thirdHz) +
+                silence(1950, 2150) + note(2150, 2950, fifthOctaveDownSharp)
+        val tones = (run(capture(), script) as ArpeggioState.Finished).tones
+        assertFalse("octave-off-but-in-tune is not a wrong note", tones[2].wrongNote)
+        assertFalse("...and not flagged wrong octave when folded", tones[2].wrongOctave)
+        assertEquals("fold keeps the within-octave error (+6¢), not 0", 6f, tones[2].cents!!, 3f)
+    }
+
+    @Test
+    fun octaveOffToneIsReportedAsWrongOctaveWhenNotIgnoring() {
+        val cap = ArpeggioCapture(
+            listOf(rootHz, thirdHz, fifthHz), CaptureParams.arco(),
+            minReadMs = 0L, ignoreWrongOctave = false,
+        )
+        val script = silence(0, 150) + note(150, 950, rootHz) +
+                silence(950, 1150) + note(1150, 1950, thirdHz) +
+                silence(1950, 2150) + note(2150, 2950, fifthHz / 2) // fifth an octave down
+        val tones = (run(cap, script) as ArpeggioState.Finished).tones
+        assertTrue("an octave-off tone is its own dimension, not a flat wrong note", tones[2].wrongOctave)
+    }
+
+    @Test
     fun ringOverOfPreviousToneIsDiscarded() {
         // After the root, the root sounds again (its ring re-attacked) while the third tone is
         // armed. That freeze matches the previous tone, not the third — it must be discarded and

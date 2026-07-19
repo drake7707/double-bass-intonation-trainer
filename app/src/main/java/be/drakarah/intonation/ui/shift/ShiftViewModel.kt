@@ -25,7 +25,6 @@ import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.game.CaptureFilterConfig
 import be.drakarah.intonation.game.CaptureParams
 import be.drakarah.intonation.game.CaptureQuality
-import be.drakarah.intonation.game.classifyAgainstTarget
 import be.drakarah.intonation.game.Difficulty
 import be.drakarah.intonation.game.FIRST_POSITION
 import be.drakarah.intonation.game.MAX_ATTEMPT_SCORE
@@ -284,6 +283,7 @@ class ShiftViewModel(
                 wrongNoteMinLevel = wrongNoteMinLevel,
                 lowestPlayableHz = lowestPlayableHz,
             ),
+            ignoreWrongOctave = ignoreWrongOctave,
             onDiscard = { phase, captured, filter ->
                 trace?.event(
                     lastSampleMs, "$phase-discard",
@@ -299,21 +299,17 @@ class ShiftViewModel(
     private fun onFinished(finished: ShiftState.Finished, state: ShiftUiState, nowMs: Long) {
         val prompt = state.prompt ?: return
         val r = finished.result
-        val targetHz = prompt.target.target.frequency(a4)
         val idealStartHz = prompt.start.target.frequency(a4)
         // Landing = absolute intonation; start = how off the confirmed start was; shift distance =
         // landing − start (the skill). A slightly-off start that shifts the right distance scores well.
-        // Classify the landing against the target with the SAME shared octave logic every game uses
-        // (fold onto the target octave when ignoreWrongOctave, else flag wrongOctave) — so a shift
-        // octave error is reported as such instead of a flat wrong note. The start is confirmed within
-        // tolerance so it is never octave-off; only the landing needs classifying.
-        val landMatch = r.landedHz?.let { classifyAgainstTarget(it, targetHz, ignoreWrongOctave) }
-        val landingCents = landMatch?.cents
+        // The landing classification (fold / wrongNote / wrongOctave) is done in the detection
+        // pipeline (ShiftCapture, shared classifier) — the ViewModel only maps it to UI/records.
+        val landingCents = r.landingCents
         val startCents = r.confirmedStartHz.takeIf { it > 0f }
             ?.let { centsBetween(it.toDouble(), idealStartHz).toFloat() }
         val shiftCents = landingCents?.let { it - (startCents ?: 0f) }
-        val wrongNote = landMatch?.wrongNote == true
-        val wrongOctave = landMatch?.wrongOctave == true
+        val wrongNote = r.wrongNote
+        val wrongOctave = r.wrongOctave
         val score = if (r.timedOut || landingCents == null) 0
             else scoreShift(landingCents, startCents ?: 0f, r.landingTimeMs, difficulty)
         val starCount = if (r.timedOut || shiftCents == null) 0 else stars(shiftCents)

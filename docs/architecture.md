@@ -133,8 +133,11 @@ single source of truth.
 
 That octave classification itself — right note / wrong note / right-note-wrong-octave, plus the
 `ignoreWrongOctave` fold that keeps the within-octave intonation error — is one shared pure function,
-`game/TargetMatch.kt` `classifyAgainstTarget()`, used by **every** game (Note Accuracy, Shift, Chords)
-so an octave-off note is handled identically everywhere rather than each game reinventing it (see
+`game/TargetMatch.kt` `classifyAgainstTarget()`, called from **every game's domain capture**
+(`NoteAttemptCapture`, `ShiftCapture`, `ArpeggioCapture`), never from the ViewModels: classification is
+detection-pipeline logic, so it stays in Layer 2/3 and each result (`NoteAttempt`/`ShiftResult`/
+`ToneResult`) carries `wrongOctave` + folded cents, leaving the ViewModel to only map it to UI/records.
+This keeps an octave-off note handled identically everywhere and unit-testable in the domain (see
 DETECTION.md §4.1).
 
 ---

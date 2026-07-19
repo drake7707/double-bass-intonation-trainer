@@ -172,7 +172,10 @@ class ShiftViewModel(
             )
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             val cfg = config.applying(settings, pizz = mode == "pizz")
-            trace = if (settings.traceGames) GameTrace(appContext, cfg, "shift-${level.id}-$mode", settings.detectionExtrasJson()).also { it.prepare() } else null
+            trace = if (settings.traceGames) GameTrace(
+                appContext, cfg, "shift-${level.id}-$mode", settings.detectionExtrasJson(),
+                """{"a4":$a4,"difficulty":"${difficulty.name}"}""",
+            ).also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
             prompts = ShiftPool(positions, level = level)
                 .draw(settings.roundLength)
@@ -332,6 +335,7 @@ class ShiftViewModel(
                 nowMs, "result",
                 "target=${prompt.target.target.midi} land=${f(landingCents)} start=${f(startCents)} " +
                     "shift=${f(shiftCents)} time=${r.landingTimeMs ?: "-"} " +
+                    "landHz=${r.landedHz?.let { "%.1f".format(it) } ?: "-"} wob=${f(r.captureWobbleCents)} " +
                     "score=$score stars=$starCount timeout=${r.timedOut} wrong=$wrongNote",
             )
         }

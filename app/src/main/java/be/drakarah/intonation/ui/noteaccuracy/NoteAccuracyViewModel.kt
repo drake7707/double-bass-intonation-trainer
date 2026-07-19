@@ -193,7 +193,10 @@ class NoteAccuracyViewModel(
             previousAnswerHz = 0f
             promptTraceLogged = false
             val cfg = config.applying(settings, pizz = mode == "pizz")
-            trace = if (settings.traceGames) GameTrace(appContext, cfg, "note-accuracy-$mode", settings.detectionExtrasJson()).also { it.prepare() } else null
+            trace = if (settings.traceGames) GameTrace(
+                appContext, cfg, "note-accuracy-$mode", settings.detectionExtrasJson(),
+                """{"a4":$a4,"difficulty":"${difficulty.name}","minReadMs":$minReadMs}""",
+            ).also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
             prompts = NotePool(positions).draw(settings.roundLength)
                 .map { it.withMixedSpelling(kotlin.random.Random.Default, mixEnharmonics) }
@@ -275,9 +278,11 @@ class NoteAccuracyViewModel(
     private fun onDiscard(
         captured: CapturedPitch, filter: CaptureFilterResult, elapsedMs: Long, nowMs: Long,
     ) {
-        trace?.event(nowMs, "discard", "hz=%.1f q=%s lvl=%.0f el=%d ring=%b soon=%b harm=%b"
-            .format(captured.frequencyHz, captured.quality, captured.energyLevel,
-                elapsedMs, filter.ringOver, filter.tooSoon, filter.harmonicArtifact))
+        trace?.event(nowMs, "discard",
+            "hz=%.1f q=%s lvl=%.0f el=%d ring=%b soon=%b harm=%b flimsy=%b unplay=%b"
+                .format(captured.frequencyHz, captured.quality, captured.energyLevel,
+                    elapsedMs, filter.ringOver, filter.tooSoon, filter.harmonicArtifact,
+                    filter.flimsy, filter.unplayable))
     }
 
     /** Map a domain [NoteAttempt] onto the screen's [AttemptUi], carrying the prompt's display
@@ -311,8 +316,12 @@ class NoteAccuracyViewModel(
             result.attackMaxStep ?: 0f, result.attackRiseSamples ?: 0, playStyleThreshold,
         )
         trace?.event(nowMs, "result",
-            "midi=${result.target.midi} cents=${result.cents} wrong=${result.wrongNote} " +
-                "timeout=${result.timedOut} step=%.0f rise=%d style=%s".format(
+            "midi=${result.target.midi} cents=${result.cents} " +
+                "played=${result.playedHz?.let { "%.1f".format(it) } ?: "-"} " +
+                "wrong=${result.wrongNote} wrongOct=${result.wrongOctave} timeout=${result.timedOut} " +
+                "react=${result.reactionTimeMs ?: -1} stable=${result.timeToStableMs ?: -1} " +
+                "wob=${result.captureWobbleCents?.let { "%.0f".format(it) } ?: "-"} " +
+                "step=%.0f rise=%d style=%s".format(
                     result.attackMaxStep ?: 0f, result.attackRiseSamples ?: -1, style))
         val drift = if (driftWarningEnabled)
             driftDetector.onAttempt(result.cents.takeUnless { result.wrongNote }) else null

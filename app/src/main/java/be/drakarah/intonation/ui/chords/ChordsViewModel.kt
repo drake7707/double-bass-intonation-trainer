@@ -168,7 +168,10 @@ class ChordsViewModel(
             revealMs = settings.playerLevel.revealMs(BASE_REVEAL_MS)
             val cfg = config.applying(settings, pizz = mode == "pizz")
             trace = if (settings.traceGames)
-                GameTrace(appContext, cfg, "chords-$mode", settings.detectionExtrasJson()).also { it.prepare() } else null
+                GameTrace(
+                    appContext, cfg, "chords-$mode", settings.detectionExtrasJson(),
+                    """{"a4":$a4,"difficulty":"${difficulty.name}","minReadMs":$minReadMs}""",
+                ).also { it.prepare() } else null
             engine = PitchEngine(cfg, trace?.waveWriter)
             prompts = ChordPool(positions, fingering = chordFingering).draw(settings.roundLength)
             startedAtWallClock = System.currentTimeMillis()

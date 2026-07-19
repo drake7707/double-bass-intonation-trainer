@@ -5,7 +5,14 @@
 problem, every design decision, what worked and what didn't, and how we got there — so after a
 context reset we can be current again in one read.
 
-Last updated: 2026-07-18, after the **pizz/arco play-style classifier** (§10): detect when she plays
+Last updated: 2026-07-19, adding **§11 — the game-trace file-format reference** (line types, every
+event's field schema per game, symptom→where-to-look recipes, and §11.2.1's accept/reject + octave
+decision rules) so agents stop re-deriving the trace structure from source each time — plus a **Tier-1
+trace enrichment** the reference already documents: the `result` event now carries the frozen pitch and
+timing (`played`/`wrongOct`/`react`/`stable`/`wob`; Shift `landHz`/`wob`), the Note-Accuracy `discard`
+logs all five reason bools (added `flimsy`/`unplay`), and the header gained a `context` block
+(`a4`/`difficulty`/`minReadMs`) so cents/too-soon/wrong-note are recomputable from the trace alone.
+Before that, the **pizz/arco play-style classifier** (§10): detect when she plays
 pizzicato in an arco exercise (or vice versa) from the attack SHAPE — a bowed onset crescendos, a
 pluck steps in. Per-rig threshold set + graded (GOOD/TIGHT/OVERLAP) by the calibration wizard from
 its labeled arco/pizz takes; the classification is logged per note into the game trace for
@@ -621,7 +628,8 @@ and can become a round-replay regression if the `onCaptured` decision is extract
 3. Read the `event` lines: `prompt` (t, target midi, previous pitch), `result` (cents, wrong,
    timeout, **and the play-style log `step`/`rise`/`style`** — see §10), `discard` (hz, quality,
    level, elapsed-ms, ring/soon/harm flags), and for Shift `hold` (start confirmed, with the same
-   `step`/`rise`/`style`). Correlate her read→play timing against captures.
+   `step`/`rise`/`style`). Correlate her read→play timing against captures. **§11 is the exact
+   field-by-field schema of every line type — read it before parsing a trace.**
 4. If a DSP change is needed, replay the `.wav` through `PitchEngine.wavSamples` under candidate
    configs (that's exactly what the wizard and corpus tests do).
 5. Fix, add a regression test from the recording, re-run on device, confirm from a fresh trace.
@@ -739,3 +747,206 @@ were both caught. Guarded by:
 - `PlayStyleTest` — the pure classifier decision and the pure separation (GOOD / OVERLAP / empty).
 - `WizardCorpusTest.playStyleSeparatesBowedFromPluckedOnTheReferenceRig` — the labeled calibration
   WAVs replayed through the real capture must separate with zero bowed false-positives.
+
+---
+
+## 11. Game-trace file format — the field-by-field reference
+
+Every agent that debugs a note issue ends up re-deriving this from `audio/GameTrace.kt` and the four
+game VMs. It is stable; read it here instead. A trace is a **pair of files** written by
+`GameTrace.save()` on round completion (only when Settings → Debug → "Record & trace games" is on) to
+`/sdcard/Android/data/be.drakarah.intonation/files/snippets/`:
+
+- `game-trace-<exercise>-<yyyyMMdd-HHmmss>.jsonl` — the complete per-sample detection stream + game
+  events. **This is the primary artifact.**
+- `game-trace-<exercise>-<yyyyMMdd-HHmmss>.wav` — float32 mono of the last `TRACE_SECONDS = 360 s`
+  (a ring buffer; a longer session keeps only its tail). Only needed to *re-run detection under a
+  different config* — see §11.5.
+
+`<exercise>` is the mode-tagged game name: `note-accuracy-<mode>`, `shift-<levelId>-<mode>`,
+`chords-<mode>`, `sustain-<mode>`, where `<mode>` is `arco` or `pizz`. **The tag is the ground truth
+for what she was asked to play** — a `style=PIZZ` inside a `…-arco-…` trace is the pizz-in-arco slip
+(§10).
+
+### 11.0 Read the JSONL directly — you usually do NOT need to re-run the WAV
+
+The `.jsonl` **already contains the fully-computed detection stream** — every `PitchSample` the real
+`PitchGate` emitted for that round, octave corrections applied, exactly as the game saw it. For "why
+was this note wrong / missed / misdetected", the answer is almost always visible by reading the
+sample lines around the offending `prompt`/`result`/`discard` — **no replay, no harness, no Python.**
+(Python cannot reproduce detection at all: `PitchGate` + octave correction are config-dependent Kotlin
+lifted from Tuner. A `.wav`-through-Python script gives *different* numbers than the game saw. This is
+why past ad-hoc replay scripts were never worth keeping — the JSONL already is the ground truth.)
+Only re-run the WAV when the question is "would a *different config* have detected it right" (§11.5).
+
+Each JSONL line is one standalone JSON object. There are exactly four kinds, told apart by which key
+is present:
+
+| Line | Distinguishing key | When |
+|---|---|---|
+| **Header** | `"config"` | Always line 1 |
+| **Sample** | `"frame"` | One per analysis window (~23 ms), the bulk of the file |
+| **Event** | `"event"` | Game-state markers (prompt/result/discard/…) |
+| **Feedback** | `"feedback"` | Optional last line — her post-round "how did that go" note |
+
+### 11.1 Header line (line 1) — the config that produced everything below
+
+```json
+{"config":{…PitchEngineConfig.toJson()…},"detection":{…AppSettings.detectionExtrasJson()…},"context":{"a4":440.0,"difficulty":"STANDARD","minReadMs":900},"exercise":"note-accuracy-arco"}
+```
+
+Self-contained by design (§5 A "Recording headers"): `config` is the *resolved* detection config that
+actually ran (all fields — gate, source, roll-off knee, odd-harmonic thresholds — not just a subset);
+`detection` adds **both** playing styles' octave-down knobs plus the capture thresholds
+(`wrongNoteMinLevel`, `lowestPlayableHz`, `pizzOctaveSettleMs`, pizz timing); **`context`** carries the
+game-side knobs the detection config doesn't — `a4` (turn any logged midi/played-Hz back into cents),
+`difficulty` (the wrong-note/scoring band), and `minReadMs` (the too-soon floor; absent for Shift and
+Sustain, which have no too-soon rule). Together they are enough to reproduce the rig in
+`PitchEngine.wavSamples` (§11.5) **and** to recompute the target-aware calls (cents, too-soon,
+wrong-note) from the trace alone. If a trace misdetects, **check the header first** — a wrong
+gate/source/threshold here explains most "the detector went crazy" reports before you look at a single
+sample.
+
+### 11.2 Sample line — the detection stream (one per ~23 ms window)
+
+```json
+{"tMs":12345,"frame":540672,"hz":98.2,"smoothedHz":98.0,"accepted":true,"noise":0.12,"harmRel":0.81,"level":74.0,"octaveCorrected":false}
+```
+
+| Field | Meaning (see §0.3 for the full glossary) |
+|---|---|
+| `tMs` | Sample timestamp on the audio clock (ms). **This is the clock every event shares** — join events to samples on `tMs`. |
+| `frame` | Absolute PCM frame position (maps the sample back into the `.wav`). |
+| `hz` | Raw detector pitch estimate for this window. |
+| `smoothedHz` | Pitch after accepted-window smoothing + outlier drop — **what the capture machines actually consume.** |
+| `accepted` | Did this window pass `PitchGate` (noise/harmonic/level)? Only `accepted` windows influence capture. A stretch of `accepted:false` during a note she says she played = a **gate/noise problem** (check `noise`, `harmRel`, `level` vs the header gate). |
+| `noise` | Un-pitch-like-ness (lower = more periodic). |
+| `harmRel` | Fraction of spectrum on one harmonic series. |
+| `level` | 0..100 log energy. Saturates at 100 for essentially any real note within a sample or two — **do not read musical dynamics into it** (§10.1); it's for the gate and the attack-step feature only. |
+| `octaveCorrected` | `true` when `PitchGate`'s octave-**UP** correction halved this window (`hz`/`smoothedHz` already carry the halved value). See §11.2.1 for what it does **not** catch. |
+
+### 11.2.1 Turning a sample line into a verdict — the decision rules
+
+These are the rules the game applied; without them a sample line is just numbers. Values below are
+the shipped defaults — **always read the actual ones from the header `config` block** (calibration
+overrides them per rig).
+
+**Why was a window rejected? (`accepted`)** A window is accepted iff **all three** gates pass
+([`PitchGate.evaluate`](../dsp/src/main/java/be/drakarah/intonation/dsp/PitchGate.kt)):
+
+```
+accepted =  noise  <  maxNoise                    (default 0.10 — header "maxNoise")
+        &&  harmRel ≥  minHarmonicEnergyContent    (default 0.10 — header "minHarmonicEnergyContent")
+        &&  level   ≥  100 − sensitivity           (default sensitivity 55 → level ≥ 45)
+```
+
+So an `accepted:false` line **tells you which gate killed it**: `noise` at/above `maxNoise` → not
+periodic enough (bow noise, junk); `harmRel` below the floor → not enough energy on one harmonic
+series; `level` below `100 − sensitivity` → too quiet (the ambient-rejection gate, §"noise gate"). A
+run of `accepted:false` across a note she insists she played is a **gate problem** — compare these
+three against the header and name the offending one before touching anything downstream. A rejected
+line still carries the raw `frequencyHz` + all three metrics (that's what lets you diagnose it), but
+its `smoothedHz` is forced to `0` — that `0` means "rejected", not "detected 0 Hz".
+
+**Was there an octave error? `octaveCorrected` alone is NOT the answer.** It flags *only* the one
+octave bug `PitchGate` fixes in-line (octave-**UP**, the missing-fundamental A-string case). The two
+octave problems this doc spends the most effort on are invisible to it:
+
+- **Sustained pizz-resonance octave (§5 A)** — a plucked low note latching its 2nd harmonic because
+  sympathetic ringing feeds it. This is a *steady, genuine-looking* read: `octaveCorrected:false`,
+  `accepted:true`, stable `smoothedHz` sitting an octave high. The pizz octave-**down** knobs handle
+  it, not the up-correction.
+- **Attack-transient octave (§2.1)** before octave-settle — also `octaveCorrected:false`.
+
+So diagnose octave errors by **comparing `smoothedHz` across the note to where it settles / to the
+prompt's target midi**, not by trusting the `octaveCorrected` flag. `octaveCorrected:false` ≠ "no
+octave issue".
+
+**Reading the frozen note off the `result` event.** The Note-Accuracy `result` (§11.3) now carries the
+freeze directly: `played` (raw frozen Hz, **pre** octave-fold), `wrongOct`, `react` (time to onset),
+`stable` (onset→freeze), and `wob` (freeze-window spread). So a "right note, wrong octave" outcome is
+readable on the event — `wrongOct=true` with `played` an octave off a near-zero `cents` (`cents` is
+octave-folded when `ignoreWrongOctave` is on, §A′). The Shift `result` carries the same idea (`landHz`,
+`wob`). You still drop to the **sample lines** for the *trajectory* — whether `played` was steady or the
+tail of a glide/settle — but you no longer sample-hunt just to find *what* froze. (Chords and Sustain
+results stay summaries: Chords lists per-tone `cents`, Sustain logs hold stats, not a single frozen Hz.)
+
+### 11.3 Event lines — game decisions, keyed on the same `tMs`
+
+Every event is `{"tMs":…,"event":"<type>","detail":"<space-separated k=v>"}` (the `detail` string is
+free-form per type — `GameTrace.event()` just embeds it). Types depend on the exercise:
+
+**Note Accuracy** (`note-accuracy-*`)
+- `prompt` — `idx=<promptIndex> midi=<targetMidi> prevHz=<previousAnswerHz>`. Emitted once the prompt
+  goes live. `prevHz` is the ring-over source for this prompt (§4).
+- `discard` — a frozen pitch the Layer-3 filter threw away, listening continues:
+  `hz=<frozenHz> q=<CLEAN|SHAKY> lvl=<energyLevel> el=<elapsedMsSincePrompt> ring=<bool> soon=<bool> harm=<bool> flimsy=<bool> unplay=<bool>`.
+  The five bools are *which rule(s) fired* (`ring`=ring-over, `soon`=too-soon, `harm`=harmonic artifact,
+  `flimsy`=faint/SHAKY, `unplay`=below `lowestPlayableHz`). **This is your first stop for "it said no
+  note" or "it scored a phantom":** each discard names its reason and its `el` timing. (All five may be
+  false only for a `q=SHAKY` freeze — `flimsy` covers quality too.)
+- `result` — the scored (or timed-out) outcome:
+  `midi=<target> cents=<±cents,octave-folded when ignoreWrongOctave> played=<frozen Hz, raw pre-fold> wrong=<wrongNote> wrongOct=<bool> timeout=<bool> react=<reactionTimeMs,-1 if n/a> stable=<timeToStableMs> wob=<captureWobbleCents> step=<attackMaxStep> rise=<attackRiseSamples> style=<PIZZ|ARCO|UNKNOWN>`.
+  `played` is the actual frozen pitch (so a wrong-octave read is visible as `played` an octave off a
+  near-zero `cents`); `react` = time to onset, `stable` = onset→freeze (the two split "never onset"
+  from "onset but wouldn't settle", §2.2 vs §3.1); `wob` = pitch spread in the freeze window.
+  `step`/`rise`/`style` are the play-style log (§10) — monitoring only, nothing acts on it yet.
+
+**Shift** (`shift-*`)
+- `prompt` — `start=<midi> target=<midi> string=<midi>` (logged when the capture is armed).
+- `hold` — the start note was confirmed: `start confirmed step=<…> rise=<…> style=<…>` (play-style of
+  the **start** attack, §10.5 — the only real onset in a shift; the mid-glide landing has no attack).
+- `go` — `departure`: she left the start note; the shift is in flight.
+- `start-discard` / `landing-discard` — an artifact freeze on the start confirmation or the landing:
+  `hz=<…> lvl=<…> flimsy=<bool> harm=<bool> ring=<bool> unplay=<bool>`. A `landing-discard` with
+  `harm=true` on the 2nd harmonic of the ringing start is the 2026-07-15 false-wrong-note case (§4.2).
+- `result` — `target=<midi> land=<landingCents> start=<startCents> shift=<shiftCents> time=<landingTimeMs> landHz=<absolute landed Hz> wob=<captureWobbleCents> score=<…> stars=<…> timeout=<bool> wrong=<bool>` (`-` where a value is null). `landHz` is the raw landed pitch (spot a wrong-octave landing that `land` cents hides); `wob` is the landing's freeze-window spread.
+
+**Chords** (`chords-*`)
+- `prompt` — `chord=<rootMidi> tones=<midi,midi,midi>`.
+- `tone` — advanced to a new arpeggio tone: `idx=<toneIndex> wrongRoot=<bool>`.
+- `result` — `chord=<rootMidi> score=<…> stars=<weakest> tones=<per-tone: open | ±cents | ->`.
+
+**Sustain** (`sustain-*`) — events come from `SustainCapture.onEvent`, so this game logs the hold
+machine's internals, not the freeze filter:
+- `prompt` — `midi=<…> hz=<…> pos=<positionId>`.
+- `onset` — `hz=<smoothedHz>`: a real attack started the hold.
+- `hold` — a goal-length in-tune stretch completed: `ms=<held> resets=<…> median=<…> mad=<…>`.
+- `reset` — the hold timer was cleared, with the cause: `dropout held=<ms>` (signal dropped out) or
+  `drift cents=<…> out=<ms>` (sustained out-of-tolerance departure past the bow-reversal grace, §6).
+- `timeout` — `best=<bestHeldMs> resets=<…>`: goal never reached in the window.
+- `result` — `midi=<…> score=<…> stars=<…> best=<bestHeldMs> resets=<…> ok=<success> median=<…> mad=<…> focus=<coachingFocus>`.
+
+### 11.4 Feedback line (optional last line)
+
+```json
+{"feedback":{"rating":"good","note":"pizz felt sharp on the low notes"}}
+```
+
+Appended by `appendFeedback()` after the summary screen asks her (skippable). Her own words on how the
+round felt — pair it with the `result` lines to know *which* notes a complaint like "sounded sharp"
+refers to.
+
+### 11.5 When you DO need the WAV — replay under a candidate config
+
+Only for "would a different config have fixed it": load the `.wav` and push it through
+`PitchEngine.wavSamples(pcm)` under a `PitchEngineConfig` built from the header (or a candidate), the
+**identical path** the live mic uses. Reuse an existing harness — `dsp` `SnippetReplayAnalysis` /
+`OctaveDiagnosis`, or the `wavSamples(...).toList()` pattern in `RealBassRegressionTest` /
+`FeedbackRegressionTest` — do **not** write a throwaway script. To lock a fix, promote the recording
+into the corpus (`dsp/src/test/resources/wav/`, or `.trace-incoming/` for full rounds) and add a
+regression test (§8). **Caveat:** octave correction is config-dependent, so a JSONL-recorded detection
+stream (e.g. `PizzOctaveSettleTest`) is the faithful ground truth for octave bugs — re-running the WAV
+under a *different* config gives different octave decisions than the round actually made.
+
+### 11.6 Recipes — finding wrong notes / misdetections / anomalies
+
+| Symptom | Where to look in the trace |
+|---|---|
+| **"It said no note / wouldn't lock"** | Between the `prompt` and the timeout: are there `accepted:true` samples at all? If not → a gate rejected them — use the §11.2.1 predicate to name which of `noise`/`harmRel`/`level` failed. If yes but no `result` → count `discard` events and read their reason bools (over-eager filter). |
+| **"Phantom / instant wrong note"** | `result` with `wrong=true` at a small `el`/`time`, or a `discard` with `ring=true`/`soon=true`. Compare the `result` `tMs` against the `prompt` `tMs` — a capture <1 s after the prompt is almost never her (§3.5). Check the previous note's `result` `cents`/`midi` still ringing in the sample `smoothedHz`. |
+| **"Right note, wrong octave"** | Read it off the `result`: `wrongOct=true` with `played` an octave from the target (`cents` is near-zero after folding). Then the sample lines around the freeze for the cause: `smoothedHz` sitting ×2 high. `octaveCorrected` catches only the up-correction case — sustained pizz (§5 A) reads `octaveCorrected:false`. Confirm against the header's octave-down knobs. |
+| **"Wouldn't settle / scored late"** | The `result` `react` vs `stable`: large `react` = slow to onset (gate/attack, §3.1); large `stable` (or high `wob`) = onset fired but the pitch kept sliding (glide/wobble, §2.2). Then the `smoothedHz` samples between onset and freeze show the slide. |
+| **"Scored sharp/flat (pizz)"** | The `result` `cents` sign + the sample `smoothedHz` trajectory across the freeze window: a pluck that reads sharp then relaxes → capture-timing (§2.2); check `pizzAttackSkipMs`/`pizzStabilityWindowMs` in the header `detection` block. |
+| **"Played pizz in arco (or reverse)"** | `result`/`hold` `style=` vs the `<mode>` in the filename. `step`/`rise` are the raw features (§10). |
+| **General** | The **event stream reads as a timeline** — filter to `"event"` lines first to see the game's decisions, then zoom into the sample lines in the `tMs` window around any suspicious event. |

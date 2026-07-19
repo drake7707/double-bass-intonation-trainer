@@ -5,6 +5,17 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-19 Game-trace enrichment (makes future detection debugging much easier)
+Purely a **debug-instrumentation** change — nothing about gameplay, scoring, or detection changes. The
+game trace (Settings → Debug → Record & trace games) now records more per note so we stop hunting
+through raw samples to diagnose issues. Details: DETECTION.md §11. Only needs a quick sanity trace to
+confirm the new fields populate on your phone:
+- [ ] **Trace one Note-Accuracy round** (arco or pizz, your call). Share the `game-trace-*.jsonl`.
+      I'm checking the header now has a `"context"` block (your `a4`/difficulty), each `result` line
+      now carries `played=`/`react=`/`stable=`/`wob=`/`wrongOct=`, and any discarded note shows all
+      five reason flags. Nothing for you to eyeball — I read it — but it needs to come off the real device once.
+- [ ] Confirm nothing *feels* different in the round (it shouldn't — no behaviour changed).
+
 ### 2026-07-18 Pizz/arco play-style classifier (your "warn me when I play pizz in arco" idea)
 Detects when a note is plucked vs bowed from its **attack shape** (a bow crescendos into the note, a
 pluck steps straight in). Built from your real traces (both your confirmed 15 & 17 Jul pizz-in-arco

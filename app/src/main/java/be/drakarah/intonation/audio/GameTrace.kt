@@ -27,6 +27,11 @@ class GameTrace(
     /** `AppSettings.detectionExtrasJson()` — both playing styles' octave knobs + capture
      * thresholds, so the header is fully self-contained (see SettingsRepository). */
     private val detectionExtras: String = "{}",
+    /** Game-side context the detection config does NOT carry but the target-aware decisions use:
+     * `a4` (so a logged midi/played-Hz can be turned back into cents), `difficulty` (the
+     * wrong-note/scoring band), and `minReadMs` (the too-soon floor). Lets those calls be
+     * reconstructed from the trace alone instead of re-derived from settings. JSON object. */
+    private val gameContext: String = "{}",
 ) {
     /** Pass to PitchEngine so the mic audio is recorded alongside the detection log. */
     val waveWriter = WaveWriter()
@@ -45,7 +50,7 @@ class GameTrace(
     private var savedJsonl: File? = null
 
     init {
-        append("""{"config":${config.toJson()},"detection":$detectionExtras,"exercise":"$exercise"}""")
+        append("""{"config":${config.toJson()},"detection":$detectionExtras,"context":$gameContext,"exercise":"$exercise"}""")
     }
 
     /** Thread-safe append — the single writer path for [lines]. */

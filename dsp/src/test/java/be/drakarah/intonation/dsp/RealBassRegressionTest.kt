@@ -26,10 +26,18 @@ class RealBassRegressionTest {
     private fun centsOff(hz: Float, expected: Double) =
         1200.0 * ln(hz / expected) / ln(2.0)
 
-    private fun check(resource: String, segments: List<Segment>) = runBlocking {
+    /** [oddHarmonicOctaveDown] mirrors how the mode actually ships: arco keeps the odd-harmonic
+     * octave-up proof (true), pizz relies on decay-continuation instead (false — DETECTION.md §12).
+     * Pizz open strings must survive with it OFF, or the arco-only decision regressed pizz. */
+    private fun check(
+        resource: String,
+        segments: List<Segment>,
+        oddHarmonicOctaveDown: Boolean = true,
+    ) = runBlocking {
         val url = javaClass.classLoader!!.getResource("wav/$resource") ?: error("missing $resource")
         val wav = WavFile.read(File(url.toURI()))
-        val samples = PitchEngine(PitchEngineConfig()).wavSamples(wav.samples).toList()
+        val samples = PitchEngine(PitchEngineConfig(oddHarmonicOctaveDown = oddHarmonicOctaveDown))
+            .wavSamples(wav.samples).toList()
 
         for (seg in segments) {
             val inSegment = samples.filter {
@@ -57,13 +65,17 @@ class RealBassRegressionTest {
         )
     )
 
+    // Pizz runs with the odd-harmonic octave-up proof OFF (§12): the decay-continuation rule alone
+    // must keep the open strings on their true octave. Guards that the arco-only decision didn't
+    // regress pizz — on this corpus both strings stay 100% correct without the proof.
     @Test
     fun pizzOpenStrings() = check(
         "bass-pizz-open-strings.wav",
         listOf(
             Segment(0.2, 2.8, 55.0, "pizz open A", minFraction = 0.95),
             Segment(3.1, 7.9, 41.2, "pizz open E through full decay", minFraction = 0.95),
-        )
+        ),
+        oddHarmonicOctaveDown = false,
     )
 
     // 2026-07-11 note-sweep snippets (user report): genuinely played notes from Do3 up were

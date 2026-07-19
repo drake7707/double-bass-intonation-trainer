@@ -213,6 +213,11 @@ private fun RevealContent(state: ShiftUiState, result: ShiftAttemptUi) {
                 style = MaterialTheme.typography.displaySmall,
                 color = color,
             )
+            result.wrongOctave -> Text(
+                stringResource(R.string.game_wrong_octave),
+                style = MaterialTheme.typography.displaySmall,
+                color = color,
+            )
             result.wrongNote -> Text(
                 stringResource(R.string.game_wrong_note),
                 style = MaterialTheme.typography.displaySmall,

@@ -1,8 +1,6 @@
 package be.drakarah.intonation.game
 
 import be.drakarah.intonation.dsp.PitchSample
-import be.drakarah.intonation.music.centsBetween
-import kotlin.math.abs
 
 /** The scored outcome of one Note Accuracy prompt — a pure domain value (no Android, no display
  * spelling; the ViewModel adds those when it maps to its UI state). */
@@ -121,25 +119,16 @@ class NoteAttemptCapture(
     /** Classify the frozen pitch against the target with the octave-fold practice aid (mirrors the
      * former `NoteAccuracyViewModel.resultFor`). The frozen pitch is folded, never the target. */
     private fun classify(frozen: CapturedPitch): NoteAttempt {
-        val rawCents = centsBetween(frozen.frequencyHz.toDouble(), targetHz).toFloat()
-        val octaves = Math.round(rawCents / 1200f)
-        val isOctaveOff = abs(rawCents) > WRONG_NOTE_CENTS && octaves != 0 &&
-                abs(rawCents - octaves * 1200f) <= OCTAVE_TOLERANCE_CENTS
-        val foldOctave = ignoreWrongOctave && isOctaveOff
-        val playedHz = if (foldOctave)
-            frozen.frequencyHz / Math.pow(2.0, octaves.toDouble()).toFloat() else frozen.frequencyHz
-        val cents = if (foldOctave) rawCents - octaves * 1200f else rawCents
-        val wrongNote = abs(cents) > WRONG_NOTE_CENTS
-        val wrongOctave = !foldOctave && isOctaveOff
+        val match = classifyAgainstTarget(frozen.frequencyHz, targetHz, ignoreWrongOctave)
         return NoteAttempt(
-            playedHz = playedHz,
-            cents = cents,
-            score = scoreAttempt(cents, difficulty),
-            starCount = stars(cents),
+            playedHz = match.playedHz,
+            cents = match.cents,
+            score = scoreAttempt(match.cents, difficulty),
+            starCount = stars(match.cents),
             quality = frozen.quality,
             timedOut = false,
-            wrongNote = wrongNote,
-            wrongOctave = wrongOctave,
+            wrongNote = match.wrongNote,
+            wrongOctave = match.wrongOctave,
             reactionTimeMs = frozen.reactionTimeMs,
             timeToStableMs = frozen.timeToStableMs,
             energyLevel = frozen.energyLevel,

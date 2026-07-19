@@ -403,6 +403,20 @@ semitone is a semitone everywhere, like the §5C constants). If in play it brand
 searching-for-the-note attempts as wrong notes, raise toward 300–350; if wrong notes still leak
 into the intonation feel, drop toward 200. One-line change in `Scoring.kt`.
 
+**One shared octave classifier (2026-07-19).** The "is this the right note / a wrong note / the right
+note an octave off" decision — including the `ignoreWrongOctave` **fold** — is a single pure function,
+`game/TargetMatch.kt` (`classifyAgainstTarget(frozenHz, targetHz, ignoreWrongOctave)` →
+`TargetMatch(playedHz, cents, wrongNote, wrongOctave)`), used by **every** game: Note Accuracy
+(`NoteAttemptCapture`), Shift (`ShiftViewModel` landing + `ShiftCapture` filter), and Chords
+(`ChordsViewModel` per tone + `ArpeggioCapture` filter). Before this, only Note Accuracy computed
+`wrongOctave`; Shift and Chords branded an octave-off note a **flat wrong note** (Sarah: "that should
+be consistent across all games"). The **fold keeps the within-octave intonation error** — an octave
+off but 7¢ sharp folds to +7¢, NOT 0 (it only nears 0 when the octave-off note is itself in tune,
+which is exactly when it should score well). `wrongOctave` flows to the outcome (`classifyOutcome`
+→ WRONG_OCTAVE), the persisted `AttemptRecord.wrongOctave`, the reveal UI ("right note, wrong octave"
+/ chords "8ve?"), the trace (`wrongOct=` / `8ve`), and is excluded from drift like a wrong note.
+Guarded by `TargetMatchTest`.
+
 ### 4.2 One shared filter — Note Accuracy, Chords, and Shift (the "third caller" extraction)
 
 The §4 rules are now **one pure function**, `game/CaptureFilter.kt` (`captureFilter()` returning the
@@ -918,12 +932,14 @@ free-form per type — `GameTrace.event()` just embeds it). Types depend on the 
 - `start-discard` / `landing-discard` — an artifact freeze on the start confirmation or the landing:
   `hz=<…> lvl=<…> flimsy=<bool> harm=<bool> ring=<bool> unplay=<bool>`. A `landing-discard` with
   `harm=true` on the 2nd harmonic of the ringing start is the 2026-07-15 false-wrong-note case (§4.2).
-- `result` — `target=<midi> land=<landingCents> start=<startCents> shift=<shiftCents> time=<landingTimeMs> landHz=<absolute landed Hz> wob=<captureWobbleCents> score=<…> stars=<…> timeout=<bool> wrong=<bool>` (`-` where a value is null). `landHz` is the raw landed pitch (spot a wrong-octave landing that `land` cents hides); `wob` is the landing's freeze-window spread.
+- `result` — `target=<midi> land=<landingCents> start=<startCents> shift=<shiftCents> time=<landingTimeMs> landHz=<absolute landed Hz> wob=<captureWobbleCents> score=<…> stars=<…> timeout=<bool> wrong=<bool> wrongOct=<bool>` (`-` where a value is null). `landHz` is the raw landed pitch; `wob` is the landing's freeze-window spread. **`wrongOct`** (added 2026-07-19, §12/consistency): the landing was the right pitch class a whole octave off — reported as such instead of a flat `wrong` note, the same as Note Accuracy. `land` cents is octave-**folded** when "ignore wrong octave" is on (so it keeps the *within-octave* intonation error, not zeroed), and left raw when off (then `wrong` and `wrongOct` are both true; the outcome is WRONG_OCTAVE).
 
 **Chords** (`chords-*`)
 - `prompt` — `chord=<rootMidi> tones=<midi,midi,midi>`.
 - `tone` — advanced to a new arpeggio tone: `idx=<toneIndex> wrongRoot=<bool>`.
-- `result` — `chord=<rootMidi> score=<…> stars=<weakest> tones=<per-tone: open | ±cents | ->`.
+- `result` — `chord=<rootMidi> score=<…> stars=<weakest> tones=<per-tone: open | 8ve | ±cents | ->`
+  (`8ve` = that tone was the right pitch class a whole octave off with "ignore wrong octave" off —
+  the same octave classification every game shares, see below).
 
 **Sustain** (`sustain-*`) — events come from `SustainCapture.onEvent`, so this game logs the hold
 machine's internals, not the freeze filter:

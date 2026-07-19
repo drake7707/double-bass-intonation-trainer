@@ -25,6 +25,7 @@ import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.game.CaptureFilterConfig
 import be.drakarah.intonation.game.CaptureParams
 import be.drakarah.intonation.game.CaptureQuality
+import be.drakarah.intonation.game.classifyAgainstTarget
 import be.drakarah.intonation.game.Difficulty
 import be.drakarah.intonation.game.FIRST_POSITION
 import be.drakarah.intonation.game.MAX_ATTEMPT_SCORE
@@ -67,6 +68,9 @@ data class ShiftAttemptUi(
     val starCount: Int,
     val timedOut: Boolean,
     val wrongNote: Boolean,
+    /** The right pitch class a whole octave off (only when "ignore wrong octave" is off) — reported
+     * as such rather than a flat wrong note, consistent with every other game. */
+    val wrongOctave: Boolean,
     val fastBonus: Boolean,
     val energyLevel: Float? = null,
     val captureWobbleCents: Float? = null,
@@ -138,6 +142,9 @@ class ShiftViewModel(
     private var positions: Set<Position> = setOf(FIRST_POSITION)
     private var soundFeedback = true
     private var driftWarningEnabled = true
+    /** Practice aid: fold a right-note-wrong-octave landing onto the target and score it there
+     * (same as Note Accuracy; off = report it as a wrong octave). */
+    private var ignoreWrongOctave = true
     /** Calibration-owned landing-filter thresholds (shared with Note Accuracy via CaptureFilter). */
     private var wrongNoteMinLevel = 55f
     private var lowestPlayableHz = 40f
@@ -163,6 +170,7 @@ class ShiftViewModel(
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
             driftWarningEnabled = settings.driftWarning
+            ignoreWrongOctave = settings.ignoreWrongOctave
             wrongNoteMinLevel = settings.wrongNoteMinLevel
             lowestPlayableHz = settings.lowestPlayableHz
             playStyleThreshold = settings.playStyleThreshold()
@@ -295,11 +303,17 @@ class ShiftViewModel(
         val idealStartHz = prompt.start.target.frequency(a4)
         // Landing = absolute intonation; start = how off the confirmed start was; shift distance =
         // landing − start (the skill). A slightly-off start that shifts the right distance scores well.
-        val landingCents = r.landedHz?.let { centsBetween(it.toDouble(), targetHz).toFloat() }
+        // Classify the landing against the target with the SAME shared octave logic every game uses
+        // (fold onto the target octave when ignoreWrongOctave, else flag wrongOctave) — so a shift
+        // octave error is reported as such instead of a flat wrong note. The start is confirmed within
+        // tolerance so it is never octave-off; only the landing needs classifying.
+        val landMatch = r.landedHz?.let { classifyAgainstTarget(it, targetHz, ignoreWrongOctave) }
+        val landingCents = landMatch?.cents
         val startCents = r.confirmedStartHz.takeIf { it > 0f }
             ?.let { centsBetween(it.toDouble(), idealStartHz).toFloat() }
         val shiftCents = landingCents?.let { it - (startCents ?: 0f) }
-        val wrongNote = landingCents != null && abs(landingCents) > WRONG_NOTE_CENTS
+        val wrongNote = landMatch?.wrongNote == true
+        val wrongOctave = landMatch?.wrongOctave == true
         val score = if (r.timedOut || landingCents == null) 0
             else scoreShift(landingCents, startCents ?: 0f, r.landingTimeMs, difficulty)
         val starCount = if (r.timedOut || shiftCents == null) 0 else stars(shiftCents)
@@ -313,14 +327,18 @@ class ShiftViewModel(
             starCount = starCount,
             timedOut = r.timedOut,
             wrongNote = wrongNote,
+            wrongOctave = wrongOctave,
             fastBonus = !r.timedOut && (r.landingTimeMs ?: Long.MAX_VALUE) < 1200 && score > 0,
             energyLevel = r.energyLevel,
             captureWobbleCents = r.captureWobbleCents,
             retryCount = r.retryCount,
         )
-        // Drift tracks the absolute landing (what a listener hears), not the interval.
+        // Drift tracks the absolute landing (what a listener hears), not the interval. A wrong note
+        // or an un-folded wrong octave is not an intonation point, so it doesn't feed drift.
         val drift = if (driftWarningEnabled)
-            driftDetector.onAttempt(attempt.landingCents.takeUnless { attempt.wrongNote }) else null
+            driftDetector.onAttempt(
+                attempt.landingCents.takeUnless { attempt.wrongNote || attempt.wrongOctave }
+            ) else null
         if (soundFeedback) {
             when {
                 attempt.starCount >= 2 -> sounds.playHit()
@@ -336,7 +354,7 @@ class ShiftViewModel(
                 "target=${prompt.target.target.midi} land=${f(landingCents)} start=${f(startCents)} " +
                     "shift=${f(shiftCents)} time=${r.landingTimeMs ?: "-"} " +
                     "landHz=${r.landedHz?.let { "%.1f".format(it) } ?: "-"} wob=${f(r.captureWobbleCents)} " +
-                    "score=$score stars=$starCount timeout=${r.timedOut} wrong=$wrongNote",
+                    "score=$score stars=$starCount timeout=${r.timedOut} wrong=$wrongNote wrongOct=$wrongOctave",
             )
         }
         revealUntilMs = nowMs + revealMs
@@ -385,6 +403,7 @@ class ShiftViewModel(
                 // the landing) so the History replay can recompute the shift coach line + the
                 // "check your start" flag — the landing alone can't.
                 wrongNote = r.wrongNote,
+                wrongOctave = r.wrongOctave,
                 timedOut = r.timedOut,
                 energyLevel = r.energyLevel,
                 retryCount = r.retryCount,

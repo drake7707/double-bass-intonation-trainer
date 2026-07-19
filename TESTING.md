@@ -5,6 +5,23 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-19 Octave errors now consistent across all games (your call — INSTALLED)
+You noticed Shift branded an octave-off landing a flat "wrong note", while Note Accuracy says "right
+note, wrong octave". Now **all four games share one octave classifier** (`classifyAgainstTarget`), so
+Shift and Chords behave exactly like Note Accuracy:
+- An octave-off note is labelled **"right note, wrong octave"** (Shift reveal) / **"8ve?"** (Chords),
+  not "wrong note", and logs `wrongOct=` in the trace.
+- With **"ignore wrong octave" ON** (your default): an octave-off note is folded onto the target
+  octave and scored there — **keeping your actual intonation error** (an octave off but 7¢ sharp
+  scores as 7¢ sharp, not perfect, and not a miss). This is a behaviour change for Shift/Chords, which
+  previously scored any octave-off note as a flat wrong note (0).
+- With it **OFF**: it's reported as a wrong octave and kept out of the intonation/drift trend.
+- [ ] **Shift, ignore-wrong-octave ON:** land a shift on the right note an octave off — it should
+      score as the right note (with whatever cents you were off), not "wrong note".
+- [ ] **Shift, ignore-wrong-octave OFF:** same play should now say **"right note, wrong octave"**, not
+      "wrong note".
+- [ ] Normal in-octave shifts/chords should score exactly as before (no regression).
+
 ### 2026-07-19 Pizz Mi/Sol on the Ré string said "wrong note" though it was right (your report — INSTALLED)
 Root-caused from your `game-trace-shift-basic-pizz-20260719-155051` (with "ignore wrong octave" OFF,
 which is what exposed it). Your **correctly-fingered Mi2 (E2) and Sol2 (G2)** were being read a full

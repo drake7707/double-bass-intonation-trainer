@@ -131,6 +131,12 @@ reported as "right note, wrong octave." Universal constants (`NON_OCTAVE_HARMONI
 `NEAR_TARGET_CENTS`, `RING_MATCH_CENTS`, `OCTAVE_TOLERANCE_CENTS`, `MAX_DISCARDS`) live here as the
 single source of truth.
 
+That octave classification itself — right note / wrong note / right-note-wrong-octave, plus the
+`ignoreWrongOctave` fold that keeps the within-octave intonation error — is one shared pure function,
+`game/TargetMatch.kt` `classifyAgainstTarget()`, used by **every** game (Note Accuracy, Shift, Chords)
+so an octave-off note is handled identically everywhere rather than each game reinventing it (see
+DETECTION.md §4.1).
+
 ---
 
 ## 3. The game domain (`game/`)

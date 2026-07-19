@@ -86,6 +86,7 @@
     <string name="chords_wrong_root">that\'s not it —\nstart on %1$s</string>
     <string name="chords_play">play</string>
     <string name="chords_tone_wrong">wrong?</string>
+    <string name="chords_tone_octave">8ve?</string>
     <string name="chords_tone_spot_on">spot on</string>
     <string name="chords_tone_sharp">sharp</string>
     <string name="chords_tone_flat">flat</string>

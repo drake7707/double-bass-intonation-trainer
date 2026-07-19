@@ -250,17 +250,17 @@ class ShiftCapture(
      * shift never applies the too-soon rule (its own cue/depart handshake paces the attempt). */
     private fun artifact(frozen: CapturedPitch, referenceHz: Double, ringSourceHz: Float): CaptureFilterResult? {
         if (referenceHz <= 0.0) return null
-        val c = cents(frozen.frequencyHz, referenceHz)
-        val octaves = (c / 1200f).roundToInt()
-        val isOctaveOff = abs(c) > WRONG_NOTE_CENTS && octaves != 0 &&
-            abs(c - octaves * 1200f) <= OCTAVE_TOLERANCE_CENTS
+        // Raw classification (no octave fold) for the filter: it needs the true wrong-note /
+        // wrong-octave signals so an octave read is exempted from the harmonic-artifact rule. The
+        // scoring-side fold lives in the ViewModel. Shared with every game (see [classifyAgainstTarget]).
+        val match = classifyAgainstTarget(frozen.frequencyHz, referenceHz, ignoreWrongOctave = false)
         return captureFilter(
             capturedHz = frozen.frequencyHz,
             quality = frozen.quality,
             energyLevel = frozen.energyLevel,
-            centsFromTarget = c,
-            wrongNote = abs(c) > WRONG_NOTE_CENTS,
-            wrongOctave = isOctaveOff,
+            centsFromTarget = match.cents,
+            wrongNote = match.wrongNote,
+            wrongOctave = match.wrongOctave,
             targetHz = referenceHz,
             previousAnswerHz = ringSourceHz,
             elapsedSincePromptMs = Long.MAX_VALUE,

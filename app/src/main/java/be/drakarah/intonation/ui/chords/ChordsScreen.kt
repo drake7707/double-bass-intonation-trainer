@@ -258,6 +258,10 @@ private fun ToneResult(tone: ToneUi, noteStyle: NoteNameStyle) {
                 fontSize = TextSizes.REVEAL_SUBTEXT, color = color,
             )
             tone.timedOut -> Text("—", fontSize = TextSizes.REVEAL_LABEL, color = color)
+            tone.wrongOctave -> Text(
+                stringResource(R.string.chords_tone_octave),
+                fontSize = TextSizes.REVEAL_SUBTEXT, color = color,
+            )
             tone.wrongNote -> Text(
                 stringResource(R.string.chords_tone_wrong),
                 fontSize = TextSizes.REVEAL_SUBTEXT, color = color,

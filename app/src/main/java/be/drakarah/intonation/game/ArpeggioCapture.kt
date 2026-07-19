@@ -1,9 +1,6 @@
 package be.drakarah.intonation.game
 
 import be.drakarah.intonation.dsp.PitchSample
-import be.drakarah.intonation.music.centsBetween
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 /** The frozen result of one arpeggio tone. [frequencyHz] null = no scoreable note (timed out
  * or nothing but artifacts). */
@@ -87,15 +84,15 @@ class ArpeggioCapture(
 
     private fun onFrozen(frozen: CapturedPitch, nowMs: Long) {
         val target = targetsHz[toneIndex]
-        val cents = centsBetween(frozen.frequencyHz.toDouble(), target).toFloat()
+        // Raw classification (no octave fold) for the filter — the scoring-side fold lives in the
+        // ViewModel. Shared with every game (see [classifyAgainstTarget]).
+        val match = classifyAgainstTarget(frozen.frequencyHz, target, ignoreWrongOctave = false)
+        val cents = match.cents
         // too-soon applies to the ROOT only (later tones follow immediately); ring-over is against
         // the previous tone of THIS arpeggio (the dominant false capture here).
         val elapsed = if (toneIndex == 0 && startMs >= 0) nowMs - startMs else Long.MAX_VALUE
 
-        val wrongNote = abs(cents) > WRONG_NOTE_CENTS
-        val octaves = (cents / 1200f).roundToInt()
-        val wrongOctave = wrongNote && octaves != 0 &&
-                abs(cents - octaves * 1200f) <= OCTAVE_TOLERANCE_CENTS
+        val wrongNote = match.wrongNote
 
         val filter = captureFilter(
             capturedHz = frozen.frequencyHz,
@@ -103,7 +100,7 @@ class ArpeggioCapture(
             energyLevel = frozen.energyLevel,
             centsFromTarget = cents,
             wrongNote = wrongNote,
-            wrongOctave = wrongOctave,
+            wrongOctave = match.wrongOctave,
             targetHz = target,
             previousAnswerHz = previousToneHz,
             elapsedSincePromptMs = elapsed,

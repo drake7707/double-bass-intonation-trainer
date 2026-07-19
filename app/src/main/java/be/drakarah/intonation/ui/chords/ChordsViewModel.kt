@@ -24,6 +24,7 @@ import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.game.ArpeggioCapture
 import be.drakarah.intonation.game.ArpeggioState
 import be.drakarah.intonation.game.ChordFingering
+import be.drakarah.intonation.game.classifyAgainstTarget
 import be.drakarah.intonation.game.ChordPool
 import be.drakarah.intonation.game.ChordSpec
 import be.drakarah.intonation.game.Difficulty
@@ -59,6 +60,9 @@ data class ToneUi(
     val starCount: Int,
     val timedOut: Boolean,
     val wrongNote: Boolean,
+    /** Right pitch class a whole octave off (only when "ignore wrong octave" is off) — consistent
+     * with every other game. */
+    val wrongOctave: Boolean = false,
     val scored: Boolean,
     val energyLevel: Float? = null,
     val captureWobbleCents: Float? = null,
@@ -136,6 +140,9 @@ class ChordsViewModel(
     private var positions: Set<Position> = setOf(FIRST_POSITION)
     private var soundFeedback = true
     private var driftWarningEnabled = true
+    /** Practice aid: fold a right-note-wrong-octave tone onto the target and score it there (same as
+     * Note Accuracy; off = report it as a wrong octave). */
+    private var ignoreWrongOctave = true
     private var wrongNoteMinLevel = 55f
     private var lowestPlayableHz = 40f
     private var minReadMs = 900L
@@ -160,6 +167,7 @@ class ChordsViewModel(
             soundFeedback = settings.soundFeedback
             sounds.volume = settings.gameVolume
             driftWarningEnabled = settings.driftWarning
+            ignoreWrongOctave = settings.ignoreWrongOctave
             wrongNoteMinLevel = settings.wrongNoteMinLevel
             lowestPlayableHz = settings.lowestPlayableHz
             minReadMs = settings.playerLevel.minReadMs
@@ -258,18 +266,24 @@ class ChordsViewModel(
         val tones = finished.tones.mapIndexed { i, tr ->
             val prompt = chord.tones[i]
             val scored = !prompt.isOpenString
-            val cents = tr.frequencyHz?.let {
-                centsBetween(it.toDouble(), prompt.target.frequency(a4)).toFloat()
+            // Classify each tone with the SAME shared octave logic every game uses: fold onto the
+            // target octave when ignoreWrongOctave (keeping the within-octave intonation error), else
+            // flag wrongOctave — so a tone an octave off is reported as such, not a flat wrong note.
+            val match = tr.frequencyHz?.let {
+                classifyAgainstTarget(it, prompt.target.frequency(a4), ignoreWrongOctave)
             }
-            val wrongNote = cents != null && abs(cents) > WRONG_NOTE_CENTS
+            val cents = match?.cents
+            val wrongNote = match?.wrongNote == true
+            val wrongOctave = match?.wrongOctave == true
             ToneUi(
                 prompt = prompt,
-                playedHz = tr.frequencyHz,
+                playedHz = match?.playedHz,
                 cents = if (scored) cents else null,
                 score = if (scored && cents != null) scoreAttempt(cents, difficulty) else 0,
                 starCount = if (scored && cents != null) stars(cents) else 0,
                 timedOut = tr.timedOut,
                 wrongNote = wrongNote,
+                wrongOctave = wrongOctave,
                 scored = scored,
                 energyLevel = tr.energyLevel,
                 captureWobbleCents = tr.captureWobbleCents,
@@ -282,7 +296,7 @@ class ChordsViewModel(
         var drift: Float? = null
         if (driftWarningEnabled) {
             tones.forEach { t ->
-                if (t.scored) drift = driftDetector.onAttempt(t.cents.takeUnless { t.wrongNote })
+                if (t.scored) drift = driftDetector.onAttempt(t.cents.takeUnless { t.wrongNote || t.wrongOctave })
             }
         }
         if (soundFeedback) {
@@ -297,7 +311,11 @@ class ChordsViewModel(
             nowMs, "result",
             "chord=${chord.root.midi} score=${attempt.score} stars=${attempt.weakestStars} " +
                 "tones=" + tones.joinToString(",") {
-                    if (!it.scored) "open" else it.cents?.let { c -> "%.0f".format(c) } ?: "-"
+                    when {
+                        !it.scored -> "open"
+                        it.wrongOctave -> "8ve"
+                        else -> it.cents?.let { c -> "%.0f".format(c) } ?: "-"
+                    }
                 },
         )
         revealUntilMs = nowMs + revealMs
@@ -345,6 +363,7 @@ class ChordsViewModel(
                     stars = tone.starCount,
                     quality = if (tone.timedOut) AttemptQuality.TIMEOUT else AttemptQuality.CLEAN,
                     wrongNote = tone.wrongNote,
+                    wrongOctave = tone.wrongOctave,
                     timedOut = tone.timedOut,
                     energyLevel = tone.energyLevel,
                     retryCount = tone.retryCount,

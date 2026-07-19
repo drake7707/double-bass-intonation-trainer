@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import be.drakarah.intonation.ui.theme.ResultColors
 import be.drakarah.intonation.ui.theme.Spacing
 
 data class DotInfo(
@@ -54,7 +55,7 @@ fun ProgressDotsCommon(
                         info.icon,
                         contentDescription = null,
                         modifier = Modifier.size(size * 0.65f), // Scale with dot size
-                        tint = Color.White
+                        tint = ResultColors.onColor
                     )
                 }
             }

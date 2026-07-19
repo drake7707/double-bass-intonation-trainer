@@ -49,6 +49,11 @@ object ResultColors {
         1 -> almost
         else -> off
     }
+
+    /** Fixed contrast colour for icons/text drawn on top of any of the four badge colours
+     * above (they're all mid-light tones, so white reads on every one; unlike Material's
+     * on-* roles this isn't tied to a single colorScheme background). */
+    val onColor = Color.White
 }
 
 @Composable

@@ -56,7 +56,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -424,7 +423,7 @@ private fun SweepGrid(
                     NoteSpec(midi).displayName(noteStyle),
                     style = if (big) MaterialTheme.typography.titleLarge
                             else MaterialTheme.typography.labelSmall,
-                    color = if (captured) Color(0xFF003912)
+                    color = if (captured) MaterialTheme.colorScheme.onPrimary
                             else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                 )

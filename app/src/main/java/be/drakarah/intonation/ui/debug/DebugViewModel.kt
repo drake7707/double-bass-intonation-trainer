@@ -11,15 +11,19 @@ import be.drakarah.intonation.dsp.PitchEngine
 import be.drakarah.intonation.dsp.PitchEngineConfig
 import be.drakarah.intonation.settings.applying
 import be.drakarah.intonation.settings.detectionExtrasJson
+import be.drakarah.intonation.settings.playStyleThreshold
 import be.drakarah.intonation.dsp.PitchSample
 import be.drakarah.intonation.dsp.misc.WaveWriter
 import be.drakarah.intonation.game.AttemptCapture
 import be.drakarah.intonation.game.CaptureParams
 import be.drakarah.intonation.game.CaptureQuality
 import be.drakarah.intonation.game.CaptureState
+import be.drakarah.intonation.game.PlayStyleClassifier
+import be.drakarah.intonation.game.PlayStyleThreshold
 import be.drakarah.intonation.music.nearestNote
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,6 +36,7 @@ import java.time.format.DateTimeFormatter
 private const val SNIPPET_SECONDS = 8
 private const val LONG_CAPTURE_SECONDS = 120
 private const val SAMPLE_LOG_CAPACITY = 6000 // ~2 min of detection log at ~23 ms/sample
+private const val FREEZE_LOG_CAPACITY = 4000 // freezes over a long capture (well above any real run)
 private const val UI_UPDATE_MS = 120L
 private const val DISPLAY_HOLD_MS = 600L
 
@@ -41,12 +46,18 @@ class DebugViewModel(
     private val settingsRepository: be.drakarah.intonation.settings.SettingsRepository,
 ) : ViewModel() {
 
-    private val waveWriter = WaveWriter()
+    // A var: recreated on every (re)start so its cumulative sample clock restarts at 0 in lockstep
+    // with a fresh PitchEngine's framePosition — otherwise a mode-switch restart would leave the WAV
+    // writer's frames offset from the detection log's, breaking alignment.
+    private var waveWriter = WaveWriter()
     private lateinit var engine: PitchEngine
     private var config: PitchEngineConfig = baseConfig
-    /** Both playing styles' octave knobs + capture thresholds, for the snippet header — a debug
-     * snippet has no arco/pizz mode, so it must carry everything either replay would need. */
+    /** Both playing styles' octave knobs + capture thresholds, for the snippet header — carries
+     * everything either replay would need (the header also records the mode, so replay need not guess). */
     private var detectionExtras: String = "{}"
+    /** A4 reference (Hz) at capture time, so a logged Hz can be turned into cents offline — mirrors
+     * the game-trace `context` block. */
+    private var a4 = 440.0
 
     private val _latestSample = MutableStateFlow<PitchSample?>(null)
     val latestSample: StateFlow<PitchSample?> = _latestSample.asStateFlow()
@@ -84,16 +95,38 @@ class DebugViewModel(
         _sweep.value = emptyMap()
     }
 
-    private var capture = AttemptCapture(CaptureParams.arco(), skipQuietGate = true)
+    private var capture = buildCapture()
 
-    fun setCaptureMode(mode: String) {
-        _captureMode.value = mode
-        rearmCapture(skipQuiet = true)
+    /** Game-prompt arming (skipQuietGate + requireOnsetRise): catch each fresh attack and ignore
+     * ring-over, so a continuous scale freezes note-by-note. Before this the re-arm used AWAIT_QUIET,
+     * which never came between legato/fast notes — so only the FIRST note of a capture was frozen
+     * (and thus play-style-labeled). Attack-based re-arm labels every plucked/bowed note. */
+    private fun buildCapture(): AttemptCapture {
+        val params = if (_captureMode.value == "pizz") CaptureParams.pizz() else CaptureParams.arco()
+        return AttemptCapture(params, skipQuietGate = true, requireOnsetRise = true)
     }
 
-    private fun rearmCapture(skipQuiet: Boolean) {
-        val params = if (_captureMode.value == "pizz") CaptureParams.pizz() else CaptureParams.arco()
-        capture = AttemptCapture(params, skipQuietGate = skipQuiet)
+    fun setCaptureMode(mode: String) {
+        if (_captureMode.value == mode) return
+        _captureMode.value = mode
+        capture = buildCapture()
+        // The arco/pizz split changes the detection ENGINE config (octave-down rules, pizz timing),
+        // not just the capture params — so a live mode switch must rebuild the whole pipeline, else
+        // "pizz" keeps running the arco detection config (the header said pizz but oddHarmonicOctaveDown
+        // stayed true). Restart listening if active.
+        if (_isListening.value) restartListening()
+    }
+
+    /** Cancel the current collector and JOIN it before starting the new one — so no stale sample
+     * from the old engine (whose frame clock also restarts at 0) can leak into the fresh log after
+     * start() clears it. Keeps [_isListening] true throughout (no flicker). */
+    private fun restartListening() {
+        val old = listenJob
+        listenJob = null
+        viewModelScope.launch {
+            old?.cancelAndJoin()
+            start()
+        }
     }
 
     private val _isListening = MutableStateFlow(false)
@@ -111,6 +144,19 @@ class DebugViewModel(
     /** Recent samples for the snippet detection log (ring, newest last). */
     private val sampleLog = ArrayDeque<PitchSample>(SAMPLE_LOG_CAPACITY)
 
+    /** Per-rig play-style threshold (attack shape → arco/pizz), null until the wizard calibrates it.
+     * Loaded in [start]; used to auto-label each freeze's physical play style in the saved capture. */
+    private var playStyleThreshold: PlayStyleThreshold? = null
+
+    /** One captured freeze, kept so the saved trace records the physical play style per note
+     * (independent of the arco/pizz toggle — the toggle only sets the detection config). `frame` is
+     * the absolute PCM position, so a freeze aligns to the WAV exactly like a sample. Touched from
+     * the collect coroutine (append) and the save coroutine (read) — always under [freezeLog]. */
+    private data class FreezeLogEntry(
+        val frame: Int, val tMs: Long, val hz: Float, val step: Float, val rise: Int,
+    )
+    private val freezeLog = ArrayDeque<FreezeLogEntry>(FREEZE_LOG_CAPACITY)
+
     /** Accepted pitches of the last ~600 ms, for the smoothed display value. */
     private val recentPitches = ArrayDeque<Pair<Long, Float>>()
     private var lastUiUpdateMs = 0L
@@ -124,7 +170,16 @@ class DebugViewModel(
             val settings = settingsRepository.settings.first()
             config = baseConfig.applying(settings, pizz = _captureMode.value == "pizz")
             detectionExtras = settings.detectionExtrasJson()
+            a4 = settings.a4
+            playStyleThreshold = settings.playStyleThreshold()
             _gateLevel.value = 100f - config.sensitivity
+            // Fresh pipeline: a new engine restarts framePosition at 0, so the WAV writer restarts too
+            // (kept frame-aligned), and stale samples/freezes from a previous config are dropped — they
+            // carry the previous engine's frame clock and would corrupt alignment on save.
+            waveWriter = WaveWriter()
+            synchronized(sampleLog) { sampleLog.clear() }
+            synchronized(freezeLog) { freezeLog.clear() }
+            recentPitches.clear()
             engine = PitchEngine(config, waveWriter)
             waveWriter.setBufferSize(SNIPPET_SECONDS * config.sampleRate)
             engine.samples().collect { sample ->
@@ -135,20 +190,33 @@ class DebugViewModel(
 
                 when (val captureState = capture.process(sample)) {
                     is CaptureState.Frozen -> {
+                        val result = captureState.result
                         val info = FreezeInfo(
-                            frequencyHz = captureState.result.frequencyHz,
-                            timeToStableMs = captureState.result.timeToStableMs,
-                            quality = captureState.result.quality,
+                            frequencyHz = result.frequencyHz,
+                            timeToStableMs = result.timeToStableMs,
+                            quality = result.quality,
                             atMs = sample.timestampMs,
                         )
                         _lastFreeze.value = info
+                        // Record the freeze with its attack shape so the saved capture carries the
+                        // physical play style per note (see saveCurrentBuffer). frame = this sample's
+                        // absolute PCM position, so it aligns to the WAV like any sample line.
+                        synchronized(freezeLog) {
+                            if (freezeLog.size == FREEZE_LOG_CAPACITY) freezeLog.removeFirst()
+                            freezeLog.addLast(
+                                FreezeLogEntry(
+                                    sample.framePosition, sample.timestampMs,
+                                    result.frequencyHz, result.attackMaxStep, result.attackRiseSamples,
+                                )
+                            )
+                        }
                         val midi = nearestNote(info.frequencyHz.toDouble()).midi
                         if (midi in MIDI_RANGE) {
                             _sweep.value = _sweep.value + (midi to info)
                         }
-                        rearmCapture(skipQuiet = false)
+                        capture = buildCapture()
                     }
-                    CaptureState.TimedOut -> rearmCapture(skipQuiet = false)
+                    CaptureState.TimedOut -> capture = buildCapture()
                     CaptureState.AwaitQuiet -> _captureState.value = CaptureUiState.AWAIT_QUIET
                     CaptureState.Listening -> _captureState.value = CaptureUiState.LISTENING
                     CaptureState.Capturing -> _captureState.value = CaptureUiState.CAPTURING
@@ -218,21 +286,52 @@ class DebugViewModel(
             val wavFile = File(dir, "$prefix-$stamp.wav")
             val logFile = File(dir, "$prefix-$stamp.jsonl")
 
-            waveWriter.storeSnapshot()
+            // Snapshot the audio first; its alignment metadata (first absolute frame + length) is
+            // computed under the WaveWriter mutex and returned, so we never read shared audio state
+            // off this coroutine. The WAV covers absolute frames [firstFrame, firstFrame + numSamples).
+            val snap = waveWriter.storeSnapshot()
             waveWriter.writeStoredSnapshot(applicationContext, Uri.fromFile(wavFile), config.sampleRate)
 
+            // The detection log (`sampleLog`) is a longer ring than the WAV and can start EARLIER
+            // (esp. long-capture, which resizes the audio ring mid-session). Keep only the samples
+            // whose window falls inside the saved WAV, so the log and WAV cover the identical span
+            // and every line maps to a real WAV sample. `frame` is the exact PCM index (integer ms
+            // `tMs` is lossy — align on `wavSample`, not `tMs`).
+            val lastFrame = snap.firstFrame + snap.numSamples
             val logSnapshot = synchronized(sampleLog) { sampleLog.toList() }
+                .filter { it.framePosition >= snap.firstFrame && it.framePosition < lastFrame }
+            val freezes = synchronized(freezeLog) { freezeLog.toList() }
+                .filter { it.frame >= snap.firstFrame && it.frame < lastFrame }
             logFile.bufferedWriter().use { writer ->
-                writer.appendLine("""{"config":${config.toJson()},"detection":$detectionExtras}""")
+                writer.appendLine(
+                    """{"config":${config.toJson()},"detection":$detectionExtras,""" +
+                        """"context":{"a4":$a4,"mode":"${_captureMode.value}"},""" +
+                        """"capture":{"frameOffset":${snap.firstFrame},"wavSamples":${snap.numSamples},""" +
+                        """"sampleRate":${config.sampleRate},"windowSize":${config.windowSize}}}"""
+                )
                 logSnapshot.forEach { s ->
                     writer.appendLine(
-                        """{"tMs":${s.timestampMs},"frame":${s.framePosition},"hz":${s.frequencyHz},""" +
+                        """{"tMs":${s.timestampMs},"frame":${s.framePosition},""" +
+                            """"wavSample":${s.framePosition - snap.firstFrame},"hz":${s.frequencyHz},""" +
                             """"smoothedHz":${s.smoothedHz},"accepted":${s.accepted},"noise":${s.noise},""" +
-                            """"harmRel":${s.harmonicEnergyRelative},"level":${s.energyLevel}}"""
+                            """"harmRel":${s.harmonicEnergyRelative},"level":${s.energyLevel},""" +
+                            """"octaveCorrected":${s.octaveCorrected}}"""
+                    )
+                }
+                // Freeze events with the auto-detected physical play style (arco/pizz from attack
+                // shape), so the capture records what she PLAYED, not just the toggle. style is
+                // UNKNOWN until the wizard calibrates the threshold, but the raw step/rise are always
+                // logged so it can be classified offline. Trimmed to the WAV span; `wavSample` aligns.
+                freezes.forEach { fz ->
+                    val style = PlayStyleClassifier.classify(fz.step, fz.rise, playStyleThreshold)
+                    writer.appendLine(
+                        """{"tMs":${fz.tMs},"frame":${fz.frame},"wavSample":${fz.frame - snap.firstFrame},""" +
+                            """"event":"freeze","hz":${fz.hz},"step":${fz.step},"rise":${fz.rise},""" +
+                            """"style":"$style"}"""
                     )
                 }
             }
-            _snippetMessage.value = "Saved ${wavFile.name}"
+            _snippetMessage.value = "Saved ${wavFile.name} (${logSnapshot.size} samples, ${freezes.size} notes)"
         }
     }
 

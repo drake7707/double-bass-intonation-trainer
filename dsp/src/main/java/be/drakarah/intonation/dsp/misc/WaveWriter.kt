@@ -42,6 +42,18 @@ class WaveWriter {
 
     private var snapShot: FloatArray? = null
 
+    /** Alignment metadata for the snapshot taken by [storeSnapshot], computed under the mutex and
+     * returned so no cross-thread field read is needed (this runs on a different coroutine than the
+     * audio appends — we have hit concurrency bugs here before).
+     *
+     * @param firstFrame Absolute frame index — the SAME clock as
+     *   [be.drakarah.intonation.dsp.PitchSample.framePosition] — of the FIRST sample in the WAV
+     *   snapshot. WAV sample `i` is absolute frame `firstFrame + i`, so a detection window at
+     *   `framePosition` sits at WAV sample `framePosition - firstFrame`. Essential when the WAV is a
+     *   ring-buffer tail or the buffer was resized mid-session (both break "WAV sample 0 == frame 0").
+     * @param numSamples Number of samples in the snapshot (the WAV's length). */
+    data class SnapshotInfo(val firstFrame: Long, val numSamples: Int)
+
     /**
      * Called from any other thread
      */
@@ -115,15 +127,18 @@ class WaveWriter {
         }
     }
 
-    /** Store current buffer, such that it can be written to wave later on. */
-    suspend fun storeSnapshot() {
-        withContext(Dispatchers.IO) {
+    /** Store current buffer, such that it can be written to wave later on. Returns the snapshot's
+     * alignment metadata (see [SnapshotInfo]) so the caller can line a detection log up to the WAV
+     * sample-exactly without reading shared state off-thread. */
+    suspend fun storeSnapshot(): SnapshotInfo {
+        return withContext(Dispatchers.IO) {
             mutex.withLock {
                 val bufferLocal = buffer
                 if (bufferLocal != null) {
                     val maxSize = bufferLocal.size
+                    val firstFrame = insertPosition - numValues
                     val inlineArray = FloatArray(numValues)
-                    val bufferIndexBegin = ((insertPosition - numValues) % maxSize).toInt()
+                    val bufferIndexBegin = (firstFrame % maxSize).toInt()
                     val numCopyPart1 = min(numValues, maxSize - bufferIndexBegin)
                     bufferLocal.copyInto(
                         inlineArray,
@@ -134,8 +149,10 @@ class WaveWriter {
                     val numCopyPart2 = numValues - numCopyPart1
                     bufferLocal.copyInto(inlineArray, numCopyPart1, 0, numCopyPart2)
                     snapShot = inlineArray
+                    SnapshotInfo(firstFrame, inlineArray.size)
                 } else {
                     snapShot = FloatArray(0)
+                    SnapshotInfo(insertPosition, 0)
                 }
             }
         }

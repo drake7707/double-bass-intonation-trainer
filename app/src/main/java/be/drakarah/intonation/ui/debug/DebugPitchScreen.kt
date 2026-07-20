@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -42,6 +41,9 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -150,9 +152,7 @@ fun DebugPitchScreen(
                 captureMode = captureMode,
                 captureState = captureState,
                 freeze = freeze,
-                onToggleMode = {
-                    viewModel.setCaptureMode(if (captureMode == "arco") "pizz" else "arco")
-                },
+                onSelectMode = { viewModel.setCaptureMode(it) },
                 onSaveSnippet = viewModel::saveSnippet,
                 onReset = viewModel::clearSweep,
                 onExit = { sweepMode = false },
@@ -268,19 +268,13 @@ fun DebugPitchScreen(
 
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(Spacing.CARD_PADDING), verticalArrangement = Arrangement.spacedBy(Spacing.FINE_SPACING)) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                stringResource(R.string.debug_game_capture_prefix) + captureStateLabel(captureState),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            ModeToggle(captureMode, big = false) {
-                                viewModel.setCaptureMode(if (captureMode == "arco") "pizz" else "arco")
-                            }
+                        ModeToggle(captureMode, big = false, modifier = Modifier.fillMaxWidth()) {
+                            viewModel.setCaptureMode(it)
                         }
+                        Text(
+                            stringResource(R.string.debug_game_capture_prefix) + captureStateLabel(captureState),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                         freeze?.let { f ->
                             val note = nearestNote(f.frequencyHz.toDouble())
                             val cents = centsBetween(f.frequencyHz.toDouble(), note.frequency())
@@ -368,27 +362,22 @@ private fun DiagnosticRow(label: String, value: String) {
     }
 }
 
+/** Arco/pizz selector — same segmented control as the Home screen, so the current style is
+ * unmistakable (the old swap-arrow + lowercase word read as a generic action; it was easy to miss
+ * you were on arco — Sarah's report). [big] scales it up for the full-screen sweep view. */
 @Composable
-private fun ModeToggle(mode: String, big: Boolean, onToggle: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.COMPONENT_SPACING),
-        modifier = Modifier
-            .clickable(onClick = onToggle)
-            .padding(Spacing.COMPONENT_SPACING),
-    ) {
-        Icon(
-            Icons.Filled.SwapHoriz,
-            contentDescription = stringResource(R.string.debug_cd_switch_mode),
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(if (big) 32.dp else 24.dp),
-        )
-        Text(
-            mode,
-            style = if (big) MaterialTheme.typography.headlineSmall
-                    else MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
+private fun ModeToggle(mode: String, big: Boolean, modifier: Modifier = Modifier, onSelect: (String) -> Unit) {
+    SingleChoiceSegmentedButtonRow(modifier = if (big) modifier.height(48.dp) else modifier) {
+        SegmentedButton(
+            selected = mode == "arco",
+            onClick = { onSelect("arco") },
+            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+        ) { Text(stringResource(R.string.home_arco)) }
+        SegmentedButton(
+            selected = mode == "pizz",
+            onClick = { onSelect("pizz") },
+            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+        ) { Text(stringResource(R.string.home_pizz)) }
     }
 }
 
@@ -450,7 +439,7 @@ private fun SweepView(
     captureMode: String,
     captureState: DebugViewModel.CaptureUiState,
     freeze: DebugViewModel.FreezeInfo?,
-    onToggleMode: () -> Unit,
+    onSelectMode: (String) -> Unit,
     onSaveSnippet: () -> Unit,
     onReset: () -> Unit,
     onExit: () -> Unit,
@@ -473,7 +462,7 @@ private fun SweepView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(stringResource(R.string.debug_sweep_title), style = MaterialTheme.typography.headlineMedium)
-            ModeToggle(captureMode, big = true, onToggle = onToggleMode)
+            ModeToggle(captureMode, big = true, onSelect = onSelectMode)
         }
 
         Column(

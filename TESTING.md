@@ -5,6 +5,42 @@ with the date once confirmed. Ask Claude for "the checklist" anytime.
 
 ## Pending
 
+### 2026-07-20 Debug long-capture fixed: WAV now aligned to the detection log (your bug report — INSTALLED)
+You spotted that the long recording in the pitch analyzer saved a WAV shorter than the detection log
+(35.9 s WAV vs 54.5 s log), so the two couldn't be lined up for analysis. Cause: the WAV ring reset when
+you tapped "start long capture" but the log kept a longer window, and there was no shared frame origin.
+Now the saved `capture-*.jsonl`:
+- carries a `"capture":{"frameOffset",...}` header and a per-sample **`wavSample`** index, so each
+  detection line maps to an exact WAV sample (aligned on sample count, not lossy `tMs`);
+- is trimmed to exactly the WAV's span (log and WAV cover the identical time);
+- gained field parity with game traces: a `"context":{"a4","mode"}` header block and `octaveCorrected`
+  on every sample line (both were missing before).
+- [ ] Do a long capture in the pitch analyzer, save it, and confirm the WAV duration matches the last
+      `tMs` in the JSONL (Claude will pull it and check `frameOffset`/`wavSample` line up).
+- [ ] The header should show the right `mode` (arco/pizz) for how you had the debug screen set.
+
+### 2026-07-20 Debug arco/pizz toggle restyled + per-note play-style logging (your request — INSTALLED)
+The pitch-analyzer arco/pizz control was a small swap-arrow + word (easy to miss it was on arco). It's
+now the **same segmented Arco | Pizz control as the Home screen** — the selected style is unmistakable
+(both on the main card and the full-screen sweep view). Also, each captured note now logs a `freeze`
+event carrying its attack shape (`step`/`rise`) and the auto-classified **physical** play style
+(arco/pizz from attack shape, independent of the toggle) into the saved capture. Style shows `UNKNOWN`
+until the play-style threshold is calibrated (yours currently reads 0 = not armed), but the raw
+`step`/`rise` are always logged so Claude can classify offline.
+- [ ] Open the pitch analyzer — the Arco|Pizz control should look like Home's and clearly show which is
+      selected. Set it to **Pizz** and do the stress run.
+- [ ] (Optional) Re-run calibration so the play-style threshold arms — then `style` will read PIZZ/ARCO
+      instead of UNKNOWN in captures.
+
+### 2026-07-20 Si1/B1 pizz octave-up — diagnosed, fix DEFERRED (your report, "ignore wrong octave" OFF)
+A fingered Si1 landing froze on B2 (octave up) once in your last shift round. Root cause: a bistable
+pluck where the smoother locks the 2nd harmonic from the note's onset; the octave rules can't recover
+it (see DETECTION.md §12.6). A candidate acf-at-2x-lag discriminator was **refuted** by your scale
+stress capture (genuine E2/G2 reach the same values — sympathetic resonance is the confound). **No
+detector fix shipped** — `ignoreWrongOctave` ON (the default) still papers over it. Exploring a proper
+discriminator from cleaner captures (your fast-scale takes) before touching detection.
+- [ ] No action to verify yet — this is a research thread, not a shipped change.
+
 ### 2026-07-19 Octave errors now consistent across all games (your call — INSTALLED)
 You noticed Shift branded an octave-off landing a flat "wrong note", while Note Accuracy says "right
 note, wrong octave". Now **all four games share one octave classifier** (`classifyAgainstTarget`), so

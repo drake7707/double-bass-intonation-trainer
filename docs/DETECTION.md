@@ -5,7 +5,10 @@
 problem, every design decision, what worked and what didn't, and how we got there — so after a
 context reset we can be current again in one read.
 
-Last updated: 2026-07-19, adding **§12 — the odd-harmonic octave-DOWN proof is now ARCO-ONLY** (it
+Last updated: 2026-07-20, adding **§12.6 — the Si1 onset-octave-up** (a fingered B1 pizz landing froze
+on B2; rule 2's decay-continuation can't catch an octave-up that's present from the note's *onset*, so
+§12.3's "pizz doesn't need rule 1" is superseded; the fix is a stateless acf-at-2x-lag proof, threshold
+calibration-owned — diagnosed + designed, not yet implemented). Before that, 2026-07-19 added **§12 — the odd-harmonic octave-DOWN proof is now ARCO-ONLY** (it
 falsely halved correctly-fingered pizz E2/G2 whose octave-below open string rings sympathetically; pizz
 now relies on the decay-continuation rule, which handles every genuine pizz octave-up in the corpus —
 her "mi2 said wrong note though it was right" report). This **reverses the §5 A "pizz needs looser
@@ -1019,9 +1022,12 @@ open strings), which is why calibration validated fine yet the bug is real in pl
 ### 12.3 The fix — rule 1 is arco-only; pizz relies on rule 2 (decay-continuation)
 Proven on the corpus (`OctaveDownThresholdSweep`, run 2026-07-19, since removed):
 
-- Every **genuine pizz octave-up** in the corpus (Mi-resonance §5 A, open E1, open A1) is corrected
-  **by the decay-continuation rule alone** — they stay correct even with the odd-harmonic proof fully
-  OFF. So pizz does not need rule 1.
+- Every **genuine pizz octave-up** in the 2026-07-19 corpus (Mi-resonance §5 A, open E1, open A1) is
+  corrected **by the decay-continuation rule alone** — they stay correct even with the odd-harmonic
+  proof fully OFF. So pizz does not need rule 1 **for those cases**. **(Superseded 2026-07-20:** that
+  corpus was incomplete. Rule 2 is a *continuation* rule — it needs the fundamental tracked at f/2
+  *first*, then an octave jump. A note that reads octave-high **from its very onset** has nothing to
+  continue from, so rule 2 cannot catch it. A fingered Si1/B1 landing did exactly that — see §12.6.)
 - The **only** case that genuinely needs the stateless odd-harmonic proof is the **bowed arco A-string**
   (open A1 arco reads A2 without it — the classic missing-fundamental case). Arco keeps rule 1.
 - No hard-coded threshold could thread it: on her rig ratio 4.0 fixes both notes but 5.0 already breaks
@@ -1048,4 +1054,109 @@ If pizz low notes start reading an octave HIGH again (decay-continuation not cat
 octave-up), the fallback is **not** to re-enable rule 1 for pizz (it brings back this false-down).
 Prefer the time-based **pizz octave-settle** (§2.1, currently `pizzOctaveSettleMs=0` on her rig) or a
 better pizz-specific octave-up signal. Re-enabling rule 1 for pizz should regress
-`PizzOctaveDownFalsePositiveTest`.
+`PizzOctaveDownFalsePositiveTest`. **This did happen — see §12.6.**
+
+## 12.6 The Si1 onset-octave-up — rule 2's blind spot (2026-07-20)
+
+**Status: root cause diagnosed and solid. A candidate `acf-at-2x-lag` fix looked clean on a 4-case
+study but was REFUTED by a fuller stress corpus (genuine E2/G2 reach the same values). No shippable
+detector fix yet — the fix direction is open. Do NOT ship the simple acf threshold below.** Written up
+so the finding — and the dead end — isn't re-walked.
+
+### The bug (Sarah, 2026-07-19 evening, pizz shift, "ignore wrong octave" OFF)
+`game-trace-shift-basic-pizz-20260719-212817`: one landing of a D2→**Si1/B1 (61.7 Hz)** shift froze on
+**B2 (122.3 Hz)** — `land=+1184c wrong=true wrongOct=true`. The *same* D2→B1 shift detected correctly
+(~61.7 Hz) **4 other times in the same round** — this is an intermittent ~1-in-5 flip, not a systematic
+error. (`ignoreWrongOctave` ON, the default, would have folded it to in-tune; she runs it OFF
+deliberately to surface exactly these edges.)
+
+### Root cause — a bistable pluck the smoother resolves the wrong way, and rule 2 can't recover it
+Reading the sample stream around the good and bad landings (both the same shift): at the pluck onset
+the **raw detector is bistable between 61 Hz (fundamental) and 122 Hz (its 2nd harmonic)** every time.
+The `OutlierRemovingSmoother` latches whichever it sees a stable run of *first*, coming out of the
+chaotic attack:
+- **good:** attack junk → a run of 61s → locks 61, holds it.
+- **bad:** attack junk → a run of 119–123 → locks 122; the later 61 reads are now >10% deviation →
+  dropped as outliers (`smoothedHz=0`). It reads the true 61 only in the decay tail, after the freeze.
+
+Neither octave rule recovers it once 122 is locked: **rule 1** is off for pizz (§12.3); **rule 2**
+(decay-continuation) needs the fundamental tracked at f/2 *first* then an octave jump, but here 122 is
+present from onset — nothing to continue from (`lastValidHz` was the ringing D2 start note, never 61).
+The §2.1 octave-settle can't help either: 61 never forms a stable *smoothed* window to settle onto.
+**This is the §12.5-predicted regression, and it falsifies §12.3's "pizz doesn't need rule 1."**
+
+### The candidate lead that failed — autocorrelation at 2× the detected lag (`Si1OctaveDiagnosis`, throwaway)
+Rule 1's 1.5× spectral peak can't be the fix — it false-fires on the §12 Mi2/Sol2 (that's the whole
+§12 problem). A **time-domain** proof looked more promising: `acf2x = acf[2·lag]/acf[lag]` asks "does the
+sub-octave period (f/2) fit at least as well as the detected one?" On a **4-case study** it looked clean:
+
+| case | detector reads | true note | `acf2x` at freeze | must halve? |
+|---|---|---|---|---|
+| **Si1 bad** (pizz) | 122 (B2) | B1 61.7 | **1.06 → 3+** | **yes** |
+| Si1 good (pizz) | 61 (B1) | B1 61.7 | 0.47–0.80 | no |
+| §12 Mi2 (pizz) | 82 (E2) | E2 82 | 0.45–0.86 | no |
+| §12 Sol2 (pizz) | 98 (G2) | G2 98 | 0.84–**0.93** | no |
+| arco A (bowed) | 110 (A2) | A1 55 | 0.91–0.95 | yes — but via **rule 1** |
+
+`acf2x ≥ 1.0` seemed to catch Si1 while staying silent on the must-not-halve cases (gap 0.93→1.06), and
+does **not** replace rule 1 (arco-A sits at 0.91–0.95; its 55 Hz fundamental is too mic-rolled-off for a
+time-domain proof).
+
+### Why it was REFUTED (stress corpus, `capture-20260720-074413`, 2026-07-20)
+Sarah recorded a rapid pizz Do/Sol-scale stress take (max harmonic bleed) — **she confirmed she plays
+the correct octaves**. Scanning `acf2x` across it kills the simple threshold: **genuine correctly-played
+notes in the correctable range reach `acf2x ≥ 1.0`** — E2 (Mi2) had a sustained ~1 s run at 1.0–1.4
+(27 windows ≥1.0), G2 (Sol2) 15 windows, plus A2/A#2/B2/C#2. So `acf2x ≥ 1.0` would false-halve E2→E1
+and G2→G1 — **exactly the §12 false-down it was meant to avoid.** The per-note medians stay safe (E2 med
+0.69) but the tails cross 1.0, and a hard threshold can't tell a genuine-note tail from a real octave-up.
+Root physics: **sympathetic open-string resonance puts real periodicity at the sub-octave even for a
+correctly-fingered note** — the *same* wall rule 1 hit in §12. A per-window spectral OR autocorrelation
+octave-down proof keeps running into it.
+
+### Where this leaves the fix (open)
+Options, roughly in order of promise, none yet validated:
+1. **Accept the limit + lean on `ignoreWrongOctave` (default ON).** Sarah's own framing: the toggle
+   exists precisely because a perfect per-window discriminator doesn't; most users leave it on. She runs
+   it OFF to surface edges like this. This costs nothing but leaves the rare OFF-mode flip.
+2. **Attack the *smoother*, not add a correction rule.** The real defect is the `OutlierRemovingSmoother`
+   locking the 2nd harmonic during the bistable pluck attack (it locks the fundamental 4/5 times). A
+   low-pizz-specific bias toward the *lower* of two bistable attack candidates could help — but it's
+   fragile and needs its own stress validation (could destabilise good captures).
+3. **A stateful bistability signal** (note flipped between f and f/2 this attack → prefer f/2 for pizz)
+   — richer than per-window, but still must beat the sympathetic-resonance confound.
+
+Any threshold introduced MUST be calibration-owned (Sarah's rule), fit + graded GOOD/TIGHT/OVERLAP from
+per-rig takes, never hard-coded to the reference Pixel 6a.
+
+### 12.6.1 The `acf2x + ampF2/ampF` combination — also REFUTED, now against real octave-ups (2026-07-20)
+Sarah recorded a low capture (`capture-20260720-123048`, Fa1↔Do2 repeated): since she played only Fa1
+(~41–44 Hz) and Do2 (~65 Hz), every detector read at **82–88 Hz is a known Fa1 octave-up** — a real
+positive dataset at last. Result: **neither `acf2x` nor `ampF2/ampF` nor their combination separates the
+octave-ups from genuine mid notes.** The octave-ups scatter `acf2x` 0.86–1.45 (median ~1.0, frequently
+**below** 1.0) and `ampF2/ampF` 0.02–0.31, while genuine/resonant mid reads (La2/Sol2, sub-octave = open
+A/D string) reach `acf2x` 0.9–1.58 and `ampF2/ampF` up to ~0.4 — full overlap. The **physics is against
+us**: the mic roll-off attenuates a real low fundamental (~43 Hz) *more* than a sympathetic open-string
+sub-octave (~55 Hz), so a genuine octave-up often looks *less* like an octave error than an innocent
+open-string-resonant note. And unlike the decaying Si1 game note (`ampF2/ampF`→1.3 in its tail), these
+sustained/re-plucked lows never let the fundamental emerge, so `ampF2/ampF` stays low for the very reads
+we'd want to catch. **A per-window (spectral or autocorrelation) discriminator cannot do this reliably.**
+Stateful bistability is also weak: many octave-up notes read a *steady* 82 Hz for their whole duration
+(no f↔f/2 flip to key on). The realistic path forward is a different class of method — harmonic-template
+/ polyphonic pitch estimation, or a learned model on the aligned corpus — which is also what the longer
+goal (scoring pitch on a played piece) needs. Until then: `ignoreWrongOctave` ON is the mitigation.
+Tooling to support this is now in place: aligned long-captures (§12.6 methodology) + per-note play-style
+labels, so a labeled low-register corpus can be built. **That "different class of method" is scoped in
+`docs/second-pipeline-plan.md`** — a per-rig template-matching second pipeline (single-instrument, not
+general polyphony) with a Kotlin decision-gate spike; not committed, explore later.
+
+### Methodology notes (important)
+- WAV-replaying the Si1 trace does **not** reproduce the live smoother lock — replay reads 61 first then
+  122, live read 122 throughout (bistability is that fragile; §11.5/§12.4 caveat in force). The faithful
+  ground truth for the live lock is the JSONL detection stream, not a WAV re-run.
+- The stress `capture-*` files are **not alignable**: the debug long-capture saves a JSONL detection log
+  (full screen-open span) and a WAV (only from the "start long capture" tap) over *different* windows
+  with no shared frame origin — so `acf2x` values can't be attributed to played notes. Fixing that
+  long-capture bug (align the log to the WAV) is a prerequisite for clean ground-truth octave analysis.
+- The fix, if one lands, must: fix the Si1 clip (→ 61) **and** keep `PizzOctaveDownFalsePositiveTest`
+  green (Mi2→82, Sol2→98). Fixtures: `.trace-incoming/game-trace-shift-basic-pizz-20260719-212817.*`
+  (untracked); promote a trimmed Si1 clip into the corpus with the fix.

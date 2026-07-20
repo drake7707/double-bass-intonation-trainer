@@ -153,8 +153,11 @@ class PitchGate(
         // Rule 1 — odd-harmonic proof (stateless). ARCO ONLY: on pizz this same 1.5x peak is
         // produced by the open E/A string ringing sympathetically under a *correctly* fingered
         // E2/G2, and firing here falsely halved those to E1/G1 (her 2026-07-19 shift report; a
-        // wrong-note where it was right, "mi2 especially"). Pizz octave-up errors are all handled
-        // by rule 2 below (verified across the corpus). See DETECTION.md §12.
+        // wrong-note where it was right, "mi2 especially"). Rule 2 below caught every pizz
+        // octave-up in the 2026-07-19 corpus, but NOT one that reads octave-high from the note's
+        // onset (nothing tracked at f/2 to continue from): a fingered Si1 (B1) froze on B2
+        // (2026-07-20). A stateless acf-at-2x-lag proof is under investigation for that — see
+        // DETECTION.md §12 / §12.6.
         if (oddHarmonicOctaveDown) {
             val oddHz = 1.5f * frequency
             val oddProminent = spectralPeakRatio(results, oddHz) > oddHarmonicMinRatio

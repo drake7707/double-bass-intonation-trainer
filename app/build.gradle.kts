@@ -1,8 +1,12 @@
+import dev.detekt.gradle.Detekt
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.devtools.ksp)
+
+    id("dev.detekt")
 }
 
 ksp {
@@ -89,4 +93,15 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+}
+
+detekt {
+    buildUponDefaultConfig = true
+}
+
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    reports {
+        html.required.set(true)
+        sarif.required.set(true)
+    }
 }

@@ -1,0 +1,26 @@
+# Overrides layered on top of detekt's default config (buildUponDefaultConfig = true).
+# Purpose: silence findings that are categorically wrong for a Jetpack Compose app so the
+# report stays a useful signal. Anything left after these overrides is a real finding.
+
+complexity:
+  # Composable screen bodies read top-to-bottom and are legitimately long/branchy; splitting
+  # them to satisfy a line/complexity budget scatters UI that belongs together. Non-Composable
+  # logic (ViewModels, DSP) is still held to the limits.
+  CyclomaticComplexMethod:
+    ignoreAnnotated: ['Composable']
+  LongMethod:
+    ignoreAnnotated: ['Composable']
+
+naming:
+  # @Composable functions are PascalCase by convention (and by the Compose API guidelines).
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+
+style:
+  MagicNumber:
+    # dp / sp / alpha / weight literals inside Composables are clearer inline than as named
+    # constants (`16.dp` beats `DefaultPadding`).
+    ignoreAnnotated: ['Composable']
+    # Enum constructor args are self-documenting via named parameters + KDoc
+    # (e.g. PlayerLevel, Difficulty, ChordQuality intervals).
+    ignoreEnums: true

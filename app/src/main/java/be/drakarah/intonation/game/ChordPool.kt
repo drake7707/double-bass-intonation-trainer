@@ -3,6 +3,7 @@ package be.drakarah.intonation.game
 import be.drakarah.intonation.music.Accidental
 import be.drakarah.intonation.music.BassTuning
 import be.drakarah.intonation.music.NoteSpec
+import be.drakarah.intonation.music.SEMITONES_PER_OCTAVE
 import kotlin.math.abs
 import kotlin.random.Random
 
@@ -35,6 +36,9 @@ enum class ChordFingering {
 // [chordToneSpellings] below supplies the root's enharmonic spelling so a flat chord reads
 // "Si♭ Majeur", never "La♯ Majeur".
 
+/** Number of note letters (C D E F G A B). */
+private const val LETTER_COUNT = 7
+
 /** The pitch classes of the seven letters C D E F G A B (Do Ré Mi Fa Sol La Si). */
 private val LETTER_PC = intArrayOf(0, 2, 4, 5, 7, 9, 11)
 
@@ -53,13 +57,14 @@ private val MINOR_ROOT_LETTER = intArrayOf(0, 0, 1, 2, 2, 3, 3, 4, 4, 5, 6, 6)
  * & flats" setting: a chord always reads the way its definition demands (Ré major → Ré Fa♯ La;
  * B♭ major → Si♭ Ré Fa, never A♯ …). Naturals ignore the [Accidental], so this is exact. */
 fun chordToneSpellings(root: NoteSpec, quality: ChordQuality): List<Accidental> {
-    val pc = ((root.midi % 12) + 12) % 12
+    val pc = ((root.midi % SEMITONES_PER_OCTAVE) + SEMITONES_PER_OCTAVE) % SEMITONES_PER_OCTAVE
     val rootLetter = (if (quality == ChordQuality.MAJOR) MAJOR_ROOT_LETTER else MINOR_ROOT_LETTER)[pc]
     val thirdSemis = if (quality == ChordQuality.MAJOR) 4 else 3
+    val fifthSemis = 7
     return listOf(
         accidentalFor(pc, rootLetter),
-        accidentalFor((pc + thirdSemis) % 12, (rootLetter + 2) % 7),
-        accidentalFor((pc + 7) % 12, (rootLetter + 4) % 7),
+        accidentalFor((pc + thirdSemis) % SEMITONES_PER_OCTAVE, (rootLetter + 2) % LETTER_COUNT),
+        accidentalFor((pc + fifthSemis) % SEMITONES_PER_OCTAVE, (rootLetter + 4) % LETTER_COUNT),
     )
 }
 
@@ -67,8 +72,8 @@ fun chordToneSpellings(root: NoteSpec, quality: ChordQuality): List<Accidental> 
  * agnostic), FLAT if below. The letters in [chordToneSpellings] are chosen so the offset is only
  * ever -1, 0 or +1, so the result is always a valid in-scope name. */
 private fun accidentalFor(pc: Int, letter: Int): Accidental {
-    var offset = (((pc - LETTER_PC[letter]) % 12) + 12) % 12
-    if (offset > 6) offset -= 12
+    var offset = (((pc - LETTER_PC[letter]) % SEMITONES_PER_OCTAVE) + SEMITONES_PER_OCTAVE) % SEMITONES_PER_OCTAVE
+    if (offset > SEMITONES_PER_OCTAVE / 2) offset -= SEMITONES_PER_OCTAVE
     return if (offset < 0) Accidental.FLAT else Accidental.SHARP
 }
 

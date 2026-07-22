@@ -97,6 +97,7 @@ dependencies {
 
 detekt {
     buildUponDefaultConfig = true
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
 }
 
 tasks.withType<dev.detekt.gradle.Detekt>().configureEach {

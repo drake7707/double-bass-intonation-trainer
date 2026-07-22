@@ -176,6 +176,25 @@ private val Context.dataStore by preferencesDataStore(name = "settings")
 
 class SettingsRepository(private val context: Context) {
 
+    /** Valid ranges for user- and calibration-set values. Kept as a single source of truth so the
+     * bulk [save] and the individual setters clamp identically and can never drift apart. */
+    companion object {
+        val MIC_SENSITIVITY_RANGE = 20f..95f
+        val MISSING_FUNDAMENTAL_HZ_RANGE = 39f..90f
+        val WRONG_NOTE_MIN_LEVEL_RANGE = 20f..90f
+        val LOWEST_PLAYABLE_HZ_RANGE = 30f..60f
+        val PIZZ_OCTAVE_SETTLE_MS_RANGE = 0L..600L
+        val PIZZ_ATTACK_SKIP_MS_RANGE = 0L..400L
+        val PIZZ_STABILITY_WINDOW_MS_RANGE = 100L..400L
+        val PIZZ_ODD_HARMONIC_RATIO_RANGE = 1.05f..3f
+        val PIZZ_ODD_HARMONIC_RELATIVE_RANGE = 0.005f..0.05f
+        val PIZZ_ARCO_ATTACK_STEP_RANGE = 0f..100f
+        val PIZZ_ARCO_MAX_RISE_RANGE = -1..10
+        val GAME_VOLUME_RANGE = 0f..1f
+        val A4_RANGE = 415.0..446.0
+        val PITCH_CLASS_RANGE = 0..11
+    }
+
     private object Keys {
         val noteNameStyle = stringPreferencesKey("noteNameStyle")
         val mixEnharmonics = booleanPreferencesKey("mixEnharmonics")
@@ -258,7 +277,7 @@ class SettingsRepository(private val context: Context) {
             pizzArcoAttackStep = prefs[Keys.pizzArcoAttackStep] ?: 0f,
             pizzArcoMaxRiseSamples = prefs[Keys.pizzArcoMaxRiseSamples] ?: 1,
             fullCalibrationAt = prefs[Keys.fullCalibrationAt] ?: 0,
-            dronePitchClass = (prefs[Keys.dronePitchClass] ?: 9).coerceIn(0, 11),
+            dronePitchClass = (prefs[Keys.dronePitchClass] ?: 9).coerceIn(PITCH_CLASS_RANGE),
             droneFifth = prefs[Keys.droneFifth] ?: false,
             traceGames = prefs[Keys.traceGames] ?: false,
             onboardingCompleted = prefs[Keys.onboardingCompleted] ?: false,
@@ -294,19 +313,21 @@ class SettingsRepository(private val context: Context) {
     ) {
         context.dataStore.edit {
             it[Keys.audioSource] = audioSource
-            it[Keys.micSensitivity] = micSensitivity.coerceIn(20f, 95f)
-            it[Keys.missingFundamentalMaxHz] = missingFundamentalMaxHz.coerceIn(39f, 90f)
+            it[Keys.micSensitivity] = micSensitivity.coerceIn(MIC_SENSITIVITY_RANGE)
+            it[Keys.missingFundamentalMaxHz] = missingFundamentalMaxHz.coerceIn(MISSING_FUNDAMENTAL_HZ_RANGE)
             it[Keys.oddHarmonicMinRatio] = oddHarmonicMinRatio
             it[Keys.oddHarmonicMinRelative] = oddHarmonicMinRelative
-            wrongNoteMinLevel?.let { v -> it[Keys.wrongNoteMinLevel] = v.coerceIn(20f, 90f) }
-            lowestPlayableHz?.let { v -> it[Keys.lowestPlayableHz] = v.coerceIn(30f, 60f) }
-            pizzOctaveSettleMs?.let { v -> it[Keys.pizzOctaveSettleMs] = v.coerceIn(0L, 600L) }
-            pizzAttackSkipMs?.let { v -> it[Keys.pizzAttackSkipMs] = v.coerceIn(0L, 400L) }
-            pizzStabilityWindowMs?.let { v -> it[Keys.pizzStabilityWindowMs] = v.coerceIn(100L, 400L) }
-            pizzOddHarmonicMinRatio?.let { v -> it[Keys.pizzOddHarmonicMinRatio] = v.coerceIn(1.05f, 3f) }
-            pizzOddHarmonicMinRelative?.let { v -> it[Keys.pizzOddHarmonicMinRelative] = v.coerceIn(0.005f, 0.05f) }
-            pizzArcoAttackStep?.let { v -> it[Keys.pizzArcoAttackStep] = v.coerceIn(0f, 100f) }
-            pizzArcoMaxRiseSamples?.let { v -> it[Keys.pizzArcoMaxRiseSamples] = v.coerceIn(-1, 10) }
+            wrongNoteMinLevel?.let { v -> it[Keys.wrongNoteMinLevel] = v.coerceIn(WRONG_NOTE_MIN_LEVEL_RANGE) }
+            lowestPlayableHz?.let { v -> it[Keys.lowestPlayableHz] = v.coerceIn(LOWEST_PLAYABLE_HZ_RANGE) }
+            pizzOctaveSettleMs?.let { v -> it[Keys.pizzOctaveSettleMs] = v.coerceIn(PIZZ_OCTAVE_SETTLE_MS_RANGE) }
+            pizzAttackSkipMs?.let { v -> it[Keys.pizzAttackSkipMs] = v.coerceIn(PIZZ_ATTACK_SKIP_MS_RANGE) }
+            pizzStabilityWindowMs?.let { v -> it[Keys.pizzStabilityWindowMs] = v.coerceIn(PIZZ_STABILITY_WINDOW_MS_RANGE) }
+            pizzOddHarmonicMinRatio?.let { v -> it[Keys.pizzOddHarmonicMinRatio] = v.coerceIn(PIZZ_ODD_HARMONIC_RATIO_RANGE) }
+            pizzOddHarmonicMinRelative?.let { v ->
+                it[Keys.pizzOddHarmonicMinRelative] = v.coerceIn(PIZZ_ODD_HARMONIC_RELATIVE_RANGE)
+            }
+            pizzArcoAttackStep?.let { v -> it[Keys.pizzArcoAttackStep] = v.coerceIn(PIZZ_ARCO_ATTACK_STEP_RANGE) }
+            pizzArcoMaxRiseSamples?.let { v -> it[Keys.pizzArcoMaxRiseSamples] = v.coerceIn(PIZZ_ARCO_MAX_RISE_RANGE) }
             it[Keys.fullCalibrationAt] = epochMs
             it[Keys.lastCalibratedAt] = epochMs
             it[Keys.onboardingCompleted] = true
@@ -322,7 +343,7 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun setMicSensitivity(value: Float) {
-        context.dataStore.edit { it[Keys.micSensitivity] = value.coerceIn(20f, 95f) }
+        context.dataStore.edit { it[Keys.micSensitivity] = value.coerceIn(MIC_SENSITIVITY_RANGE) }
     }
 
     suspend fun setLastTunedAt(epochMs: Long) {
@@ -342,7 +363,7 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun setGameVolume(volume: Float) {
-        context.dataStore.edit { it[Keys.gameVolume] = volume.coerceIn(0f, 1f) }
+        context.dataStore.edit { it[Keys.gameVolume] = volume.coerceIn(GAME_VOLUME_RANGE) }
     }
 
     suspend fun setPositions(positions: Set<Position>) {
@@ -361,7 +382,7 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun setA4(a4: Double) {
-        context.dataStore.edit { it[Keys.a4] = a4.coerceIn(415.0, 446.0) }
+        context.dataStore.edit { it[Keys.a4] = a4.coerceIn(A4_RANGE) }
     }
 
     suspend fun setDifficulty(difficulty: Difficulty) {
@@ -381,7 +402,7 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun setDronePitchClass(pitchClass: Int) {
-        context.dataStore.edit { it[Keys.dronePitchClass] = pitchClass.coerceIn(0, 11) }
+        context.dataStore.edit { it[Keys.dronePitchClass] = pitchClass.coerceIn(PITCH_CLASS_RANGE) }
     }
 
     suspend fun setDroneFifth(enabled: Boolean) {

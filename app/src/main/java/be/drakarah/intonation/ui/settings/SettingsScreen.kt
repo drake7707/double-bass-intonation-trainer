@@ -114,7 +114,9 @@ fun SettingsScreen(
                 if (summary.skippedSessions > 0) String.format(
                     fmtImportedSkipped, summary.importedSessions, summary.skippedSessions,
                 ) else String.format(fmtImported, summary.importedSessions)
-            } catch (e: Exception) {
+                // Import parses an untrusted file: any failure (I/O, bad gzip, malformed JSON,
+                // wrong schema) must become a friendly status line, never crash the screen.
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 String.format(fmtImportFailed, e.message ?: "")
             }
             backupBusy = false
@@ -148,7 +150,9 @@ fun SettingsScreen(
                     ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 )
                 msgBackupCreated
-            } catch (e: Exception) {
+                // Export touches storage and hands off to a share sheet: any failure (I/O, no
+                // share target) must become a friendly status line, never crash the screen.
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 String.format(fmtExportFailed, e.message ?: "")
             }
             backupBusy = false

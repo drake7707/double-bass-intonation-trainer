@@ -76,7 +76,10 @@ class DroneTone {
                 .setBufferSizeInBytes(maxOf(minBuf, bufFrames * 2))
                 .setTransferMode(AudioTrack.MODE_STREAM)
                 .build()
-        } catch (e: Exception) {
+            // AudioTrack setup throws a device-dependent spread of RuntimeExceptions
+            // (IllegalState/IllegalArgument/UnsupportedOperation) across OEMs; a drone that
+            // won't start must degrade silently, never crash the app.
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
             Log.w(TAG, "drone AudioTrack init failed", e)
             running = false
             return
@@ -124,7 +127,9 @@ class DroneTone {
                 fade[i] = (Short.MAX_VALUE * v * gain * vol).toInt().toShort()
             }
             track.write(fade, 0, fadeN)
-        } catch (e: Exception) {
+            // Playback throws IllegalStateException on OEM audio-HAL hiccups mid-stream;
+            // a failed render must stop quietly, never crash the app.
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
             Log.w(TAG, "drone render failed", e)
         } finally {
             runCatching { track.stop() }

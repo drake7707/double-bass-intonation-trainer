@@ -62,18 +62,22 @@ object CalibrationAnalysis {
     private fun cents(hz: Float, ref: Float): Float =
         (1200.0 * ln(hz.toDouble() / ref) / ln(2.0)).toFloat()
 
+    /** A window counts as "on" a target pitch when within this many cents of it. Wide enough to
+     * accept a still-settling attack, tight enough to reject a neighbouring semitone. */
+    const val ON_NOTE_CENTS = 60f
+
     fun score(samples: List<PitchSample>, expectedHz: Float): TakeScore {
         val accepted = samples.filter { it.accepted && it.smoothedHz > 0f }
         fun rate(predicate: (PitchSample) -> Boolean): Float =
             if (accepted.isEmpty()) 0f else accepted.count(predicate).toFloat() / accepted.size
         val startMs = samples.firstOrNull()?.timestampMs ?: 0L
-        val firstCorrect = accepted.firstOrNull { abs(cents(it.smoothedHz, expectedHz)) <= 60f }
+        val firstCorrect = accepted.firstOrNull { abs(cents(it.smoothedHz, expectedHz)) <= ON_NOTE_CENTS }
         return TakeScore(
             totalWindows = samples.size,
             acceptedWindows = accepted.size,
-            correctRate = rate { abs(cents(it.smoothedHz, expectedHz)) <= 60f },
-            octaveUpRate = rate { abs(cents(it.smoothedHz, 2f * expectedHz)) <= 60f },
-            octaveDownRate = rate { abs(cents(it.smoothedHz, expectedHz / 2f)) <= 60f },
+            correctRate = rate { abs(cents(it.smoothedHz, expectedHz)) <= ON_NOTE_CENTS },
+            octaveUpRate = rate { abs(cents(it.smoothedHz, 2f * expectedHz)) <= ON_NOTE_CENTS },
+            octaveDownRate = rate { abs(cents(it.smoothedHz, expectedHz / 2f)) <= ON_NOTE_CENTS },
             msToFirstCorrect = firstCorrect?.let { it.timestampMs - startMs } ?: -1L,
         )
     }

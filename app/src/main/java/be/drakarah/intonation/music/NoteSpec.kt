@@ -4,6 +4,15 @@ import kotlin.math.log2
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
+/** Semitones per octave in 12-tone equal temperament. */
+const val SEMITONES_PER_OCTAVE = 12
+/** Cents per octave. */
+const val CENTS_PER_OCTAVE = 1200.0
+/** MIDI number of the A4 tuning reference. */
+const val A4_MIDI = 69
+/** Default concert-pitch reference for A4 (Hz). */
+const val DEFAULT_A4_HZ = 440.0
+
 /** How note names are displayed; Sarah thinks in fixed-do solfège. */
 enum class NoteNameStyle {
     LETTERS,
@@ -31,25 +40,26 @@ private fun pitchClassNames(style: NoteNameStyle, accidental: Accidental): List<
 
 /** A note in 12-tone equal temperament, identified by its MIDI number (E1 = 28, A4 = 69). */
 data class NoteSpec(val midi: Int) {
-    fun frequency(a4: Double = 440.0): Double = a4 * 2.0.pow((midi - 69) / 12.0)
+    fun frequency(a4: Double = DEFAULT_A4_HZ): Double =
+        a4 * 2.0.pow((midi - A4_MIDI) / SEMITONES_PER_OCTAVE.toDouble())
 
     /** Scientific pitch notation with sharps, e.g. "G2", "F♯3". */
     val name: String get() = displayName(NoteNameStyle.LETTERS)
 
     /** Note name in the given style, with scientific octave number ("G2" / "Sol2"). */
     fun displayName(style: NoteNameStyle, accidental: Accidental = Accidental.SHARP): String =
-        pitchClassNames(style, accidental)[midi % 12] + (midi / 12 - 1)
+        pitchClassNames(style, accidental)[midi % SEMITONES_PER_OCTAVE] + (midi / SEMITONES_PER_OCTAVE - 1)
 
     /** Pitch-class name without octave ("G" / "Sol") — for string hints. */
     fun pitchClassName(style: NoteNameStyle, accidental: Accidental = Accidental.SHARP): String =
-        pitchClassNames(style, accidental)[midi % 12]
+        pitchClassNames(style, accidental)[midi % SEMITONES_PER_OCTAVE]
 }
 
 fun centsBetween(frequency: Double, reference: Double): Double =
-    1200.0 * log2(frequency / reference)
+    CENTS_PER_OCTAVE * log2(frequency / reference)
 
-fun nearestNote(frequency: Double, a4: Double = 440.0): NoteSpec =
-    NoteSpec((69 + 12.0 * log2(frequency / a4)).roundToInt())
+fun nearestNote(frequency: Double, a4: Double = DEFAULT_A4_HZ): NoteSpec =
+    NoteSpec((A4_MIDI + SEMITONES_PER_OCTAVE.toDouble() * log2(frequency / a4)).roundToInt())
 
 object BassTuning {
     val E1 = NoteSpec(28)

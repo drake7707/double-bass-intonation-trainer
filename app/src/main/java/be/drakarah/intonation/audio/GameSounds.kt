@@ -124,7 +124,9 @@ class GameSounds {
             })
             track.play()
             Log.d(TAG, "playing ${pcm.size} frames (playState=${track.playState}, volume=$volume)")
-        } catch (e: Exception) {
+            // AudioTrack playback throws a device-dependent spread of RuntimeExceptions across
+            // OEMs; a failed game sound must be inaudible, never crash the app.
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
             Log.w(TAG, "game sound failed", e)
         }
     }

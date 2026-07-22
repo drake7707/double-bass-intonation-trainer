@@ -9,6 +9,7 @@ import be.drakarah.intonation.dsp.misc.WaveWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -94,7 +95,7 @@ class GameTrace(
                 jsonl.bufferedWriter().use { w -> snapshot.forEach { w.appendLine(it) } }
                 savedJsonl = jsonl
                 Log.d(TAG, "saved trace $base (${snapshot.size} lines)")
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 Log.w(TAG, "failed to save game trace", e)
             }
         }
@@ -111,7 +112,7 @@ class GameTrace(
                 file.appendText(
                     """{"feedback":{"rating":"$rating","note":"${note.escapeJson()}"}}""" + "\n"
                 )
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 Log.w(TAG, "failed to append trace feedback", e)
             }
         }

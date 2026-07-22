@@ -60,7 +60,7 @@ fun TuneUpScreen(
     onDone: () -> Unit,
     viewModel: TuneUpViewModel = viewModel(factory = TuneUpViewModel.Factory),
 ) {
-    RequireMicPermission {
+    RequireMicPermission(onStart = viewModel::start, onStop = viewModel::stop) {
         LaunchedEffect(Unit) { viewModel.start() }
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         val noteStyle = rememberAppSettings().noteNameStyle

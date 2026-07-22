@@ -56,7 +56,7 @@ fun ShiftScreen(
     onExit: () -> Unit,
     viewModel: ShiftViewModel = viewModel(factory = ShiftViewModel.Factory),
 ) {
-    RequireMicPermission {
+    RequireMicPermission(onStart = viewModel::start, onStop = viewModel::stop) {
         LaunchedEffect(Unit) { viewModel.start() }
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         if (!state.ready) return@RequireMicPermission

@@ -50,7 +50,7 @@ fun SustainScreen(
     onExit: () -> Unit,
     viewModel: SustainViewModel = viewModel(factory = SustainViewModel.Factory),
 ) {
-    RequireMicPermission {
+    RequireMicPermission(onStart = viewModel::start, onStop = viewModel::stop) {
         LaunchedEffect(Unit) { viewModel.start() }
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         if (!state.ready) return@RequireMicPermission

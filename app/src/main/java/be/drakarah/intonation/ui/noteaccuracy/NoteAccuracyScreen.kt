@@ -48,7 +48,7 @@ fun NoteAccuracyScreen(
     onExit: () -> Unit,
     viewModel: NoteAccuracyViewModel = viewModel(factory = NoteAccuracyViewModel.Factory),
 ) {
-    RequireMicPermission {
+    RequireMicPermission(onStart = viewModel::start, onStop = viewModel::stop) {
         LaunchedEffect(Unit) { viewModel.start() }
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         if (!state.ready) return@RequireMicPermission

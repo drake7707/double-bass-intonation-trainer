@@ -1,9 +1,12 @@
 # Second detection pipeline — per-rig template matching (research plan)
 
-**Status: research sidestep, NOT committed.** This plan captures a direction to *explore later*; nothing
-here ships or touches the current pipeline until a spike proves it worthwhile. Written 2026-07-20 after
-the per-window octave discriminators (`acf2x`, `ampF2/ampF`) were refuted on real data — see
-DETECTION.md §12.6 / §12.6.1.
+**Status: EXPLORED and SHELVED (2026-07-22). Negative result — see §11.** The rule-3 template
+octave-verifier described below was built and evaluated against a fresh chromatic corpus and does not
+work: a genuine open-string-resonant note is spectrally identical to a true octave-up, so a
+target-agnostic per-window discriminator cannot separate them (full write-up: §11 + DETECTION.md
+§12.6.2). Nothing shipped; `ignoreWrongOctave` stays the mitigation. The design below (§1–§10) is kept
+as the record of what was tried. Originally written 2026-07-20 after the per-window discriminators
+(`acf2x`, `ampF2/ampF`) were refuted (DETECTION.md §12.6 / §12.6.1).
 
 ## 1. The idea in one line
 Run a second, per-rig **template-matching** detector *alongside* the existing pitch pipeline to
@@ -255,3 +258,53 @@ integration (§6, verify mode).
 Not a general-purpose transcriber, not multi-instrument separation, not a replacement for Pipeline 1, and
 not something that ships without the §8 decision gate passing. The current pipeline stays as-is and
 `ignoreWrongOctave` stays ON until/unless this proves out.
+
+## 11. Outcome — decision gate FAILED, shelved (2026-07-22)
+Built the rule-3 octave-verifier (`HarmonicTemplateDictionary` + `TemplateOctaveResolver` + the
+`TemplateDecompositionSpike` eval, all in the **dsp test** source set) and ran the §8 gate against a
+fresh, purpose-recorded corpus. **It fails, conclusively.**
+
+**Method as built** (not the §6.2 draft): the {f/2, f} 2-candidate ratio collapses (template(f/2)
+subsumes template(f)'s partials), so the resolver decomposes the frame over a **full local octave**
+`[f/2, f]` (13 semitone candidates) via NNLS and votes on which cluster the strongest activation lands
+in, with rolling-window aggregation. Dictionary = **measured** combs from a gapped chromatic pizz take
+(2026-07-22, E1→B2), labelled by the trace's octave-correct `smoothedHz`.
+
+**Result** (sub-octave vote per region; want octave-ups high, genuine notes low):
+
+| note | truth | vote | wanted |
+|---|---|---|---|
+| Fa1→F2 | octave-up | 48% | high |
+| Si1→B2 | octave-up | 41% | high |
+| Mi2 (E2) | genuine | 25% | low |
+| **La2** (open-A rings) | **genuine** | **63%** | low |
+| Sol2 | genuine | 10% | low |
+
+A genuine **La2 votes sub-octave harder than the real Fa1→F2 octave-up** — no threshold separates them.
+Confirmed across three metrics (argmax / activation-ratio / odd-even), sparse vs dense dictionaries, a
+16384-point FFT (worse — pizz decay + longer window averages in more open-string ring), and thresholds
+up to unanimity.
+
+**Root cause:** a genuine note whose sub-octave is a hard-ringing open string (Mi2/open-E, La2/open-A) is
+**spectrally identical** to a true octave-up — the open string genuinely sounds an octave down (real
+polyphony in the roll-off knee). Measured open-string templates match the ring *better*, worsening it.
+
+**Conclusion:** the octave decision for low pizz is **not solvable by a target-agnostic per-window
+discriminator**. The only separating signal is the *prompted note* (context), already exploited by
+`ignoreWrongOctave` / the game's octave-fold at the target-aware layer. Rule 3 shelved; code kept as a
+guarded documented dead-end (like the acf2x write-up). Full trace: DETECTION.md §12.6.2.
+
+**The temporal axis was probed too, and also fails** (`TemplateDecompositionSpike.temporalProbe`,
+2026-07-22). Idea: a true octave-up's odd harmonic (1.5·f) is a real partial present at the pluck (rise
+lag ≈ 0), while a genuine note's 1.5·f is a sympathetic ring that builds up *after* (lag > 0). The data
+refute it — genuine La2's odd energy rises *with* its fundamental (lag 0), the Fa1 octave-up's builds up
+*late* (+255 ms), no consistent sign otherwise. Reason: sympathetic coupling on the bass is
+**near-instant** vs the 23 ms frame — the open string rings inside the first window, so there is no onset
+lag to exploit. A note-level HMM would only help the *bistable* Si1 flip, not the steady-La2 tie.
+
+**Net:** per-window spectral, odd/even split, onset timing, and note continuity have all been tried and
+fail on the same physical ambiguity (a strong sympathetic ring is the *same vibration* as playing that
+open string). The only untried signal-only avenue is a full learned polyphonic-over-time model — and its
+justification is the **transcription** goal (§6.7 / scoring a played piece), where melodic context does
+the octave disambiguation, NOT octave-error mitigation (which `ignoreWrongOctave` already handles). If
+polyphony is ever pursued, scope it around transcription, not this bug.

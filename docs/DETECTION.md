@@ -5,10 +5,13 @@
 problem, every design decision, what worked and what didn't, and how we got there — so after a
 context reset we can be current again in one read.
 
-Last updated: 2026-07-20, adding **§12.6 — the Si1 onset-octave-up** (a fingered B1 pizz landing froze
-on B2; rule 2's decay-continuation can't catch an octave-up that's present from the note's *onset*, so
-§12.3's "pizz doesn't need rule 1" is superseded; the fix is a stateless acf-at-2x-lag proof, threshold
-calibration-owned — diagnosed + designed, not yet implemented). Before that, 2026-07-19 added **§12 — the odd-harmonic octave-DOWN proof is now ARCO-ONLY** (it
+Last updated: 2026-07-22, adding **§12.6.2 — the template-decomposition octave-verifier is SHELVED**: a
+per-rig measured-template rule 3 for `PitchGate` was built and tested against a fresh chromatic corpus
+and conclusively fails — a genuine open-string-resonant note (La2) is spectrally identical to a true
+octave-up, so no target-agnostic per-window discriminator can separate them; `ignoreWrongOctave` stays
+the mitigation. Before that, 2026-07-20 added **§12.6 — the Si1 onset-octave-up** (a fingered B1 pizz
+landing froze on B2; rule 2's decay-continuation can't catch an octave-up that's present from the note's
+*onset*, so §12.3's "pizz doesn't need rule 1" is superseded). Before that, 2026-07-19 added **§12 — the odd-harmonic octave-DOWN proof is now ARCO-ONLY** (it
 falsely halved correctly-fingered pizz E2/G2 whose octave-below open string rings sympathetically; pizz
 now relies on the decay-continuation rule, which handles every genuine pizz octave-up in the corpus —
 her "mi2 said wrong note though it was right" report). This **reverses the §5 A "pizz needs looser
@@ -1148,6 +1151,55 @@ Tooling to support this is now in place: aligned long-captures (§12.6 methodolo
 labels, so a labeled low-register corpus can be built. **That "different class of method" is scoped in
 `docs/second-pipeline-plan.md`** — a per-rig template-matching second pipeline (single-instrument, not
 general polyphony) with a Kotlin decision-gate spike; not committed, explore later.
+
+### 12.6.2 The template-decomposition octave-verifier — built, tested, SHELVED (2026-07-22)
+The "different class of method" from §12.6.1 was built and evaluated as a candidate **rule 3** for
+`PitchGate` (target-agnostic, per-window): a per-rig dictionary of **measured** harmonic templates, with
+the frame decomposed by non-negative least-squares over a local octave `[f/2, f]` to decide whether the
+true pitch is `f` or `f/2`. Sarah recorded a fresh **gapped chromatic pizz take** (E1→B2) so every low
+semitone had a *real* measured template (labelled by the trace's octave-correct `smoothedHz` — the raw
+detector re-reads the low notes an octave up, the very bug). Harness: the guarded `TemplateDecomposition
+Spike` eval + `HarmonicTemplates.kt` (both in the **dsp test** source set — never shipped).
+
+**Conclusive negative result.** Reading each region's "sub-octave vote" over the dense measured
+dictionary:
+
+| note | truth | sub-octave vote | wanted |
+|---|---|---|---|
+| Fa1→F2 | octave-up | 48% | halve (high) |
+| Si1→B2 | octave-up | 41% | halve |
+| Mi2 (E2) | genuine | 25% | keep (low) |
+| **La2** (open-A rings) | **genuine** | **63%** | keep (low) |
+| Sol2 | genuine | 10% | keep |
+
+A **genuine La2 votes sub-octave harder (63%) than the real Fa1→F2 octave-up (48%)**, so no threshold
+halves the octave-ups without also halving genuine notes. This held across all variants tried: three
+decision metrics (full-dictionary argmax, {f/2,f} activation ratio, odd/even-harmonic split), sparse vs
+dense dictionaries, a 4096→16384 FFT resolution bump (worse — a longer window averages in more of the
+decayed pizz's ringing open string), and rolling-vote thresholds up to unanimity. **Root cause (the same
+wall as §12.6.1, now proven with measured templates and real positives):** a genuine note whose
+sub-octave is a hard-ringing *open string* (Mi2/open-E, La2/open-A) is **spectrally identical** to a true
+octave-up — the open string really is sounding an octave down. Adding measured open-string templates
+only makes them match the ring better, worsening false-halving. **The only separating signal is the
+*prompted note* (context)** — which the target-aware layer (`ignoreWrongOctave` / octave-fold) already
+exploits. **A target-agnostic per-window discriminator cannot solve the low-pizz octave problem.**
+Decision: **rule 3 shelved**; `ignoreWrongOctave` stays ON as the mitigation. Code kept guarded as a
+documented dead-end (`dsp/src/test/.../HarmonicTemplates.kt`, `TemplateDecompositionSpike`); write-up in
+`docs/second-pipeline-plan.md` §11.
+
+**The time axis was also probed and does not save it** (`TemplateDecompositionSpike.temporalProbe`,
+2026-07-22). Hypothesis: for a *true* octave-up the odd harmonic (1.5·f) is a real 3rd harmonic present
+*at* the pluck (rise-lag ≈ 0), whereas for a *genuine* note the 1.5·f comes from the sympathetic ring
+which *builds up after* onset (lag > 0). The data refute it: genuine La2's odd energy rises *with* its
+fundamental (lag 0, not >0) and the Fa1 octave-up's builds up *late* (+255 ms) — the opposite of the
+prediction, and no consistent sign across the chromatic notes. Physical reason: sympathetic coupling on
+the bass is **near-instant** relative to the 23 ms analysis frame — pluck a note and its sub-octave open
+string is already ringing inside the first window, so there is no onset lag to key on. A note-level HMM
+would stabilise the *bistable* Si1 flip but gives no leverage on the La2-vs-octave-up tie (La2 is a
+steady genuine note — continuity has nothing to correct). So per-window spectral, odd/even, onset
+timing, and note continuity all fail; the only remaining signal-only avenue is a full learned
+polyphonic-over-time model, whose payoff would be the **transcription** goal (scoring a played piece),
+not octave-fixing — where musical/melodic context, not one isolated note, does the disambiguation.
 
 ### Methodology notes (important)
 - WAV-replaying the Si1 trace does **not** reproduce the live smoother lock — replay reads 61 first then

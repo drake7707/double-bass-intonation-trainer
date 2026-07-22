@@ -351,7 +351,9 @@ class NoteAccuracyViewModel(
             // Build the round + its summary synchronously so the Done screen has content the moment
             // the phase flips; the trend is filled in once persistRound's record() returns.
             val round = buildRound(state)
-            _uiState.value = state.copy(phase = NoteAccuracyPhase.Done, summary = buildRoundSummary(round))
+            _uiState.value = state.copy(
+                phase = NoteAccuracyPhase.Done, summary = buildRoundSummary(round), driftCents = null,
+            )
             persistRound(round, state)
             // Round over: stop the capture loop (and the mic) so recording doesn't continue through
             // the summary + feedback screen. persistRound runs on viewModelScope, not listenJob, so

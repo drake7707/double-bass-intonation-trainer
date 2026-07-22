@@ -325,7 +325,9 @@ class ChordsViewModel(
         val next = state.promptIndex + 1
         if (next >= state.roundLength) {
             val round = buildRound(state)
-            _uiState.value = state.copy(phase = ChordsPhase.Done, summary = buildRoundSummary(round))
+            _uiState.value = state.copy(
+                phase = ChordsPhase.Done, summary = buildRoundSummary(round), driftCents = null,
+            )
             persistRound(round)
             // Round over: stop the capture loop (and the mic) so recording doesn't continue through
             // the summary + feedback screen. persistRound runs on viewModelScope, not listenJob, so

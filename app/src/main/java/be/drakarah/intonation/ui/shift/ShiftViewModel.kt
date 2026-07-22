@@ -367,7 +367,9 @@ class ShiftViewModel(
         val next = state.promptIndex + 1
         if (next >= state.roundLength) {
             val round = buildRound(state)
-            _uiState.value = state.copy(phase = ShiftPhase.Done, summary = buildRoundSummary(round))
+            _uiState.value = state.copy(
+                phase = ShiftPhase.Done, summary = buildRoundSummary(round), driftCents = null,
+            )
             persistRound(round)
             // Round over: stop the capture loop (and with it the mic) so we don't keep recording
             // through the summary + "how did that go" feedback screen. persistRound runs on
